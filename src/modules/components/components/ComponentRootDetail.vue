@@ -1,0 +1,191 @@
+<script setup lang="ts">
+/**
+ * ComponentRootDetail
+ *
+ * Root component for the component detail feature.
+ * Handles database initialization, data fetching by ID, and loading/error states.
+ * Passes data down to ComponentSectionDetail.
+ */
+
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+import BaseSpinner from '@/base/components/BaseSpinner.vue'
+
+import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
+import { useDatabase } from '@/shared/composables/use-database'
+import { useToast } from '@/shared/composables/use-toast'
+
+import { useKanjiRepository } from '@/modules/kanji-list/composables/use-kanji-repository'
+import { useComponentRepository } from '../composables/use-component-repository'
+
+import ComponentSectionDetail from './ComponentSectionDetail.vue'
+
+import type { Component, Kanji } from '@/shared/types/database-types'
+
+// Router
+const route = useRoute()
+const router = useRouter()
+
+// Database initialization
+const { initError, initialize, isInitialized, isInitializing } = useDatabase()
+
+// Repository for data access
+const { getById, getLinkedKanjiCount, getLinkedKanjiIds, remove } =
+  useComponentRepository()
+const { getById: getKanjiById, getByIds: getKanjiByIds } = useKanjiRepository()
+
+// Toast notifications
+const { success } = useToast()
+
+// Local state
+const component = ref<Component | null>(null)
+const sourceKanji = ref<Kanji | null>(null)
+const linkedKanjiCount = ref(0)
+const linkedKanji = ref<Kanji[]>([])
+const fetchError = ref<Error | null>(null)
+const isDeleting = ref(false)
+
+// Computed component ID from route params
+const componentId = computed(() => {
+  const id = route.params['id']
+  return typeof id === 'string' ? parseInt(id, 10) : NaN
+})
+
+// Fetch component by ID
+function loadComponent() {
+  if (Number.isNaN(componentId.value)) {
+    fetchError.value = new Error('Invalid component ID')
+    return
+  }
+
+  try {
+    component.value = getById(componentId.value)
+    if (!component.value) {
+      fetchError.value = new Error('Component not found')
+    } else {
+      // Load source kanji if set
+      sourceKanji.value = component.value.sourceKanjiId
+        ? getKanjiById(component.value.sourceKanjiId)
+        : null
+
+      // Load linked kanji information
+      linkedKanjiCount.value = getLinkedKanjiCount(componentId.value)
+      const kanjiIds = getLinkedKanjiIds(componentId.value)
+      linkedKanji.value = getKanjiByIds(kanjiIds)
+    }
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle delete action
+async function handleDelete() {
+  const componentToDelete = component.value
+  if (!componentToDelete) return
+
+  isDeleting.value = true
+  try {
+    remove(componentToDelete.id)
+    success(`Component "${componentToDelete.character}" deleted`)
+    await router.push({ name: 'component-list' })
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+    isDeleting.value = false
+  }
+}
+
+// Initialize on mount
+onMounted(async () => {
+  try {
+    await initialize()
+    loadComponent()
+  } catch {
+    // Error is already captured in initError
+  }
+})
+
+// Reload when ID changes (for navigation between components)
+watch(componentId, () => {
+  if (isInitialized.value) {
+    fetchError.value = null
+    loadComponent()
+  }
+})
+</script>
+
+<template>
+  <!-- Loading state -->
+  <SharedPageContainer
+    v-if="isInitializing"
+    class="component-root-detail-loading"
+  >
+    <BaseSpinner
+      label="Loading component..."
+      size="lg"
+    />
+    <p class="component-root-detail-loading-text">Loading component...</p>
+  </SharedPageContainer>
+
+  <!-- Error state -->
+  <SharedPageContainer
+    v-else-if="initError || fetchError"
+    class="component-root-detail-error"
+  >
+    <p class="component-root-detail-error-title">Failed to load</p>
+    <p class="component-root-detail-error-message">
+      {{ initError?.message || fetchError?.message }}
+    </p>
+  </SharedPageContainer>
+
+  <!-- Content -->
+  <ComponentSectionDetail
+    v-else-if="isInitialized && component"
+    :component="component"
+    :is-deleting="isDeleting"
+    :linked-kanji="linkedKanji"
+    :linked-kanji-count="linkedKanjiCount"
+    :source-kanji="sourceKanji"
+    @delete="handleDelete"
+  />
+</template>
+
+<style scoped>
+.component-root-detail-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  min-height: 50vh;
+}
+
+.component-root-detail-loading-text {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+}
+
+.component-root-detail-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: 50vh;
+  text-align: center;
+}
+
+.component-root-detail-error-title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.component-root-detail-error-message {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+}
+</style>
