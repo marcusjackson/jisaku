@@ -10,31 +10,19 @@ import type {
   Component,
   CreateComponentInput,
   CreateKanjiInput,
-  CreateRadicalInput,
-  Kanji,
-  Radical
+  Kanji
 } from '@/shared/types/database-types'
 import type { Database } from 'sql.js'
 
-// SQL for creating the schema (matches 001-initial.sql)
+// SQL for creating the schema (matches migration 003 schema)
 const SCHEMA_SQL = `
   PRAGMA foreign_keys = ON;
-
-  CREATE TABLE IF NOT EXISTS radicals (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    character TEXT NOT NULL,
-    stroke_count INTEGER NOT NULL CHECK (stroke_count > 0),
-    number INTEGER NOT NULL UNIQUE CHECK (number >= 1 AND number <= 214),
-    meaning TEXT,
-    japanese_name TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
 
   CREATE TABLE IF NOT EXISTS kanjis (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     character TEXT NOT NULL UNIQUE,
     stroke_count INTEGER NOT NULL CHECK (stroke_count > 0 AND stroke_count <= 64),
+    short_meaning TEXT,
     radical_id INTEGER,
     jlpt_level TEXT CHECK (jlpt_level IN ('N5', 'N4', 'N3', 'N2', 'N1')),
     joyo_level TEXT CHECK (joyo_level IN (
@@ -42,37 +30,141 @@ const SCHEMA_SQL = `
       'elementary4', 'elementary5', 'elementary6',
       'secondary'
     )),
+    kanji_kentei_level TEXT,
     stroke_diagram_image BLOB,
     stroke_gif_image BLOB,
     notes_etymology TEXT,
-    notes_cultural TEXT,
+    notes_semantic TEXT,
+    notes_education_mnemonics TEXT,
     notes_personal TEXT,
+    identifier INTEGER,
+    radical_stroke_count INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (radical_id) REFERENCES radicals(id) ON DELETE SET NULL
+    FOREIGN KEY (radical_id) REFERENCES components(id) ON DELETE SET NULL
   );
 
   CREATE TABLE IF NOT EXISTS components (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     character TEXT NOT NULL,
     stroke_count INTEGER NOT NULL CHECK (stroke_count > 0),
+    short_meaning TEXT,
     source_kanji_id INTEGER,
-    description_short TEXT,
     japanese_name TEXT,
     description TEXT,
+    can_be_radical BOOLEAN DEFAULT 0,
+    kangxi_number INTEGER CHECK (kangxi_number >= 1 AND kangxi_number <= 214),
+    kangxi_meaning TEXT,
+    radical_name_japanese TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (source_kanji_id) REFERENCES kanjis(id) ON DELETE SET NULL
   );
 
-  CREATE TABLE IF NOT EXISTS kanji_components (
-    kanji_id INTEGER NOT NULL,
+  CREATE TABLE IF NOT EXISTS classification_types (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type_name TEXT NOT NULL UNIQUE,
+    name_japanese TEXT,
+    name_english TEXT,
+    description TEXT,
+    description_short TEXT,
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS position_types (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    position_name TEXT NOT NULL UNIQUE,
+    name_japanese TEXT,
+    name_english TEXT,
+    description TEXT,
+    description_short TEXT,
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS component_forms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     component_id INTEGER NOT NULL,
-    position INTEGER,
-    PRIMARY KEY (kanji_id, component_id),
-    FOREIGN KEY (kanji_id) REFERENCES kanjis(id) ON DELETE CASCADE,
+    form_character TEXT NOT NULL,
+    form_name TEXT,
+    description TEXT,
+    is_primary BOOLEAN DEFAULT 0,
+    stroke_count INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS component_occurrences (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kanji_id INTEGER NOT NULL,
+    component_id INTEGER NOT NULL,
+    component_form_id INTEGER,
+    position_type_id INTEGER,
+    is_radical BOOLEAN DEFAULT 0,
+    display_order INTEGER DEFAULT 0,
+    analysis_notes TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (kanji_id) REFERENCES kanjis(id) ON DELETE CASCADE,
+    FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE,
+    FOREIGN KEY (component_form_id) REFERENCES component_forms(id) ON DELETE SET NULL,
+    FOREIGN KEY (position_type_id) REFERENCES position_types(id) ON DELETE SET NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS component_groupings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    component_id INTEGER NOT NULL,
+    component_form_id INTEGER,
+    name TEXT NOT NULL,
+    analysis_notes TEXT,
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE,
+    FOREIGN KEY (component_form_id) REFERENCES component_forms(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS component_grouping_members (
+    grouping_id INTEGER NOT NULL,
+    occurrence_id INTEGER NOT NULL,
+    display_order INTEGER DEFAULT 0,
+    PRIMARY KEY (grouping_id, occurrence_id),
+    FOREIGN KEY (grouping_id) REFERENCES component_groupings(id) ON DELETE CASCADE,
+    FOREIGN KEY (occurrence_id) REFERENCES component_occurrences(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS kanji_classifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kanji_id INTEGER NOT NULL,
+    classification_type_id INTEGER NOT NULL,
+    is_primary BOOLEAN DEFAULT 0,
+    notes TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (kanji_id) REFERENCES kanjis(id) ON DELETE CASCADE,
+    FOREIGN KEY (classification_type_id) REFERENCES classification_types(id) ON DELETE CASCADE
+  );
+
+  -- Prepopulate reference tables
+  INSERT INTO classification_types (type_name, name_japanese, name_english, description_short, display_order) VALUES
+  ('pictograph', '象形文字', 'Pictograph', 'Pictures of physical objects', 1),
+  ('ideograph', '指事文字', 'Ideograph', 'Abstract concepts shown graphically', 2),
+  ('compound_ideograph', '会意文字', 'Compound Ideograph', 'Combining meanings of components', 3),
+  ('phono_semantic', '形声文字', 'Phono-semantic', 'Meaning component + sound component', 4);
+
+  INSERT INTO position_types (position_name, name_japanese, name_english, description_short, display_order) VALUES
+  ('hen', '偏', 'Left side', 'Component on left side of kanji', 1),
+  ('tsukuri', '旁', 'Right side', 'Component on right side of kanji', 2),
+  ('kanmuri', '冠', 'Crown/Top', 'Component on top of kanji', 3),
+  ('ashi', '脚', 'Legs/Bottom', 'Component on bottom of kanji', 4),
+  ('tare', '垂', 'Hanging', 'Component hanging from top-left', 5),
+  ('nyou', '繞', 'Enclosure (bottom-left)', 'Component wrapping from bottom-left', 6),
+  ('kamae', '構', 'Enclosure (full)', 'Component fully enclosing kanji', 7),
+  ('other', 'その他', 'Other', 'Does not fit standard positions', 8);
 `
 
 /**
@@ -91,27 +183,37 @@ export async function createTestDatabase(): Promise<Database> {
 export function seedKanji(db: Database, data: CreateKanjiInput): Kanji {
   const {
     character,
+    identifier = null,
     jlptLevel = null,
     joyoLevel = null,
-    notesCultural = null,
+    kenteiLevel = null,
+    notesEducationMnemonics = null,
     notesEtymology = null,
     notesPersonal = null,
+    notesSemantic = null,
     radicalId = null,
+    radicalStrokeCount = null,
+    shortMeaning = null,
     strokeCount
   } = data
 
   db.run(
-    `INSERT INTO kanjis (character, stroke_count, radical_id, jlpt_level, joyo_level, notes_etymology, notes_cultural, notes_personal)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO kanjis (character, stroke_count, short_meaning, radical_id, jlpt_level, joyo_level, kanji_kentei_level, notes_etymology, notes_semantic, notes_education_mnemonics, notes_personal, identifier, radical_stroke_count)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       character,
       strokeCount,
+      shortMeaning,
       radicalId,
       jlptLevel,
       joyoLevel,
+      kenteiLevel,
       notesEtymology,
-      notesCultural,
-      notesPersonal
+      notesSemantic,
+      notesEducationMnemonics,
+      notesPersonal,
+      identifier,
+      radicalStrokeCount
     ]
   )
 
@@ -132,24 +234,32 @@ export function seedComponent(
   data: CreateComponentInput
 ): Component {
   const {
+    canBeRadical = false,
     character,
     description = null,
-    descriptionShort = null,
     japaneseName = null,
+    kangxiMeaning = null,
+    kangxiNumber = null,
+    radicalNameJapanese = null,
+    shortMeaning = null,
     sourceKanjiId = null,
     strokeCount
   } = data
 
   db.run(
-    `INSERT INTO components (character, stroke_count, source_kanji_id, description_short, japanese_name, description)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO components (character, stroke_count, short_meaning, source_kanji_id, japanese_name, description, can_be_radical, kangxi_number, kangxi_meaning, radical_name_japanese)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       character,
       strokeCount,
+      shortMeaning,
       sourceKanjiId,
-      descriptionShort,
       japaneseName,
-      description
+      description,
+      canBeRadical ? 1 : 0,
+      kangxiNumber,
+      kangxiMeaning,
+      radicalNameJapanese
     ]
   )
 
@@ -164,22 +274,68 @@ export function seedComponent(
   return rowToComponent(row)
 }
 
+/**
+ * Seed a component occurrence into the test database
+ */
+export function seedComponentOccurrence(
+  db: Database,
+  kanjiId: number,
+  componentId: number,
+  data: {
+    componentFormId?: number | null
+    positionTypeId?: number | null
+    isRadical?: boolean
+    displayOrder?: number
+    analysisNotes?: string | null
+  } = {}
+): number {
+  const {
+    analysisNotes = null,
+    componentFormId = null,
+    displayOrder = 0,
+    isRadical = false,
+    positionTypeId = null
+  } = data
+
+  db.run(
+    `INSERT INTO component_occurrences (kanji_id, component_id, component_form_id, position_type_id, is_radical, display_order, analysis_notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      kanjiId,
+      componentId,
+      componentFormId,
+      positionTypeId,
+      isRadical ? 1 : 0,
+      displayOrder,
+      analysisNotes
+    ]
+  )
+
+  const result = db.exec('SELECT last_insert_rowid() as id')
+  return result[0]?.values[0]?.[0] as number
+}
+
 // Helper to convert SQL row to Kanji object
 function rowToKanji(row: unknown[]): Kanji {
   return {
     id: row[0] as number,
     character: row[1] as string,
     strokeCount: row[2] as number,
-    radicalId: row[3] as number | null,
-    jlptLevel: row[4] as Kanji['jlptLevel'],
-    joyoLevel: row[5] as Kanji['joyoLevel'],
-    strokeDiagramImage: row[6] as Uint8Array | null,
-    strokeGifImage: row[7] as Uint8Array | null,
-    notesEtymology: row[8] as string | null,
-    notesCultural: row[9] as string | null,
-    notesPersonal: row[10] as string | null,
-    createdAt: row[11] as string,
-    updatedAt: row[12] as string
+    shortMeaning: row[3] as string | null,
+    radicalId: row[4] as number | null,
+    jlptLevel: row[5] as Kanji['jlptLevel'],
+    joyoLevel: row[6] as Kanji['joyoLevel'],
+    kenteiLevel: row[7] as string | null,
+    strokeDiagramImage: row[8] as Uint8Array | null,
+    strokeGifImage: row[9] as Uint8Array | null,
+    notesEtymology: row[10] as string | null,
+    notesSemantic: row[11] as string | null,
+    notesEducationMnemonics: row[12] as string | null,
+    notesPersonal: row[13] as string | null,
+    identifier: row[14] as number | null,
+    radicalStrokeCount: row[15] as number | null,
+    createdAt: row[16] as string,
+    updatedAt: row[17] as string
   }
 }
 
@@ -189,54 +345,15 @@ function rowToComponent(row: unknown[]): Component {
     id: row[0] as number,
     character: row[1] as string,
     strokeCount: row[2] as number,
-    sourceKanjiId: row[3] as number | null,
-    descriptionShort: row[4] as string | null,
+    shortMeaning: row[3] as string | null,
+    sourceKanjiId: row[4] as number | null,
     japaneseName: row[5] as string | null,
     description: row[6] as string | null,
-    createdAt: row[7] as string,
-    updatedAt: row[8] as string
+    canBeRadical: Boolean(row[7]),
+    kangxiNumber: row[8] as number | null,
+    kangxiMeaning: row[9] as string | null,
+    radicalNameJapanese: row[10] as string | null,
+    createdAt: row[11] as string,
+    updatedAt: row[12] as string
   }
-}
-
-// Helper to convert SQL row to Radical object
-function rowToRadical(row: unknown[]): Radical {
-  return {
-    id: row[0] as number,
-    character: row[1] as string,
-    strokeCount: row[2] as number,
-    number: row[3] as number,
-    meaning: row[4] as string | null,
-    japaneseName: row[5] as string | null,
-    createdAt: row[6] as string,
-    updatedAt: row[7] as string
-  }
-}
-
-/**
- * Seed a radical into the test database
- */
-export function seedRadical(db: Database, data: CreateRadicalInput): Radical {
-  const {
-    character,
-    japaneseName = null,
-    meaning = null,
-    number,
-    strokeCount
-  } = data
-
-  db.run(
-    `INSERT INTO radicals (character, stroke_count, number, meaning, japanese_name)
-     VALUES (?, ?, ?, ?, ?)`,
-    [character, strokeCount, number, meaning, japaneseName]
-  )
-
-  const result = db.exec(
-    'SELECT * FROM radicals WHERE id = last_insert_rowid()'
-  )
-  const row = result[0]?.values[0]
-  if (!row) {
-    throw new Error('Failed to seed radical')
-  }
-
-  return rowToRadical(row)
 }

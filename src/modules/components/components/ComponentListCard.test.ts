@@ -15,10 +15,14 @@ function createMockComponent(overrides: Partial<Component> = {}): Component {
     id: 1,
     character: '亻',
     strokeCount: 2,
+    shortMeaning: null,
     sourceKanjiId: null,
-    descriptionShort: null,
     japaneseName: null,
     description: null,
+    canBeRadical: false,
+    kangxiNumber: null,
+    kangxiMeaning: null,
+    radicalNameJapanese: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides
@@ -46,26 +50,26 @@ describe('ComponentListCard', () => {
     expect(screen.getByText(/2 strokes/i)).toBeInTheDocument()
   })
 
-  it('displays short description when present', () => {
+  it('displays short meaning when present', () => {
     const component = createMockComponent({
-      descriptionShort: 'Person radical'
+      shortMeaning: 'person'
     })
 
     renderWithProviders(ComponentListCard, {
       props: { component }
     })
 
-    expect(screen.getByText('Person radical')).toBeInTheDocument()
+    expect(screen.getByText('person')).toBeInTheDocument()
   })
 
-  it('does not display description when not present', () => {
-    const component = createMockComponent({ descriptionShort: null })
+  it('does not display meaning when not present', () => {
+    const component = createMockComponent({ shortMeaning: null })
 
     renderWithProviders(ComponentListCard, {
       props: { component }
     })
 
-    expect(screen.queryByText(/radical/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/person/i)).not.toBeInTheDocument()
   })
 
   it('links to component detail page', () => {

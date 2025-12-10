@@ -4,19 +4,20 @@
  *
  * UI component for filtering kanji by radical (Kangxi radical).
  * Renders a dropdown select with all available radicals.
+ * Radicals are now components with canBeRadical=true.
  */
 
 import { computed } from 'vue'
 
 import BaseSelect from '@/base/components/BaseSelect.vue'
 
-import type { Radical } from '@/shared/types/database-types'
+import type { Component } from '@/shared/types/database-types'
 
 const props = defineProps<{
   /** Currently selected radical ID (null = no filter) */
   modelValue: number | null
-  /** List of available radicals to filter by */
-  radicals: Radical[]
+  /** List of available radicals to filter by (components with canBeRadical=true) */
+  radicals: Component[]
 }>()
 
 const emit = defineEmits<{
@@ -28,7 +29,7 @@ const ALL_RADICALS_VALUE = '__all__'
 
 const options = computed(() => {
   const radicalOptions = props.radicals.map((r) => ({
-    label: `${r.character} (#${String(r.number)}) - ${r.meaning ?? 'Radical'}`,
+    label: `${r.character} (#${String(r.kangxiNumber ?? '?')}) - ${r.kangxiMeaning ?? 'Radical'}`,
     value: String(r.id)
   }))
 

@@ -25,8 +25,7 @@ import KanjiListSectionGrid from './KanjiListSectionGrid.vue'
 import type {
   Component,
   Kanji,
-  KanjiFilters,
-  Radical
+  KanjiFilters
 } from '@/shared/types/database-types'
 
 // Database initialization
@@ -49,7 +48,7 @@ const {
 // Local state
 const kanjiList = ref<Kanji[]>([])
 const components = ref<Component[]>([])
-const radicals = ref<Radical[]>([])
+const radicals = ref<Component[]>([])
 const fetchError = ref<Error | null>(null)
 
 // Handler for filter updates from section component

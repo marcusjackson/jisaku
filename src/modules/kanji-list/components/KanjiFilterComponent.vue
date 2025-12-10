@@ -29,7 +29,7 @@ const ALL_COMPONENTS_VALUE = '__all__'
 const options = computed(() => {
   const componentOptions = props.components.map((c) => ({
     value: String(c.id),
-    label: `${c.character} - ${c.descriptionShort ?? 'Component'}`
+    label: `${c.character} - ${c.description ?? 'Component'}`
   }))
 
   return [

@@ -27,17 +27,8 @@ vi.mock('vee-validate', () => ({
   }))
 }))
 
-// Mock RadicalFormModal component to avoid complexity in tests
-vi.mock('./RadicalFormModal.vue', () => ({
-  default: {
-    name: 'RadicalFormModal',
-    template: '<div data-testid="radical-form-modal-mock"></div>'
-  }
-}))
-
 describe('KanjiFormFields', () => {
   const defaultProps = {
-    radicalOptions: [],
     componentOptions: []
   }
 
@@ -71,10 +62,10 @@ describe('KanjiFormFields', () => {
     expect(screen.getByLabelText(/etymology/i)).toBeInTheDocument()
   })
 
-  it('renders cultural notes textarea', () => {
+  it('renders semantic notes textarea', () => {
     render(KanjiFormFields, { props: defaultProps })
 
-    expect(screen.getByLabelText(/cultural/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/semantic/i)).toBeInTheDocument()
   })
 
   it('renders personal notes textarea', () => {
@@ -103,20 +94,8 @@ describe('KanjiFormFields', () => {
     render(KanjiFormFields, { props: defaultProps })
 
     expect(
-      screen.getByPlaceholderText(/mnemonics, personal observations/i)
+      screen.getByPlaceholderText(/personal observations, learning notes/i)
     ).toBeInTheDocument()
-  })
-
-  it('renders radical combobox', () => {
-    render(KanjiFormFields, { props: defaultProps })
-
-    expect(screen.getByLabelText(/radical/i)).toBeInTheDocument()
-  })
-
-  it('renders new radical button', () => {
-    render(KanjiFormFields, { props: defaultProps })
-
-    expect(screen.getByRole('button', { name: /new/i })).toBeInTheDocument()
   })
 
   it('renders components selector', () => {

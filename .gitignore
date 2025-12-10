@@ -44,3 +44,7 @@ pnpm-debug.log*
 
 # Files to manually ignore
 ignore/
+
+# To ensure use of pnpm
+package-lock.json
+yarn.lock

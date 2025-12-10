@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event'
 import { render, screen } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 
-import BaseCombobox from './BaseCombobox.vue'
+import BaseCombobox, { type ComboboxOption } from './BaseCombobox.vue'
 
 const testOptions = [
   { label: 'Apple', value: 'apple' },
@@ -136,5 +136,85 @@ describe('BaseCombobox', () => {
     })
 
     expect(screen.getByRole('combobox')).toBeInTheDocument()
+  })
+
+  it('searches across multiple fields when searchKeys is provided', async () => {
+    const user = userEvent.setup()
+    const optionsWithMeaning = [
+      { label: '水', value: 1, shortMeaning: 'water' },
+      { label: '火', value: 2, shortMeaning: 'fire' },
+      { label: '木', value: 3, shortMeaning: 'tree' }
+    ]
+
+    render(BaseCombobox, {
+      props: {
+        label: 'Kanji',
+        options: optionsWithMeaning,
+        searchKeys: ['label', 'shortMeaning']
+      }
+    })
+
+    const input = screen.getByRole('combobox')
+
+    // Search by meaning (not label)
+    await user.type(input, 'wat')
+
+    expect(screen.getByText('水')).toBeInTheDocument()
+    expect(screen.queryByText('火')).not.toBeInTheDocument()
+    expect(screen.queryByText('木')).not.toBeInTheDocument()
+  })
+
+  it('uses displayFn for custom option display', async () => {
+    const user = userEvent.setup()
+
+    interface OptionWithMeaning extends ComboboxOption {
+      shortMeaning?: string
+    }
+
+    const optionsWithMeaning: OptionWithMeaning[] = [
+      { label: '水', value: 1, shortMeaning: 'water' },
+      { label: '火', value: 2, shortMeaning: 'fire' }
+    ]
+
+    render(BaseCombobox, {
+      props: {
+        label: 'Kanji',
+        options: optionsWithMeaning,
+        displayFn: (option: ComboboxOption) => {
+          const opt = option as OptionWithMeaning
+          const label = String(opt.label)
+          const meaning = opt.shortMeaning ?? 'no meaning'
+          return `${label} (${meaning})`
+        }
+      }
+    })
+
+    await user.click(screen.getByRole('button', { name: /toggle/i }))
+
+    expect(screen.getByText('水 (water)')).toBeInTheDocument()
+    expect(screen.getByText('火 (fire)')).toBeInTheDocument()
+  })
+
+  it('defaults to searching label only when searchKeys not provided', async () => {
+    const user = userEvent.setup()
+    const optionsWithMeaning = [
+      { label: '水', value: 1, shortMeaning: 'water' },
+      { label: '火', value: 2, shortMeaning: 'fire' }
+    ]
+
+    render(BaseCombobox, {
+      props: {
+        label: 'Kanji',
+        options: optionsWithMeaning
+        // No searchKeys provided, should only search label
+      }
+    })
+
+    const input = screen.getByRole('combobox')
+
+    // Search by meaning should not find anything
+    await user.type(input, 'wat')
+
+    expect(screen.getByText('No results found')).toBeInTheDocument()
   })
 })

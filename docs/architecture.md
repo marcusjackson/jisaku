@@ -328,17 +328,55 @@ export function useKanjiRepository() {
 }
 ```
 
-### Database Initialization
+### Database Layer Structure
 
-The shared `useDatabase` composable handles sql.js initialization and persistence:
+The database layer is split into focused modules for maintainability:
+
+```
+src/
+├── db/                          # Database layer modules
+│   ├── migrations/              # SQL migrations
+│   │   ├── index.ts             # Migration runner
+│   │   ├── 001-initial.sql      # Initial schema
+│   │   ├── 002-note-categories.sql
+│   │   ├── 003-component-overhaul.sql
+│   │   └── 004-add-kentei-level.sql
+│   ├── indexeddb.ts             # IndexedDB persistence layer
+│   ├── lifecycle.ts             # Browser lifecycle event handlers
+│   └── init.ts                  # Database initialization
+│
+├── shared/composables/
+│   └── use-database.ts          # Thin wrapper composable
+```
+
+**Responsibilities:**
+
+- **`src/db/init.ts`** — Initializes sql.js, loads/creates database, runs migrations
+- **`src/db/migrations/index.ts`** — Runs SQL migration files in order
+- **`src/db/indexeddb.ts`** — Saves/loads database to/from IndexedDB, handles debounced persistence
+- **`src/db/lifecycle.ts`** — Attaches browser lifecycle listeners (visibilitychange, pagehide, beforeunload)
+- **`src/shared/composables/use-database.ts`** — Exposes database instance and methods to the app
+
+**Usage:**
 
 ```typescript
-// shared/composables/use-database.ts
-export function useDatabase() {
-  // Initialize sql.js
-  // Load DB from IndexedDB
-  // Provide query methods
-  // Save changes back to IndexedDB
+// In a repository composable
+import { useDatabase } from '@/shared/composables/use-database'
+
+export function useKanjiRepository() {
+  const { database, exec, run, initialize } = useDatabase()
+
+  const findById = (id: number): Kanji | null => {
+    const result = exec('SELECT * FROM kanjis WHERE id = ?', [id])
+    return result[0]?.values[0] ? mapToKanji(result[0].values[0]) : null
+  }
+
+  const create = (data: CreateKanjiInput): Kanji => {
+    run('INSERT INTO kanjis (...) VALUES (?)', [data.character, ...])
+    // Auto-persists to IndexedDB (debounced)
+  }
+
+  return { findById, create, /* ... */ }
 }
 ```
 
@@ -472,3 +510,43 @@ The app is a fully installable Progressive Web App:
 - **IndexedDB** — Persists SQLite database between sessions
 
 Database is stored as a single binary blob in IndexedDB, loaded into sql.js on app start.
+
+---
+
+## Development Seed Data
+
+Development seed data is organized by entity type for maintainability:
+
+```
+scripts/
+├── seed-dev-data.ts           # Main orchestrator (53 lines)
+└── seeds/                     # Entity-specific seed modules
+    ├── kanji-seed.ts          # Kanji test data
+    ├── component-seed.ts      # Component/radical test data
+    └── radical-seed.ts        # Legacy radical table data
+```
+
+**Usage:**
+
+```typescript
+import { seedDevData, clearDevData } from '@/scripts/seed-dev-data'
+
+// Seed all data
+seedDevData(db)
+
+// Or seed individually
+import { seedKanji } from '@/scripts/seeds/kanji-seed'
+import { seedComponents } from '@/scripts/seeds/component-seed'
+seedKanji(db)
+seedComponents(db)
+
+// Clear all data
+clearDevData(db)
+```
+
+Each seed module:
+
+- Checks if data already exists before seeding
+- Provides both seed and clear functions
+- Exports seed data arrays for testing/reuse
+- Handles dependencies (e.g., components need kanji to exist first)

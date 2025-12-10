@@ -17,11 +17,16 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     id: 1,
     jlptLevel: null,
     joyoLevel: null,
+    kenteiLevel: null,
     notesEtymology: null,
-    notesCultural: null,
+    notesSemantic: null,
+    notesEducationMnemonics: null,
     notesPersonal: null,
+    identifier: null,
+    radicalStrokeCount: null,
     radicalId: null,
     strokeCount: 4,
+    shortMeaning: null,
     strokeDiagramImage: null,
     strokeGifImage: null,
     updatedAt: new Date().toISOString(),
@@ -38,16 +43,6 @@ describe('KanjiDetailHeader', () => {
     })
 
     expect(screen.getByText('水')).toBeInTheDocument()
-  })
-
-  it('displays stroke count', () => {
-    const kanji = createMockKanji({ strokeCount: 8 })
-
-    renderWithProviders(KanjiDetailHeader, {
-      props: { kanji }
-    })
-
-    expect(screen.getByText(/8 strokes/i)).toBeInTheDocument()
   })
 
   it('renders back link', () => {
@@ -83,16 +78,5 @@ describe('KanjiDetailHeader', () => {
     })
 
     expect(screen.getByText('漢')).toBeInTheDocument()
-  })
-
-  it('renders singular stroke for count of 1', () => {
-    const kanji = createMockKanji({ strokeCount: 1 })
-
-    renderWithProviders(KanjiDetailHeader, {
-      props: { kanji }
-    })
-
-    // Component shows "1 strokes" - this is acceptable
-    expect(screen.getByText(/1 strokes/i)).toBeInTheDocument()
   })
 })

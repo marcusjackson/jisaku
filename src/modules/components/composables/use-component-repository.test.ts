@@ -56,8 +56,7 @@ describe('useComponentRepository', () => {
     it('maps database columns to camelCase properties', () => {
       seedComponent(testDb, {
         character: '亻',
-        description: 'The person radical represents a human figure.',
-        descriptionShort: 'Person radical',
+        description: 'Person radical',
         japaneseName: 'にんべん',
         strokeCount: 2
       })
@@ -67,8 +66,7 @@ describe('useComponentRepository', () => {
 
       expect(result[0]).toMatchObject({
         character: '亻',
-        description: 'The person radical represents a human figure.',
-        descriptionShort: 'Person radical',
+        description: 'Person radical',
         japaneseName: 'にんべん',
         strokeCount: 2
       })
@@ -137,16 +135,14 @@ describe('useComponentRepository', () => {
 
       const created = create({
         character: '亻',
-        description: 'Full description of the person radical.',
-        descriptionShort: 'Person radical',
+        description: 'Person radical',
         japaneseName: 'にんべん',
         strokeCount: 2
       })
 
       expect(created).toMatchObject({
         character: '亻',
-        description: 'Full description of the person radical.',
-        descriptionShort: 'Person radical',
+        description: 'Person radical',
         japaneseName: 'にんべん',
         strokeCount: 2
       })
@@ -173,11 +169,11 @@ describe('useComponentRepository', () => {
 
       const { update } = useComponentRepository()
       const updated = update(seeded.id, {
-        descriptionShort: 'Updated description',
+        description: 'Updated description',
         strokeCount: 3
       })
 
-      expect(updated.descriptionShort).toBe('Updated description')
+      expect(updated.description).toBe('Updated description')
       expect(updated.strokeCount).toBe(3)
       expect(updated.character).toBe('亻') // Unchanged
     })
@@ -185,14 +181,14 @@ describe('useComponentRepository', () => {
     it('returns existing component when no fields to update', () => {
       const seeded = seedComponent(testDb, {
         character: '亻',
-        descriptionShort: 'Original',
+        description: 'Original',
         strokeCount: 2
       })
 
       const { update } = useComponentRepository()
       const updated = update(seeded.id, {})
 
-      expect(updated.descriptionShort).toBe('Original')
+      expect(updated.description).toBe('Original')
     })
 
     it('throws error for non-existent component', () => {
@@ -222,9 +218,9 @@ describe('useComponentRepository', () => {
         strokeCount: 2
       })
 
-      // Link kanji to component
+      // Link kanji to component via component_occurrences
       testDb.run(
-        'INSERT INTO kanji_components (kanji_id, component_id, position) VALUES (?, ?, ?)',
+        'INSERT INTO component_occurrences (kanji_id, component_id, display_order) VALUES (?, ?, ?)',
         [kanji.id, component.id, 1]
       )
 
@@ -238,7 +234,7 @@ describe('useComponentRepository', () => {
 
       // Junction entry should be removed (component no longer exists)
       const result = testDb.exec(
-        'SELECT * FROM kanji_components WHERE component_id = ?',
+        'SELECT * FROM component_occurrences WHERE component_id = ?',
         [component.id]
       )
       expect(result[0]?.values.length ?? 0).toBe(0)
@@ -266,13 +262,13 @@ describe('useComponentRepository', () => {
         strokeCount: 2
       })
 
-      // Link both kanji to component
+      // Link both kanji to component via component_occurrences
       testDb.run(
-        'INSERT INTO kanji_components (kanji_id, component_id, position) VALUES (?, ?, ?)',
+        'INSERT INTO component_occurrences (kanji_id, component_id, display_order) VALUES (?, ?, ?)',
         [kanji1.id, component.id, 1]
       )
       testDb.run(
-        'INSERT INTO kanji_components (kanji_id, component_id, position) VALUES (?, ?, ?)',
+        'INSERT INTO component_occurrences (kanji_id, component_id, display_order) VALUES (?, ?, ?)',
         [kanji2.id, component.id, 1]
       )
 
@@ -304,20 +300,20 @@ describe('useComponentRepository', () => {
         strokeCount: 2
       })
 
-      // Link kanji with positions
+      // Link kanji with positions via component_occurrences
       testDb.run(
-        'INSERT INTO kanji_components (kanji_id, component_id, position) VALUES (?, ?, ?)',
+        'INSERT INTO component_occurrences (kanji_id, component_id, display_order) VALUES (?, ?, ?)',
         [kanji2.id, component.id, 2]
       )
       testDb.run(
-        'INSERT INTO kanji_components (kanji_id, component_id, position) VALUES (?, ?, ?)',
+        'INSERT INTO component_occurrences (kanji_id, component_id, display_order) VALUES (?, ?, ?)',
         [kanji1.id, component.id, 1]
       )
 
       const { getLinkedKanjiIds } = useComponentRepository()
       const ids = getLinkedKanjiIds(component.id)
 
-      // Should be ordered by position
+      // Should be ordered by display_order
       expect(ids).toEqual([kanji1.id, kanji2.id])
     })
   })

@@ -33,7 +33,10 @@ const joyoLabel = computed(() => {
 })
 
 const hasAnyBadge = computed(() => {
-  return Boolean(props.kanji.jlptLevel ?? props.kanji.joyoLevel)
+  return Boolean(
+    props.kanji.strokeCount ||
+    (props.kanji.jlptLevel ?? props.kanji.joyoLevel ?? props.kanji.kenteiLevel)
+  )
 })
 </script>
 
@@ -42,6 +45,12 @@ const hasAnyBadge = computed(() => {
     v-if="hasAnyBadge"
     class="kanji-detail-badges"
   >
+    <span
+      v-if="kanji.strokeCount"
+      class="kanji-detail-badges-badge kanji-detail-badges-strokes"
+    >
+      {{ kanji.strokeCount }} strokes
+    </span>
     <span
       v-if="kanji.jlptLevel"
       class="kanji-detail-badges-badge"
@@ -54,6 +63,12 @@ const hasAnyBadge = computed(() => {
       class="kanji-detail-badges-badge kanji-detail-badges-joyo"
     >
       {{ joyoLabel }}
+    </span>
+    <span
+      v-if="kanji.kenteiLevel"
+      class="kanji-detail-badges-badge kanji-detail-badges-kentei"
+    >
+      {{ kanji.kenteiLevel }}
     </span>
   </div>
 </template>
@@ -105,5 +120,19 @@ const hasAnyBadge = computed(() => {
   border: 1px solid var(--color-border);
   background-color: var(--color-surface);
   color: var(--color-text-secondary);
+}
+
+/* Kentei badge */
+.kanji-detail-badges-kentei {
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-variant);
+  color: var(--color-text-secondary);
+}
+
+/* Strokes badge */
+.kanji-detail-badges-strokes {
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
 }
 </style>

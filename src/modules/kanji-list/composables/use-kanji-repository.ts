@@ -23,14 +23,19 @@ interface KanjiRow {
   id: number
   character: string
   stroke_count: number
+  short_meaning: string | null
   radical_id: number | null
   jlpt_level: string | null
   joyo_level: string | null
+  kanji_kentei_level: string | null
   stroke_diagram_image: Uint8Array | null
   stroke_gif_image: Uint8Array | null
   notes_etymology: string | null
-  notes_cultural: string | null
+  notes_semantic: string | null
+  notes_education_mnemonics: string | null
   notes_personal: string | null
+  identifier: number | null
+  radical_stroke_count: number | null
   created_at: string
   updated_at: string
 }
@@ -40,14 +45,19 @@ function mapRowToKanji(row: KanjiRow): Kanji {
     id: row.id,
     character: row.character,
     strokeCount: row.stroke_count,
+    shortMeaning: row.short_meaning,
     radicalId: row.radical_id,
     jlptLevel: row.jlpt_level as Kanji['jlptLevel'],
     joyoLevel: row.joyo_level as Kanji['joyoLevel'],
+    kenteiLevel: row.kanji_kentei_level,
     strokeDiagramImage: row.stroke_diagram_image,
     strokeGifImage: row.stroke_gif_image,
     notesEtymology: row.notes_etymology,
-    notesCultural: row.notes_cultural,
+    notesSemantic: row.notes_semantic,
+    notesEducationMnemonics: row.notes_education_mnemonics,
     notesPersonal: row.notes_personal,
+    identifier: row.identifier,
+    radicalStrokeCount: row.radical_stroke_count,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   }
@@ -79,10 +89,14 @@ interface ComponentRow {
   id: number
   character: string
   stroke_count: number
+  short_meaning: string | null
   source_kanji_id: number | null
-  description_short: string | null
   japanese_name: string | null
   description: string | null
+  can_be_radical: number | null
+  kangxi_number: number | null
+  kangxi_meaning: string | null
+  radical_name_japanese: string | null
   created_at: string
   updated_at: string
 }
@@ -92,10 +106,14 @@ function mapRowToComponent(row: ComponentRow): Component {
     id: row.id,
     character: row.character,
     strokeCount: row.stroke_count,
+    shortMeaning: row.short_meaning,
     sourceKanjiId: row.source_kanji_id,
-    descriptionShort: row.description_short,
     japaneseName: row.japanese_name,
     description: row.description,
+    canBeRadical: Boolean(row.can_be_radical),
+    kangxiNumber: row.kangxi_number,
+    kangxiMeaning: row.kangxi_meaning,
+    radicalNameJapanese: row.radical_name_japanese,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   }
@@ -191,6 +209,12 @@ export function useKanjiRepository(): UseKanjiRepository {
       params.push(...filters.joyoLevels)
     }
 
+    if (filters.kenteiLevels && filters.kenteiLevels.length > 0) {
+      const placeholders = filters.kenteiLevels.map(() => '?').join(', ')
+      conditions.push(`kanji_kentei_level IN (${placeholders})`)
+      params.push(...filters.kenteiLevels)
+    }
+
     if (filters.radicalId !== undefined) {
       conditions.push('radical_id = ?')
       params.push(filters.radicalId)
@@ -198,7 +222,7 @@ export function useKanjiRepository(): UseKanjiRepository {
 
     if (filters.componentId !== undefined) {
       conditions.push(
-        `id IN (SELECT kanji_id FROM kanji_components WHERE component_id = ?)`
+        `id IN (SELECT kanji_id FROM component_occurrences WHERE component_id = ?)`
       )
       params.push(filters.componentId)
     }
@@ -235,20 +259,25 @@ export function useKanjiRepository(): UseKanjiRepository {
 
   function create(input: CreateKanjiInput): Kanji {
     const sql = `
-      INSERT INTO kanjis (character, stroke_count, radical_id, jlpt_level, joyo_level, stroke_diagram_image, stroke_gif_image, notes_etymology, notes_cultural, notes_personal)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO kanjis (character, stroke_count, short_meaning, radical_id, jlpt_level, joyo_level, kanji_kentei_level, stroke_diagram_image, stroke_gif_image, notes_etymology, notes_semantic, notes_education_mnemonics, notes_personal, identifier, radical_stroke_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     run(sql, [
       input.character,
       input.strokeCount,
+      input.shortMeaning ?? null,
       input.radicalId ?? null,
       input.jlptLevel ?? null,
       input.joyoLevel ?? null,
+      input.kenteiLevel ?? null,
       input.strokeDiagramImage ?? null,
       input.strokeGifImage ?? null,
       input.notesEtymology ?? null,
-      input.notesCultural ?? null,
-      input.notesPersonal ?? null
+      input.notesSemantic ?? null,
+      input.notesEducationMnemonics ?? null,
+      input.notesPersonal ?? null,
+      input.identifier ?? null,
+      input.radicalStrokeCount ?? null
     ])
 
     // Get the newly created kanji
@@ -273,6 +302,10 @@ export function useKanjiRepository(): UseKanjiRepository {
       fields.push('stroke_count = ?')
       values.push(input.strokeCount)
     }
+    if (input.shortMeaning !== undefined) {
+      fields.push('short_meaning = ?')
+      values.push(input.shortMeaning)
+    }
     if (input.radicalId !== undefined) {
       fields.push('radical_id = ?')
       values.push(input.radicalId)
@@ -284,6 +317,10 @@ export function useKanjiRepository(): UseKanjiRepository {
     if (input.joyoLevel !== undefined) {
       fields.push('joyo_level = ?')
       values.push(input.joyoLevel)
+    }
+    if (input.kenteiLevel !== undefined) {
+      fields.push('kanji_kentei_level = ?')
+      values.push(input.kenteiLevel)
     }
     if (input.strokeDiagramImage !== undefined) {
       fields.push('stroke_diagram_image = ?')
@@ -297,13 +334,25 @@ export function useKanjiRepository(): UseKanjiRepository {
       fields.push('notes_etymology = ?')
       values.push(input.notesEtymology)
     }
-    if (input.notesCultural !== undefined) {
-      fields.push('notes_cultural = ?')
-      values.push(input.notesCultural)
+    if (input.notesSemantic !== undefined) {
+      fields.push('notes_semantic = ?')
+      values.push(input.notesSemantic)
+    }
+    if (input.notesEducationMnemonics !== undefined) {
+      fields.push('notes_education_mnemonics = ?')
+      values.push(input.notesEducationMnemonics)
     }
     if (input.notesPersonal !== undefined) {
       fields.push('notes_personal = ?')
       values.push(input.notesPersonal)
+    }
+    if (input.identifier !== undefined) {
+      fields.push('identifier = ?')
+      values.push(input.identifier)
+    }
+    if (input.radicalStrokeCount !== undefined) {
+      fields.push('radical_stroke_count = ?')
+      values.push(input.radicalStrokeCount)
     }
 
     if (fields.length === 0) {
@@ -331,7 +380,7 @@ export function useKanjiRepository(): UseKanjiRepository {
 
   function getLinkedComponentIds(kanjiId: number): number[] {
     const result = exec(
-      'SELECT component_id FROM kanji_components WHERE kanji_id = ? ORDER BY position',
+      'SELECT component_id FROM component_occurrences WHERE kanji_id = ? ORDER BY display_order',
       [kanjiId]
     )
     if (!result[0]) {
@@ -343,24 +392,52 @@ export function useKanjiRepository(): UseKanjiRepository {
   function getLinkedComponents(kanjiId: number): Component[] {
     const result = exec(
       `SELECT c.* FROM components c
-       JOIN kanji_components kc ON c.id = kc.component_id
-       WHERE kc.kanji_id = ?
-       ORDER BY kc.position`,
+       JOIN component_occurrences co ON c.id = co.component_id
+       WHERE co.kanji_id = ?
+       ORDER BY co.display_order`,
       [kanjiId]
     )
     return resultToComponentList(result)
   }
 
   function saveComponentLinks(kanjiId: number, componentIds: number[]): void {
-    // Clear existing links
-    run('DELETE FROM kanji_components WHERE kanji_id = ?', [kanjiId])
+    // Get current component IDs linked to this kanji
+    const currentComponentIds = getLinkedComponentIds(kanjiId)
 
-    // Insert new links with position
-    componentIds.forEach((componentId, index) => {
+    // Find components to remove (in current but not in new list)
+    const toRemove = currentComponentIds.filter(
+      (id) => !componentIds.includes(id)
+    )
+
+    // Find components to add (in new list but not in current)
+    const toAdd = componentIds.filter((id) => !currentComponentIds.includes(id))
+
+    // Remove old links that are no longer needed
+    if (toRemove.length > 0) {
+      const placeholders = toRemove.map(() => '?').join(',')
       run(
-        'INSERT INTO kanji_components (kanji_id, component_id, position) VALUES (?, ?, ?)',
-        [kanjiId, componentId, index]
+        `DELETE FROM component_occurrences WHERE kanji_id = ? AND component_id IN (${placeholders})`,
+        [kanjiId, ...toRemove]
       )
+    }
+
+    // Insert new links with display_order (preserving existing occurrences)
+    toAdd.forEach((componentId) => {
+      const displayOrder = componentIds.indexOf(componentId)
+      run(
+        'INSERT INTO component_occurrences (kanji_id, component_id, display_order) VALUES (?, ?, ?)',
+        [kanjiId, componentId, displayOrder]
+      )
+    })
+
+    // Update display_order for existing links
+    componentIds.forEach((componentId, index) => {
+      if (!toAdd.includes(componentId)) {
+        run(
+          'UPDATE component_occurrences SET display_order = ? WHERE kanji_id = ? AND component_id = ?',
+          [index, kanjiId, componentId]
+        )
+      }
     })
   }
 

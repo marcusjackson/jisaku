@@ -43,7 +43,9 @@ test.describe('Kanji CRUD Flow', () => {
     await page.getByRole('option', { name: /grade 1/i }).click()
 
     // Add notes
-    await page.getByLabel(/notes/i).fill('Water. Pictograph of flowing water.')
+    await page
+      .getByLabel(/etymology/i)
+      .fill('Water. Pictograph of flowing water.')
 
     // Submit form
     await page.getByRole('button', { name: /create kanji/i }).click()
@@ -87,7 +89,7 @@ test.describe('Kanji CRUD Flow', () => {
     await page.waitForTimeout(500)
 
     // Update notes
-    const notesField = page.getByLabel(/notes/i)
+    const notesField = page.getByLabel(/etymology/i)
     await notesField.clear()
     await notesField.fill(
       'Water. One of the most basic elements. Pictograph of flowing water.'

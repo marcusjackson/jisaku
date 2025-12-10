@@ -14,7 +14,6 @@ import BaseButton from '@/base/components/BaseButton.vue'
 import KanjiFormFields from './KanjiFormFields.vue'
 
 import type { ComboboxOption } from '@/base/components/BaseCombobox.vue'
-import type { Radical } from '@/shared/types/database-types'
 
 interface Props {
   /** Form mode (create or edit) */
@@ -23,8 +22,6 @@ interface Props {
   isSubmitting?: boolean
   /** Back link URL */
   backUrl?: string
-  /** Available radical options */
-  radicalOptions?: ComboboxOption[]
   /** Available component options */
   componentOptions?: ComboboxOption[]
 }
@@ -32,14 +29,12 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   backUrl: '/',
   isSubmitting: false,
-  radicalOptions: () => [],
   componentOptions: () => []
 })
 
 const emit = defineEmits<{
   submit: []
   cancel: []
-  radicalCreated: [radical: Radical]
 }>()
 
 const submitLabel = computed(() => {
@@ -63,10 +58,6 @@ function handleSubmit() {
 function handleCancel() {
   emit('cancel')
 }
-
-function handleRadicalCreated(radical: Radical) {
-  emit('radicalCreated', radical)
-}
 </script>
 
 <template>
@@ -85,11 +76,7 @@ function handleRadicalCreated(radical: Radical) {
     </header>
 
     <div class="kanji-section-form-content">
-      <KanjiFormFields
-        :component-options="props.componentOptions"
-        :radical-options="props.radicalOptions"
-        @radical-created="handleRadicalCreated"
-      />
+      <KanjiFormFields :component-options="props.componentOptions" />
     </div>
 
     <div class="kanji-section-form-actions">

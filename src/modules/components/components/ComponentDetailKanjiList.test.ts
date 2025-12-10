@@ -8,22 +8,47 @@ import { describe, expect, it } from 'vitest'
 
 import ComponentDetailKanjiList from './ComponentDetailKanjiList.vue'
 
-import type { Kanji } from '@/shared/types/database-types'
+import type { Kanji, OccurrenceWithKanji } from '@/shared/types/database-types'
 
 function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
   return {
-    id: 1,
     character: '休',
-    strokeCount: 6,
-    radicalId: null,
+    createdAt: new Date().toISOString(),
+    id: 1,
+    identifier: null,
     jlptLevel: null,
     joyoLevel: null,
+    kenteiLevel: null,
+    notesEducationMnemonics: null,
+    notesEtymology: null,
+    notesPersonal: null,
+    notesSemantic: null,
+    radicalId: null,
+    radicalStrokeCount: null,
+    strokeCount: 6,
+    shortMeaning: null,
     strokeDiagramImage: null,
     strokeGifImage: null,
-    notesEtymology: null,
-    notesCultural: null,
-    notesPersonal: null,
+    updatedAt: new Date().toISOString(),
+    ...overrides
+  }
+}
+
+function createMockOccurrence(
+  overrides: Partial<OccurrenceWithKanji> = {}
+): OccurrenceWithKanji {
+  return {
+    analysisNotes: null,
+    componentFormId: null,
+    componentId: 1,
     createdAt: new Date().toISOString(),
+    displayOrder: 0,
+    id: 1,
+    isRadical: false,
+    kanji: createMockKanji(),
+    kanjiId: 1,
+    position: null,
+    positionTypeId: null,
     updatedAt: new Date().toISOString(),
     ...overrides
   }
@@ -32,7 +57,7 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
 describe('ComponentDetailKanjiList', () => {
   it('renders title', () => {
     renderWithProviders(ComponentDetailKanjiList, {
-      props: { kanjiList: [] }
+      props: { occurrences: [] }
     })
 
     expect(screen.getByText('Kanji Using This Component')).toBeInTheDocument()
@@ -40,7 +65,7 @@ describe('ComponentDetailKanjiList', () => {
 
   it('displays empty state when no kanji linked', () => {
     renderWithProviders(ComponentDetailKanjiList, {
-      props: { kanjiList: [] }
+      props: { occurrences: [] }
     })
 
     expect(
@@ -49,13 +74,19 @@ describe('ComponentDetailKanjiList', () => {
   })
 
   it('displays kanji characters when present', () => {
-    const kanjiList = [
-      createMockKanji({ id: 1, character: '休' }),
-      createMockKanji({ id: 2, character: '体' })
+    const occurrences = [
+      createMockOccurrence({
+        id: 1,
+        kanji: createMockKanji({ id: 1, character: '休' })
+      }),
+      createMockOccurrence({
+        id: 2,
+        kanji: createMockKanji({ id: 2, character: '体' })
+      })
     ]
 
     renderWithProviders(ComponentDetailKanjiList, {
-      props: { kanjiList }
+      props: { occurrences }
     })
 
     expect(screen.getByText('休')).toBeInTheDocument()
@@ -63,10 +94,15 @@ describe('ComponentDetailKanjiList', () => {
   })
 
   it('links kanji to their detail pages', () => {
-    const kanjiList = [createMockKanji({ id: 42, character: '休' })]
+    const occurrences = [
+      createMockOccurrence({
+        id: 1,
+        kanji: createMockKanji({ id: 42, character: '休' })
+      })
+    ]
 
     renderWithProviders(ComponentDetailKanjiList, {
-      props: { kanjiList }
+      props: { occurrences }
     })
 
     const link = screen.getByRole('link', { name: '休' })
@@ -74,10 +110,10 @@ describe('ComponentDetailKanjiList', () => {
   })
 
   it('does not show empty state when kanji present', () => {
-    const kanjiList = [createMockKanji()]
+    const occurrences = [createMockOccurrence()]
 
     renderWithProviders(ComponentDetailKanjiList, {
-      props: { kanjiList }
+      props: { occurrences }
     })
 
     expect(

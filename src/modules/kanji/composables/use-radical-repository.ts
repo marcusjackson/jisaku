@@ -2,48 +2,55 @@
  * Radical Repository Composable
  *
  * Provides data access methods for radical entries (Kangxi radicals).
- * Uses the shared database composable for SQL operations.
+ * After migration 003, radicals are stored in the components table with canBeRadical=true.
+ * This composable queries components and returns them filtered by canBeRadical.
  */
 
 import { useDatabase } from '@/shared/composables/use-database'
 
-import type {
-  CreateRadicalInput,
-  Radical,
-  UpdateRadicalInput
-} from '@/shared/types/database-types'
+import type { Component } from '@/shared/types/database-types'
 
 // =============================================================================
 // Row Mapping
 // =============================================================================
 
-interface RadicalRow {
+interface ComponentRow {
   id: number
   character: string
   stroke_count: number
-  number: number
-  meaning: string | null
+  short_meaning: string | null
+  description: string | null
   japanese_name: string | null
+  source_kanji_id: number | null
+  can_be_radical: number
+  kangxi_number: number | null
+  kangxi_meaning: string | null
+  radical_name_japanese: string | null
   created_at: string
   updated_at: string
 }
 
-function mapRowToRadical(row: RadicalRow): Radical {
+function mapRowToComponent(row: ComponentRow): Component {
   return {
     id: row.id,
     character: row.character,
     strokeCount: row.stroke_count,
-    number: row.number,
-    meaning: row.meaning,
+    shortMeaning: row.short_meaning,
+    description: row.description,
     japaneseName: row.japanese_name,
+    sourceKanjiId: row.source_kanji_id,
+    canBeRadical: row.can_be_radical === 1,
+    kangxiNumber: row.kangxi_number,
+    kangxiMeaning: row.kangxi_meaning,
+    radicalNameJapanese: row.radical_name_japanese,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   }
 }
 
-function resultToRadicalList(
+function resultToComponentList(
   result: ReturnType<ReturnType<typeof useDatabase>['exec']>
-): Radical[] {
+): Component[] {
   if (!result[0]) {
     return []
   }
@@ -55,7 +62,7 @@ function resultToRadicalList(
     columns.forEach((col, i) => {
       obj[col] = row[i]
     })
-    return mapRowToRadical(obj as unknown as RadicalRow)
+    return mapRowToComponent(obj as unknown as ComponentRow)
   })
 }
 
@@ -64,128 +71,57 @@ function resultToRadicalList(
 // =============================================================================
 
 export interface UseRadicalRepository {
-  /** Get all radical entries */
-  getAll: () => Radical[]
-  /** Get a radical by ID */
-  getById: (id: number) => Radical | null
-  /** Get a radical by Kangxi number */
-  getByNumber: (number: number) => Radical | null
-  /** Get a radical by character */
-  getByCharacter: (character: string) => Radical | null
-  /** Create a new radical entry */
-  create: (input: CreateRadicalInput) => Radical
-  /** Update an existing radical entry */
-  update: (id: number, input: UpdateRadicalInput) => Radical
-  /** Delete a radical entry */
-  remove: (id: number) => void
+  /** Get all radical components (components with canBeRadical=true) */
+  getAll: () => Component[]
+  /** Get a radical component by ID */
+  getById: (id: number) => Component | null
+  /** Get a radical component by Kangxi number */
+  getByNumber: (number: number) => Component | null
+  /** Get a radical component by character */
+  getByCharacter: (character: string) => Component | null
 }
 
 export function useRadicalRepository(): UseRadicalRepository {
-  const { exec, run } = useDatabase()
+  const { exec } = useDatabase()
 
-  function getAll(): Radical[] {
-    const result = exec('SELECT * FROM radicals ORDER BY number ASC')
-    return resultToRadicalList(result)
+  function getAll(): Component[] {
+    const result = exec(
+      'SELECT * FROM components WHERE can_be_radical = 1 ORDER BY kangxi_number ASC'
+    )
+    return resultToComponentList(result)
   }
 
-  function getById(id: number): Radical | null {
-    const result = exec('SELECT * FROM radicals WHERE id = ?', [id])
-    const list = resultToRadicalList(result)
+  function getById(id: number): Component | null {
+    const result = exec(
+      'SELECT * FROM components WHERE id = ? AND can_be_radical = 1',
+      [id]
+    )
+    const list = resultToComponentList(result)
     return list[0] ?? null
   }
 
-  function getByNumber(number: number): Radical | null {
-    const result = exec('SELECT * FROM radicals WHERE number = ?', [number])
-    const list = resultToRadicalList(result)
+  function getByNumber(number: number): Component | null {
+    const result = exec(
+      'SELECT * FROM components WHERE kangxi_number = ? AND can_be_radical = 1',
+      [number]
+    )
+    const list = resultToComponentList(result)
     return list[0] ?? null
   }
 
-  function getByCharacter(character: string): Radical | null {
-    const result = exec('SELECT * FROM radicals WHERE character = ?', [
-      character
-    ])
-    const list = resultToRadicalList(result)
+  function getByCharacter(character: string): Component | null {
+    const result = exec(
+      'SELECT * FROM components WHERE character = ? AND can_be_radical = 1',
+      [character]
+    )
+    const list = resultToComponentList(result)
     return list[0] ?? null
-  }
-
-  function create(input: CreateRadicalInput): Radical {
-    const sql = `
-      INSERT INTO radicals (character, stroke_count, number, meaning, japanese_name)
-      VALUES (?, ?, ?, ?, ?)
-    `
-    run(sql, [
-      input.character,
-      input.strokeCount,
-      input.number,
-      input.meaning ?? null,
-      input.japaneseName ?? null
-    ])
-
-    // Get the newly created radical
-    const idResult = exec('SELECT last_insert_rowid() as id')
-    const newId = idResult[0]?.values[0]?.[0] as number
-    const created = getById(newId)
-    if (!created) {
-      throw new Error('Failed to create radical')
-    }
-    return created
-  }
-
-  function update(id: number, input: UpdateRadicalInput): Radical {
-    const fields: string[] = []
-    const values: unknown[] = []
-
-    if (input.character !== undefined) {
-      fields.push('character = ?')
-      values.push(input.character)
-    }
-    if (input.strokeCount !== undefined) {
-      fields.push('stroke_count = ?')
-      values.push(input.strokeCount)
-    }
-    if (input.number !== undefined) {
-      fields.push('number = ?')
-      values.push(input.number)
-    }
-    if (input.meaning !== undefined) {
-      fields.push('meaning = ?')
-      values.push(input.meaning)
-    }
-    if (input.japaneseName !== undefined) {
-      fields.push('japanese_name = ?')
-      values.push(input.japaneseName)
-    }
-
-    if (fields.length === 0) {
-      const existing = getById(id)
-      if (!existing) {
-        throw new Error(`Radical with id ${String(id)} not found`)
-      }
-      return existing
-    }
-
-    values.push(id)
-    const sql = `UPDATE radicals SET ${fields.join(', ')} WHERE id = ?`
-    run(sql, values)
-
-    const updated = getById(id)
-    if (!updated) {
-      throw new Error(`Radical with id ${String(id)} not found`)
-    }
-    return updated
-  }
-
-  function remove(id: number): void {
-    run('DELETE FROM radicals WHERE id = ?', [id])
   }
 
   return {
-    create,
     getAll,
     getByCharacter,
     getById,
-    getByNumber,
-    remove,
-    update
+    getByNumber
   }
 }

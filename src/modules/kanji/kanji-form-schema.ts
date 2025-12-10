@@ -18,7 +18,7 @@ export const kanjiFormSchema = z.object({
     .min(1, 'Must be at least 1')
     .max(64, 'Must be at most 64'),
 
-  radicalId: z.number().nullable().optional(),
+  shortMeaning: z.string().optional(),
 
   jlptLevel: z.enum(['N5', 'N4', 'N3', 'N2', 'N1']).nullable().optional(),
 
@@ -35,8 +35,11 @@ export const kanjiFormSchema = z.object({
     .nullable()
     .optional(),
 
+  kenteiLevel: z.string().nullable().optional(),
+
   notesEtymology: z.string().optional(),
-  notesCultural: z.string().optional(),
+  notesSemantic: z.string().optional(),
+  notesEducationMnemonics: z.string().optional(),
   notesPersonal: z.string().optional(),
 
   strokeDiagramImage: z.instanceof(Uint8Array).nullable().optional(),

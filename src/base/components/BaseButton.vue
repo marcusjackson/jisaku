@@ -22,6 +22,8 @@ interface Props {
   loading?: boolean
   /** HTML button type */
   type?: 'button' | 'submit' | 'reset'
+  /** Form ID for submission (HTML form attribute) */
+  form?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -29,7 +31,8 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   disabled: false,
   loading: false,
-  type: 'button'
+  type: 'button',
+  form: ''
 })
 
 const classes = computed(() => [
@@ -47,6 +50,7 @@ const classes = computed(() => [
   <button
     :class="classes"
     :disabled="disabled || loading"
+    v-bind="form ? { form } : {}"
     :type="type"
   >
     <span

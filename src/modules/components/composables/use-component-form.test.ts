@@ -14,7 +14,6 @@ const mockIsSubmitting = ref(false)
 const mockValues = ref({
   character: '',
   description: '',
-  descriptionShort: '',
   japaneseName: '',
   sourceKanjiId: null,
   strokeCount: undefined
@@ -113,7 +112,6 @@ describe('useComponentForm', () => {
     expect((values as any).value).toEqual({
       character: '',
       description: '',
-      descriptionShort: '',
       japaneseName: '',
       sourceKanjiId: null,
       strokeCount: undefined

@@ -115,7 +115,7 @@ e2e/                            # Playwright E2E tests
 ### Prerequisites
 
 - Node.js 20+
-- pnpm (recommended) or npm
+- pnpm
 
 ### Installation
 

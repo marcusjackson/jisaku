@@ -47,6 +47,10 @@ vi.mock('@/shared/composables/use-toast', () => ({
   })
 }))
 
+// Mock values for component occurrence repository
+const mockGetByComponentIdWithPosition = vi.fn()
+const mockUpdateAnalysisNotes = vi.fn()
+
 // Mock the repository
 vi.mock('../composables/use-component-repository', () => ({
   useComponentRepository: () => ({
@@ -54,6 +58,14 @@ vi.mock('../composables/use-component-repository', () => ({
     getLinkedKanjiCount: mockGetLinkedKanjiCount,
     getLinkedKanjiIds: mockGetLinkedKanjiIds,
     remove: mockRemove
+  })
+}))
+
+// Mock component occurrence repository
+vi.mock('../composables/use-component-occurrence-repository', () => ({
+  useComponentOccurrenceRepository: () => ({
+    getByComponentIdWithPosition: mockGetByComponentIdWithPosition,
+    updateAnalysisNotes: mockUpdateAnalysisNotes
   })
 }))
 
@@ -87,11 +99,15 @@ function createMockComponent(overrides: Partial<Component> = {}): Component {
     character: '亻',
     createdAt: new Date().toISOString(),
     description: 'Person radical',
-    descriptionShort: 'person',
     id: 1,
     japaneseName: 'にんべん',
     sourceKanjiId: null,
     strokeCount: 2,
+    shortMeaning: null,
+    canBeRadical: false,
+    kangxiNumber: null,
+    kangxiMeaning: null,
+    radicalNameJapanese: null,
     updatedAt: new Date().toISOString(),
     ...overrides
   }
@@ -104,11 +120,16 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     id: 10,
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: null,
     notesEtymology: null,
-    notesCultural: null,
+    notesSemantic: null,
+    notesEducationMnemonics: null,
     notesPersonal: 'Person kanji',
+    identifier: null,
+    radicalStrokeCount: null,
     radicalId: null,
     strokeCount: 2,
+    shortMeaning: null,
     strokeDiagramImage: null,
     strokeGifImage: null,
     updatedAt: new Date().toISOString(),
@@ -128,6 +149,10 @@ describe('ComponentRootDetail', () => {
     mockGetLinkedKanjiIds.mockReturnValue([])
     mockGetKanjiById.mockReturnValue(null)
     mockGetKanjiByIds.mockReturnValue([])
+    mockGetByComponentIdWithPosition.mockReturnValue([])
+    mockUpdateAnalysisNotes.mockImplementation(() => {
+      // Empty implementation for mock
+    })
   })
 
   afterEach(() => {
@@ -190,16 +215,28 @@ describe('ComponentRootDetail', () => {
   })
 
   it('loads linked kanji information', async () => {
-    mockGetLinkedKanjiCount.mockReturnValue(5)
-    mockGetLinkedKanjiIds.mockReturnValue([1, 2, 3, 4, 5])
-    mockGetKanjiByIds.mockReturnValue([createMockKanji()])
+    const mockOccurrences = [
+      {
+        analysisNotes: 'Test note',
+        componentId: 1,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        id: 1,
+        isRadical: false,
+        kanjiId: 10,
+        positionTypeId: 1,
+        updatedAt: '2025-01-01T00:00:00.000Z'
+      }
+    ]
+    mockGetLinkedKanjiCount.mockReturnValue(1)
+    mockGetByComponentIdWithPosition.mockReturnValue(mockOccurrences)
+    mockGetKanjiById.mockReturnValue(createMockKanji())
 
     mount(ComponentRootDetail)
     await flushPromises()
 
     expect(mockGetLinkedKanjiCount).toHaveBeenCalledWith(1)
-    expect(mockGetLinkedKanjiIds).toHaveBeenCalledWith(1)
-    expect(mockGetKanjiByIds).toHaveBeenCalledWith([1, 2, 3, 4, 5])
+    expect(mockGetByComponentIdWithPosition).toHaveBeenCalledWith(1)
+    expect(mockGetKanjiById).toHaveBeenCalledWith(10)
   })
 
   it('fetches source kanji when component has sourceKanjiId', async () => {

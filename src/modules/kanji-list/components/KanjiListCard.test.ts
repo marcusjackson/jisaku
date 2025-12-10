@@ -15,14 +15,19 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     id: 1,
     character: '日',
     strokeCount: 4,
+    shortMeaning: null,
     radicalId: null,
     jlptLevel: null,
     joyoLevel: null,
+    kenteiLevel: null,
     strokeDiagramImage: null,
     strokeGifImage: null,
     notesEtymology: null,
-    notesCultural: null,
+    notesSemantic: null,
+    notesEducationMnemonics: null,
     notesPersonal: null,
+    identifier: null,
+    radicalStrokeCount: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides
@@ -38,16 +43,6 @@ describe('KanjiListCard', () => {
     })
 
     expect(screen.getByText('日')).toBeInTheDocument()
-  })
-
-  it('displays stroke count', () => {
-    const kanji = createMockKanji({ strokeCount: 4 })
-
-    renderWithProviders(KanjiListCard, {
-      props: { kanji }
-    })
-
-    expect(screen.getByText(/4 strokes/i)).toBeInTheDocument()
   })
 
   it('displays JLPT level badge when set', () => {
@@ -101,6 +96,26 @@ describe('KanjiListCard', () => {
     })
 
     expect(screen.queryByText(/小[1-6]|中学/)).not.toBeInTheDocument()
+  })
+
+  it('displays Kentei level badge when set', () => {
+    const kanji = createMockKanji({ kenteiLevel: '3級' })
+
+    renderWithProviders(KanjiListCard, {
+      props: { kanji }
+    })
+
+    expect(screen.getByText('3級')).toBeInTheDocument()
+  })
+
+  it('does not display Kentei badge when not set', () => {
+    const kanji = createMockKanji({ kenteiLevel: null })
+
+    renderWithProviders(KanjiListCard, {
+      props: { kanji }
+    })
+
+    expect(screen.queryByText(/[1-9]級|準[12]級/)).not.toBeInTheDocument()
   })
 
   it('renders as a link to kanji detail page', () => {

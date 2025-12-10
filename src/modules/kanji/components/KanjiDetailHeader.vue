@@ -7,11 +7,11 @@
 
 import { RouterLink } from 'vue-router'
 
-import type { Kanji, Radical } from '@/shared/types/database-types'
+import type { Component, Kanji } from '@/shared/types/database-types'
 
 defineProps<{
   kanji: Kanji
-  radical?: Radical | null
+  radical?: Component | null
 }>()
 </script>
 
@@ -27,9 +27,12 @@ defineProps<{
     <div class="kanji-detail-header-main">
       <span class="kanji-detail-header-character">{{ kanji.character }}</span>
       <div class="kanji-detail-header-info">
-        <span class="kanji-detail-header-strokes"
-          >{{ kanji.strokeCount }} strokes</span
+        <span
+          v-if="kanji.shortMeaning"
+          class="kanji-detail-header-meaning"
         >
+          {{ kanji.shortMeaning }}
+        </span>
         <span
           v-if="radical"
           class="kanji-detail-header-radical"
@@ -39,9 +42,9 @@ defineProps<{
             radical.character
           }}</span>
           <span
-            v-if="radical.meaning"
+            v-if="radical.kangxiMeaning"
             class="kanji-detail-header-radical-meaning"
-            >({{ radical.meaning }})</span
+            >({{ radical.kangxiMeaning }})</span
           >
         </span>
       </div>
@@ -85,6 +88,12 @@ defineProps<{
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+}
+
+.kanji-detail-header-meaning {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
 }
 
 .kanji-detail-header-strokes {

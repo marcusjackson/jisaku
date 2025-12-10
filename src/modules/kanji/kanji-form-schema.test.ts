@@ -165,10 +165,10 @@ describe('kanjiFormSchema', () => {
       expect(result.success).toBe(true)
     })
 
-    it('accepts optional cultural notes', () => {
+    it('accepts optional semantic notes', () => {
       const result = kanjiFormSchema.safeParse({
         character: '日',
-        notesCultural: 'Cultural significance and usage.',
+        notesSemantic: 'Semantic significance and usage.',
         strokeCount: 4
       })
       expect(result.success).toBe(true)
@@ -187,7 +187,7 @@ describe('kanjiFormSchema', () => {
       const result = kanjiFormSchema.safeParse({
         character: '日',
         notesEtymology: '',
-        notesCultural: '',
+        notesSemantic: '',
         notesPersonal: '',
         strokeCount: 4
       })
@@ -210,7 +210,7 @@ describe('kanjiFormSchema', () => {
         jlptLevel: 'N5',
         joyoLevel: 'elementary1',
         notesEtymology: 'Sun pictograph',
-        notesCultural: 'Associated with Japan',
+        notesSemantic: 'Associated with Japan',
         notesPersonal: 'Sun, day',
         strokeCount: 4
       })

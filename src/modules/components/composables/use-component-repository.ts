@@ -21,10 +21,14 @@ interface ComponentRow {
   id: number
   character: string
   stroke_count: number
+  short_meaning: string | null
   source_kanji_id: number | null
-  description_short: string | null
   japanese_name: string | null
   description: string | null
+  can_be_radical: number | null
+  kangxi_number: number | null
+  kangxi_meaning: string | null
+  radical_name_japanese: string | null
   created_at: string
   updated_at: string
 }
@@ -34,10 +38,14 @@ function mapRowToComponent(row: ComponentRow): Component {
     id: row.id,
     character: row.character,
     strokeCount: row.stroke_count,
+    shortMeaning: row.short_meaning,
     sourceKanjiId: row.source_kanji_id,
-    descriptionShort: row.description_short,
     japaneseName: row.japanese_name,
     description: row.description,
+    canBeRadical: Boolean(row.can_be_radical),
+    kangxiNumber: row.kangxi_number,
+    kangxiMeaning: row.kangxi_meaning,
+    radicalNameJapanese: row.radical_name_japanese,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   }
@@ -108,16 +116,20 @@ export function useComponentRepository(): UseComponentRepository {
 
   function create(input: CreateComponentInput): Component {
     const sql = `
-      INSERT INTO components (character, stroke_count, source_kanji_id, description_short, japanese_name, description)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO components (character, stroke_count, short_meaning, source_kanji_id, japanese_name, description, can_be_radical, kangxi_number, kangxi_meaning, radical_name_japanese)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     run(sql, [
       input.character,
       input.strokeCount,
+      input.shortMeaning ?? null,
       input.sourceKanjiId ?? null,
-      input.descriptionShort ?? null,
       input.japaneseName ?? null,
-      input.description ?? null
+      input.description ?? null,
+      input.canBeRadical ? 1 : 0,
+      input.kangxiNumber ?? null,
+      input.kangxiMeaning ?? null,
+      input.radicalNameJapanese ?? null
     ])
 
     // Get the newly created component
@@ -142,13 +154,13 @@ export function useComponentRepository(): UseComponentRepository {
       fields.push('stroke_count = ?')
       values.push(input.strokeCount)
     }
+    if (input.shortMeaning !== undefined) {
+      fields.push('short_meaning = ?')
+      values.push(input.shortMeaning)
+    }
     if (input.sourceKanjiId !== undefined) {
       fields.push('source_kanji_id = ?')
       values.push(input.sourceKanjiId)
-    }
-    if (input.descriptionShort !== undefined) {
-      fields.push('description_short = ?')
-      values.push(input.descriptionShort)
     }
     if (input.japaneseName !== undefined) {
       fields.push('japanese_name = ?')
@@ -157,6 +169,22 @@ export function useComponentRepository(): UseComponentRepository {
     if (input.description !== undefined) {
       fields.push('description = ?')
       values.push(input.description)
+    }
+    if (input.canBeRadical !== undefined) {
+      fields.push('can_be_radical = ?')
+      values.push(input.canBeRadical ? 1 : 0)
+    }
+    if (input.kangxiNumber !== undefined) {
+      fields.push('kangxi_number = ?')
+      values.push(input.kangxiNumber)
+    }
+    if (input.kangxiMeaning !== undefined) {
+      fields.push('kangxi_meaning = ?')
+      values.push(input.kangxiMeaning)
+    }
+    if (input.radicalNameJapanese !== undefined) {
+      fields.push('radical_name_japanese = ?')
+      values.push(input.radicalNameJapanese)
     }
 
     if (fields.length === 0) {
@@ -185,7 +213,7 @@ export function useComponentRepository(): UseComponentRepository {
 
   function getLinkedKanjiCount(componentId: number): number {
     const result = exec(
-      'SELECT COUNT(*) as count FROM kanji_components WHERE component_id = ?',
+      'SELECT COUNT(*) as count FROM component_occurrences WHERE component_id = ?',
       [componentId]
     )
     const count = result[0]?.values[0]?.[0]
@@ -194,7 +222,7 @@ export function useComponentRepository(): UseComponentRepository {
 
   function getLinkedKanjiIds(componentId: number): number[] {
     const result = exec(
-      'SELECT kanji_id FROM kanji_components WHERE component_id = ? ORDER BY position',
+      'SELECT kanji_id FROM component_occurrences WHERE component_id = ? ORDER BY display_order',
       [componentId]
     )
     if (!result[0]) {

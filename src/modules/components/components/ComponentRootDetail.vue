@@ -17,11 +17,16 @@ import { useDatabase } from '@/shared/composables/use-database'
 import { useToast } from '@/shared/composables/use-toast'
 
 import { useKanjiRepository } from '@/modules/kanji-list/composables/use-kanji-repository'
+import { useComponentOccurrenceRepository } from '../composables/use-component-occurrence-repository'
 import { useComponentRepository } from '../composables/use-component-repository'
 
 import ComponentSectionDetail from './ComponentSectionDetail.vue'
 
-import type { Component, Kanji } from '@/shared/types/database-types'
+import type {
+  Component,
+  Kanji,
+  OccurrenceWithKanji
+} from '@/shared/types/database-types'
 
 // Router
 const route = useRoute()
@@ -31,9 +36,14 @@ const router = useRouter()
 const { initError, initialize, isInitialized, isInitializing } = useDatabase()
 
 // Repository for data access
-const { getById, getLinkedKanjiCount, getLinkedKanjiIds, remove } =
-  useComponentRepository()
-const { getById: getKanjiById, getByIds: getKanjiByIds } = useKanjiRepository()
+const { getById, getLinkedKanjiCount, remove } = useComponentRepository()
+const { getById: getKanjiById } = useKanjiRepository()
+const {
+  getByComponentIdWithPosition,
+  updateAnalysisNotes,
+  updateIsRadical,
+  updatePosition
+} = useComponentOccurrenceRepository()
 
 // Toast notifications
 const { success } = useToast()
@@ -42,7 +52,7 @@ const { success } = useToast()
 const component = ref<Component | null>(null)
 const sourceKanji = ref<Kanji | null>(null)
 const linkedKanjiCount = ref(0)
-const linkedKanji = ref<Kanji[]>([])
+const occurrences = ref<OccurrenceWithKanji[]>([])
 const fetchError = ref<Error | null>(null)
 const isDeleting = ref(false)
 
@@ -69,10 +79,21 @@ function loadComponent() {
         ? getKanjiById(component.value.sourceKanjiId)
         : null
 
-      // Load linked kanji information
+      // Load occurrence information with position data
       linkedKanjiCount.value = getLinkedKanjiCount(componentId.value)
-      const kanjiIds = getLinkedKanjiIds(componentId.value)
-      linkedKanji.value = getKanjiByIds(kanjiIds)
+      const rawOccurrences = getByComponentIdWithPosition(componentId.value)
+      occurrences.value = rawOccurrences.map((occurrence) => {
+        const kanji = getKanjiById(occurrence.kanjiId)
+        if (!kanji) {
+          throw new Error(
+            `Kanji with id ${String(occurrence.kanjiId)} not found`
+          )
+        }
+        return {
+          ...occurrence,
+          kanji
+        }
+      })
     }
   } catch (err) {
     fetchError.value = err instanceof Error ? err : new Error(String(err))
@@ -92,6 +113,57 @@ async function handleDelete() {
   } catch (err) {
     fetchError.value = err instanceof Error ? err : new Error(String(err))
     isDeleting.value = false
+  }
+}
+
+// Handle analysis notes update
+function handleAnalysisNotesUpdate(
+  occurrenceId: number,
+  analysisNotes: string | null
+) {
+  try {
+    updateAnalysisNotes(occurrenceId, analysisNotes)
+    // Update local state
+    const occurrence = occurrences.value.find((o) => o.id === occurrenceId)
+    if (occurrence) {
+      occurrence.analysisNotes = analysisNotes
+    }
+    success('Analysis notes updated')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle position update
+function handlePositionUpdate(
+  occurrenceId: number,
+  positionTypeId: number | null
+) {
+  try {
+    updatePosition(occurrenceId, positionTypeId)
+    // Update local state
+    const occurrence = occurrences.value.find((o) => o.id === occurrenceId)
+    if (occurrence) {
+      occurrence.positionTypeId = positionTypeId
+    }
+    success('Position updated')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle radical flag update
+function handleIsRadicalUpdate(occurrenceId: number, isRadical: boolean) {
+  try {
+    updateIsRadical(occurrenceId, isRadical)
+    // Update local state
+    const occurrence = occurrences.value.find((o) => o.id === occurrenceId)
+    if (occurrence) {
+      occurrence.isRadical = isRadical
+    }
+    success('Radical flag updated')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
   }
 }
 
@@ -143,10 +215,13 @@ watch(componentId, () => {
     v-else-if="isInitialized && component"
     :component="component"
     :is-deleting="isDeleting"
-    :linked-kanji="linkedKanji"
     :linked-kanji-count="linkedKanjiCount"
+    :occurrences="occurrences"
     :source-kanji="sourceKanji"
     @delete="handleDelete"
+    @update:analysis-notes="handleAnalysisNotesUpdate"
+    @update:is-radical="handleIsRadicalUpdate"
+    @update:position="handlePositionUpdate"
   />
 </template>
 

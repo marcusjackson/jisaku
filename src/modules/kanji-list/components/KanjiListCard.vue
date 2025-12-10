@@ -33,6 +33,10 @@ const joyoLabel = computed(() => {
   }
   return labels[props.kanji.joyoLevel] ?? null
 })
+
+const kenteiLabel = computed(() => {
+  return props.kanji.kenteiLevel ?? null
+})
 </script>
 
 <template>
@@ -43,9 +47,12 @@ const joyoLabel = computed(() => {
     <span class="kanji-list-card-character">{{ kanji.character }}</span>
 
     <div class="kanji-list-card-info">
-      <span class="kanji-list-card-strokes"
-        >{{ kanji.strokeCount }} strokes</span
+      <span
+        v-if="kanji.shortMeaning"
+        class="kanji-list-card-meaning"
       >
+        {{ kanji.shortMeaning }}
+      </span>
 
       <div class="kanji-list-card-badges">
         <span
@@ -60,6 +67,12 @@ const joyoLabel = computed(() => {
           class="kanji-list-card-badge kanji-list-card-badge-joyo"
         >
           {{ joyoLabel }}
+        </span>
+        <span
+          v-if="kenteiLabel"
+          class="kanji-list-card-badge kanji-list-card-badge-kentei"
+        >
+          {{ kenteiLabel }}
         </span>
       </div>
     </div>
@@ -105,6 +118,17 @@ const joyoLabel = computed(() => {
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-1);
+}
+
+.kanji-list-card-meaning {
+  max-width: 150px;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .kanji-list-card-strokes {
@@ -155,6 +179,13 @@ const joyoLabel = computed(() => {
 /* Joyo level */
 .kanji-list-card-badge-joyo {
   background-color: var(--color-background);
+  color: var(--color-text-secondary);
+}
+
+/* Kentei level */
+.kanji-list-card-badge-kentei {
+  border: var(--border-width) solid var(--color-border);
+  background-color: var(--color-surface-variant);
   color: var(--color-text-secondary);
 }
 </style>

@@ -24,7 +24,7 @@ test.describe('Kanji Components Selection', () => {
 
     await page.getByLabel(/character/i).fill('日')
     await page.getByLabel(/stroke count/i).fill('4')
-    await page.getByLabel(/short description/i).fill('sun')
+    await page.getByLabel('Description').fill('sun')
 
     await page.getByRole('button', { name: /create component/i }).click()
     await expect(page).toHaveURL(/\/components\/\d+/)
@@ -95,7 +95,7 @@ test.describe('Kanji Components Selection', () => {
     await page.goto('/components/new')
     await page.getByLabel(/character/i).fill('月')
     await page.getByLabel(/stroke count/i).fill('4')
-    await page.getByLabel(/short description/i).fill('moon')
+    await page.getByLabel('Description').fill('moon')
     await page.getByRole('button', { name: /create component/i }).click()
     await expect(page).toHaveURL(/\/components\/\d+/)
     await page.waitForTimeout(500)
@@ -154,7 +154,7 @@ test.describe('Kanji Components Selection', () => {
     await page.goto('/components/new')
     await page.getByLabel(/character/i).fill('火')
     await page.getByLabel(/stroke count/i).fill('4')
-    await page.getByLabel(/short description/i).fill('fire')
+    await page.getByLabel('Description').fill('fire')
     await page.getByRole('button', { name: /create component/i }).click()
     await expect(page).toHaveURL(/\/components\/\d+/)
     await page.waitForTimeout(500)
@@ -192,7 +192,7 @@ test.describe('Kanji Components Selection', () => {
     await page.goto('/components/new')
     await page.getByLabel(/character/i).fill('水')
     await page.getByLabel(/stroke count/i).fill('4')
-    await page.getByLabel(/short description/i).fill('water')
+    await page.getByLabel('Description').fill('water')
     await page.getByRole('button', { name: /create component/i }).click()
     await expect(page).toHaveURL(/\/components\/\d+/)
     await page.waitForTimeout(500)
@@ -220,8 +220,8 @@ test.describe('Kanji Components Selection', () => {
     await expect(page).toHaveURL(/\/kanji\/\d+$/, { timeout: 10000 })
     await page.waitForTimeout(500)
 
-    // Click on component link
-    await page.locator('.kanji-detail-components-link').first().click()
+    // Click on component link (the → button)
+    await page.locator('.kanji-detail-components-view-link').first().click()
 
     // Should navigate to component detail page
     await expect(page).toHaveURL(/\/components\/\d+/)

@@ -31,14 +31,19 @@ export interface Kanji {
   id: number
   character: string
   strokeCount: number
+  shortMeaning: string | null
   radicalId: number | null
   jlptLevel: JlptLevel | null
   joyoLevel: JoyoLevel | null
+  kenteiLevel: string | null
   strokeDiagramImage: Uint8Array | null
   strokeGifImage: Uint8Array | null
   notesEtymology: string | null
-  notesCultural: string | null
+  notesSemantic: string | null
+  notesEducationMnemonics: string | null
   notesPersonal: string | null
+  identifier: number | null
+  radicalStrokeCount: number | null
   createdAt: string // ISO 8601
   updatedAt: string // ISO 8601
 }
@@ -50,35 +55,130 @@ export interface Component {
   id: number
   character: string
   strokeCount: number
+  shortMeaning: string | null
   sourceKanjiId: number | null
-  descriptionShort: string | null
   japaneseName: string | null
   description: string | null
+  canBeRadical: boolean
+  kangxiNumber: number | null
+  kangxiMeaning: string | null
+  radicalNameJapanese: string | null
   createdAt: string
   updatedAt: string
 }
 
 /**
- * Radical entity — Kangxi radicals for kanji classification
+ * ComponentOccurrence — Per-occurrence data for kanji-component relationships
+ * Replaces the old KanjiComponent junction table
  */
-export interface Radical {
+export interface ComponentOccurrence {
   id: number
-  character: string
-  strokeCount: number
-  number: number // Kangxi radical number (1-214)
-  meaning: string | null
-  japaneseName: string | null
+  kanjiId: number
+  componentId: number
+  componentFormId: number | null
+  positionTypeId: number | null
+  isRadical: boolean
+  displayOrder: number
+  analysisNotes: string | null
   createdAt: string
   updatedAt: string
 }
 
 /**
- * KanjiComponent junction — Links kanji to their components
+ * OccurrenceWithComponent — Component occurrence with full component data
+ */
+export interface OccurrenceWithComponent extends ComponentOccurrence {
+  component: Component
+  position: PositionType | null
+}
+
+/**
+ * OccurrenceWithKanji — Component occurrence with full kanji data
+ */
+export interface OccurrenceWithKanji extends ComponentOccurrence {
+  kanji: Kanji
+  position: PositionType | null
+}
+
+/**
+ * PositionType — Reference table for component positions in kanji
+ */
+export interface PositionType {
+  id: number
+  positionName: string
+  nameJapanese: string | null
+  nameEnglish: string | null
+  description: string | null
+  descriptionShort: string | null
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * ClassificationType — Reference table for kanji classification types (Rikusho)
+ */
+export interface ClassificationType {
+  id: number
+  typeName: string
+  nameJapanese: string | null
+  nameEnglish: string | null
+  description: string | null
+  descriptionShort: string | null
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * ComponentForm — Different visual forms of the same semantic component
+ */
+export interface ComponentForm {
+  id: number
+  componentId: number
+  formCharacter: string
+  formName: string | null
+  description: string | null
+  isPrimary: boolean
+  strokeCount: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * ComponentGrouping — User-created groups for pattern analysis
+ */
+export interface ComponentGrouping {
+  id: number
+  componentId: number
+  componentFormId: number | null
+  name: string
+  analysisNotes: string | null
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * KanjiClassification — Links kanji to classification types
+ */
+export interface KanjiClassification {
+  id: number
+  kanjiId: number
+  classificationTypeId: number
+  isPrimary: boolean
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * @deprecated Use ComponentOccurrence instead. Kept for migration compatibility.
  */
 export interface KanjiComponent {
   kanjiId: number
   componentId: number
-  position: number | null // Optional ordering for display
+  position: number | null
 }
 
 // =============================================================================
@@ -88,47 +188,86 @@ export interface KanjiComponent {
 export interface CreateKanjiInput {
   character: string
   strokeCount: number
+  shortMeaning?: string | null
   radicalId?: number | null
   jlptLevel?: JlptLevel | null
   joyoLevel?: JoyoLevel | null
+  kenteiLevel?: string | null
   strokeDiagramImage?: Uint8Array | null
   strokeGifImage?: Uint8Array | null
   notesEtymology?: string | null
-  notesCultural?: string | null
+  notesSemantic?: string | null
+  notesEducationMnemonics?: string | null
   notesPersonal?: string | null
+  identifier?: number | null
+  radicalStrokeCount?: number | null
 }
 
 export interface UpdateKanjiInput {
   character?: string
   strokeCount?: number
+  shortMeaning?: string | null
   radicalId?: number | null
   jlptLevel?: JlptLevel | null
   joyoLevel?: JoyoLevel | null
+  kenteiLevel?: string | null
   strokeDiagramImage?: Uint8Array | null
   strokeGifImage?: Uint8Array | null
   notesEtymology?: string | null
-  notesCultural?: string | null
+  notesSemantic?: string | null
+  notesEducationMnemonics?: string | null
   notesPersonal?: string | null
+  identifier?: number | null
+  radicalStrokeCount?: number | null
 }
 
 export interface CreateComponentInput {
   character: string
   strokeCount: number
+  shortMeaning?: string | null
   sourceKanjiId?: number | null
-  descriptionShort?: string | null
   japaneseName?: string | null
   description?: string | null
+  canBeRadical?: boolean
+  kangxiNumber?: number | null
+  kangxiMeaning?: string | null
+  radicalNameJapanese?: string | null
 }
 
 export interface UpdateComponentInput {
   character?: string
   strokeCount?: number
+  shortMeaning?: string | null
   sourceKanjiId?: number | null
-  descriptionShort?: string | null
   japaneseName?: string | null
   description?: string | null
+  canBeRadical?: boolean
+  kangxiNumber?: number | null
+  kangxiMeaning?: string | null
+  radicalNameJapanese?: string | null
 }
 
+export interface CreateComponentOccurrenceInput {
+  kanjiId: number
+  componentId: number
+  componentFormId?: number | null
+  positionTypeId?: number | null
+  isRadical?: boolean
+  displayOrder: number
+  analysisNotes?: string | null
+}
+
+export interface UpdateComponentOccurrenceInput {
+  componentFormId?: number | null
+  positionTypeId?: number | null
+  isRadical?: boolean
+  displayOrder?: number
+  analysisNotes?: string | null
+}
+
+/**
+ * @deprecated Radicals table no longer exists. Radical data is now in components table.
+ */
 export interface CreateRadicalInput {
   character: string
   strokeCount: number
@@ -137,6 +276,9 @@ export interface CreateRadicalInput {
   japaneseName?: string | null
 }
 
+/**
+ * @deprecated Radicals table no longer exists. Radical data is now in components table.
+ */
 export interface UpdateRadicalInput {
   character?: string
   strokeCount?: number
@@ -155,6 +297,7 @@ export interface KanjiFilters {
   strokeCountMax?: number
   jlptLevels?: JlptLevel[]
   joyoLevels?: JoyoLevel[]
+  kenteiLevels?: string[]
   radicalId?: number
   componentId?: number
 }
@@ -174,7 +317,7 @@ export interface ComponentFilters {
  * Kanji with resolved relationships for display
  */
 export interface KanjiWithRelations extends Kanji {
-  radical: Radical | null
+  radical: Component | null
   components: Component[]
 }
 

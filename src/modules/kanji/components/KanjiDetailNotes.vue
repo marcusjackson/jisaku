@@ -3,21 +3,23 @@
  * KanjiDetailNotes
  *
  * UI component displaying the notes sections for a kanji.
- * Shows three categories: etymology, cultural context, and personal notes.
+ * Shows three categories: etymology, semantic notes, and personal notes.
  */
 
 import { computed } from 'vue'
 
 const props = defineProps<{
   notesEtymology: string | null
-  notesCultural: string | null
+  notesSemantic: string | null
+  notesEducationMnemonics: string | null
   notesPersonal: string | null
 }>()
 
 const hasAnyNotes = computed(
   () =>
     Boolean(props.notesEtymology) ||
-    Boolean(props.notesCultural) ||
+    Boolean(props.notesSemantic) ||
+    Boolean(props.notesEducationMnemonics) ||
     Boolean(props.notesPersonal)
 )
 </script>
@@ -41,12 +43,22 @@ const hasAnyNotes = computed(
       </div>
 
       <div
-        v-if="notesCultural"
+        v-if="notesSemantic"
         class="kanji-detail-notes-category"
       >
-        <h3 class="kanji-detail-notes-category-title">Cultural Context</h3>
+        <h3 class="kanji-detail-notes-category-title">Semantic Analysis</h3>
         <p class="kanji-detail-notes-content">
-          {{ notesCultural }}
+          {{ notesSemantic }}
+        </p>
+      </div>
+
+      <div
+        v-if="notesEducationMnemonics"
+        class="kanji-detail-notes-category"
+      >
+        <h3 class="kanji-detail-notes-category-title">Education & Mnemonics</h3>
+        <p class="kanji-detail-notes-content">
+          {{ notesEducationMnemonics }}
         </p>
       </div>
 

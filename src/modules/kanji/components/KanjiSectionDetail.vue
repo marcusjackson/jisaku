@@ -19,18 +19,22 @@ import KanjiDetailHeader from './KanjiDetailHeader.vue'
 import KanjiDetailNotes from './KanjiDetailNotes.vue'
 import KanjiDetailStrokeImages from './KanjiDetailStrokeImages.vue'
 
-import type { Component, Kanji, Radical } from '@/shared/types/database-types'
+import type {
+  Kanji,
+  OccurrenceWithComponent
+} from '@/shared/types/database-types'
+import type { Component } from '@/shared/types/database-types'
 
 interface Props {
   kanji: Kanji
-  radical?: Radical | null
-  components?: Component[]
   isDeleting?: boolean
+  occurrences?: OccurrenceWithComponent[]
+  radical?: Component | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   radical: null,
-  components: () => [],
+  occurrences: () => [],
   isDeleting: false
 })
 
@@ -67,15 +71,16 @@ function handleDeleteCancel() {
 
     <div class="kanji-section-detail-content">
       <KanjiDetailBadges :kanji="props.kanji" />
-      <KanjiDetailComponents :components="props.components" />
+      <KanjiDetailComponents :occurrences="props.occurrences" />
       <KanjiDetailStrokeImages
         :stroke-diagram="props.kanji.strokeDiagramImage"
         :stroke-gif="props.kanji.strokeGifImage"
       />
       <KanjiDetailNotes
-        :notes-cultural="props.kanji.notesCultural"
+        :notes-education-mnemonics="props.kanji.notesEducationMnemonics"
         :notes-etymology="props.kanji.notesEtymology"
         :notes-personal="props.kanji.notesPersonal"
+        :notes-semantic="props.kanji.notesSemantic"
       />
     </div>
 

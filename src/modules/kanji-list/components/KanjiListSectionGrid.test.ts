@@ -15,14 +15,19 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     id: 1,
     character: '日',
     strokeCount: 4,
+    shortMeaning: null,
     radicalId: null,
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: null,
     strokeDiagramImage: null,
     strokeGifImage: null,
     notesEtymology: null,
-    notesCultural: null,
+    notesSemantic: null,
+    notesEducationMnemonics: null,
     notesPersonal: null,
+    identifier: null,
+    radicalStrokeCount: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides
@@ -76,18 +81,6 @@ describe('KanjiListSectionGrid', () => {
     expect(
       screen.getByRole('button', { name: /add kanji/i })
     ).toBeInTheDocument()
-  })
-
-  it('displays stroke count on kanji cards', () => {
-    const kanjiList = [
-      createMockKanji({ id: 1, character: '日', strokeCount: 4 })
-    ]
-
-    renderWithProviders(KanjiListSectionGrid, {
-      props: { kanjiList }
-    })
-
-    expect(screen.getByText(/4 strokes/i)).toBeInTheDocument()
   })
 
   it('displays JLPT level badge on kanji cards', () => {

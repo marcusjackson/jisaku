@@ -1,6 +1,6 @@
 {
   "name": "jisaku",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,7 +17,7 @@
     "lint:check": "eslint .",
     "lint:css": "stylelint \"src/**/*.{css,vue}\" --fix",
     "lint:css:check": "stylelint \"src/**/*.{css,vue}\"",
-    "format": "prettier --write .",
+    "format": "prettier --write --list-different .",
     "format:check": "prettier --check .",
     "type-check": "vue-tsc --noEmit",
     "check": "pnpm type-check && pnpm lint:check && pnpm lint:css:check && pnpm format:check",

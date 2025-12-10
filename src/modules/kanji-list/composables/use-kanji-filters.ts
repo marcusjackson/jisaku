@@ -68,6 +68,28 @@ function parseJoyoLevels(value: unknown): JoyoLevel[] | undefined {
   return undefined
 }
 
+function parseKenteiLevels(value: unknown): string[] | undefined {
+  if (typeof value === 'string' && value.length > 0) {
+    const validLevels = [
+      '10級',
+      '9級',
+      '8級',
+      '7級',
+      '6級',
+      '5級',
+      '4級',
+      '3級',
+      '準2級',
+      '2級',
+      '準1級',
+      '1級'
+    ]
+    const levels = value.split(',').filter((v) => validLevels.includes(v))
+    return levels.length > 0 ? levels : undefined
+  }
+  return undefined
+}
+
 // =============================================================================
 // Composable
 // =============================================================================
@@ -119,6 +141,11 @@ export function useKanjiFilters(): UseKanjiFilters {
     const joyo = parseJoyoLevels(route.query['joyo'])
     if (joyo) {
       result.joyoLevels = joyo
+    }
+
+    const kentei = parseKenteiLevels(route.query['kentei'])
+    if (kentei) {
+      result.kenteiLevels = kentei
     }
 
     const radicalId = parseNumber(route.query['radical'])
@@ -192,6 +219,7 @@ export function useKanjiFilters(): UseKanjiFilters {
     strokeCountMax: 'strokeMax',
     jlptLevels: 'jlpt',
     joyoLevels: 'joyo',
+    kenteiLevels: 'kentei',
     radicalId: 'radical',
     componentId: 'component'
   }
@@ -224,6 +252,7 @@ export function useKanjiFilters(): UseKanjiFilters {
       f.strokeCountMax ??
       (f.jlptLevels && f.jlptLevels.length > 0) ??
       (f.joyoLevels && f.joyoLevels.length > 0) ??
+      (f.kenteiLevels && f.kenteiLevels.length > 0) ??
       f.radicalId ??
       f.componentId
     )

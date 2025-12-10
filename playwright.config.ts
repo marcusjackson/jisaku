@@ -16,7 +16,7 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
 
   // Opt out of parallel tests on CI
-  workers: isCI ? 1 : 4,
+  workers: 1,
 
   // Reporter to use
   reporter: [

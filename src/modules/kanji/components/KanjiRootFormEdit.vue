@@ -17,7 +17,6 @@ import { useToast } from '@/shared/composables/use-toast'
 
 import { useKanjiRepository } from '@/modules/kanji-list/composables/use-kanji-repository'
 import { useKanjiForm } from '../composables/use-kanji-form'
-import { useRadicalRepository } from '../composables/use-radical-repository'
 
 import KanjiSectionForm from './KanjiSectionForm.vue'
 
@@ -35,7 +34,6 @@ const { initError, initialize, isInitialized, isInitializing } = useDatabase()
 // Repository for data access
 const { getById, getLinkedComponentIds, saveComponentLinks, update } =
   useKanjiRepository()
-const { getAll: getAllRadicals } = useRadicalRepository()
 
 import { useComponentRepository } from '@/modules/components/composables/use-component-repository'
 const { getAll: getAllComponents } = useComponentRepository()
@@ -47,26 +45,14 @@ const { error: showError, success: showSuccess } = useToast()
 const kanji = ref<Kanji | null>(null)
 const fetchError = ref<Error | null>(null)
 
-// Radical options for combobox
-const radicalOptions = ref<ComboboxOption[]>([])
-
 // Component options for multi-select
 const componentOptions = ref<ComboboxOption[]>([])
-
-// Load radical options
-function loadRadicalOptions() {
-  const radicals = getAllRadicals()
-  radicalOptions.value = radicals.map((r) => ({
-    label: `${r.character} (${r.meaning ?? `#${String(r.number)}`})`,
-    value: r.id
-  }))
-}
 
 // Load component options
 function loadComponentOptions() {
   const components = getAllComponents()
   componentOptions.value = components.map((c) => ({
-    label: `${c.character}${c.descriptionShort ? ` — ${c.descriptionShort}` : ''}`,
+    label: `${c.character}${c.description ? ` — ${c.description}` : ''}`,
     value: c.id
   }))
 }
@@ -111,11 +97,13 @@ async function handleSubmit(values: KanjiFormData) {
     const input = {
       character: values.character,
       strokeCount: values.strokeCount,
+      shortMeaning: values.shortMeaning ?? null,
       ...(values.jlptLevel != null && { jlptLevel: values.jlptLevel }),
       ...(values.joyoLevel != null && { joyoLevel: values.joyoLevel }),
-      ...(values.radicalId != null && { radicalId: values.radicalId }),
+      ...(values.kenteiLevel != null && { kenteiLevel: values.kenteiLevel }),
       notesEtymology: values.notesEtymology ?? null,
-      notesCultural: values.notesCultural ?? null,
+      notesSemantic: values.notesSemantic ?? null,
+      notesEducationMnemonics: values.notesEducationMnemonics ?? null,
       notesPersonal: values.notesPersonal ?? null,
       strokeDiagramImage: values.strokeDiagramImage ?? null,
       strokeGifImage: values.strokeGifImage ?? null
@@ -136,17 +124,11 @@ function handleCancel() {
   void router.push(backUrl.value)
 }
 
-function handleRadicalCreated() {
-  // Reload radical options to include newly created radical
-  loadRadicalOptions()
-}
-
 // Initialize on mount
 onMounted(async () => {
   try {
     await initialize()
     loadKanji()
-    loadRadicalOptions()
     loadComponentOptions()
   } catch {
     // Error is already captured in initError
@@ -158,14 +140,25 @@ watch(kanji, (newKanji) => {
   if (newKanji && !formInitialized.value) {
     setFieldValue('character', newKanji.character)
     setFieldValue('strokeCount', newKanji.strokeCount)
+    setFieldValue('shortMeaning', newKanji.shortMeaning ?? '')
     setFieldValue('jlptLevel', newKanji.jlptLevel)
     setFieldValue('joyoLevel', newKanji.joyoLevel)
-    setFieldValue('radicalId', newKanji.radicalId)
+    setFieldValue('kenteiLevel', newKanji.kenteiLevel)
     setFieldValue('notesEtymology', newKanji.notesEtymology ?? '')
-    setFieldValue('notesCultural', newKanji.notesCultural ?? '')
+    setFieldValue('notesSemantic', newKanji.notesSemantic ?? '')
+    setFieldValue(
+      'notesEducationMnemonics',
+      newKanji.notesEducationMnemonics ?? ''
+    )
     setFieldValue('notesPersonal', newKanji.notesPersonal ?? '')
-    setFieldValue('strokeDiagramImage', newKanji.strokeDiagramImage)
-    setFieldValue('strokeGifImage', newKanji.strokeGifImage)
+    setFieldValue(
+      'strokeDiagramImage',
+      newKanji.strokeDiagramImage as Uint8Array<ArrayBuffer> | null
+    )
+    setFieldValue(
+      'strokeGifImage',
+      newKanji.strokeGifImage as Uint8Array<ArrayBuffer> | null
+    )
 
     // Load existing component links
     const linkedComponentIds = getLinkedComponentIds(newKanji.id)
@@ -206,9 +199,7 @@ watch(kanji, (newKanji) => {
     :component-options="componentOptions"
     :is-submitting="isSubmitting"
     mode="edit"
-    :radical-options="radicalOptions"
     @cancel="handleCancel"
-    @radical-created="handleRadicalCreated"
     @submit="submitForm"
   />
 </template>

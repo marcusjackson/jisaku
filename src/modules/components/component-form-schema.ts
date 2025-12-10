@@ -18,13 +18,28 @@ export const componentFormSchema = z.object({
     .min(1, 'Must be at least 1')
     .max(64, 'Must be at most 64'),
 
-  descriptionShort: z.string().optional(),
+  shortMeaning: z.string().optional(),
 
   japaneseName: z.string().optional(),
 
   description: z.string().optional(),
 
-  sourceKanjiId: z.number().nullable().optional()
+  sourceKanjiId: z.number().nullable().optional(),
+
+  // Radical-related fields (for components that can be radicals)
+  canBeRadical: z.boolean().optional(),
+
+  kangxiNumber: z
+    .number()
+    .int('Must be a whole number')
+    .min(1, 'Must be at least 1')
+    .max(214, 'Must be at most 214')
+    .nullable()
+    .optional(),
+
+  kangxiMeaning: z.string().optional(),
+
+  radicalNameJapanese: z.string().optional()
 })
 
 // Export inferred type

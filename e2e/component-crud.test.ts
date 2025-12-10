@@ -33,9 +33,8 @@ test.describe('Component CRUD Flow', () => {
     // Fill in form fields
     await page.getByLabel(/character/i).fill('亻')
     await page.getByLabel(/stroke count/i).fill('2')
-    await page.getByLabel(/short description/i).fill('person')
     await page.getByLabel(/japanese name/i).fill('にんべん')
-    await page.getByLabel('Full Description').fill('Person/human radical.')
+    await page.getByLabel('Description').fill('Person/human radical.')
 
     // Submit form
     await page.getByRole('button', { name: /create component/i }).click()
@@ -58,10 +57,9 @@ test.describe('Component CRUD Flow', () => {
     // Check metadata
     await expect(page.getByText(/2 strokes/i)).toBeVisible()
     await expect(page.getByText(/にんべん/i)).toBeVisible()
-    await expect(page.getByText('person', { exact: true })).toBeVisible()
 
     // Check description is displayed
-    await expect(page.getByText('Person/human radical.')).toBeVisible()
+    await expect(page.getByText('Person/human radical.').first()).toBeVisible()
 
     // =========================================================================
     // EDIT: Modify the component
@@ -80,7 +78,7 @@ test.describe('Component CRUD Flow', () => {
     await page.waitForTimeout(500)
 
     // Update description
-    const descriptionField = page.getByLabel('Full Description')
+    const descriptionField = page.getByLabel('Description')
     await descriptionField.clear()
     await descriptionField.fill(
       'Person/human radical. Derived from the kanji 人 (person).'
@@ -96,7 +94,9 @@ test.describe('Component CRUD Flow', () => {
     await page.waitForTimeout(3500)
 
     // Verify updated description
-    await expect(page.getByText(/derived from the kanji/i)).toBeVisible()
+    await expect(
+      page.getByText(/derived from the kanji/i).first()
+    ).toBeVisible()
 
     // =========================================================================
     // DELETE: Remove the component

@@ -155,6 +155,15 @@ export default tseslint.config(
     }
   },
 
+  // Script files (seed data, build scripts) - allow console.log
+  // This must come AFTER the main rules to override them
+  {
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'no-console': 'off'
+    }
+  },
+
   // Prettier (must be last to override other formatting rules)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   eslintConfigPrettier

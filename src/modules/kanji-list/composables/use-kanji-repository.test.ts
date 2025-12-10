@@ -2,7 +2,12 @@
  * Tests for useKanjiRepository composable
  */
 
-import { createTestDatabase, seedKanji } from '@test/helpers/database'
+import {
+  createTestDatabase,
+  seedComponent,
+  seedComponentOccurrence,
+  seedKanji
+} from '@test/helpers/database'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { Database } from 'sql.js'
@@ -56,7 +61,7 @@ describe('useKanjiRepository', () => {
         jlptLevel: 'N5',
         joyoLevel: 'elementary1',
         notesEtymology: null,
-        notesCultural: null,
+        notesSemantic: null,
         notesPersonal: 'Test note'
       })
 
@@ -69,7 +74,7 @@ describe('useKanjiRepository', () => {
         jlptLevel: 'N5',
         joyoLevel: 'elementary1',
         notesEtymology: null,
-        notesCultural: null,
+        notesSemantic: null,
         notesPersonal: 'Test note'
       })
       expect(result[0]).toHaveProperty('id')
@@ -173,6 +178,107 @@ describe('useKanjiRepository', () => {
       const result = search({ joyoLevels: ['elementary4'] })
       expect(result).toHaveLength(1)
       expect(result[0]?.character).toBe('愛')
+    })
+  })
+
+  describe('saveComponentLinks', () => {
+    it('preserves existing component occurrence data when updating links', () => {
+      // Create test data
+      const kanji = seedKanji(testDb, { character: '明', strokeCount: 8 })
+      const component1 = seedComponent(testDb, {
+        character: '日',
+        strokeCount: 4
+      })
+      const component2 = seedComponent(testDb, {
+        character: '月',
+        strokeCount: 4
+      })
+      const component3 = seedComponent(testDb, {
+        character: '火',
+        strokeCount: 4
+      })
+
+      // Create component occurrences with metadata
+      seedComponentOccurrence(testDb, kanji.id, component1.id, {
+        positionTypeId: 1,
+        isRadical: true,
+        analysisNotes: 'Test notes for 日'
+      })
+      seedComponentOccurrence(testDb, kanji.id, component2.id, {
+        positionTypeId: 2,
+        isRadical: false,
+        analysisNotes: 'Test notes for 月'
+      })
+
+      const { getLinkedComponentIds, saveComponentLinks } = useKanjiRepository()
+
+      // Initially should have 2 components
+      expect(getLinkedComponentIds(kanji.id)).toEqual([
+        component1.id,
+        component2.id
+      ])
+
+      // Update links: remove component2, add component3
+      saveComponentLinks(kanji.id, [component1.id, component3.id])
+
+      // Should now have component1 and component3
+      expect(getLinkedComponentIds(kanji.id)).toEqual([
+        component1.id,
+        component3.id
+      ])
+
+      // Check that component1's occurrence data is preserved
+      const result = testDb.exec(
+        'SELECT position_type_id, is_radical, analysis_notes FROM component_occurrences WHERE kanji_id = ? AND component_id = ?',
+        [kanji.id, component1.id]
+      )
+      expect(result[0]?.values[0]).toEqual([1, 1, 'Test notes for 日'])
+
+      // Check that component3 has default values
+      const result3 = testDb.exec(
+        'SELECT position_type_id, is_radical, analysis_notes FROM component_occurrences WHERE kanji_id = ? AND component_id = ?',
+        [kanji.id, component3.id]
+      )
+      expect(result3[0]?.values[0]).toEqual([null, 0, null])
+    })
+
+    it('updates display_order for existing links', () => {
+      // Create test data
+      const kanji = seedKanji(testDb, { character: '休', strokeCount: 6 })
+      const component1 = seedComponent(testDb, {
+        character: '亻',
+        strokeCount: 2
+      })
+      const component2 = seedComponent(testDb, {
+        character: '木',
+        strokeCount: 4
+      })
+
+      // Create component occurrences
+      seedComponentOccurrence(testDb, kanji.id, component1.id, {
+        displayOrder: 0
+      })
+      seedComponentOccurrence(testDb, kanji.id, component2.id, {
+        displayOrder: 1
+      })
+
+      const { saveComponentLinks } = useKanjiRepository()
+
+      // Reverse the order
+      saveComponentLinks(kanji.id, [component2.id, component1.id])
+
+      // Check display orders are updated
+      const result1 = testDb.exec(
+        'SELECT display_order FROM component_occurrences WHERE kanji_id = ? AND component_id = ?',
+        [kanji.id, component2.id]
+      )
+      expect(result1[0]?.values[0]?.[0]).toBe(0)
+
+      const result2 = testDb.exec(
+        'SELECT display_order FROM component_occurrences WHERE kanji_id = ? AND component_id = ?',
+        [kanji.id, component1.id]
+      )
+      expect(result2[0]?.values[0]?.[0]).toBe(1)
     })
   })
 })

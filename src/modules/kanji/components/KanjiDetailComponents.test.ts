@@ -8,31 +8,84 @@ import { describe, expect, it } from 'vitest'
 
 import KanjiDetailComponents from './KanjiDetailComponents.vue'
 
-import type { Component } from '@/shared/types/database-types'
+import type { ComponentOccurrenceWithPosition } from '@/modules/components/composables/use-component-occurrence-repository'
+import type { Component, PositionType } from '@/shared/types/database-types'
 
-const mockComponents: Component[] = [
-  {
-    id: 1,
+interface OccurrenceWithComponent extends ComponentOccurrenceWithPosition {
+  component: Component
+}
+
+const createMockOccurrence = (
+  overrides: Partial<OccurrenceWithComponent> = {}
+): OccurrenceWithComponent => ({
+  analysisNotes: null,
+  component: {
+    canBeRadical: false,
     character: '日',
-    strokeCount: 4,
-    sourceKanjiId: null,
-    descriptionShort: 'sun',
-    japaneseName: null,
-    description: 'The sun radical',
     createdAt: '2024-01-01',
+    description: 'sun',
+    id: 1,
+    japaneseName: null,
+    kangxiMeaning: null,
+    kangxiNumber: null,
+    radicalNameJapanese: null,
+    sourceKanjiId: null,
+    strokeCount: 4,
+    shortMeaning: null,
     updatedAt: '2024-01-01'
   },
-  {
-    id: 2,
-    character: '月',
-    strokeCount: 4,
-    sourceKanjiId: null,
-    descriptionShort: 'moon',
-    japaneseName: null,
-    description: 'The moon radical',
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01'
-  }
+  componentFormId: null,
+  componentId: 1,
+  createdAt: '2024-01-01',
+  displayOrder: 0,
+  id: 1,
+  isRadical: false,
+  kanjiId: 1,
+  position: null,
+  positionTypeId: null,
+  updatedAt: '2024-01-01',
+  ...overrides
+})
+
+const mockOccurrences: OccurrenceWithComponent[] = [
+  createMockOccurrence({
+    component: {
+      canBeRadical: false,
+      character: '日',
+      createdAt: '2024-01-01',
+      description: 'sun',
+      id: 1,
+      japaneseName: null,
+      kangxiMeaning: null,
+      kangxiNumber: null,
+      radicalNameJapanese: null,
+      sourceKanjiId: null,
+      strokeCount: 4,
+      shortMeaning: null,
+      updatedAt: '2024-01-01'
+    },
+    componentId: 1,
+    id: 1
+  }),
+  createMockOccurrence({
+    component: {
+      canBeRadical: false,
+      character: '月',
+      createdAt: '2024-01-01',
+      description: 'moon',
+      id: 2,
+      japaneseName: null,
+      kangxiMeaning: null,
+      kangxiNumber: null,
+      radicalNameJapanese: null,
+      sourceKanjiId: null,
+      strokeCount: 4,
+      shortMeaning: null,
+      updatedAt: '2024-01-01'
+    },
+    componentId: 2,
+    id: 2
+  })
 ]
 
 describe('KanjiDetailComponents', () => {
@@ -44,8 +97,8 @@ describe('KanjiDetailComponents', () => {
 
   it('renders component title', () => {
     render(KanjiDetailComponents, {
-      props: { components: mockComponents },
-      global: defaultGlobal
+      global: defaultGlobal,
+      props: { occurrences: mockOccurrences }
     })
 
     expect(screen.getByText('Components')).toBeInTheDocument()
@@ -53,68 +106,158 @@ describe('KanjiDetailComponents', () => {
 
   it('renders all component characters', () => {
     render(KanjiDetailComponents, {
-      props: { components: mockComponents },
-      global: defaultGlobal
+      global: defaultGlobal,
+      props: { occurrences: mockOccurrences }
     })
 
     expect(screen.getByText('日')).toBeInTheDocument()
     expect(screen.getByText('月')).toBeInTheDocument()
   })
 
-  it('renders component descriptions', () => {
+  it('renders short meanings when available', () => {
+    const occurrencesWithMeaning = [
+      createMockOccurrence({
+        component: {
+          ...mockOccurrences[0]!.component,
+          shortMeaning: 'sun, day'
+        }
+      }),
+      createMockOccurrence({
+        component: {
+          ...mockOccurrences[1]!.component,
+          shortMeaning: 'moon, month'
+        }
+      })
+    ]
+
     render(KanjiDetailComponents, {
-      props: { components: mockComponents },
-      global: defaultGlobal
+      global: defaultGlobal,
+      props: { occurrences: occurrencesWithMeaning }
     })
 
-    expect(screen.getByText('sun')).toBeInTheDocument()
-    expect(screen.getByText('moon')).toBeInTheDocument()
+    expect(screen.getByText('sun, day')).toBeInTheDocument()
+    expect(screen.getByText('moon, month')).toBeInTheDocument()
   })
 
-  it('renders links to component detail pages', () => {
+  it('renders view links to component detail pages', () => {
     const wrapper = render(KanjiDetailComponents, {
-      props: { components: mockComponents },
-      global: defaultGlobal
+      global: defaultGlobal,
+      props: { occurrences: mockOccurrences }
     })
 
-    // RouterLinkStub renders as <a> elements without href (has to attribute instead)
+    // RouterLinkStub renders as <a> elements
     const links = wrapper.container.querySelectorAll(
-      '.kanji-detail-components-link'
+      '.kanji-detail-components-view-link'
     )
     expect(links).toHaveLength(2)
   })
 
-  it('does not render section when components array is empty', () => {
+  it('does not render section when occurrences array is empty', () => {
     render(KanjiDetailComponents, {
-      props: { components: [] },
-      global: defaultGlobal
+      global: defaultGlobal,
+      props: { occurrences: [] }
     })
 
     expect(screen.queryByText('Components')).not.toBeInTheDocument()
   })
 
-  it('handles component without description', () => {
-    const componentWithoutDesc: Component[] = [
-      {
-        id: 1,
+  it('handles component without short meaning', () => {
+    const occurrenceWithoutMeaning = createMockOccurrence({
+      component: {
+        canBeRadical: false,
         character: '火',
-        strokeCount: 4,
-        sourceKanjiId: null,
-        descriptionShort: null,
-        japaneseName: null,
-        description: null,
         createdAt: '2024-01-01',
+        description: null,
+        id: 3,
+        japaneseName: null,
+        kangxiMeaning: null,
+        kangxiNumber: null,
+        radicalNameJapanese: null,
+        sourceKanjiId: null,
+        strokeCount: 4,
+        shortMeaning: null,
         updatedAt: '2024-01-01'
       }
-    ]
+    })
 
     render(KanjiDetailComponents, {
-      props: { components: componentWithoutDesc },
-      global: defaultGlobal
+      global: defaultGlobal,
+      props: { occurrences: [occurrenceWithoutMeaning] }
     })
 
     expect(screen.getByText('火')).toBeInTheDocument()
-    // Should not render description element
-    expect(screen.queryByText('sun')).not.toBeInTheDocument()
+    // Should not crash when shortMeaning is null
+  })
+
+  it('renders position badge when position is provided', () => {
+    const mockPosition: PositionType = {
+      createdAt: '2024-01-01',
+      description: 'Left side',
+      descriptionShort: 'Left',
+      displayOrder: 0,
+      id: 1,
+      nameEnglish: 'Left side',
+      nameJapanese: 'ε΄',
+      positionName: 'hen',
+      updatedAt: '2024-01-01'
+    }
+
+    const occurrenceWithPosition = createMockOccurrence({
+      position: mockPosition,
+      positionTypeId: 1
+    })
+
+    render(KanjiDetailComponents, {
+      global: defaultGlobal,
+      props: { occurrences: [occurrenceWithPosition] }
+    })
+
+    expect(screen.getByText('ε΄')).toBeInTheDocument()
+  })
+
+  it('renders radical badge when isRadical is true', () => {
+    const radicalOccurrence = createMockOccurrence({
+      isRadical: true
+    })
+
+    render(KanjiDetailComponents, {
+      global: defaultGlobal,
+      props: { occurrences: [radicalOccurrence] }
+    })
+
+    expect(screen.getByText('🔶 Radical')).toBeInTheDocument()
+  })
+
+  it('does not render analysis notes (simplified view)', () => {
+    const occurrenceWithNotes = createMockOccurrence({
+      analysisNotes: 'This component provides the meaning of sun'
+    })
+
+    render(KanjiDetailComponents, {
+      global: defaultGlobal,
+      props: { occurrences: [occurrenceWithNotes] }
+    })
+
+    // Analysis notes are NOT shown in simplified kanji page view
+    // Users must navigate to component page to see them
+    expect(
+      screen.queryByText('This component provides the meaning of sun')
+    ).not.toBeInTheDocument()
+  })
+
+  it('does not render metadata section when no position and not radical', () => {
+    const basicOccurrence = createMockOccurrence({
+      isRadical: false,
+      position: null
+    })
+
+    const wrapper = render(KanjiDetailComponents, {
+      global: defaultGlobal,
+      props: { occurrences: [basicOccurrence] }
+    })
+
+    expect(
+      wrapper.container.querySelector('.kanji-detail-components-metadata')
+    ).not.toBeInTheDocument()
   })
 })

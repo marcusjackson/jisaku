@@ -216,10 +216,16 @@ export function useDatabaseExport(): UseDatabaseExport {
       isClearing.value = true
 
       // Delete all data from tables (order matters due to foreign keys)
-      run('DELETE FROM kanji_components')
+      // First delete from junction/dependent tables
+      run('DELETE FROM component_grouping_members')
+      run('DELETE FROM component_groupings')
+      run('DELETE FROM component_occurrences')
+      run('DELETE FROM component_forms')
+      run('DELETE FROM kanji_classifications')
+      // Then delete from main tables
       run('DELETE FROM kanjis')
       run('DELETE FROM components')
-      run('DELETE FROM radicals')
+      // Note: classification_types and position_types are reference data, keep them
 
       // Persist changes
       await persist()

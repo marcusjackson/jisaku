@@ -38,17 +38,12 @@ for (const size of sizes) {
   const filename = `pwa-${String(size)}x${String(size)}.svg`
   const filepath = resolve(import.meta.dirname, '..', 'public', filename)
   writeFileSync(filepath, svg, 'utf-8')
-  // eslint-disable-next-line no-console
   console.log(`Generated ${filename}`)
 }
 
-// eslint-disable-next-line no-console
 console.log('\nNote: SVG icons generated. For PNG conversion, use a tool like:')
-// eslint-disable-next-line no-console
 console.log('  - https://cloudconvert.com/svg-to-png')
-// eslint-disable-next-line no-console
 console.log('  - Inkscape CLI: inkscape -w 192 -h 192 input.svg -o output.png')
-// eslint-disable-next-line no-console
 console.log(
   '\nOr use the SVGs directly - modern browsers support SVG PWA icons.'
 )

@@ -15,128 +15,164 @@ const SEED_KANJI = [
   {
     character: '日',
     strokeCount: 4,
+    shortMeaning: 'sun, day',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: '10級',
     notesPersonal: 'Sun, day. One of the most fundamental kanji.'
   },
   {
     character: '月',
     strokeCount: 4,
+    shortMeaning: 'moon, month',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: '10級',
     notesPersonal: 'Moon, month. Pictograph of a crescent moon.'
   },
   {
     character: '水',
     strokeCount: 4,
+    shortMeaning: 'water',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: '10級',
     notesPersonal: 'Water. Pictograph of flowing water.'
   },
   {
     character: '火',
     strokeCount: 4,
+    shortMeaning: 'fire',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: '10級',
     notesPersonal: 'Fire. Pictograph of flames.'
   },
   {
     character: '木',
     strokeCount: 4,
+    shortMeaning: 'tree, wood',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: '10級',
     notesPersonal: 'Tree, wood. Pictograph of a tree.'
   },
   {
     character: '金',
     strokeCount: 8,
+    shortMeaning: 'gold, metal, money',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: '9級',
     notesPersonal: 'Gold, metal, money.'
   },
   {
     character: '土',
     strokeCount: 3,
+    shortMeaning: 'earth, soil',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: '10級',
     notesPersonal: 'Earth, soil, ground.'
   },
   {
     character: '山',
     strokeCount: 3,
+    shortMeaning: 'mountain',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: '10級',
     notesPersonal: 'Mountain. Pictograph of three peaks.'
   },
   {
     character: '川',
     strokeCount: 3,
+    shortMeaning: 'river',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: '10級',
     notesPersonal: 'River. Pictograph of flowing water between banks.'
   },
   {
     character: '人',
     strokeCount: 2,
+    shortMeaning: 'person, human',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: '10級',
     notesPersonal: 'Person. Pictograph of a standing person.'
   },
   {
     character: '空',
     strokeCount: 8,
+    shortMeaning: 'sky, empty',
     jlptLevel: 'N4',
     joyoLevel: 'elementary1',
+    kenteiLevel: '9級',
     notesPersonal: 'Sky, empty. Represents openness above.'
   },
   {
     character: '海',
     strokeCount: 9,
+    shortMeaning: 'sea, ocean',
     jlptLevel: 'N4',
     joyoLevel: 'elementary2',
+    kenteiLevel: '8級',
     notesPersonal: 'Sea, ocean. Contains the water radical.'
   },
   {
     character: '花',
     strokeCount: 7,
+    shortMeaning: 'flower',
     jlptLevel: 'N4',
     joyoLevel: 'elementary1',
+    kenteiLevel: '9級',
     notesPersonal: 'Flower. Contains the grass radical.'
   },
   {
     character: '愛',
     strokeCount: 13,
+    shortMeaning: 'love, affection',
     jlptLevel: 'N3',
     joyoLevel: 'elementary4',
+    kenteiLevel: '6級',
     notesPersonal: 'Love, affection. Contains the heart radical.'
   },
   {
     character: '夢',
     strokeCount: 13,
+    shortMeaning: 'dream',
     jlptLevel: 'N2',
     joyoLevel: 'elementary5',
+    kenteiLevel: '5級',
     notesPersonal: 'Dream.'
   },
   {
     character: '桜',
     strokeCount: 10,
+    shortMeaning: 'cherry blossom',
     jlptLevel: 'N2',
     joyoLevel: 'elementary5',
+    kenteiLevel: '5級',
     notesPersonal: 'Cherry blossom. Iconic symbol of Japan.'
   },
   {
     character: '鬱',
     strokeCount: 29,
+    shortMeaning: 'depression, gloom',
     jlptLevel: 'N1',
     joyoLevel: 'secondary',
+    kenteiLevel: '準1級',
     notesPersonal:
       'Depression, melancholy. One of the most complex common kanji.'
   },
   {
     character: '薔',
     strokeCount: 16,
+    shortMeaning: 'rose',
     jlptLevel: 'N1',
     joyoLevel: null,
+    kenteiLevel: '1級',
     notesPersonal: 'Rose (part of 薔薇 - bara).'
   }
 ]
@@ -146,155 +182,89 @@ const SEED_COMPONENTS = [
   {
     character: '亻',
     strokeCount: 2,
-    descriptionShort: 'person',
+    shortMeaning: 'person',
     japaneseName: 'にんべん',
     description: 'Person/human radical. Derived from 人.',
-    sourceKanjiCharacter: '人'
+    sourceKanjiCharacter: '人',
+    canBeRadical: true,
+    kangxiNumber: 9,
+    kangxiMeaning: 'person',
+    radicalNameJapanese: 'にんべん'
   },
   {
     character: '氵',
     strokeCount: 3,
-    descriptionShort: 'water',
+    shortMeaning: 'water',
     japaneseName: 'さんずい',
     description: 'Water radical. Derived from 水.',
-    sourceKanjiCharacter: '水'
+    sourceKanjiCharacter: '水',
+    canBeRadical: true,
+    kangxiNumber: 85,
+    kangxiMeaning: 'water',
+    radicalNameJapanese: 'さんずい'
   },
   {
     character: '扌',
     strokeCount: 3,
-    descriptionShort: 'hand',
+    shortMeaning: 'hand',
     japaneseName: 'てへん',
-    description: 'Hand radical. Derived from 手.'
+    description: 'Hand radical. Derived from 手.',
+    canBeRadical: false
   },
   {
     character: '口',
     strokeCount: 3,
-    descriptionShort: 'mouth',
+    shortMeaning: 'mouth',
     japaneseName: 'くち',
-    description: 'Mouth radical. Also means opening or entrance.'
+    description: 'Mouth radical. Also means opening or entrance.',
+    canBeRadical: true,
+    kangxiNumber: 30,
+    kangxiMeaning: 'mouth',
+    radicalNameJapanese: 'くち'
   },
   {
     character: '女',
     strokeCount: 3,
-    descriptionShort: 'woman',
+    shortMeaning: 'woman',
     japaneseName: 'おんな',
-    description: 'Woman/female radical.'
+    description: 'Woman/female radical.',
+    canBeRadical: true,
+    kangxiNumber: 38,
+    kangxiMeaning: 'woman',
+    radicalNameJapanese: 'おんな'
   },
   {
     character: '艹',
     strokeCount: 3,
-    descriptionShort: 'grass',
+    shortMeaning: 'grass',
     japaneseName: 'くさかんむり',
-    description: 'Grass/plant radical. Appears at top of characters.'
+    description: 'Grass/plant radical. Appears at top of characters.',
+    canBeRadical: true,
+    kangxiNumber: 140,
+    kangxiMeaning: 'grass',
+    radicalNameJapanese: 'くさかんむり'
   },
   {
     character: '宀',
     strokeCount: 3,
-    descriptionShort: 'roof',
+    shortMeaning: 'roof',
     japaneseName: 'うかんむり',
-    description: 'Roof/house radical. Indicates shelter or building.'
+    description: 'Roof/house radical. Indicates shelter or building.',
+    canBeRadical: true,
+    kangxiNumber: 40,
+    kangxiMeaning: 'roof',
+    radicalNameJapanese: 'うかんむり'
   },
   {
     character: '心',
     strokeCount: 4,
-    descriptionShort: 'heart',
+    shortMeaning: 'heart',
     japaneseName: 'こころ',
-    description: 'Heart/mind radical. Indicates emotions or thoughts.'
-  }
-]
-
-// Sample Kangxi radicals for seeding
-const SEED_RADICALS = [
-  {
-    character: '一',
-    strokeCount: 1,
-    number: 1,
-    meaning: 'one',
-    japaneseName: 'いち'
-  },
-  {
-    character: '人',
-    strokeCount: 2,
-    number: 9,
-    meaning: 'person',
-    japaneseName: 'ひと'
-  },
-  {
-    character: '口',
-    strokeCount: 3,
-    number: 30,
-    meaning: 'mouth',
-    japaneseName: 'くち'
-  },
-  {
-    character: '土',
-    strokeCount: 3,
-    number: 32,
-    meaning: 'earth',
-    japaneseName: 'つち'
-  },
-  {
-    character: '女',
-    strokeCount: 3,
-    number: 38,
-    meaning: 'woman',
-    japaneseName: 'おんな'
-  },
-  {
-    character: '山',
-    strokeCount: 3,
-    number: 46,
-    meaning: 'mountain',
-    japaneseName: 'やま'
-  },
-  {
-    character: '心',
-    strokeCount: 4,
-    number: 61,
-    meaning: 'heart',
-    japaneseName: 'こころ'
-  },
-  {
-    character: '日',
-    strokeCount: 4,
-    number: 72,
-    meaning: 'sun/day',
-    japaneseName: 'ひ'
-  },
-  {
-    character: '月',
-    strokeCount: 4,
-    number: 74,
-    meaning: 'moon/month',
-    japaneseName: 'つき'
-  },
-  {
-    character: '木',
-    strokeCount: 4,
-    number: 75,
-    meaning: 'tree',
-    japaneseName: 'き'
-  },
-  {
-    character: '水',
-    strokeCount: 4,
-    number: 85,
-    meaning: 'water',
-    japaneseName: 'みず'
-  },
-  {
-    character: '火',
-    strokeCount: 4,
-    number: 86,
-    meaning: 'fire',
-    japaneseName: 'ひ'
-  },
-  {
-    character: '金',
-    strokeCount: 8,
-    number: 167,
-    meaning: 'gold/metal',
-    japaneseName: 'かね'
+    description: 'Heart/mind radical. Indicates emotions or thoughts.',
+    canBeRadical: true,
+    kangxiNumber: 61,
+    kangxiMeaning: 'heart',
+    radicalNameJapanese: 'こころ'
   }
 ]
 
@@ -312,26 +282,95 @@ export function useSeedData() {
     try {
       let seededKanji = 0
       let seededComponents = 0
-      let seededRadicals = 0
+      let seededPositionTypes = 0
 
-      // Seed radicals first (they are referenced by kanji)
-      const radicalCountResult = exec('SELECT COUNT(*) as count FROM radicals')
-      const radicalCount = radicalCountResult[0]?.values[0]?.[0]
-      if (typeof radicalCount === 'number' && radicalCount === 0) {
-        for (const radical of SEED_RADICALS) {
+      // Seed position types (reference data)
+      const positionTypeCountResult = exec(
+        'SELECT COUNT(*) as count FROM position_types'
+      )
+      const positionTypeCount = positionTypeCountResult[0]?.values[0]?.[0]
+      if (typeof positionTypeCount === 'number' && positionTypeCount === 0) {
+        const positionTypes = [
+          {
+            positionName: 'hen',
+            nameJapanese: 'へん',
+            nameEnglish: 'left side',
+            description:
+              'Component appears on the left side of the kanji character',
+            descriptionShort: 'Left side'
+          },
+          {
+            positionName: 'tsukuri',
+            nameJapanese: 'つくり',
+            nameEnglish: 'right side',
+            description:
+              'Component appears on the right side of the kanji character',
+            descriptionShort: 'Right side'
+          },
+          {
+            positionName: 'kanmuri',
+            nameJapanese: 'かんむり',
+            nameEnglish: 'top',
+            description:
+              'Component appears at the top of the kanji character, covering it like a crown',
+            descriptionShort: 'Top'
+          },
+          {
+            positionName: 'ashi',
+            nameJapanese: 'あし',
+            nameEnglish: 'bottom',
+            description:
+              'Component appears at the bottom of the kanji character, supporting it like legs',
+            descriptionShort: 'Bottom'
+          },
+          {
+            positionName: 'tare',
+            nameJapanese: 'たれ',
+            nameEnglish: 'hanging',
+            description:
+              'Component hangs from the top and wraps around the left side',
+            descriptionShort: 'Hanging from top-left'
+          },
+          {
+            positionName: 'nyou',
+            nameJapanese: 'にょう',
+            nameEnglish: 'enclosure',
+            description:
+              'Component wraps around the bottom and left side of the kanji',
+            descriptionShort: 'Bottom-left enclosure'
+          },
+          {
+            positionName: 'kamae',
+            nameJapanese: 'かまえ',
+            nameEnglish: 'enclosure',
+            description: 'Component completely or partially encloses the kanji',
+            descriptionShort: 'Enclosure'
+          },
+          {
+            positionName: 'other',
+            nameJapanese: 'その他',
+            nameEnglish: 'other',
+            description:
+              'Component appears in an unusual or mixed position that does not fit standard categories',
+            descriptionShort: 'Other position'
+          }
+        ]
+
+        positionTypes.forEach((pt, i) => {
           run(
-            `INSERT INTO radicals (character, stroke_count, number, meaning, japanese_name)
-             VALUES (?, ?, ?, ?, ?)`,
+            `INSERT INTO position_types (position_name, name_japanese, name_english, description, description_short, display_order)
+             VALUES (?, ?, ?, ?, ?, ?)`,
             [
-              radical.character,
-              radical.strokeCount,
-              radical.number,
-              radical.meaning,
-              radical.japaneseName
+              pt.positionName,
+              pt.nameJapanese,
+              pt.nameEnglish,
+              pt.description,
+              pt.descriptionShort,
+              i + 1
             ]
           )
-        }
-        seededRadicals = SEED_RADICALS.length
+        })
+        seededPositionTypes = positionTypes.length
       }
 
       // Seed kanji
@@ -340,13 +379,15 @@ export function useSeedData() {
       if (typeof kanjiCount === 'number' && kanjiCount === 0) {
         for (const kanji of SEED_KANJI) {
           run(
-            `INSERT INTO kanjis (character, stroke_count, jlpt_level, joyo_level, notes_personal)
-             VALUES (?, ?, ?, ?, ?)`,
+            `INSERT INTO kanjis (character, stroke_count, short_meaning, jlpt_level, joyo_level, kanji_kentei_level, notes_personal)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
               kanji.character,
               kanji.strokeCount,
+              kanji.shortMeaning,
               kanji.jlptLevel,
               kanji.joyoLevel,
+              kanji.kenteiLevel,
               kanji.notesPersonal
             ]
           )
@@ -363,7 +404,10 @@ export function useSeedData() {
         for (const component of SEED_COMPONENTS) {
           // Look up source kanji ID if specified
           let sourceKanjiId: number | null = null
-          if (component.sourceKanjiCharacter) {
+          if (
+            'sourceKanjiCharacter' in component &&
+            component.sourceKanjiCharacter
+          ) {
             const result = exec('SELECT id FROM kanjis WHERE character = ?', [
               component.sourceKanjiCharacter
             ])
@@ -372,15 +416,25 @@ export function useSeedData() {
           }
 
           run(
-            `INSERT INTO components (character, stroke_count, description_short, japanese_name, description, source_kanji_id)
-             VALUES (?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO components (character, stroke_count, short_meaning, japanese_name, description, source_kanji_id, can_be_radical, kangxi_number, kangxi_meaning, radical_name_japanese)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               component.character,
               component.strokeCount,
-              component.descriptionShort,
+              component.shortMeaning,
               component.japaneseName,
               component.description,
-              sourceKanjiId
+              sourceKanjiId,
+              component.canBeRadical ? 1 : 0,
+              'kangxiNumber' in component
+                ? (component.kangxiNumber ?? null)
+                : null,
+              'kangxiMeaning' in component
+                ? (component.kangxiMeaning ?? null)
+                : null,
+              'radicalNameJapanese' in component
+                ? (component.radicalNameJapanese ?? null)
+                : null
             ]
           )
         }
@@ -411,22 +465,26 @@ export function useSeedData() {
 
           if (kanjiId && compId) {
             run(
-              'INSERT INTO kanji_components (kanji_id, component_id) VALUES (?, ?)',
-              [kanjiId, compId]
+              'INSERT INTO component_occurrences (kanji_id, component_id, display_order) VALUES (?, ?, ?)',
+              [kanjiId, compId, 0]
             )
           }
         }
       }
 
-      if (seededKanji === 0 && seededComponents === 0 && seededRadicals === 0) {
+      if (
+        seededKanji === 0 &&
+        seededComponents === 0 &&
+        seededPositionTypes === 0
+      ) {
         showError('Database already has data')
         return
       }
 
       await persist()
       const messages: string[] = []
-      if (seededRadicals > 0) {
-        messages.push(`${String(seededRadicals)} radicals`)
+      if (seededPositionTypes > 0) {
+        messages.push(`${String(seededPositionTypes)} position types`)
       }
       if (seededKanji > 0) {
         messages.push(`${String(seededKanji)} kanji`)
@@ -447,10 +505,16 @@ export function useSeedData() {
 
     isClearing.value = true
     try {
-      run('DELETE FROM kanji_components')
+      // Delete from junction/dependent tables first
+      run('DELETE FROM component_grouping_members')
+      run('DELETE FROM component_groupings')
+      run('DELETE FROM component_occurrences')
+      run('DELETE FROM component_forms')
+      run('DELETE FROM kanji_classifications')
+      // Then main tables
       run('DELETE FROM kanjis')
       run('DELETE FROM components')
-      run('DELETE FROM radicals')
+      // Note: classification_types and position_types are reference data, keep them
       await persist()
       showSuccess('All data cleared')
     } catch (err) {

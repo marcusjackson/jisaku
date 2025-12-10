@@ -159,7 +159,7 @@ After MVP ships:
 - One logical change per commit
 - Reference GitHub Issues when applicable
 
-See `.github/instructions/commits.md` for details.
+See `.github/instructions/commit.instructions.md` for details.
 
 ## Before Submitting Code
 

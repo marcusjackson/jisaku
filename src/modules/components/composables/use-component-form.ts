@@ -35,10 +35,13 @@ export function useComponentForm(options: UseComponentFormOptions) {
     initialValues: {
       character: '',
       description: '',
-      descriptionShort: '',
       japaneseName: '',
       sourceKanjiId: null,
       strokeCount: undefined as unknown as number,
+      canBeRadical: false,
+      kangxiNumber: null,
+      kangxiMeaning: '',
+      radicalNameJapanese: '',
       ...initialValues
     },
     validationSchema: schema

@@ -15,6 +15,7 @@ import { useDatabase } from '@/shared/composables/use-database'
 
 import SettingsSectionDatabase from './SettingsSectionDatabase.vue'
 import SettingsSectionDevTools from './SettingsSectionDevTools.vue'
+import SettingsSectionPositionTypes from './SettingsSectionPositionTypes.vue'
 
 // Database initialization
 const { initError, initialize, isInitialized, isInitializing } = useDatabase()
@@ -65,6 +66,7 @@ onMounted(async () => {
     </header>
 
     <div class="settings-root-content">
+      <SettingsSectionPositionTypes />
       <SettingsSectionDatabase />
       <SettingsSectionDevTools v-if="isDev" />
     </div>

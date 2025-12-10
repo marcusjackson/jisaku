@@ -238,11 +238,16 @@ const selectRootProps = computed(() => {
   These cannot be scoped because the content is rendered outside the component tree.
 -->
 <style>
+[data-reka-popper-content-wrapper='']:has(.base-select-content) {
+  z-index: var(--z-dropdown) !important;
+}
+
 .base-select-content {
-  z-index: var(--z-dropdown);
   width: var(--reka-select-trigger-width);
   min-width: var(--reka-select-trigger-width);
+  max-height: 400px;
   overflow: hidden;
+  overflow-y: auto;
   border: var(--card-border);
   border-radius: var(--radius-md);
   background-color: var(--color-surface);

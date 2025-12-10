@@ -15,10 +15,14 @@ function createMockComponent(overrides: Partial<Component> = {}): Component {
     id: 1,
     character: '亻',
     strokeCount: 2,
+    shortMeaning: null,
     sourceKanjiId: null,
-    descriptionShort: null,
     japaneseName: null,
     description: null,
+    canBeRadical: false,
+    kangxiNumber: null,
+    kangxiMeaning: null,
+    radicalNameJapanese: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides
@@ -30,14 +34,19 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     id: 1,
     character: '人',
     strokeCount: 2,
+    shortMeaning: null,
     radicalId: null,
     jlptLevel: null,
     joyoLevel: null,
+    kenteiLevel: null,
     strokeDiagramImage: null,
     strokeGifImage: null,
     notesEtymology: null,
-    notesCultural: null,
+    notesSemantic: null,
+    notesEducationMnemonics: null,
     notesPersonal: null,
+    identifier: null,
+    radicalStrokeCount: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides
@@ -58,14 +67,15 @@ describe('ComponentDetailInfo', () => {
 
   it('displays short description when present', () => {
     const component = createMockComponent({
-      descriptionShort: 'Person radical'
+      description: 'Person radical'
     })
 
     renderWithProviders(ComponentDetailInfo, {
       props: { component }
     })
 
-    expect(screen.getByText('Person radical')).toBeInTheDocument()
+    // Description appears both in the Short Description field and Description section
+    expect(screen.getAllByText('Person radical').length).toBeGreaterThan(0)
   })
 
   it('displays full description when present', () => {
@@ -77,10 +87,14 @@ describe('ComponentDetailInfo', () => {
       props: { component }
     })
 
+    // Description appears both in definition list and description section
     expect(
-      screen.getByText('The person radical represents a standing human figure.')
-    ).toBeInTheDocument()
-    expect(screen.getByText('Description')).toBeInTheDocument()
+      screen.getAllByText(
+        'The person radical represents a standing human figure.'
+      ).length
+    ).toBeGreaterThan(0)
+    // "Description" label appears twice (in dt and h3)
+    expect(screen.getAllByText('Description').length).toBeGreaterThan(0)
   })
 
   it('displays source kanji link when present', () => {

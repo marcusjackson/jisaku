@@ -2,13 +2,14 @@
  * useRadicalRepository tests
  *
  * Tests for the radical repository composable.
+ * Radicals are now stored in the components table with canBeRadical=true.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   createTestDatabase,
-  seedRadical
+  seedComponent
 } from '../../../../test/helpers/database'
 
 import type { Database } from 'sql.js'
@@ -42,46 +43,61 @@ describe('useRadicalRepository', () => {
   })
 
   describe('getAll', () => {
-    it('returns empty array when no radicals exist', () => {
+    it('returns empty array when no radical components exist', () => {
       const { getAll } = useRadicalRepository()
       const result = getAll()
       expect(result).toEqual([])
     })
 
-    it('returns all radicals ordered by number', () => {
-      seedRadical(testDb, { character: '口', strokeCount: 3, number: 30 })
-      seedRadical(testDb, { character: '人', strokeCount: 2, number: 9 })
+    it('returns only components with canBeRadical=true', () => {
+      // Seed a regular component (not a radical)
+      seedComponent(testDb, {
+        character: '氵',
+        strokeCount: 3,
+        canBeRadical: false
+      })
+
+      // Seed a radical component
+      seedComponent(testDb, {
+        character: '水',
+        strokeCount: 4,
+        canBeRadical: true,
+        kangxiNumber: 85,
+        kangxiMeaning: 'water'
+      })
+
+      const { getAll } = useRadicalRepository()
+      const result = getAll()
+
+      expect(result).toHaveLength(1)
+      expect(result[0]?.character).toBe('水')
+      expect(result[0]?.canBeRadical).toBe(true)
+      expect(result[0]?.kangxiNumber).toBe(85)
+    })
+
+    it('returns radicals ordered by kangxi number', () => {
+      seedComponent(testDb, {
+        character: '火',
+        strokeCount: 4,
+        canBeRadical: true,
+        kangxiNumber: 86,
+        kangxiMeaning: 'fire'
+      })
+
+      seedComponent(testDb, {
+        character: '水',
+        strokeCount: 4,
+        canBeRadical: true,
+        kangxiNumber: 85,
+        kangxiMeaning: 'water'
+      })
 
       const { getAll } = useRadicalRepository()
       const result = getAll()
 
       expect(result).toHaveLength(2)
-      expect(result[0]?.character).toBe('人') // number 9 first
-      expect(result[1]?.character).toBe('口') // number 30 second
-    })
-
-    it('maps database columns to camelCase properties', () => {
-      seedRadical(testDb, {
-        character: '人',
-        strokeCount: 2,
-        number: 9,
-        meaning: 'person',
-        japaneseName: 'ひと'
-      })
-
-      const { getAll } = useRadicalRepository()
-      const result = getAll()
-
-      expect(result[0]).toMatchObject({
-        character: '人',
-        strokeCount: 2,
-        number: 9,
-        meaning: 'person',
-        japaneseName: 'ひと'
-      })
-      expect(result[0]).toHaveProperty('id')
-      expect(result[0]).toHaveProperty('createdAt')
-      expect(result[0]).toHaveProperty('updatedAt')
+      expect(result[0]?.kangxiNumber).toBe(85)
+      expect(result[1]?.kangxiNumber).toBe(86)
     })
   })
 
@@ -92,36 +108,58 @@ describe('useRadicalRepository', () => {
       expect(result).toBeNull()
     })
 
-    it('returns radical by id', () => {
-      const seeded = seedRadical(testDb, {
-        character: '人',
-        strokeCount: 2,
-        number: 9
+    it('returns null for non-radical components', () => {
+      const component = seedComponent(testDb, {
+        character: '氵',
+        strokeCount: 3,
+        canBeRadical: false
       })
 
       const { getById } = useRadicalRepository()
-      const result = getById(seeded.id)
+      const result = getById(component.id)
+
+      expect(result).toBeNull()
+    })
+
+    it('returns radical component by id', () => {
+      const radical = seedComponent(testDb, {
+        character: '水',
+        strokeCount: 4,
+        canBeRadical: true,
+        kangxiNumber: 85,
+        kangxiMeaning: 'water'
+      })
+
+      const { getById } = useRadicalRepository()
+      const result = getById(radical.id)
 
       expect(result).not.toBeNull()
-      expect(result?.character).toBe('人')
+      expect(result?.character).toBe('水')
+      expect(result?.kangxiMeaning).toBe('water')
     })
   })
 
   describe('getByNumber', () => {
-    it('returns null when number does not exist', () => {
+    it('returns null when kangxi number does not exist', () => {
       const { getByNumber } = useRadicalRepository()
       const result = getByNumber(999)
       expect(result).toBeNull()
     })
 
-    it('returns radical by Kangxi number', () => {
-      seedRadical(testDb, { character: '人', strokeCount: 2, number: 9 })
+    it('returns radical by kangxi number', () => {
+      seedComponent(testDb, {
+        character: '水',
+        strokeCount: 4,
+        canBeRadical: true,
+        kangxiNumber: 85,
+        kangxiMeaning: 'water'
+      })
 
       const { getByNumber } = useRadicalRepository()
-      const result = getByNumber(9)
+      const result = getByNumber(85)
 
       expect(result).not.toBeNull()
-      expect(result?.character).toBe('人')
+      expect(result?.character).toBe('水')
     })
   })
 
@@ -132,105 +170,33 @@ describe('useRadicalRepository', () => {
       expect(result).toBeNull()
     })
 
-    it('returns radical by character', () => {
-      seedRadical(testDb, { character: '人', strokeCount: 2, number: 9 })
+    it('returns null for non-radical with matching character', () => {
+      seedComponent(testDb, {
+        character: '氵',
+        strokeCount: 3,
+        canBeRadical: false
+      })
 
       const { getByCharacter } = useRadicalRepository()
-      const result = getByCharacter('人')
+      const result = getByCharacter('氵')
+
+      expect(result).toBeNull()
+    })
+
+    it('returns radical by character', () => {
+      seedComponent(testDb, {
+        character: '水',
+        strokeCount: 4,
+        canBeRadical: true,
+        kangxiNumber: 85,
+        kangxiMeaning: 'water'
+      })
+
+      const { getByCharacter } = useRadicalRepository()
+      const result = getByCharacter('水')
 
       expect(result).not.toBeNull()
-      expect(result?.number).toBe(9)
-    })
-  })
-
-  describe('create', () => {
-    it('creates a new radical', () => {
-      const { create, getAll } = useRadicalRepository()
-
-      const created = create({
-        character: '人',
-        strokeCount: 2,
-        number: 9,
-        meaning: 'person'
-      })
-
-      expect(created.character).toBe('人')
-      expect(created.strokeCount).toBe(2)
-      expect(created.number).toBe(9)
-      expect(created.meaning).toBe('person')
-      expect(created.id).toBeDefined()
-
-      const all = getAll()
-      expect(all).toHaveLength(1)
-    })
-
-    it('creates radical with all optional fields', () => {
-      const { create } = useRadicalRepository()
-
-      const created = create({
-        character: '口',
-        strokeCount: 3,
-        number: 30,
-        meaning: 'mouth',
-        japaneseName: 'くち'
-      })
-
-      expect(created.meaning).toBe('mouth')
-      expect(created.japaneseName).toBe('くち')
-    })
-  })
-
-  describe('update', () => {
-    it('updates radical fields', () => {
-      const seeded = seedRadical(testDb, {
-        character: '人',
-        strokeCount: 2,
-        number: 9
-      })
-
-      const { update } = useRadicalRepository()
-      const updated = update(seeded.id, { meaning: 'person' })
-
-      expect(updated.meaning).toBe('person')
-      expect(updated.character).toBe('人') // unchanged
-    })
-
-    it('returns existing radical when no updates provided', () => {
-      const seeded = seedRadical(testDb, {
-        character: '人',
-        strokeCount: 2,
-        number: 9
-      })
-
-      const { update } = useRadicalRepository()
-      const result = update(seeded.id, {})
-
-      expect(result.id).toBe(seeded.id)
-    })
-
-    it('throws when radical not found', () => {
-      const { update } = useRadicalRepository()
-
-      expect(() => update(999, { meaning: 'test' })).toThrow(
-        'Radical with id 999 not found'
-      )
-    })
-  })
-
-  describe('remove', () => {
-    it('removes a radical', () => {
-      const seeded = seedRadical(testDb, {
-        character: '人',
-        strokeCount: 2,
-        number: 9
-      })
-
-      const { getAll, remove } = useRadicalRepository()
-      expect(getAll()).toHaveLength(1)
-
-      remove(seeded.id)
-
-      expect(getAll()).toHaveLength(0)
+      expect(result?.kangxiNumber).toBe(85)
     })
   })
 })

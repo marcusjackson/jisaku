@@ -15,11 +15,7 @@ const props = defineProps<{
   sourceKanji?: Kanji | null
 }>()
 
-const hasDescription = computed(
-  () =>
-    Boolean(props.component.description) ||
-    Boolean(props.component.descriptionShort)
-)
+const hasDescription = computed(() => Boolean(props.component.description))
 </script>
 
 <template>
@@ -36,12 +32,12 @@ const hasDescription = computed(
       </div>
 
       <div
-        v-if="component.descriptionShort"
+        v-if="component.description"
         class="component-detail-info-item"
       >
-        <dt class="component-detail-info-label">Short Description</dt>
+        <dt class="component-detail-info-label">Description</dt>
         <dd class="component-detail-info-value">
-          {{ component.descriptionShort }}
+          {{ component.description }}
         </dd>
       </div>
 

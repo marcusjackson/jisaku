@@ -17,25 +17,32 @@ import ComponentDetailHeader from './ComponentDetailHeader.vue'
 import ComponentDetailInfo from './ComponentDetailInfo.vue'
 import ComponentDetailKanjiList from './ComponentDetailKanjiList.vue'
 
-import type { Component, Kanji } from '@/shared/types/database-types'
+import type {
+  Component,
+  Kanji,
+  OccurrenceWithKanji
+} from '@/shared/types/database-types'
 
 interface Props {
   component: Component
-  sourceKanji?: Kanji | null
-  linkedKanji?: Kanji[]
-  linkedKanjiCount?: number
   isDeleting?: boolean
+  linkedKanjiCount?: number
+  occurrences?: OccurrenceWithKanji[]
+  sourceKanji?: Kanji | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isDeleting: false,
-  linkedKanji: () => [],
   linkedKanjiCount: 0,
+  occurrences: () => [],
   sourceKanji: null
 })
 
 const emit = defineEmits<{
   delete: []
+  'update:analysisNotes': [occurrenceId: number, analysisNotes: string | null]
+  'update:position': [occurrenceId: number, positionTypeId: number | null]
+  'update:isRadical': [occurrenceId: number, isRadical: boolean]
 }>()
 
 // Computed to handle exactOptionalPropertyTypes
@@ -64,6 +71,24 @@ function handleDeleteConfirm() {
 function handleDeleteCancel() {
   showDeleteDialog.value = false
 }
+
+function handleAnalysisNotesUpdate(
+  occurrenceId: number,
+  analysisNotes: string | null
+) {
+  emit('update:analysisNotes', occurrenceId, analysisNotes)
+}
+
+function handlePositionUpdate(
+  occurrenceId: number,
+  positionTypeId: number | null
+) {
+  emit('update:position', occurrenceId, positionTypeId)
+}
+
+function handleIsRadicalUpdate(occurrenceId: number, isRadical: boolean) {
+  emit('update:isRadical', occurrenceId, isRadical)
+}
 </script>
 
 <template>
@@ -76,7 +101,12 @@ function handleDeleteCancel() {
         :source-kanji="props.sourceKanji"
       />
 
-      <ComponentDetailKanjiList :kanji-list="props.linkedKanji" />
+      <ComponentDetailKanjiList
+        :occurrences="props.occurrences"
+        @update:analysis-notes="handleAnalysisNotesUpdate"
+        @update:is-radical="handleIsRadicalUpdate"
+        @update:position="handlePositionUpdate"
+      />
     </div>
 
     <div class="component-section-detail-actions">

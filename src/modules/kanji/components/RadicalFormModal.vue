@@ -3,6 +3,7 @@
  * RadicalFormModal
  *
  * Modal dialog for creating a new radical inline from the kanji form.
+ * Creates a component with canBeRadical=true.
  * Provides a simple form for entering basic radical information.
  */
 
@@ -16,9 +17,9 @@ import BaseButton from '@/base/components/BaseButton.vue'
 import BaseDialog from '@/base/components/BaseDialog.vue'
 import BaseInput from '@/base/components/BaseInput.vue'
 
-import { useRadicalRepository } from '../composables/use-radical-repository'
+import { useComponentRepository } from '@/modules/components/composables/use-component-repository'
 
-import type { Radical } from '@/shared/types/database-types'
+import type { Component } from '@/shared/types/database-types'
 
 defineProps<{
   /** Placeholder - not used but keeps component signature consistent */
@@ -26,7 +27,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  created: [radical: Radical]
+  created: [radical: Component]
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
@@ -37,7 +38,7 @@ const radicalSchema = z.object({
     .string()
     .min(1, 'Character is required')
     .max(1, 'Must be a single character'),
-  number: z
+  kangxiNumber: z
     .number({ invalid_type_error: 'Kangxi number is required' })
     .int('Must be a whole number')
     .min(1, 'Must be at least 1')
@@ -47,8 +48,8 @@ const radicalSchema = z.object({
     .int('Must be a whole number')
     .min(1, 'Must be at least 1')
     .max(17, 'Must be at most 17'),
-  meaning: z.string().optional(),
-  japaneseName: z.string().optional()
+  kangxiMeaning: z.string().optional(),
+  radicalNameJapanese: z.string().optional()
 })
 
 type RadicalFormValues = z.infer<typeof radicalSchema>
@@ -63,11 +64,12 @@ const { handleSubmit, resetForm } = useForm<RadicalFormValues>({
 // Field bindings
 const { errorMessage: characterError, value: character } =
   useField<string>('character')
-const { errorMessage: numberError, value: number } = useField<number>('number')
+const { errorMessage: kangxiNumberError, value: kangxiNumber } =
+  useField<number>('kangxiNumber')
 const { errorMessage: strokeCountError, value: strokeCount } =
   useField<number>('strokeCount')
-const { value: meaning } = useField<string>('meaning')
-const { value: japaneseName } = useField<string>('japaneseName')
+const { value: kangxiMeaning } = useField<string>('kangxiMeaning')
+const { value: radicalNameJapanese } = useField<string>('radicalNameJapanese')
 
 // Reset form when dialog closes
 watch(open, (isOpen) => {
@@ -77,7 +79,7 @@ watch(open, (isOpen) => {
   }
 })
 
-const { create } = useRadicalRepository()
+const { create } = useComponentRepository()
 
 const onSubmit = handleSubmit((formValues) => {
   isSubmitting.value = true
@@ -86,10 +88,11 @@ const onSubmit = handleSubmit((formValues) => {
   try {
     const radical = create({
       character: formValues.character,
-      number: formValues.number,
       strokeCount: formValues.strokeCount,
-      meaning: formValues.meaning ?? null,
-      japaneseName: formValues.japaneseName ?? null
+      canBeRadical: true,
+      kangxiNumber: formValues.kangxiNumber,
+      kangxiMeaning: formValues.kangxiMeaning ?? null,
+      radicalNameJapanese: formValues.radicalNameJapanese ?? null
     })
 
     emit('created', radical)
@@ -136,10 +139,10 @@ const onSubmit = handleSubmit((formValues) => {
 
         <div class="radical-form-modal-field radical-form-modal-field-number">
           <BaseInput
-            v-model.number="number"
-            :error="numberError"
+            v-model.number="kangxiNumber"
+            :error="kangxiNumberError"
             label="Kangxi #"
-            name="number"
+            name="kangxiNumber"
             required
             type="number"
           />
@@ -160,18 +163,18 @@ const onSubmit = handleSubmit((formValues) => {
       <div class="radical-form-modal-row">
         <div class="radical-form-modal-field">
           <BaseInput
-            v-model="meaning"
+            v-model="kangxiMeaning"
             label="Meaning"
-            name="meaning"
+            name="kangxiMeaning"
             placeholder="e.g., water"
           />
         </div>
 
         <div class="radical-form-modal-field">
           <BaseInput
-            v-model="japaneseName"
+            v-model="radicalNameJapanese"
             label="Japanese Name"
-            name="japaneseName"
+            name="radicalNameJapanese"
             placeholder="e.g., さんずい"
           />
         </div>

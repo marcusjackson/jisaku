@@ -253,10 +253,15 @@ describe('useDatabaseExport', () => {
       const { clearDatabase } = useDatabaseExport()
       await clearDatabase()
 
-      expect(mockRun).toHaveBeenCalledWith('DELETE FROM kanji_components')
+      expect(mockRun).toHaveBeenCalledWith(
+        'DELETE FROM component_grouping_members'
+      )
+      expect(mockRun).toHaveBeenCalledWith('DELETE FROM component_groupings')
+      expect(mockRun).toHaveBeenCalledWith('DELETE FROM component_occurrences')
+      expect(mockRun).toHaveBeenCalledWith('DELETE FROM component_forms')
+      expect(mockRun).toHaveBeenCalledWith('DELETE FROM kanji_classifications')
       expect(mockRun).toHaveBeenCalledWith('DELETE FROM kanjis')
       expect(mockRun).toHaveBeenCalledWith('DELETE FROM components')
-      expect(mockRun).toHaveBeenCalledWith('DELETE FROM radicals')
     })
 
     it('persists changes after clearing', async () => {

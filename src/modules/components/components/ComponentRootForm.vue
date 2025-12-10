@@ -38,7 +38,8 @@ const route = useRoute()
 const router = useRouter()
 
 // Database initialization
-const { initError, initialize, isInitialized, isInitializing } = useDatabase()
+const { initError, initialize, isInitialized, isInitializing, persist } =
+  useDatabase()
 
 // Repositories
 const { create, getById, update } = useComponentRepository()
@@ -108,12 +109,13 @@ async function handleSubmit(values: ComponentFormData) {
       const input = {
         character: values.character,
         strokeCount: values.strokeCount,
-        descriptionShort: values.descriptionShort ?? null,
-        japaneseName: values.japaneseName ?? null,
+        shortMeaning: values.shortMeaning ?? null,
         description: values.description ?? null,
+        japaneseName: values.japaneseName ?? null,
         sourceKanjiId: values.sourceKanjiId ?? null
       }
       const newComponent = create(input)
+      await persist()
       showSuccess(`Created component: ${newComponent.character}`)
       await router.push(`/components/${String(newComponent.id)}`)
     } else {
@@ -121,9 +123,9 @@ async function handleSubmit(values: ComponentFormData) {
       const input = {
         character: values.character,
         strokeCount: values.strokeCount,
-        descriptionShort: values.descriptionShort ?? null,
-        japaneseName: values.japaneseName ?? null,
+        shortMeaning: values.shortMeaning ?? null,
         description: values.description ?? null,
+        japaneseName: values.japaneseName ?? null,
         sourceKanjiId: values.sourceKanjiId ?? null
       }
       const updated = update(component.value.id, input)
@@ -160,9 +162,9 @@ watch(component, (newComponent) => {
   if (newComponent && !formInitialized.value) {
     setFieldValue('character', newComponent.character)
     setFieldValue('strokeCount', newComponent.strokeCount)
-    setFieldValue('descriptionShort', newComponent.descriptionShort ?? '')
-    setFieldValue('japaneseName', newComponent.japaneseName ?? '')
+    setFieldValue('shortMeaning', newComponent.shortMeaning ?? '')
     setFieldValue('description', newComponent.description ?? '')
+    setFieldValue('japaneseName', newComponent.japaneseName ?? '')
     setFieldValue('sourceKanjiId', newComponent.sourceKanjiId ?? undefined)
     formInitialized.value = true
   }

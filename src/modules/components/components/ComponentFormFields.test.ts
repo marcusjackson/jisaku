@@ -36,10 +36,12 @@ describe('ComponentFormFields', () => {
     expect(screen.getByLabelText(/stroke count/i)).toBeInTheDocument()
   })
 
-  it('renders short description input', () => {
+  it('renders description input', () => {
     render(ComponentFormFields, { props: defaultProps })
 
-    expect(screen.getByLabelText(/short description/i)).toBeInTheDocument()
+    expect(
+      screen.getByLabelText('Description', { exact: true })
+    ).toBeInTheDocument()
   })
 
   it('renders japanese name input', () => {
@@ -54,11 +56,20 @@ describe('ComponentFormFields', () => {
     expect(screen.getByLabelText(/source kanji/i)).toBeInTheDocument()
   })
 
-  it('renders full description textarea', () => {
+  it('renders description textarea', () => {
     render(ComponentFormFields, { props: defaultProps })
 
-    expect(screen.getByLabelText(/full description/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^description$/i)).toBeInTheDocument()
   })
+
+  it('renders can be radical checkbox', () => {
+    render(ComponentFormFields, { props: defaultProps })
+
+    expect(screen.getByText(/can be used as a radical/i)).toBeInTheDocument()
+  })
+
+  // Note: Testing conditional radical fields requires complex VeeValidate form interaction
+  // Tested via E2E tests instead
 
   it('marks character as required', () => {
     render(ComponentFormFields, { props: defaultProps })
@@ -82,12 +93,6 @@ describe('ComponentFormFields', () => {
     expect(
       screen.getByPlaceholderText(/add detailed description/i)
     ).toBeInTheDocument()
-  })
-
-  it('has short description placeholder', () => {
-    render(ComponentFormFields, { props: defaultProps })
-
-    expect(screen.getByPlaceholderText(/person radical/i)).toBeInTheDocument()
   })
 
   it('has japanese name placeholder', () => {

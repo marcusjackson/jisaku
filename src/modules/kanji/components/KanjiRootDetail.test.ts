@@ -44,6 +44,9 @@ vi.mock('@/shared/composables/use-toast', () => ({
   })
 }))
 
+// Mock values for component occurrence repository
+const mockGetByKanjiIdWithPosition = vi.fn()
+
 // Mock the repository
 vi.mock('@/modules/kanji-list/composables/use-kanji-repository', () => ({
   useKanjiRepository: () => ({
@@ -52,6 +55,16 @@ vi.mock('@/modules/kanji-list/composables/use-kanji-repository', () => ({
     remove: mockRemove
   })
 }))
+
+// Mock component occurrence repository
+vi.mock(
+  '@/modules/components/composables/use-component-occurrence-repository',
+  () => ({
+    useComponentOccurrenceRepository: () => ({
+      getByKanjiIdWithPosition: mockGetByKanjiIdWithPosition
+    })
+  })
+)
 
 // Mock router
 vi.mock('vue-router', () => ({
@@ -77,11 +90,16 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     id: 1,
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
+    kenteiLevel: null,
     notesEtymology: null,
-    notesCultural: null,
+    notesSemantic: null,
+    notesEducationMnemonics: null,
     notesPersonal: 'Sun, day',
+    identifier: null,
+    radicalStrokeCount: null,
     radicalId: null,
     strokeCount: 4,
+    shortMeaning: null,
     strokeDiagramImage: null,
     strokeGifImage: null,
     updatedAt: new Date().toISOString(),
@@ -97,6 +115,7 @@ describe('KanjiRootDetail', () => {
     mockInitError.value = null
     mockRouteParams.value = { id: '1' }
     mockGetById.mockReturnValue(createMockKanji())
+    mockGetByKanjiIdWithPosition.mockReturnValue([])
   })
 
   afterEach(() => {
@@ -116,14 +135,6 @@ describe('KanjiRootDetail', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('日')
-  })
-
-  it('displays stroke count', async () => {
-    const wrapper = mount(KanjiRootDetail)
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('4')
-    expect(wrapper.text()).toContain('stroke')
   })
 
   it('displays JLPT level', async () => {

@@ -27,6 +27,7 @@ export interface ComboboxOption {
   value: string | number
   label: string
   disabled?: boolean
+  [key: string]: unknown // Allow additional fields for multi-field search
 }
 
 const props = defineProps<{
@@ -46,9 +47,14 @@ const props = defineProps<{
   options: ComboboxOption[]
   /** Display function for selected value */
   displayValue?: (option: ComboboxOption | undefined) => string
+  /** Keys to search across (defaults to ['label']) */
+  searchKeys?: string[]
+  /** Custom display function for options in dropdown */
+  displayFn?: (option: ComboboxOption) => string
 }>()
 
-const { disabled, name, options, placeholder, required } = toRefs(props)
+const { disabled, name, options, placeholder, required, searchKeys } =
+  toRefs(props)
 
 const model = defineModel<string | number | null>()
 
@@ -58,14 +64,24 @@ const searchTerm = ref('')
 // Use Reka UI's filter utility for fuzzy matching
 const { contains } = useFilter({ sensitivity: 'base' })
 
-// Filter options based on search term
+// Filter options based on search term across multiple keys
 const filteredOptions = computed(() => {
   if (!searchTerm.value) {
     return options.value
   }
-  return options.value.filter((option) =>
-    contains(option.label, searchTerm.value)
-  )
+
+  const keys = searchKeys.value ?? ['label']
+
+  return options.value.filter((option) => {
+    // Check if any of the specified keys match the search term
+    return keys.some((key) => {
+      const value = option[key]
+      if (typeof value === 'string') {
+        return contains(value, searchTerm.value)
+      }
+      return false
+    })
+  })
 })
 
 // Get currently selected option (returns null instead of undefined for type safety)
@@ -86,6 +102,14 @@ function handleSelect(option: ComboboxOption) {
   model.value = option.value
   searchTerm.value = ''
 }
+
+// Get display text for an option (in dropdown)
+const getOptionDisplayText = computed(() => {
+  if (props.displayFn) {
+    return props.displayFn
+  }
+  return (option: ComboboxOption) => option.label
+})
 
 // Build props object for ComboboxRoot
 const comboboxRootProps = computed(() => {
@@ -191,7 +215,9 @@ const comboboxRootProps = computed(() => {
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
               </ComboboxItemIndicator>
-              <span class="base-combobox-item-text">{{ option.label }}</span>
+              <span class="base-combobox-item-text">{{
+                getOptionDisplayText(option)
+              }}</span>
             </ComboboxItem>
           </ComboboxViewport>
         </ComboboxContent>

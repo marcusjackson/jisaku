@@ -16,11 +16,16 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     id: 1,
     jlptLevel: null,
     joyoLevel: null,
+    kenteiLevel: null,
     notesEtymology: null,
-    notesCultural: null,
+    notesSemantic: null,
+    notesEducationMnemonics: null,
     notesPersonal: null,
+    identifier: null,
+    radicalStrokeCount: null,
     radicalId: null,
     strokeCount: 4,
+    shortMeaning: null,
     strokeDiagramImage: null,
     strokeGifImage: null,
     updatedAt: new Date().toISOString(),
@@ -110,7 +115,7 @@ describe('KanjiDetailBadges', () => {
     expect(screen.getByText('小3')).toBeInTheDocument()
   })
 
-  it('does not render container when no badges', () => {
+  it('still renders container for stroke count even when no other badges', () => {
     const kanji = createMockKanji({
       jlptLevel: null,
       joyoLevel: null
@@ -120,8 +125,8 @@ describe('KanjiDetailBadges', () => {
       props: { kanji }
     })
 
-    expect(
-      container.querySelector('.kanji-detail-badges')
-    ).not.toBeInTheDocument()
+    // Stroke count is always shown, so container should be present
+    expect(container.querySelector('.kanji-detail-badges')).toBeInTheDocument()
+    expect(screen.getByText(/4 strokes/i)).toBeInTheDocument()
   })
 })

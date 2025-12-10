@@ -27,9 +27,17 @@ defineProps<{
       <span class="component-detail-header-character">
         {{ component.character }}
       </span>
-      <span class="component-detail-header-strokes">
-        {{ component.strokeCount }} strokes
-      </span>
+      <div class="component-detail-header-info">
+        <span
+          v-if="component.shortMeaning"
+          class="component-detail-header-meaning"
+        >
+          {{ component.shortMeaning }}
+        </span>
+        <span class="component-detail-header-strokes">
+          {{ component.strokeCount }} strokes
+        </span>
+      </div>
     </div>
   </header>
 </template>
@@ -64,6 +72,18 @@ defineProps<{
   font-size: var(--font-size-6xl);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-tight);
+}
+
+.component-detail-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.component-detail-header-meaning {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
 }
 
 .component-detail-header-strokes {

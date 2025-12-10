@@ -9,18 +9,26 @@ import { describe, expect, it, vi } from 'vitest'
 
 import ComponentSectionDetail from './ComponentSectionDetail.vue'
 
-import type { Component, Kanji } from '@/shared/types/database-types'
+import type {
+  Component,
+  Kanji,
+  OccurrenceWithKanji
+} from '@/shared/types/database-types'
 
 function createMockComponent(overrides: Partial<Component> = {}): Component {
   return {
+    canBeRadical: false,
     character: '亻',
     createdAt: new Date().toISOString(),
-    description: null,
-    descriptionShort: 'Person radical',
+    description: 'Person radical',
     id: 1,
     japaneseName: 'にんべん',
+    kangxiMeaning: null,
+    kangxiNumber: null,
+    radicalNameJapanese: null,
     sourceKanjiId: null,
     strokeCount: 2,
+    shortMeaning: null,
     updatedAt: new Date().toISOString(),
     ...overrides
   }
@@ -31,15 +39,40 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     character: '休',
     createdAt: new Date().toISOString(),
     id: 1,
+    identifier: null,
     jlptLevel: null,
     joyoLevel: null,
+    kenteiLevel: null,
+    notesEducationMnemonics: null,
     notesEtymology: null,
-    notesCultural: null,
     notesPersonal: null,
+    notesSemantic: null,
     radicalId: null,
+    radicalStrokeCount: null,
     strokeCount: 6,
+    shortMeaning: null,
     strokeDiagramImage: null,
     strokeGifImage: null,
+    updatedAt: new Date().toISOString(),
+    ...overrides
+  }
+}
+
+function createMockOccurrence(
+  overrides: Partial<OccurrenceWithKanji> = {}
+): OccurrenceWithKanji {
+  return {
+    analysisNotes: null,
+    componentFormId: null,
+    componentId: 1,
+    createdAt: new Date().toISOString(),
+    displayOrder: 0,
+    id: 1,
+    isRadical: false,
+    kanji: createMockKanji(),
+    kanjiId: 1,
+    position: null,
+    positionTypeId: null,
     updatedAt: new Date().toISOString(),
     ...overrides
   }
@@ -58,14 +91,15 @@ describe('ComponentSectionDetail', () => {
 
   it('renders short description', () => {
     const component = createMockComponent({
-      descriptionShort: 'Person radical'
+      description: 'Person radical'
     })
 
     renderWithProviders(ComponentSectionDetail, {
       props: { component }
     })
 
-    expect(screen.getByText('Person radical')).toBeInTheDocument()
+    // Description appears in multiple places in ComponentDetailInfo
+    expect(screen.getAllByText('Person radical').length).toBeGreaterThan(0)
   })
 
   it('renders japanese name', () => {
@@ -133,13 +167,19 @@ describe('ComponentSectionDetail', () => {
 
   it('displays linked kanji when present', () => {
     const component = createMockComponent()
-    const linkedKanji = [
-      createMockKanji({ id: 1, character: '休' }),
-      createMockKanji({ id: 2, character: '体' })
+    const occurrences = [
+      createMockOccurrence({
+        id: 1,
+        kanji: createMockKanji({ id: 1, character: '休' })
+      }),
+      createMockOccurrence({
+        id: 2,
+        kanji: createMockKanji({ id: 2, character: '体' })
+      })
     ]
 
     renderWithProviders(ComponentSectionDetail, {
-      props: { component, linkedKanji }
+      props: { component, occurrences }
     })
 
     expect(screen.getByText('休')).toBeInTheDocument()

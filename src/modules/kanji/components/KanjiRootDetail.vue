@@ -16,12 +16,18 @@ import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
 import { useDatabase } from '@/shared/composables/use-database'
 import { useToast } from '@/shared/composables/use-toast'
 
+import { useComponentOccurrenceRepository } from '@/modules/components/composables/use-component-occurrence-repository'
+import { useComponentRepository } from '@/modules/components/composables/use-component-repository'
 import { useKanjiRepository } from '@/modules/kanji-list/composables/use-kanji-repository'
 import { useRadicalRepository } from '../composables/use-radical-repository'
 
 import KanjiSectionDetail from './KanjiSectionDetail.vue'
 
-import type { Component, Kanji, Radical } from '@/shared/types/database-types'
+import type {
+  Component,
+  Kanji,
+  OccurrenceWithComponent
+} from '@/shared/types/database-types'
 
 // Router
 const route = useRoute()
@@ -31,16 +37,18 @@ const router = useRouter()
 const { initError, initialize, isInitialized, isInitializing } = useDatabase()
 
 // Repository for data access
-const { getById, getLinkedComponents, remove } = useKanjiRepository()
+const { getById, remove } = useKanjiRepository()
 const { getById: getRadicalById } = useRadicalRepository()
+const { getByKanjiIdWithPosition } = useComponentOccurrenceRepository()
+const { getById: getComponentById } = useComponentRepository()
 
 // Toast notifications
 const { success } = useToast()
 
 // Local state
 const kanji = ref<Kanji | null>(null)
-const radical = ref<Radical | null>(null)
-const components = ref<Component[]>([])
+const radical = ref<Component | null>(null)
+const occurrences = ref<OccurrenceWithComponent[]>([])
 const fetchError = ref<Error | null>(null)
 const isDeleting = ref(false)
 
@@ -71,8 +79,20 @@ function loadKanji() {
       radical.value = null
     }
 
-    // Load linked components
-    components.value = getLinkedComponents(kanji.value.id)
+    // Load component occurrences with position data
+    const rawOccurrences = getByKanjiIdWithPosition(kanji.value.id)
+    occurrences.value = rawOccurrences.map((occurrence) => {
+      const component = getComponentById(occurrence.componentId)
+      if (!component) {
+        throw new Error(
+          `Component with id ${String(occurrence.componentId)} not found`
+        )
+      }
+      return {
+        ...occurrence,
+        component
+      }
+    })
   } catch (err) {
     fetchError.value = err instanceof Error ? err : new Error(String(err))
   }
@@ -140,9 +160,9 @@ watch(kanjiId, () => {
   <!-- Content -->
   <KanjiSectionDetail
     v-else-if="isInitialized && kanji"
-    :components="components"
     :is-deleting="isDeleting"
     :kanji="kanji"
+    :occurrences="occurrences"
     :radical="radical"
     @delete="handleDelete"
   />

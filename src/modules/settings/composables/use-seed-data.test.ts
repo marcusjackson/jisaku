@@ -87,20 +87,20 @@ describe('useSeedData', () => {
       const { seed } = useSeedData()
       await seed()
 
-      // Should insert 13 radicals + 18 kanji + 8 components + up to 4 kanji_components (depends on mocks)
-      // With current mocks: 13 + 18 + 8 + 0 = 39 calls (no kanji_components because lookups don't return IDs)
-      expect(mockRun).toHaveBeenCalledTimes(39)
+      // Should insert 8 position types + 18 kanji + 8 components + 0 component_occurrences (depends on mocks) = 34 calls
+      // With current mocks: no component_occurrences because lookups don't return IDs
+      expect(mockRun).toHaveBeenCalledTimes(34)
       expect(mockRun).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO radicals'),
-        expect.arrayContaining(['一', 1, 1, 'one', 'いち'])
+        expect.stringContaining('INSERT INTO position_types'),
+        expect.arrayContaining(['hen', 'へん', 'left side'])
       )
       expect(mockRun).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO kanjis'),
-        expect.arrayContaining(['日', 4, 'N5', 'elementary1'])
+        expect.arrayContaining(['日', 4, 'N5', 'elementary1', '10級'])
       )
       expect(mockRun).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO components'),
-        expect.arrayContaining(['亻', 2, 'person'])
+        expect.arrayContaining(['亻', 2, 'にんべん'])
       )
     })
 
@@ -122,7 +122,7 @@ describe('useSeedData', () => {
       await seed()
 
       expect(mockShowSuccess).toHaveBeenCalledWith(
-        'Seeded 13 radicals, 18 kanji, 8 components'
+        'Seeded 8 position types, 18 kanji, 8 components'
       )
     })
 
@@ -168,7 +168,7 @@ describe('useSeedData', () => {
 
       await Promise.all([promise1, promise2])
 
-      // exec is called for kanji count, components count, and lookups for kanji_components links
+      // exec is called for kanji count, components count, and lookups for component_occurrences links
       // So it will be called more than twice
       expect(mockExec.mock.calls.length).toBeGreaterThan(2)
     })
@@ -181,7 +181,13 @@ describe('useSeedData', () => {
       const { clear } = useSeedData()
       await clear()
 
-      expect(mockRun).toHaveBeenCalledWith('DELETE FROM kanji_components')
+      expect(mockRun).toHaveBeenCalledWith(
+        'DELETE FROM component_grouping_members'
+      )
+      expect(mockRun).toHaveBeenCalledWith('DELETE FROM component_groupings')
+      expect(mockRun).toHaveBeenCalledWith('DELETE FROM component_occurrences')
+      expect(mockRun).toHaveBeenCalledWith('DELETE FROM component_forms')
+      expect(mockRun).toHaveBeenCalledWith('DELETE FROM kanji_classifications')
       expect(mockRun).toHaveBeenCalledWith('DELETE FROM kanjis')
       expect(mockRun).toHaveBeenCalledWith('DELETE FROM components')
     })
@@ -243,8 +249,8 @@ describe('useSeedData', () => {
 
       await Promise.all([promise1, promise2])
 
-      // run should only be called four times (once for each table: kanji_components, kanjis, components, radicals)
-      expect(mockRun).toHaveBeenCalledTimes(4)
+      // run should only be called seven times (once for each table in new schema)
+      expect(mockRun).toHaveBeenCalledTimes(7)
     })
   })
 })

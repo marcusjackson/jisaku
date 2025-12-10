@@ -23,15 +23,15 @@ defineProps<{
     <span class="component-list-card-character">{{ component.character }}</span>
 
     <div class="component-list-card-info">
-      <span class="component-list-card-strokes">
-        {{ component.strokeCount }} strokes
+      <span
+        v-if="component.shortMeaning"
+        class="component-list-card-meaning"
+      >
+        {{ component.shortMeaning }}
       </span>
 
-      <span
-        v-if="component.descriptionShort"
-        class="component-list-card-description"
-      >
-        {{ component.descriptionShort }}
+      <span class="component-list-card-strokes">
+        {{ component.strokeCount }} strokes
       </span>
     </div>
   </RouterLink>
@@ -78,18 +78,19 @@ defineProps<{
   gap: var(--spacing-1);
 }
 
-.component-list-card-strokes {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.component-list-card-description {
+.component-list-card-meaning {
   max-width: 150px;
   overflow: hidden;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.component-list-card-strokes {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 </style>

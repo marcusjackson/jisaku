@@ -6,32 +6,19 @@
  * Uses vee-validate's useField for field-level validation.
  */
 
-import { ref } from 'vue'
-
 import { useField } from 'vee-validate'
 
-import BaseButton from '@/base/components/BaseButton.vue'
-import BaseCombobox from '@/base/components/BaseCombobox.vue'
 import BaseComboboxMulti from '@/base/components/BaseComboboxMulti.vue'
 import BaseFileInput from '@/base/components/BaseFileInput.vue'
 import BaseInput from '@/base/components/BaseInput.vue'
 import BaseSelect from '@/base/components/BaseSelect.vue'
 import BaseTextarea from '@/base/components/BaseTextarea.vue'
 
-import RadicalFormModal from './RadicalFormModal.vue'
-
 import type { ComboboxOption } from '@/base/components/BaseCombobox.vue'
-import type { Radical } from '@/shared/types/database-types'
 
 defineProps<{
-  /** Available radical options for the selector */
-  radicalOptions: ComboboxOption[]
   /** Available component options for the selector */
   componentOptions: ComboboxOption[]
-}>()
-
-const emit = defineEmits<{
-  radicalCreated: [radical: Radical]
 }>()
 
 // Character field
@@ -43,18 +30,24 @@ const { errorMessage: strokeCountError, value: strokeCount } = useField<
   number | undefined
 >('strokeCount')
 
+// Short meaning field
+const { value: shortMeaning } = useField<string | undefined>('shortMeaning')
+
 // JLPT Level field
 const { value: jlptLevel } = useField<string | null>('jlptLevel')
 
 // Joyo Level field
 const { value: joyoLevel } = useField<string | null>('joyoLevel')
 
-// Radical field
-const { value: radicalId } = useField<number | null>('radicalId')
+// Kentei Level field
+const { value: kenteiLevel } = useField<string | null>('kenteiLevel')
 
 // Note fields
 const { value: notesEtymology } = useField<string | undefined>('notesEtymology')
-const { value: notesCultural } = useField<string | undefined>('notesCultural')
+const { value: notesSemantic } = useField<string | undefined>('notesSemantic')
+const { value: notesEducationMnemonics } = useField<string | undefined>(
+  'notesEducationMnemonics'
+)
 const { value: notesPersonal } = useField<string | undefined>('notesPersonal')
 
 // Image fields
@@ -65,9 +58,6 @@ const { value: strokeGifImage } = useField<Uint8Array | null>('strokeGifImage')
 
 // Component IDs field (for linking kanji to components)
 const { value: componentIds } = useField<number[]>('componentIds')
-
-// Modal state
-const showRadicalModal = ref(false)
 
 // Options for selects
 const jlptOptions = [
@@ -88,12 +78,20 @@ const joyoOptions = [
   { label: '中学 (Secondary)', value: 'secondary' }
 ]
 
-function handleRadicalCreated(radical: Radical) {
-  // Update the selected radical to the newly created one
-  radicalId.value = radical.id
-  // Emit event so parent can refresh radical options
-  emit('radicalCreated', radical)
-}
+const kenteiOptions = [
+  { label: '10級', value: '10級' },
+  { label: '9級', value: '9級' },
+  { label: '8級', value: '8級' },
+  { label: '7級', value: '7級' },
+  { label: '6級', value: '6級' },
+  { label: '5級', value: '5級' },
+  { label: '4級', value: '4級' },
+  { label: '3級', value: '3級' },
+  { label: '準2級', value: '準2級' },
+  { label: '2級', value: '2級' },
+  { label: '準1級', value: '準1級' },
+  { label: '1級', value: '1級' }
+]
 </script>
 
 <template>
@@ -125,6 +123,18 @@ function handleRadicalCreated(radical: Radical) {
         </div>
       </div>
 
+      <div class="kanji-form-fields-group">
+        <BaseInput
+          v-model="shortMeaning"
+          label="Short Meaning"
+          name="shortMeaning"
+          placeholder="e.g., bright, clear"
+        />
+        <p class="kanji-form-fields-help">
+          Brief English meaning for search and display (optional).
+        </p>
+      </div>
+
       <div class="kanji-form-fields-row">
         <div class="kanji-form-fields-group">
           <BaseSelect
@@ -147,25 +157,15 @@ function handleRadicalCreated(radical: Radical) {
         </div>
       </div>
 
-      <div class="kanji-form-fields-row kanji-form-fields-row-radical">
-        <div class="kanji-form-fields-group kanji-form-fields-group-radical">
-          <BaseCombobox
-            v-model="radicalId"
-            label="Radical"
-            name="radicalId"
-            :options="radicalOptions"
-            placeholder="Select radical..."
+      <div class="kanji-form-fields-row">
+        <div class="kanji-form-fields-group">
+          <BaseSelect
+            v-model="kenteiLevel"
+            label="Kanji Kentei Level"
+            name="kenteiLevel"
+            :options="kenteiOptions"
+            placeholder="Select level..."
           />
-        </div>
-        <div class="kanji-form-fields-radical-action">
-          <BaseButton
-            size="sm"
-            type="button"
-            variant="secondary"
-            @click="showRadicalModal = true"
-          >
-            + New
-          </BaseButton>
         </div>
       </div>
     </fieldset>
@@ -229,10 +229,20 @@ function handleRadicalCreated(radical: Radical) {
 
       <div class="kanji-form-fields-group">
         <BaseTextarea
-          v-model="notesCultural"
-          label="Cultural Context"
-          name="notesCultural"
-          placeholder="Usage in names, cultural significance, common expressions..."
+          v-model="notesSemantic"
+          label="Semantic Analysis"
+          name="notesSemantic"
+          placeholder="Modern usage, compounds, semantic patterns..."
+          :rows="3"
+        />
+      </div>
+
+      <div class="kanji-form-fields-group">
+        <BaseTextarea
+          v-model="notesEducationMnemonics"
+          label="Education & Mnemonics"
+          name="notesEducationMnemonics"
+          placeholder="Japanese education context, native mnemonics, teaching methods..."
           :rows="3"
         />
       </div>
@@ -242,17 +252,11 @@ function handleRadicalCreated(radical: Radical) {
           v-model="notesPersonal"
           label="Personal Notes"
           name="notesPersonal"
-          placeholder="Mnemonics, personal observations, learning notes..."
+          placeholder="Personal observations, learning notes, custom mnemonics..."
           :rows="3"
         />
       </div>
     </fieldset>
-
-    <!-- Radical Creation Modal -->
-    <RadicalFormModal
-      v-model:open="showRadicalModal"
-      @created="handleRadicalCreated"
-    />
   </div>
 </template>
 
@@ -292,10 +296,6 @@ function handleRadicalCreated(radical: Radical) {
   gap: var(--spacing-md);
 }
 
-.kanji-form-fields-row-radical {
-  align-items: flex-end;
-}
-
 .kanji-form-fields-group {
   display: flex;
   flex: 1;
@@ -311,15 +311,6 @@ function handleRadicalCreated(radical: Radical) {
   flex: 0 0 150px;
 }
 
-.kanji-form-fields-group-radical {
-  flex: 1;
-}
-
-.kanji-form-fields-radical-action {
-  flex-shrink: 0;
-  padding-bottom: var(--spacing-1);
-}
-
 .kanji-form-fields-help {
   margin: var(--spacing-1) 0 0;
   color: var(--color-text-muted);
@@ -333,10 +324,6 @@ function handleRadicalCreated(radical: Radical) {
 
   /* Keep character and strokes row horizontal on mobile */
   .kanji-form-fields-row:has(.kanji-form-fields-group-character) {
-    flex-direction: row;
-  }
-
-  .kanji-form-fields-row-radical {
     flex-direction: row;
   }
 

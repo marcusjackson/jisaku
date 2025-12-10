@@ -4,38 +4,27 @@ import { describe, expect, it } from 'vitest'
 
 import KanjiListSectionFilters from './KanjiListSectionFilters.vue'
 
-import type {
-  Component,
-  KanjiFilters,
-  Radical
-} from '@/shared/types/database-types'
+import type { Component, KanjiFilters } from '@/shared/types/database-types'
 
 const mockComponents: Component[] = [
   {
     id: 1,
     character: '氵',
     strokeCount: 3,
+    shortMeaning: null,
     sourceKanjiId: null,
-    descriptionShort: 'Water',
+    description: 'Water',
     japaneseName: 'さんずい',
-    description: 'Water radical',
+    canBeRadical: false,
+    kangxiNumber: null,
+    kangxiMeaning: null,
+    radicalNameJapanese: null,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
   }
 ]
 
-const mockRadicals: Radical[] = [
-  {
-    id: 1,
-    character: '水',
-    strokeCount: 4,
-    number: 85,
-    meaning: 'water',
-    japaneseName: 'みず',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
-  }
-]
+const mockRadicals: Component[] = []
 
 const defaultProps = {
   filters: {} as KanjiFilters,

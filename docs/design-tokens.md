@@ -214,8 +214,8 @@ Based on 4px unit grid:
 
 ```css
 :root {
-  --z-dropdown: 100;
   --z-sticky: 200;
+  --z-dropdown: 201;
   --z-modal-backdrop: 300;
   --z-modal: 400;
   --z-toast: 500;
