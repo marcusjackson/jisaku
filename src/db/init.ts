@@ -26,7 +26,8 @@ export async function initializeDatabase(): Promise<Database> {
   // Initialize sql.js
   const SQL = await initSqlJs({
     // Load WASM from public directory (self-hosted for reliability)
-    locateFile: (file: string) => `/${file}`
+    // Use BASE_URL to ensure correct path on GitHub Pages with /jisaku/ base
+    locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`
   })
 
   // Try to load existing database from IndexedDB
@@ -72,7 +73,8 @@ export async function replaceDatabaseWithImported(
 
   // Initialize sql.js
   const SQL = await initSqlJs({
-    locateFile: (file: string) => `/${file}`
+    // Use BASE_URL to ensure correct path on GitHub Pages with /jisaku/ base
+    locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`
   })
 
   // Create new database from imported data

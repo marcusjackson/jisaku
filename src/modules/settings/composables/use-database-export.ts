@@ -96,7 +96,8 @@ async function validateSqliteData(data: Uint8Array): Promise<boolean> {
     // Dynamic import for sql.js
     const { default: initSqlJs } = await import('sql.js')
     const SQL = await initSqlJs({
-      locateFile: (file: string) => `https://sql.js.org/dist/${file}`
+      // Use BASE_URL to ensure correct path on GitHub Pages with /jisaku/ base
+      locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`
     })
 
     // Try to open the database
