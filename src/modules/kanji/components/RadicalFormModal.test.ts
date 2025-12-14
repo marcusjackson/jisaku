@@ -8,12 +8,12 @@
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { useComponentRepository } from '@/modules/components/composables/use-component-repository'
+import { useComponentRepository } from '@/shared/composables/use-component-repository'
 
 import RadicalFormModal from './RadicalFormModal.vue'
 
 // Mock the component repository
-vi.mock('@/modules/components/composables/use-component-repository')
+vi.mock('@/shared/composables/use-component-repository')
 
 describe('RadicalFormModal', () => {
   const mockCreate = vi.fn()

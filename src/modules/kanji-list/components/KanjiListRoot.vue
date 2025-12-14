@@ -12,11 +12,11 @@ import { onMounted, ref, watch } from 'vue'
 import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
+import { useComponentRepository } from '@/shared/composables/use-component-repository'
 import { useDatabase } from '@/shared/composables/use-database'
 import { useFilterPersistence } from '@/shared/composables/use-filter-persistence'
+import { useRadicalRepository } from '@/shared/composables/use-radical-repository'
 
-import { useComponentRepository } from '@/modules/components/composables/use-component-repository'
-import { useRadicalRepository } from '@/modules/kanji/composables/use-radical-repository'
 import { useKanjiFilters } from '../composables/use-kanji-filters'
 import { useKanjiRepository } from '../composables/use-kanji-repository'
 
@@ -46,6 +46,7 @@ const {
   clearFilters,
   filters,
   hasActiveFilters,
+  searchKeywords,
   updateFilter
 } = useKanjiFilters()
 
@@ -139,9 +140,11 @@ onMounted(async () => {
       :filters="filters"
       :has-active-filters="hasActiveFilters"
       :radicals="radicals"
+      :search-keywords="searchKeywords"
       @clear-filters="clearFilters"
       @update-filter="handleFilterUpdate"
       @update:character-search="characterSearch = $event"
+      @update:search-keywords="searchKeywords = $event"
     />
 
     <KanjiListSectionGrid

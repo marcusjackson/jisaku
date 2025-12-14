@@ -32,15 +32,18 @@ describe('KanjiFilterJoyoLevel', () => {
       props: { modelValue: ['elementary1', 'elementary3'] }
     })
 
-    expect(
-      screen.getByRole('button', { name: '小1 (Grade 1)' })
-    ).toHaveAttribute('aria-pressed', 'true')
-    expect(
-      screen.getByRole('button', { name: '小2 (Grade 2)' })
-    ).toHaveAttribute('aria-pressed', 'false')
-    expect(
-      screen.getByRole('button', { name: '小3 (Grade 3)' })
-    ).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '小1' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+    expect(screen.getByRole('button', { name: '小2' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    )
+    expect(screen.getByRole('button', { name: '小3' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
   })
 
   it('emits new selection when chip is clicked to add', async () => {
@@ -49,7 +52,7 @@ describe('KanjiFilterJoyoLevel', () => {
       props: { modelValue: ['elementary1'] }
     })
 
-    await user.click(screen.getByRole('button', { name: '小4 (Grade 4)' }))
+    await user.click(screen.getByRole('button', { name: '小4' }))
 
     const emittedEvents = result.emitted()
     expect(emittedEvents['update:modelValue']).toBeTruthy()
@@ -64,7 +67,7 @@ describe('KanjiFilterJoyoLevel', () => {
       props: { modelValue: ['elementary1', 'elementary2'] }
     })
 
-    await user.click(screen.getByRole('button', { name: '小1 (Grade 1)' }))
+    await user.click(screen.getByRole('button', { name: '小1' }))
 
     const emittedEvents = result.emitted()
     expect(emittedEvents['update:modelValue']).toBeTruthy()

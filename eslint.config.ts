@@ -164,6 +164,14 @@ export default tseslint.config(
     }
   },
 
+  {
+    languageOptions: {
+      globals: {
+        NodeJS: true
+      }
+    }
+  },
+
   // Prettier (must be last to override other formatting rules)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   eslintConfigPrettier

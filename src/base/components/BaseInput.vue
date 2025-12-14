@@ -23,6 +23,8 @@ const props = defineProps<{
   name?: string
   /** Make input required */
   required?: boolean
+  /** Maximum length for text inputs */
+  maxlength?: string | number
 }>()
 
 const model = defineModel<string | number | undefined>()
@@ -61,6 +63,7 @@ const inputClasses = computed(() => [
       :aria-invalid="!!error"
       :class="inputClasses"
       :disabled="disabled"
+      :maxlength="maxlength"
       :name="name"
       :placeholder="placeholder ?? ''"
       :required="required"

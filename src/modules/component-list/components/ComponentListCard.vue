@@ -30,7 +30,10 @@ defineProps<{
         {{ component.shortMeaning }}
       </span>
 
-      <span class="component-list-card-strokes">
+      <span
+        v-if="component.strokeCount != null"
+        class="component-list-card-strokes"
+      >
         {{ component.strokeCount }}画
       </span>
     </div>
@@ -79,7 +82,7 @@ defineProps<{
 }
 
 .component-list-card-meaning {
-  max-width: 150px;
+  max-width: 145px;
   overflow: hidden;
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);

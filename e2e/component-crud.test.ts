@@ -64,6 +64,9 @@ test.describe('Component CRUD Flow', () => {
       .first()
       .click()
 
+    // Wait longer for page to load (if you don't, the character input may not be loaded to be filled)
+    await page.waitForTimeout(300)
+
     // Fill in form and submit
     await page.getByLabel(/character/i).fill('氵')
     await page.getByLabel(/short meaning/i).fill('water')

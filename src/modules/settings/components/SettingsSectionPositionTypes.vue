@@ -18,9 +18,8 @@ import BaseInput from '@/base/components/BaseInput.vue'
 import BaseTextarea from '@/base/components/BaseTextarea.vue'
 
 import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
+import { usePositionTypeRepository } from '@/shared/composables/use-position-type-repository'
 import { useToast } from '@/shared/composables/use-toast'
-
-import { usePositionTypeRepository } from '@/modules/components/composables/use-position-type-repository'
 
 import type { PositionType } from '@/shared/types/database-types'
 

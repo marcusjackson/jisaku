@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 
 import KanjiDetailComponents from './KanjiDetailComponents.vue'
 
-import type { ComponentOccurrenceWithPosition } from '@/modules/components/composables/use-component-occurrence-repository'
+import type { ComponentOccurrenceWithPosition } from '@/shared/composables/use-component-occurrence-repository'
 import type { Component, PositionType } from '@/shared/types/database-types'
 
 interface OccurrenceWithComponent extends ComponentOccurrenceWithPosition {

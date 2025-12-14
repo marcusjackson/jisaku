@@ -29,6 +29,7 @@ const mockRadicals: Component[] = []
 const defaultProps = {
   filters: {} as KanjiFilters,
   characterSearch: '',
+  searchKeywords: '',
   hasActiveFilters: false,
   components: mockComponents,
   radicals: mockRadicals
@@ -73,9 +74,7 @@ describe('KanjiListSectionFilters', () => {
     render(KanjiListSectionFilters, { props: defaultProps })
 
     expect(screen.getByText('Joyo Level')).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: '小1 (Grade 1)' })
-    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '小1' })).toBeInTheDocument()
   })
 
   it('renders component filter', () => {

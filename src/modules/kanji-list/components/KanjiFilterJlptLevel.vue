@@ -49,7 +49,7 @@ function isSelected(level: JlptLevel): boolean {
         type="button"
         @click="toggleLevel(option.value)"
       >
-        {{ option.value }}
+        {{ option.label }}
       </button>
     </div>
   </div>

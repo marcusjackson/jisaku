@@ -127,7 +127,7 @@ describe('KanjiDetailBasicInfo', () => {
     const kanji = createMockKanji()
     const wrapper = mountBasicInfo({ kanji })
 
-    expect(wrapper.text()).toContain('Grade 1')
+    expect(wrapper.text()).toContain('小1')
   })
 
   it('renders radical display in view mode', () => {

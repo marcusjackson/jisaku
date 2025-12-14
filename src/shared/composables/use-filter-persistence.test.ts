@@ -270,6 +270,9 @@ describe('useFilterPersistence', () => {
   })
 
   it('handles invalid JSON in localStorage gracefully', async () => {
+    // Mock console.error to avoid stderr output in test
+    const consoleSpy = vi.spyOn(console, 'error').mockReturnValue(undefined)
+
     // Put invalid JSON in localStorage
     localStorage.setItem('filter-state:test-list', 'invalid json {')
 
@@ -292,6 +295,8 @@ describe('useFilterPersistence', () => {
     expect(router.currentRoute.value.query).toEqual({})
 
     wrapper.unmount()
+
+    consoleSpy.mockRestore()
   })
 
   it('preserves string values from query params', async () => {

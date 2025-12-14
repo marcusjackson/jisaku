@@ -3,7 +3,7 @@
  * ComponentListSectionFilters
  *
  * Section component that orchestrates all component filter UI components.
- * Simple filtering by character and stroke range.
+ * Redesigned to match the kanji list filters design.
  */
 
 import { computed, onMounted, ref, watch } from 'vue'
@@ -18,6 +18,8 @@ const props = defineProps<{
   filters: ComponentFilters
   /** Character search value (debounced separately) */
   characterSearch: string
+  /** Search keywords value (debounced separately) */
+  searchKeywords: string
   /** Whether any filters are active */
   hasActiveFilters: boolean
 }>()
@@ -25,6 +27,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   /** Update character search input */
   'update:characterSearch': [value: string]
+  /** Update search keywords input */
+  'update:searchKeywords': [value: string]
   /** Update a filter value */
   updateFilter: [key: keyof ComponentFilters, value: unknown]
   /** Clear all filters */
@@ -63,45 +67,37 @@ function toggleCollapsed() {
 const activeFilterCount = computed(() => {
   let count = 0
   if (props.filters.character) count++
+  if (props.filters.searchKeywords) count++
   if (props.filters.strokeCountMin !== undefined) count++
   if (props.filters.strokeCountMax !== undefined) count++
   if (props.filters.sourceKanjiId !== undefined) count++
   return count
 })
 
-// Local state for stroke range inputs
-const strokeMin = ref<string>('')
-const strokeMax = ref<string>('')
-
-// Sync local state with props
-watch(
-  () => props.filters.strokeCountMin,
-  (newVal) => {
-    strokeMin.value = newVal !== undefined ? String(newVal) : ''
-  },
-  { immediate: true }
-)
-
-watch(
-  () => props.filters.strokeCountMax,
-  (newVal) => {
-    strokeMax.value = newVal !== undefined ? String(newVal) : ''
-  },
-  { immediate: true }
-)
-
-function handleStrokeMinChange(value: string | number | undefined) {
-  const strValue = String(value ?? '')
-  strokeMin.value = strValue
-  const num = parseInt(strValue, 10)
-  emit('updateFilter', 'strokeCountMin', isNaN(num) ? undefined : num)
+function handleCharacterInput(value: string | number | undefined) {
+  emit('update:characterSearch', String(value ?? ''))
 }
 
-function handleStrokeMaxChange(value: string | number | undefined) {
-  const strValue = String(value ?? '')
-  strokeMax.value = strValue
-  const num = parseInt(strValue, 10)
-  emit('updateFilter', 'strokeCountMax', isNaN(num) ? undefined : num)
+function handleSearchKeywordsInput(value: string | number | undefined) {
+  emit('update:searchKeywords', String(value ?? ''))
+}
+
+function handleStrokeMinInput(value: string | number | undefined) {
+  const num = typeof value === 'number' ? value : parseInt(String(value), 10)
+  emit(
+    'updateFilter',
+    'strokeCountMin',
+    isNaN(num) || value === '' ? undefined : num
+  )
+}
+
+function handleStrokeMaxInput(value: string | number | undefined) {
+  const num = typeof value === 'number' ? value : parseInt(String(value), 10)
+  emit(
+    'updateFilter',
+    'strokeCountMax',
+    isNaN(num) || value === '' ? undefined : num
+  )
 }
 </script>
 
@@ -121,90 +117,135 @@ function handleStrokeMaxChange(value: string | number | undefined) {
         Filters
         <span
           v-if="activeFilterCount > 0"
-          class="component-list-filters-header-count"
+          class="component-list-filters-header-badge"
         >
-          ({{ activeFilterCount }})
+          {{ activeFilterCount }}
         </span>
       </span>
-      <span
-        aria-hidden="true"
-        :class="{
-          'component-list-filters-header-icon': true,
-          'component-list-filters-header-icon-collapsed': isCollapsed
-        }"
+      <svg
+        class="component-list-filters-header-chevron"
+        :class="{ 'component-list-filters-header-chevron-open': !isCollapsed }"
+        fill="none"
+        height="20"
+        viewBox="0 0 20 20"
+        width="20"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        ▼
-      </span>
+        <path
+          d="M5 7.5L10 12.5L15 7.5"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+        />
+      </svg>
     </button>
 
-    <!-- Filter Content (collapsible) -->
+    <!-- Collapsible Content -->
     <div
       v-show="!isCollapsed"
       class="component-list-filters-content"
     >
-      <!-- Character Search -->
-      <div class="component-list-filters-field">
-        <label
-          class="component-list-filters-label"
-          for="component-filter-character"
+      <div class="component-list-filters-row">
+        <!-- Character Filter -->
+        <div
+          class="component-list-filters-field component-list-filters-field-character"
         >
-          Search
-        </label>
-        <BaseInput
-          id="component-filter-character"
-          :model-value="characterSearch"
-          placeholder="Character or meaning..."
-          type="text"
-          @update:model-value="
-            (val) => emit('update:characterSearch', val as string)
-          "
-        />
-      </div>
+          <BaseInput
+            label="Character"
+            :model-value="characterSearch"
+            name="character"
+            placeholder="亻"
+            @update:model-value="handleCharacterInput"
+          />
+        </div>
 
-      <!-- Stroke Range -->
-      <div class="component-list-filters-field">
-        <label class="component-list-filters-label">Stroke Count</label>
-        <div class="component-list-filters-range">
+        <!-- Search Keywords Filter -->
+        <div
+          class="component-list-filters-field component-list-filters-field-keywords"
+        >
           <BaseInput
-            id="component-filter-stroke-min"
-            inputmode="numeric"
-            :model-value="strokeMin"
-            placeholder="Min"
-            type="text"
-            @update:model-value="handleStrokeMinChange"
+            label="Meaning/Keywords"
+            :model-value="searchKeywords"
+            name="searchKeywords"
+            placeholder="person, human..."
+            @update:model-value="handleSearchKeywordsInput"
           />
-          <span class="component-list-filters-range-separator">to</span>
-          <BaseInput
-            id="component-filter-stroke-max"
-            inputmode="numeric"
-            :model-value="strokeMax"
-            placeholder="Max"
-            type="text"
-            @update:model-value="handleStrokeMaxChange"
-          />
+        </div>
+
+        <!-- Stroke Range -->
+        <div
+          class="component-list-filters-field component-list-filters-field-strokes"
+        >
+          <span class="component-list-filters-stroke-label">Strokes</span>
+          <div class="component-list-filters-stroke-inputs">
+            <BaseInput
+              label="Minimum strokes"
+              :model-value="filters.strokeCountMin"
+              name="strokeMin"
+              placeholder="Min"
+              type="number"
+              @update:model-value="handleStrokeMinInput"
+            />
+            <span class="component-list-filters-stroke-separator">–</span>
+            <BaseInput
+              label="Maximum strokes"
+              :model-value="filters.strokeCountMax"
+              name="strokeMax"
+              placeholder="Max"
+              type="number"
+              @update:model-value="handleStrokeMaxInput"
+            />
+          </div>
         </div>
       </div>
 
-      <!-- Clear Filters Button -->
-      <div
-        v-if="hasActiveFilters"
-        class="component-list-filters-actions"
-      >
-        <BaseButton
-          size="sm"
-          variant="ghost"
-          @click="emit('clearFilters')"
+      <div class="component-list-filters-bottom">
+        <div
+          v-if="hasActiveFilters"
+          class="component-list-filters-actions"
         >
-          Clear Filters
-        </BaseButton>
+          <BaseButton
+            variant="ghost"
+            @click="emit('clearFilters')"
+          >
+            Clear filters
+          </BaseButton>
+        </div>
+
+        <div class="component-list-filters-collapse">
+          <BaseButton
+            size="sm"
+            variant="secondary"
+            @click="toggleCollapsed"
+          >
+            Collapse
+          </BaseButton>
+        </div>
       </div>
+    </div>
+
+    <!-- Clear filters button visible when collapsed and filters active -->
+    <div
+      v-if="isCollapsed && hasActiveFilters"
+      class="component-list-filters-collapsed-actions"
+    >
+      <BaseButton
+        size="sm"
+        variant="ghost"
+        @click="emit('clearFilters')"
+      >
+        Clear filters
+      </BaseButton>
     </div>
   </section>
 </template>
 
 <style scoped>
 .component-list-filters {
-  margin-bottom: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
@@ -215,14 +256,14 @@ function handleStrokeMaxChange(value: string | number | undefined) {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-md);
   border: none;
   background: none;
   color: var(--color-text-primary);
   font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.15s;
 }
 
 .component-list-filters-header:hover {
@@ -235,64 +276,114 @@ function handleStrokeMaxChange(value: string | number | undefined) {
   gap: var(--spacing-xs);
 }
 
-.component-list-filters-header-count {
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-normal);
+.component-list-filters-header-badge {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 20px;
+  padding: 0 var(--spacing-1);
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 }
 
-.component-list-filters-header-icon {
+.component-list-filters-header-chevron {
+  flex-shrink: 0;
   color: var(--color-text-secondary);
-  transition: transform 0.2s;
+  transition: transform 0.2s ease;
 }
 
-.component-list-filters-header-icon-collapsed {
-  transform: rotate(-90deg);
+.component-list-filters-header-chevron-open {
+  transform: rotate(180deg);
 }
 
 .component-list-filters-content {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  padding: 0 var(--spacing-lg) var(--spacing-lg);
+  padding: 0 var(--spacing-md) var(--spacing-md);
 }
 
-.component-list-filters-field {
+.component-list-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--spacing-md);
+}
+
+.component-list-filters-field-character {
+  min-width: 100px;
+}
+
+.component-list-filters-field-keywords {
+  min-width: 140px;
+}
+
+.component-list-filters-field-strokes {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
 }
 
-.component-list-filters-label {
-  color: var(--color-text-primary);
+.component-list-filters-stroke-label {
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
 }
 
-.component-list-filters-range {
+.component-list-filters-stroke-inputs {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
 }
 
-.component-list-filters-range-separator {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+.component-list-filters-stroke-inputs :deep(.base-input) {
+  flex: 1;
+  min-width: 60px;
+}
+
+.component-list-filters-stroke-inputs :deep(.base-input-label) {
+  /* Hide the label visually but keep for screen readers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+}
+
+.component-list-filters-stroke-separator {
+  color: var(--color-text-tertiary);
 }
 
 .component-list-filters-actions {
-  padding-top: var(--spacing-sm);
+  position: absolute;
+  top: 50%;
+  left: var(--spacing-md);
+  display: flex;
+  justify-content: flex-end;
+  transform: translateY(-50%);
+}
+
+.component-list-filters-bottom {
+  position: relative;
+  padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
 }
 
-@media (width >= 768px) {
-  .component-list-filters-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-md);
-  }
+.component-list-filters-collapse {
+  display: flex;
+  justify-content: center;
+}
 
-  .component-list-filters-actions {
-    grid-column: 1 / -1;
-  }
+.component-list-filters-collapsed-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--spacing-md) var(--spacing-md);
 }
 </style>

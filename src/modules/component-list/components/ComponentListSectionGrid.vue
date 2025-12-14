@@ -10,69 +10,81 @@ import { RouterLink } from 'vue-router'
 
 import BaseButton from '@/base/components/BaseButton.vue'
 
-import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
-
 import ComponentListCard from './ComponentListCard.vue'
 
 import type { Component } from '@/shared/types/database-types'
 
 defineProps<{
   componentList: Component[]
+  /** Whether any filters are currently active */
+  hasActiveFilters?: boolean
 }>()
 </script>
 
 <template>
-  <SharedPageContainer>
-    <div class="component-list-section-grid">
-      <header class="component-list-section-grid-header">
-        <h1 class="component-list-section-grid-title">Components</h1>
-        <RouterLink
-          v-slot="{ navigate }"
-          custom
-          to="/components/new"
-        >
-          <BaseButton @click="navigate">Add Component</BaseButton>
-        </RouterLink>
-      </header>
-
-      <!-- Empty state -->
-      <div
-        v-if="componentList.length === 0"
-        class="component-list-section-grid-empty"
+  <div class="component-list-section-grid">
+    <header class="component-list-section-grid-header">
+      <h1 class="component-list-section-grid-title">Components</h1>
+      <RouterLink
+        v-slot="{ navigate }"
+        custom
+        to="/components/new"
       >
-        <p class="component-list-section-grid-empty-text">
-          No components yet. Add your first one!
-        </p>
-        <RouterLink
-          v-slot="{ navigate }"
-          custom
-          to="/components/new"
-        >
-          <BaseButton
-            size="lg"
-            @click="navigate"
-          >
-            Add Your First Component
-          </BaseButton>
-        </RouterLink>
-      </div>
+        <BaseButton @click="navigate">Add Component</BaseButton>
+      </RouterLink>
+    </header>
 
-      <!-- Component grid -->
-      <div
-        v-else
-        class="component-list-section-grid-grid"
-      >
-        <ComponentListCard
-          v-for="component in componentList"
-          :key="component.id"
-          :component="component"
-        />
-      </div>
+    <!-- Empty state: no results from filter -->
+    <div
+      v-if="componentList.length === 0 && hasActiveFilters"
+      class="component-list-section-grid-empty"
+    >
+      <p class="component-list-section-grid-empty-text">
+        No components match your filters.
+      </p>
     </div>
-  </SharedPageContainer>
+
+    <!-- Empty state: no components at all -->
+    <div
+      v-else-if="componentList.length === 0"
+      class="component-list-section-grid-empty"
+    >
+      <p class="component-list-section-grid-empty-text">
+        No components yet. Add your first one!
+      </p>
+      <RouterLink
+        v-slot="{ navigate }"
+        custom
+        to="/components/new"
+      >
+        <BaseButton
+          size="lg"
+          @click="navigate"
+        >
+          Add Your First Component
+        </BaseButton>
+      </RouterLink>
+    </div>
+
+    <!-- Component grid -->
+    <div
+      v-else
+      class="component-list-section-grid-grid"
+    >
+      <ComponentListCard
+        v-for="component in componentList"
+        :key="component.id"
+        :component="component"
+      />
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.component-list-section-grid {
+  margin-top: var(--spacing-lg);
+}
+
 .component-list-section-grid-header {
   display: flex;
   justify-content: space-between;

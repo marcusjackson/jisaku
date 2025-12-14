@@ -13,9 +13,9 @@ import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
 import { useDatabase } from '@/shared/composables/use-database'
+import { useKanjiRepository } from '@/shared/composables/use-kanji-repository'
 import { useToast } from '@/shared/composables/use-toast'
 
-import { useKanjiRepository } from '@/modules/kanji-list/composables/use-kanji-repository'
 import { useKanjiForm } from '../composables/use-kanji-form'
 
 import KanjiSectionForm from './KanjiSectionForm.vue'
@@ -33,7 +33,7 @@ const { initError, initialize, isInitialized, isInitializing, persist } =
 // Repository for data access
 const { create, saveComponentLinks } = useKanjiRepository()
 
-import { useComponentRepository } from '@/modules/components/composables/use-component-repository'
+import { useComponentRepository } from '@/shared/composables/use-component-repository'
 const { getAll: getAllComponents } = useComponentRepository()
 
 // Toast notifications

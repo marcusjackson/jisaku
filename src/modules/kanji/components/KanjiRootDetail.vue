@@ -14,13 +14,12 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
+import { useComponentOccurrenceRepository } from '@/shared/composables/use-component-occurrence-repository'
+import { useComponentRepository } from '@/shared/composables/use-component-repository'
 import { useDatabase } from '@/shared/composables/use-database'
+import { useKanjiRepository } from '@/shared/composables/use-kanji-repository'
+import { useRadicalRepository } from '@/shared/composables/use-radical-repository'
 import { useToast } from '@/shared/composables/use-toast'
-
-import { useComponentOccurrenceRepository } from '@/modules/components/composables/use-component-occurrence-repository'
-import { useComponentRepository } from '@/modules/components/composables/use-component-repository'
-import { useKanjiRepository } from '@/modules/kanji-list/composables/use-kanji-repository'
-import { useRadicalRepository } from '../composables/use-radical-repository'
 
 import KanjiSectionDetail from './KanjiSectionDetail.vue'
 
@@ -82,6 +81,7 @@ const radicalOptions = ref<Component[]>([])
 const fetchError = ref<Error | null>(null)
 const isDeleting = ref(false)
 const isDestructiveMode = ref(false)
+const updateToastTimeout = ref<NodeJS.Timeout | null>(null)
 
 // Computed kanji ID from route params
 const kanjiId = computed(() => {
@@ -355,7 +355,13 @@ async function handleUpdateBasicInfo(
       }
     }
     await persist()
-    success('Updated successfully')
+
+    // Debounce the success toast to avoid multiple toasts for rapid updates
+    if (updateToastTimeout.value) clearTimeout(updateToastTimeout.value)
+    updateToastTimeout.value = setTimeout(() => {
+      success('Updated successfully')
+      updateToastTimeout.value = null
+    }, 500)
   } catch (err) {
     showError(err instanceof Error ? err.message : 'Failed to update')
   }

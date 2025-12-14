@@ -43,7 +43,7 @@ vi.mock('@/shared/composables/use-toast', () => ({
 }))
 
 // Mock the component repository
-vi.mock('../composables/use-component-repository', () => ({
+vi.mock('@/shared/composables/use-component-repository', () => ({
   useComponentRepository: () => ({
     create: mockCreate,
     getById: mockGetById,
@@ -52,7 +52,7 @@ vi.mock('../composables/use-component-repository', () => ({
 }))
 
 // Mock the kanji repository
-vi.mock('@/modules/kanji-list/composables/use-kanji-repository', () => ({
+vi.mock('@/shared/composables/use-kanji-repository', () => ({
   useKanjiRepository: () => ({
     getAll: mockGetAllKanji
   })

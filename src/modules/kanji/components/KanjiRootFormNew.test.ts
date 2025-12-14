@@ -38,7 +38,7 @@ vi.mock('@/shared/composables/use-toast', () => ({
 }))
 
 // Mock the repository
-vi.mock('@/modules/kanji-list/composables/use-kanji-repository', () => ({
+vi.mock('@/shared/composables/use-kanji-repository', () => ({
   useKanjiRepository: () => ({
     create: mockCreate,
     saveComponentLinks: mockSaveComponentLinks
@@ -46,7 +46,7 @@ vi.mock('@/modules/kanji-list/composables/use-kanji-repository', () => ({
 }))
 
 // Mock the component repository
-vi.mock('@/modules/components/composables/use-component-repository', () => ({
+vi.mock('@/shared/composables/use-component-repository', () => ({
   useComponentRepository: () => ({
     getAll: vi.fn().mockReturnValue([])
   })

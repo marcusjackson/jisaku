@@ -13,12 +13,12 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
+import { useComponentRepository } from '@/shared/composables/use-component-repository'
 import { useDatabase } from '@/shared/composables/use-database'
+import { useKanjiRepository } from '@/shared/composables/use-kanji-repository'
 import { useToast } from '@/shared/composables/use-toast'
 
-import { useKanjiRepository } from '@/modules/kanji-list/composables/use-kanji-repository'
 import { useComponentForm } from '../composables/use-component-form'
-import { useComponentRepository } from '../composables/use-component-repository'
 
 import ComponentSectionForm from './ComponentSectionForm.vue'
 

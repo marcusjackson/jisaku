@@ -22,11 +22,9 @@ describe('kanji-constants', () => {
       const first = JLPT_OPTIONS[0]
       const last = JLPT_OPTIONS[4]
       const nonJlpt = JLPT_OPTIONS[5]
-      expect(first?.label).toContain('N5')
-      expect(first?.label).toContain('Beginner')
-      expect(last?.label).toContain('N1')
-      expect(last?.label).toContain('Advanced')
-      expect(nonJlpt?.label).toBe('Non-JLPT')
+      expect(first?.label).toBe('N5')
+      expect(last?.label).toBe('N1')
+      expect(nonJlpt?.label).toBe('非JLPT')
     })
   })
 
@@ -57,16 +55,16 @@ describe('kanji-constants', () => {
       const secondary = JOYO_OPTIONS[6]
       const nonJoyo = JOYO_OPTIONS[7]
       expect(secondary?.value).toBe('secondary')
-      expect(secondary?.label).toContain('Secondary')
+      expect(secondary?.label).toBe('中学')
       expect(nonJoyo?.value).toBe('non-joyo')
-      expect(nonJoyo?.label).toBe('Non-Joyo')
+      expect(nonJoyo?.label).toBe('非常用')
     })
 
     it('has Japanese grade labels', () => {
       const first = JOYO_OPTIONS[0]
       const secondary = JOYO_OPTIONS[6]
-      expect(first?.label).toContain('小1')
-      expect(secondary?.label).toContain('中学')
+      expect(first?.label).toBe('小1')
+      expect(secondary?.label).toBe('中学')
     })
   })
 

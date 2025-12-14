@@ -163,7 +163,7 @@ function handleOpenChange(open: boolean, id: string): void {
 <style>
 .base-toast-viewport {
   position: fixed;
-  top: var(--spacing-lg);
+  top: calc(var(--spacing-lg) * 2);
   left: 50%;
   z-index: var(--z-toast);
   display: flex;

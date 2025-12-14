@@ -45,7 +45,7 @@ vi.mock('@/shared/composables/use-toast', () => ({
 }))
 
 // Mock the kanji repository
-vi.mock('@/modules/kanji-list/composables/use-kanji-repository', () => ({
+vi.mock('@/shared/composables/use-kanji-repository', () => ({
   useKanjiRepository: () => ({
     getById: mockGetById,
     getLinkedComponents: mockGetLinkedComponents,
@@ -70,7 +70,7 @@ const mockCreateComponent = vi.fn()
 const mockGetAllComponents = vi.fn().mockReturnValue([])
 
 // Mock component repository
-vi.mock('@/modules/components/composables/use-component-repository', () => ({
+vi.mock('@/shared/composables/use-component-repository', () => ({
   useComponentRepository: () => ({
     create: mockCreateComponent,
     getAll: mockGetAllComponents,
@@ -83,15 +83,12 @@ const mockGetByKanjiIdWithPosition = vi.fn()
 const mockCreateOccurrence = vi.fn()
 
 // Mock component occurrence repository
-vi.mock(
-  '@/modules/components/composables/use-component-occurrence-repository',
-  () => ({
-    useComponentOccurrenceRepository: () => ({
-      create: mockCreateOccurrence,
-      getByKanjiIdWithPosition: mockGetByKanjiIdWithPosition
-    })
+vi.mock('@/shared/composables/use-component-occurrence-repository', () => ({
+  useComponentOccurrenceRepository: () => ({
+    create: mockCreateOccurrence,
+    getByKanjiIdWithPosition: mockGetByKanjiIdWithPosition
   })
-)
+}))
 
 // Mock radical repository
 vi.mock('../composables/use-radical-repository', () => ({

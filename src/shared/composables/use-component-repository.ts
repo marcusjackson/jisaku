@@ -21,7 +21,7 @@ import type {
 interface ComponentRow {
   id: number
   character: string
-  stroke_count: number
+  stroke_count: number | null
   short_meaning: string | null
   source_kanji_id: number | null
   search_keywords: string | null
@@ -107,13 +107,17 @@ export function useComponentRepository(): UseComponentRepository {
     const conditions: string[] = []
     const params: unknown[] = []
 
-    // Character search (searches character, short_meaning, and search_keywords)
+    // Character search (exact match on character)
     if (filters.character) {
-      conditions.push(
-        '(character LIKE ? OR short_meaning LIKE ? OR search_keywords LIKE ?)'
-      )
-      const searchPattern = `%${filters.character}%`
-      params.push(searchPattern, searchPattern, searchPattern)
+      conditions.push('character = ?')
+      params.push(filters.character)
+    }
+
+    // Search keywords (searches short_meaning and search_keywords)
+    if (filters.searchKeywords) {
+      conditions.push('(short_meaning LIKE ? OR search_keywords LIKE ?)')
+      const searchPattern = `%${filters.searchKeywords}%`
+      params.push(searchPattern, searchPattern)
     }
 
     // Stroke count range
@@ -162,7 +166,7 @@ export function useComponentRepository(): UseComponentRepository {
     `
     run(sql, [
       input.character,
-      input.strokeCount,
+      input.strokeCount ?? null,
       input.shortMeaning ?? null,
       input.sourceKanjiId ?? null,
       input.searchKeywords ?? null,

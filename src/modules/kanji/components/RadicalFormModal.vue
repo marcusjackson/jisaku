@@ -17,7 +17,7 @@ import BaseButton from '@/base/components/BaseButton.vue'
 import BaseDialog from '@/base/components/BaseDialog.vue'
 import BaseInput from '@/base/components/BaseInput.vue'
 
-import { useComponentRepository } from '@/modules/components/composables/use-component-repository'
+import { useComponentRepository } from '@/shared/composables/use-component-repository'
 
 import type { Component } from '@/shared/types/database-types'
 

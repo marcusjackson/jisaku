@@ -17,6 +17,7 @@ import KanjiFilterJlptLevel from './KanjiFilterJlptLevel.vue'
 import KanjiFilterJoyoLevel from './KanjiFilterJoyoLevel.vue'
 import KanjiFilterKenteiLevel from './KanjiFilterKenteiLevel.vue'
 import KanjiFilterRadical from './KanjiFilterRadical.vue'
+import KanjiFilterSearchKeywords from './KanjiFilterSearchKeywords.vue'
 import KanjiFilterStrokeRange from './KanjiFilterStrokeRange.vue'
 
 import type { Component, KanjiFilters } from '@/shared/types/database-types'
@@ -26,6 +27,8 @@ const props = defineProps<{
   filters: KanjiFilters
   /** Character search value (debounced separately) */
   characterSearch: string
+  /** Search keywords value (debounced separately) */
+  searchKeywords: string
   /** Whether any filters are active */
   hasActiveFilters: boolean
   /** Available components for filter dropdown */
@@ -37,6 +40,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   /** Update character search input */
   'update:characterSearch': [value: string]
+  /** Update search keywords input */
+  'update:searchKeywords': [value: string]
   /** Update a filter value */
   updateFilter: [key: keyof KanjiFilters, value: unknown]
   /** Clear all filters */
@@ -75,6 +80,7 @@ function toggleCollapsed() {
 const activeFilterCount = computed(() => {
   let count = 0
   if (props.filters.character) count++
+  if (props.filters.searchKeywords) count++
   if (props.filters.strokeCountMin !== undefined) count++
   if (props.filters.strokeCountMax !== undefined) count++
   if (props.filters.jlptLevels && props.filters.jlptLevels.length > 0) count++
@@ -138,6 +144,11 @@ const activeFilterCount = computed(() => {
           @update:model-value="emit('update:characterSearch', $event)"
         />
 
+        <KanjiFilterSearchKeywords
+          :model-value="searchKeywords"
+          @update:model-value="emit('update:searchKeywords', $event)"
+        />
+
         <KanjiFilterStrokeRange
           :max="filters.strokeCountMax"
           :min="filters.strokeCountMin"
@@ -193,16 +204,28 @@ const activeFilterCount = computed(() => {
         />
       </div>
 
-      <div
-        v-if="hasActiveFilters"
-        class="kanji-list-filters-actions"
-      >
-        <BaseButton
-          variant="ghost"
-          @click="emit('clearFilters')"
+      <div class="kanji-list-filters-bottom">
+        <div
+          v-if="hasActiveFilters"
+          class="kanji-list-filters-actions"
         >
-          Clear filters
-        </BaseButton>
+          <BaseButton
+            variant="ghost"
+            @click="emit('clearFilters')"
+          >
+            Clear filters
+          </BaseButton>
+        </div>
+
+        <div class="kanji-list-filters-collapse">
+          <BaseButton
+            size="sm"
+            variant="secondary"
+            @click="toggleCollapsed"
+          >
+            Collapse
+          </BaseButton>
+        </div>
       </div>
     </div>
 
@@ -295,8 +318,23 @@ const activeFilterCount = computed(() => {
 }
 
 .kanji-list-filters-actions {
+  position: absolute;
+  top: 50%;
+  left: var(--spacing-md);
   display: flex;
   justify-content: flex-end;
+  transform: translateY(-50%);
+}
+
+.kanji-list-filters-bottom {
+  position: relative;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.kanji-list-filters-collapse {
+  display: flex;
+  justify-content: center;
 }
 
 .kanji-list-filters-collapsed-actions {

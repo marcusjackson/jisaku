@@ -10,8 +10,6 @@ import { RouterLink } from 'vue-router'
 
 import BaseButton from '@/base/components/BaseButton.vue'
 
-import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
-
 import KanjiListCard from './KanjiListCard.vue'
 
 import type { Kanji } from '@/shared/types/database-types'
@@ -24,67 +22,69 @@ defineProps<{
 </script>
 
 <template>
-  <SharedPageContainer>
-    <div class="kanji-list-section-grid">
-      <header class="kanji-list-section-grid-header">
-        <h1 class="kanji-list-section-grid-title">Kanji List</h1>
-        <RouterLink
-          v-slot="{ navigate }"
-          custom
-          to="/kanji/new"
-        >
-          <BaseButton @click="navigate">Add Kanji</BaseButton>
-        </RouterLink>
-      </header>
-
-      <!-- Empty state: no results from filter -->
-      <div
-        v-if="kanjiList.length === 0 && hasActiveFilters"
-        class="kanji-list-section-grid-empty"
+  <div class="kanji-list-section-grid">
+    <header class="kanji-list-section-grid-header">
+      <h1 class="kanji-list-section-grid-title">Kanji List</h1>
+      <RouterLink
+        v-slot="{ navigate }"
+        custom
+        to="/kanji/new"
       >
-        <p class="kanji-list-section-grid-empty-text">
-          No kanji match your filters.
-        </p>
-      </div>
+        <BaseButton @click="navigate">Add Kanji</BaseButton>
+      </RouterLink>
+    </header>
 
-      <!-- Empty state: no kanji at all -->
-      <div
-        v-else-if="kanjiList.length === 0"
-        class="kanji-list-section-grid-empty"
-      >
-        <p class="kanji-list-section-grid-empty-text">
-          No kanji yet. Add your first one!
-        </p>
-        <RouterLink
-          v-slot="{ navigate }"
-          custom
-          to="/kanji/new"
-        >
-          <BaseButton
-            size="lg"
-            @click="navigate"
-          >
-            Add Your First Kanji
-          </BaseButton>
-        </RouterLink>
-      </div>
-
-      <!-- Kanji grid -->
-      <div
-        v-else
-        class="kanji-list-section-grid-grid"
-      >
-        <KanjiListCard
-          v-for="kanji in kanjiList"
-          :key="kanji.id"
-          :kanji="kanji"
-        />
-      </div>
+    <!-- Empty state: no results from filter -->
+    <div
+      v-if="kanjiList.length === 0 && hasActiveFilters"
+      class="kanji-list-section-grid-empty"
+    >
+      <p class="kanji-list-section-grid-empty-text">
+        No kanji match your filters.
+      </p>
     </div>
-  </SharedPageContainer>
+
+    <!-- Empty state: no kanji at all -->
+    <div
+      v-else-if="kanjiList.length === 0"
+      class="kanji-list-section-grid-empty"
+    >
+      <p class="kanji-list-section-grid-empty-text">
+        No kanji yet. Add your first one!
+      </p>
+      <RouterLink
+        v-slot="{ navigate }"
+        custom
+        to="/kanji/new"
+      >
+        <BaseButton
+          size="lg"
+          @click="navigate"
+        >
+          Add Your First Kanji
+        </BaseButton>
+      </RouterLink>
+    </div>
+
+    <!-- Kanji grid -->
+    <div
+      v-else
+      class="kanji-list-section-grid-grid"
+    >
+      <KanjiListCard
+        v-for="kanji in kanjiList"
+        :key="kanji.id"
+        :kanji="kanji"
+      />
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.kanji-list-section-grid {
+  margin-top: var(--spacing-lg);
+}
+
 .kanji-list-section-grid-header {
   display: flex;
   justify-content: space-between;

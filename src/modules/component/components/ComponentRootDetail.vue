@@ -13,12 +13,11 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
+import { useComponentOccurrenceRepository } from '@/shared/composables/use-component-occurrence-repository'
+import { useComponentRepository } from '@/shared/composables/use-component-repository'
 import { useDatabase } from '@/shared/composables/use-database'
+import { useKanjiRepository } from '@/shared/composables/use-kanji-repository'
 import { useToast } from '@/shared/composables/use-toast'
-
-import { useKanjiRepository } from '@/modules/kanji-list/composables/use-kanji-repository'
-import { useComponentOccurrenceRepository } from '../composables/use-component-occurrence-repository'
-import { useComponentRepository } from '../composables/use-component-repository'
 
 import ComponentSectionDetail from './ComponentSectionDetail.vue'
 
@@ -68,6 +67,7 @@ const allKanji = ref<Kanji[]>([])
 const fetchError = ref<Error | null>(null)
 const isDeleting = ref(false)
 const isDestructiveMode = ref(false)
+const updateToastTimeout = ref<NodeJS.Timeout | null>(null)
 
 // Computed component ID from route params
 const componentId = computed(() => {
@@ -312,7 +312,12 @@ async function handleBasicInfoUpdate(
       sourceKanji.value = typeof value === 'number' ? getKanjiById(value) : null
     }
 
-    success('Basic info updated')
+    // Debounce the success toast to avoid multiple toasts for rapid updates
+    if (updateToastTimeout.value) clearTimeout(updateToastTimeout.value)
+    updateToastTimeout.value = setTimeout(() => {
+      success('Basic info updated')
+      updateToastTimeout.value = null
+    }, 500)
   } catch (err) {
     fetchError.value = err instanceof Error ? err : new Error(String(err))
   }

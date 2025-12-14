@@ -121,7 +121,7 @@ onMounted(async () => {
   gap: var(--spacing-lg);
   max-width: 800px;
   margin: 0 auto;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
 }
 
 .settings-root-loading {

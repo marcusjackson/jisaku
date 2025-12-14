@@ -43,6 +43,8 @@ export interface UseComponentFilters {
   filters: ComputedRef<ComponentFilters>
   /** Character search with debounce (for input binding) */
   characterSearch: Ref<string>
+  /** Search keywords with debounce (for input binding) */
+  searchKeywords: Ref<string>
   /** Update a single filter value (pushes to URL) */
   updateFilter: (key: keyof ComponentFilters, value: unknown) => void
   /** Clear all filters (resets URL query params) */
@@ -57,6 +59,8 @@ export function useComponentFilters(): UseComponentFilters {
 
   // Debounced character search (150ms default)
   const characterSearch = useDebounce('', 150)
+  // Debounced search keywords (150ms default)
+  const searchKeywords = useDebounce('', 150)
 
   // Parse filters from URL query params
   const filters = computed<ComponentFilters>(() => {
@@ -65,6 +69,11 @@ export function useComponentFilters(): UseComponentFilters {
     const char = characterSearch.value
     if (char) {
       result.character = char
+    }
+
+    const keywords = searchKeywords.value
+    if (keywords) {
+      result.searchKeywords = keywords
     }
 
     const strokeMin = parseNumber(route.query['strokeMin'])
@@ -107,6 +116,28 @@ export function useComponentFilters(): UseComponentFilters {
     }
   })
 
+  // Sync search keywords from URL on route change
+  watch(
+    () => route.query['keywords'],
+    (newValue) => {
+      const parsed = parseString(newValue)
+      // Only update if different to avoid loops
+      if (parsed !== searchKeywords.value) {
+        // Directly set internal value to avoid debounce on URL sync
+        searchKeywords.value = parsed ?? ''
+      }
+    },
+    { immediate: true }
+  )
+
+  // Sync debounced search keywords to URL
+  watch(searchKeywords, (newValue) => {
+    const currentUrlValue = parseString(route.query['keywords'])
+    if (newValue !== currentUrlValue) {
+      updateQueryParam('keywords', newValue || undefined)
+    }
+  })
+
   // Update a single query param in the URL
   function updateQueryParam(key: string, value: unknown): void {
     const query: Record<string, string> = {}
@@ -136,6 +167,7 @@ export function useComponentFilters(): UseComponentFilters {
   // Map filter keys to URL query param keys
   const filterKeyToQueryKey: Record<keyof ComponentFilters, string> = {
     character: 'character',
+    searchKeywords: 'keywords',
     strokeCountMin: 'strokeMin',
     strokeCountMax: 'strokeMax',
     sourceKanjiId: 'sourceKanji'
@@ -151,12 +183,19 @@ export function useComponentFilters(): UseComponentFilters {
       return
     }
 
+    // Handle search keywords specially (goes through debounce)
+    if (key === 'searchKeywords') {
+      searchKeywords.value = typeof value === 'string' ? value : ''
+      return
+    }
+
     updateQueryParam(queryKey, value)
   }
 
   // Clear all filters
   function clearFilters(): void {
     characterSearch.value = ''
+    searchKeywords.value = ''
     void router.replace({ query: {} })
   }
 
@@ -164,13 +203,18 @@ export function useComponentFilters(): UseComponentFilters {
   const hasActiveFilters = computed<boolean>(() => {
     const f = filters.value
     return Boolean(
-      f.character ?? f.strokeCountMin ?? f.strokeCountMax ?? f.sourceKanjiId
+      f.character ??
+      f.searchKeywords ??
+      f.strokeCountMin ??
+      f.strokeCountMax ??
+      f.sourceKanjiId
     )
   })
 
   return {
     filters,
     characterSearch,
+    searchKeywords,
     updateFilter,
     clearFilters,
     hasActiveFilters

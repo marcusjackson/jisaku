@@ -17,8 +17,7 @@ import BaseSelect from '@/base/components/BaseSelect.vue'
 
 import SharedEntitySearch from '@/shared/components/SharedEntitySearch.vue'
 import SharedQuickCreateKanji from '@/shared/components/SharedQuickCreateKanji.vue'
-
-import { usePositionTypeRepository } from '../composables/use-position-type-repository'
+import { usePositionTypeRepository } from '@/shared/composables/use-position-type-repository'
 
 import type { SelectOption } from '@/base/components/BaseSelect.vue'
 import type {

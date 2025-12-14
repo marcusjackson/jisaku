@@ -12,10 +12,10 @@ import { onMounted, ref, watch } from 'vue'
 import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
+import { useComponentRepository } from '@/shared/composables/use-component-repository'
 import { useDatabase } from '@/shared/composables/use-database'
 import { useFilterPersistence } from '@/shared/composables/use-filter-persistence'
 
-import { useComponentRepository } from '@/modules/component/composables/use-component-repository'
 import { useComponentFilters } from '../composables/use-component-filters'
 
 import ComponentListSectionFilters from './ComponentListSectionFilters.vue'
@@ -38,6 +38,7 @@ const {
   clearFilters,
   filters,
   hasActiveFilters,
+  searchKeywords,
   updateFilter
 } = useComponentFilters()
 
@@ -102,17 +103,22 @@ onMounted(async () => {
   </SharedPageContainer>
 
   <!-- Content -->
-  <div v-else-if="isInitialized">
+  <SharedPageContainer v-else-if="isInitialized">
     <ComponentListSectionFilters
       :character-search="characterSearch"
       :filters="filters"
       :has-active-filters="hasActiveFilters"
+      :search-keywords="searchKeywords"
       @clear-filters="clearFilters"
       @update-filter="handleFilterUpdate"
       @update:character-search="(val) => (characterSearch = val)"
+      @update:search-keywords="(val) => (searchKeywords = val)"
     />
-    <ComponentListSectionGrid :component-list="componentList" />
-  </div>
+    <ComponentListSectionGrid
+      :component-list="componentList"
+      :has-active-filters="hasActiveFilters"
+    />
+  </SharedPageContainer>
 </template>
 
 <style scoped>

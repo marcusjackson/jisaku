@@ -20,6 +20,13 @@ const jlptBadgeClass = computed(() => {
   return `kanji-list-card-badge-jlpt-${props.kanji.jlptLevel.toLowerCase()}`
 })
 
+const jlptLabel = computed(() => {
+  if (!props.kanji.jlptLevel) return null
+  // Display 非JLPT for non-jlpt, otherwise show the level as-is
+  if (props.kanji.jlptLevel === 'non-jlpt') return '非JLPT'
+  return props.kanji.jlptLevel
+})
+
 const joyoLabel = computed(() => {
   if (!props.kanji.joyoLevel) return null
   const labels: Record<string, string> = {
@@ -29,7 +36,8 @@ const joyoLabel = computed(() => {
     elementary4: '小4',
     elementary5: '小5',
     elementary6: '小6',
-    secondary: '中学'
+    secondary: '中学',
+    'non-joyo': '非常用'
   }
   return labels[props.kanji.joyoLevel] ?? null
 })
@@ -67,7 +75,7 @@ const kenteiLabel = computed(() => {
           class="kanji-list-card-badge"
           :class="jlptBadgeClass"
         >
-          {{ kanji.jlptLevel }}
+          {{ jlptLabel }}
         </span>
         <span
           v-if="joyoLabel"
@@ -128,7 +136,7 @@ const kenteiLabel = computed(() => {
 }
 
 .kanji-list-card-meaning {
-  max-width: 150px;
+  max-width: 145px;
   overflow: hidden;
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
@@ -181,6 +189,12 @@ const kenteiLabel = computed(() => {
 .kanji-list-card-badge-jlpt-n1 {
   background-color: var(--color-error-bg);
   color: var(--color-error);
+}
+
+.kanji-list-card-badge-jlpt-non-jlpt {
+  border: var(--border-width) solid var(--color-border);
+  background-color: var(--color-surface-variant);
+  color: var(--color-text-muted);
 }
 
 /* Joyo level */

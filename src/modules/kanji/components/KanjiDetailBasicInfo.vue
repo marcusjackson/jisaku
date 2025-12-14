@@ -38,29 +38,29 @@ const emit = defineEmits<{
 const NONE_VALUE = '__none__'
 
 const JLPT_OPTIONS = [
-  { label: 'None', value: NONE_VALUE },
+  { label: 'なし', value: NONE_VALUE },
   { label: 'N5', value: 'N5' },
   { label: 'N4', value: 'N4' },
   { label: 'N3', value: 'N3' },
   { label: 'N2', value: 'N2' },
   { label: 'N1', value: 'N1' },
-  { label: 'Non-JLPT', value: 'non-jlpt' }
+  { label: '非JLPT', value: 'non-jlpt' }
 ]
 
 const JOYO_OPTIONS = [
-  { label: 'None', value: NONE_VALUE },
-  { label: 'Grade 1', value: 'elementary1' },
-  { label: 'Grade 2', value: 'elementary2' },
-  { label: 'Grade 3', value: 'elementary3' },
-  { label: 'Grade 4', value: 'elementary4' },
-  { label: 'Grade 5', value: 'elementary5' },
-  { label: 'Grade 6', value: 'elementary6' },
-  { label: 'Secondary', value: 'secondary' },
-  { label: 'Non-Joyo', value: 'non-joyo' }
+  { label: 'なし', value: NONE_VALUE },
+  { label: '小1', value: 'elementary1' },
+  { label: '小2', value: 'elementary2' },
+  { label: '小3', value: 'elementary3' },
+  { label: '小4', value: 'elementary4' },
+  { label: '小5', value: 'elementary5' },
+  { label: '小6', value: 'elementary6' },
+  { label: '中学', value: 'secondary' },
+  { label: '非常用', value: 'non-joyo' }
 ]
 
 const KENTEI_OPTIONS = [
-  { label: 'None', value: NONE_VALUE },
+  { label: 'なし', value: NONE_VALUE },
   { label: '10級', value: '10級' },
   { label: '9級', value: '9級' },
   { label: '8級', value: '8級' },
@@ -124,20 +124,20 @@ const radicalComboboxOptions = computed<RadicalComboboxOption[]>(() => {
 // Display values
 const jlptDisplay = computed(() => {
   if (!props.kanji.jlptLevel) return '—'
-  if (props.kanji.jlptLevel === 'non-jlpt') return 'Non-JLPT'
+  if (props.kanji.jlptLevel === 'non-jlpt') return '非JLPT'
   return props.kanji.jlptLevel
 })
 const joyoDisplay = computed(() => {
   if (!props.kanji.joyoLevel) return '—'
   const labels: Record<string, string> = {
-    elementary1: 'Grade 1',
-    elementary2: 'Grade 2',
-    elementary3: 'Grade 3',
-    elementary4: 'Grade 4',
-    elementary5: 'Grade 5',
-    elementary6: 'Grade 6',
-    secondary: 'Secondary',
-    'non-joyo': 'Non-Joyo'
+    elementary1: '小1',
+    elementary2: '小2',
+    elementary3: '小3',
+    elementary4: '小4',
+    elementary5: '小5',
+    elementary6: '小6',
+    secondary: '中学',
+    'non-joyo': '非常用'
   }
   return labels[props.kanji.joyoLevel] ?? '—'
 })

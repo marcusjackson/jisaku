@@ -3,11 +3,13 @@
  * SharedSearchKeywordsIndicator
  *
  * UI component displaying a subtle indicator when search_keywords has content.
- * Shows a small icon/badge with tooltip displaying the keywords on hover.
- * Not prominently visible, just informative.
+ * Shows a small icon with tooltip displaying the keywords.
+ * On desktop: Hovers to show tooltip (native behavior)
+ * On mobile: Click to toggle tooltip open/close with close button for dismissal
+ * Outside clicks also close the tooltip when open via click.
  */
 
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import {
   TooltipArrow,
@@ -23,6 +25,9 @@ const props = defineProps<{
   searchKeywords: string | null | undefined
 }>()
 
+const isOpen = ref(false)
+const contentRef = ref<HTMLElement>()
+
 const hasKeywords = computed(() => {
   return props.searchKeywords && props.searchKeywords.trim().length > 0
 })
@@ -30,15 +35,52 @@ const hasKeywords = computed(() => {
 const tooltipMessage = computed(() => {
   return hasKeywords.value ? props.searchKeywords : 'No search keywords set'
 })
+
+const handleClick = () => {
+  isOpen.value = !isOpen.value
+}
+
+const handleClose = () => {
+  isOpen.value = false
+}
+
+const handleOutsideClick = (event: Event) => {
+  if (!isOpen.value) return // Only handle outside clicks when tooltip is open
+
+  const target = event.target as Node
+  if (
+    contentRef.value &&
+    typeof contentRef.value.contains === 'function' &&
+    !contentRef.value.contains(target)
+  ) {
+    // Check if click is on the trigger button to avoid immediately closing on open click
+    const trigger = document.querySelector(
+      '[aria-label="Show search keywords"]'
+    )
+    if (trigger && !trigger.contains(target)) {
+      isOpen.value = false
+    }
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleOutsideClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleOutsideClick)
+})
 </script>
 
 <template>
   <TooltipProvider>
-    <TooltipRoot :delay-duration="300">
+    <TooltipRoot v-model:open="isOpen">
       <TooltipTrigger as-child>
-        <span
-          aria-label="Has search keywords"
+        <button
+          aria-label="Show search keywords"
           class="search-keywords-indicator"
+          type="button"
+          @click="handleClick"
         >
           <svg
             class="search-keywords-indicator-icon"
@@ -52,16 +94,45 @@ const tooltipMessage = computed(() => {
               fill-rule="evenodd"
             />
           </svg>
-        </span>
+        </button>
       </TooltipTrigger>
       <TooltipPortal>
         <TooltipContent
           class="search-keywords-tooltip"
           :side-offset="5"
         >
-          <div class="search-keywords-tooltip-title">Search Keywords</div>
-          <div class="search-keywords-tooltip-content">
-            {{ tooltipMessage }}
+          <div
+            ref="contentRef"
+            class="search-keywords-tooltip-content-wrapper"
+          >
+            <div class="search-keywords-tooltip-header">
+              <div class="search-keywords-tooltip-title">Search Keywords</div>
+              <button
+                aria-label="Close"
+                class="search-keywords-tooltip-close"
+                type="button"
+                @click="handleClose"
+              >
+                <svg
+                  fill="none"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  width="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M4 4L12 12M12 4L4 12"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div class="search-keywords-tooltip-content">
+              {{ tooltipMessage }}
+            </div>
           </div>
           <TooltipArrow class="search-keywords-tooltip-arrow" />
         </TooltipContent>
@@ -75,13 +146,21 @@ const tooltipMessage = computed(() => {
   display: inline-flex;
   align-items: center;
   padding: var(--spacing-1);
+  border: none;
+  background: none;
   color: var(--color-text-muted);
-  cursor: help;
+  cursor: pointer;
   transition: color var(--transition-fast);
 }
 
 .search-keywords-indicator:hover {
   color: var(--color-text-secondary);
+}
+
+.search-keywords-indicator:focus-visible {
+  border-radius: var(--radius-sm);
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .search-keywords-indicator-icon {
@@ -92,26 +171,58 @@ const tooltipMessage = computed(() => {
 :deep(.search-keywords-tooltip) {
   z-index: 50;
   max-width: 20rem;
-  padding: var(--spacing-2) var(--spacing-3);
+  padding: var(--spacing-3);
   overflow: hidden;
   border-radius: var(--radius-md);
-  background-color: var(--color-text-primary);
-  color: var(--color-text-inverse);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
+  background-color: var(--color-surface);
   box-shadow: var(--shadow-lg);
 }
 
+:deep(.search-keywords-tooltip-header) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-2);
+}
+
 :deep(.search-keywords-tooltip-title) {
-  margin-bottom: var(--spacing-1);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
 }
 
+:deep(.search-keywords-tooltip-close) {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+:deep(.search-keywords-tooltip-close:hover) {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+:deep(.search-keywords-tooltip-close:focus-visible) {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
 :deep(.search-keywords-tooltip-content) {
-  color: var(--color-text-inverse);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
 }
 
 :deep(.search-keywords-tooltip-arrow) {
-  fill: var(--color-text-primary);
+  fill: var(--color-surface);
 }
 </style>

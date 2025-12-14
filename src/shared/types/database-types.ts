@@ -297,6 +297,7 @@ export interface UpdateRadicalInput {
 
 export interface KanjiFilters {
   character?: string
+  searchKeywords?: string
   strokeCountMin?: number
   strokeCountMax?: number
   jlptLevels?: JlptLevel[]
@@ -308,6 +309,7 @@ export interface KanjiFilters {
 
 export interface ComponentFilters {
   character?: string
+  searchKeywords?: string
   strokeCountMin?: number
   strokeCountMax?: number
   sourceKanjiId?: number
