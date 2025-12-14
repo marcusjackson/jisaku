@@ -11,7 +11,7 @@
 import { computed, watch } from 'vue'
 
 import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
+import { useField, useForm } from 'vee-validate'
 
 import BaseButton from '@/base/components/BaseButton.vue'
 import BaseCheckbox from '@/base/components/BaseCheckbox.vue'
@@ -51,12 +51,16 @@ const open = defineModel<boolean>('open', { default: false })
 const occurrenceRepo = useComponentOccurrenceRepository()
 const positionTypeRepo = usePositionTypeRepository()
 
+// Use '__none__' as sentinel value for "None" option
+// Reka UI SelectItem doesn't allow empty string values
+const NONE_VALUE = '__none__'
+
 // Get all position types for dropdown
 const positionTypes = computed<PositionType[]>(() => positionTypeRepo.getAll())
 
 // Convert position types to select options
 const positionOptions = computed(() => [
-  { value: '', label: 'None', disabled: false },
+  { value: NONE_VALUE, label: 'None', disabled: false },
   ...positionTypes.value.map((pt) => ({
     value: String(pt.id),
     label: `${pt.nameJapanese ?? pt.positionName} (${pt.nameEnglish ?? pt.positionName})`,
@@ -67,7 +71,7 @@ const positionOptions = computed(() => [
 // Form setup
 const schema = toTypedSchema(componentOccurrenceEditSchema)
 
-const { errors, handleSubmit, resetForm, setFieldValue } = useForm({
+const { handleSubmit, resetForm } = useForm({
   validationSchema: schema,
   initialValues: {
     positionTypeId: null as number | null,
@@ -76,14 +80,35 @@ const { errors, handleSubmit, resetForm, setFieldValue } = useForm({
   }
 })
 
+// Use field-level bindings to avoid readonly proxy issues with v-model
+const { errorMessage: positionTypeIdError, value: positionTypeIdRaw } =
+  useField<number | null>('positionTypeId')
+const { errorMessage: isRadicalError, value: isRadical } =
+  useField<boolean>('isRadical')
+const { errorMessage: analysisNotesError, value: analysisNotes } =
+  useField<string>('analysisNotes')
+
+// Convert between string (for select) and number (for form)
+const positionTypeIdString = computed({
+  get: () => {
+    return positionTypeIdRaw.value
+      ? String(positionTypeIdRaw.value)
+      : NONE_VALUE
+  },
+  set: (value: string | null) => {
+    positionTypeIdRaw.value =
+      value && value !== NONE_VALUE ? parseInt(value, 10) : null
+  }
+})
+
 // Watch occurrence changes to update form
 watch(
   () => props.occurrence,
   (newOccurrence) => {
     if (newOccurrence) {
-      setFieldValue('positionTypeId', newOccurrence.positionTypeId)
-      setFieldValue('isRadical', newOccurrence.isRadical)
-      setFieldValue('analysisNotes', newOccurrence.analysisNotes ?? '')
+      positionTypeIdRaw.value = newOccurrence.positionTypeId
+      isRadical.value = newOccurrence.isRadical
+      analysisNotes.value = newOccurrence.analysisNotes ?? ''
     } else {
       resetForm()
     }
@@ -91,43 +116,12 @@ watch(
   { immediate: true }
 )
 
-// Form fields
-const positionTypeId = defineModel<string | null>('positionTypeId')
-const isRadical = defineModel<boolean>('isRadical', { default: false })
-const analysisNotes = defineModel<string | undefined>('analysisNotes')
-
-// Sync v-model changes back to form state
-// This ensures the form has the latest field values when submitted
-watch(
-  () => analysisNotes.value,
-  (newValue) => {
-    setFieldValue('analysisNotes', newValue ?? '')
-  }
-)
-
-// Convert between string (for select) and number (for database)
-const positionTypeIdString = computed({
-  get: () => {
-    const value = positionTypeId.value
-    return value ?? ''
-  },
-  set: (value: string | null) => {
-    positionTypeId.value = value && value !== '' ? value : null
-  }
-})
-
 // Watch dialog open state to sync form with occurrence
 watch(
   () => open.value,
   (isOpen) => {
     if (isOpen && props.occurrence) {
-      setFieldValue('positionTypeId', props.occurrence.positionTypeId)
-      setFieldValue('isRadical', props.occurrence.isRadical)
-      setFieldValue('analysisNotes', props.occurrence.analysisNotes ?? '')
-
-      positionTypeId.value = props.occurrence.positionTypeId
-        ? String(props.occurrence.positionTypeId)
-        : null
+      positionTypeIdRaw.value = props.occurrence.positionTypeId
       isRadical.value = props.occurrence.isRadical
       analysisNotes.value = props.occurrence.analysisNotes ?? ''
     }
@@ -179,7 +173,7 @@ const isSaving = computed(() => false)
       <!-- Position Type -->
       <BaseSelect
         v-model="positionTypeIdString"
-        :error="errors.positionTypeId"
+        :error="positionTypeIdError"
         label="Position"
         name="positionTypeId"
         :options="positionOptions"
@@ -189,14 +183,14 @@ const isSaving = computed(() => false)
       <!-- Is Radical -->
       <BaseCheckbox
         v-model="isRadical"
-        v-bind="errors.isRadical ? { error: errors.isRadical } : {}"
+        v-bind="isRadicalError ? { error: isRadicalError } : {}"
         label="Mark as radical for this kanji"
       />
 
       <!-- Analysis Notes -->
       <BaseTextarea
         v-model="analysisNotes"
-        v-bind="errors.analysisNotes ? { error: errors.analysisNotes } : {}"
+        v-bind="analysisNotesError ? { error: analysisNotesError } : {}"
         label="Analysis Notes"
         name="analysisNotes"
         placeholder="Add notes about this component's role in the kanji..."

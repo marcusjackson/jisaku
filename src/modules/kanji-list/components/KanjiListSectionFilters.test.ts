@@ -14,7 +14,7 @@ const mockComponents: Component[] = [
     shortMeaning: null,
     sourceKanjiId: null,
     description: 'Water',
-    japaneseName: 'さんずい',
+    searchKeywords: 'さんずい',
     canBeRadical: false,
     kangxiNumber: null,
     kangxiMeaning: null,

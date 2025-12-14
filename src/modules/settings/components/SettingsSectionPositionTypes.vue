@@ -256,15 +256,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="settings-section-position-types">
-    <header class="settings-section-position-types-header">
-      <h2 class="settings-section-position-types-title">Position Types</h2>
-      <p class="settings-section-position-types-description">
-        Manage position types used to classify where components appear in kanji
-        (e.g., hen, tsukuri, kanmuri).
-      </p>
-    </header>
-
+  <div class="settings-section-position-types">
     <div class="settings-section-position-types-actions">
       <BaseButton
         :disabled="createDisabled"
@@ -503,7 +495,7 @@ onMounted(() => {
       @cancel="handleDeleteCancel"
       @confirm="handleDeleteConfirm"
     />
-  </section>
+  </div>
 </template>
 
 <style scoped>
@@ -511,29 +503,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  background-color: var(--color-surface);
-}
-
-.settings-section-position-types-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.settings-section-position-types-title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-}
-
-.settings-section-position-types-description {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
 }
 
 .settings-section-position-types-actions {

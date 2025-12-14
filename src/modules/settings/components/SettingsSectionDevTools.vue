@@ -3,7 +3,7 @@
  * SettingsSectionDevTools
  *
  * Section component for developer tools in settings.
- * Provides seed/clear database functionality.
+ * Provides seed/clear/reset database functionality.
  */
 
 import { computed } from 'vue'
@@ -39,12 +39,7 @@ const clearDisabled = computed(() => isClearing.value || isSeeding.value)
 </script>
 
 <template>
-  <section class="settings-section-dev-tools">
-    <h2 class="settings-section-dev-tools-title">Developer Tools</h2>
-    <p class="settings-section-dev-tools-description">
-      Tools for development and testing. Use with caution.
-    </p>
-
+  <div class="settings-section-dev-tools">
     <div class="settings-section-dev-tools-actions">
       <div class="settings-section-dev-tools-action">
         <h3 class="settings-section-dev-tools-action-title">Seed Database</h3>
@@ -86,7 +81,7 @@ const clearDisabled = computed(() => isClearing.value || isSeeding.value)
       @cancel="handleClearCancel"
       @confirm="handleClearConfirm"
     />
-  </section>
+  </div>
 </template>
 
 <style scoped>
@@ -94,23 +89,6 @@ const clearDisabled = computed(() => isClearing.value || isSeeding.value)
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background-color: var(--color-surface);
-}
-
-.settings-section-dev-tools-title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-}
-
-.settings-section-dev-tools-description {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
 }
 
 .settings-section-dev-tools-actions {

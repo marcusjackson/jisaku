@@ -54,6 +54,13 @@ const kenteiLabel = computed(() => {
         {{ kanji.shortMeaning }}
       </span>
 
+      <span
+        v-if="kanji.strokeCount"
+        class="kanji-list-card-strokes"
+      >
+        {{ kanji.strokeCount }}画数
+      </span>
+
       <div class="kanji-list-card-badges">
         <span
           v-if="kanji.jlptLevel"

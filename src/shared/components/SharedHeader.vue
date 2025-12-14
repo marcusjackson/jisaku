@@ -25,9 +25,9 @@ import { RouterLink } from 'vue-router'
       >
         <RouterLink
           class="shared-header-link"
-          to="/"
+          to="/kanji"
         >
-          Home
+          Kanji
         </RouterLink>
         <RouterLink
           class="shared-header-link"

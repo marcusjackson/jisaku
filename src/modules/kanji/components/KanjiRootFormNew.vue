@@ -60,8 +60,9 @@ async function handleSubmit(values: KanjiFormData) {
   try {
     const input = {
       character: values.character,
-      strokeCount: values.strokeCount,
+      strokeCount: values.strokeCount ?? null,
       shortMeaning: values.shortMeaning ?? null,
+      searchKeywords: values.searchKeywords ?? null,
       ...(values.jlptLevel != null && { jlptLevel: values.jlptLevel }),
       ...(values.joyoLevel != null && { joyoLevel: values.joyoLevel }),
       ...(values.kenteiLevel != null && { kenteiLevel: values.kenteiLevel }),

@@ -82,12 +82,18 @@ describe('KanjiFormFields', () => {
     expect(characterGroup?.textContent).toContain('*')
   })
 
-  it('marks stroke count as required', () => {
-    render(KanjiFormFields, { props: defaultProps })
+  it('hides stroke count in create mode', () => {
+    render(KanjiFormFields, { props: { ...defaultProps, mode: 'create' } })
 
-    // Stroke count should have required indicator
-    const strokeGroup = screen.getByLabelText(/stroke count/i).closest('div')
-    expect(strokeGroup?.textContent).toContain('*')
+    // Stroke count should not appear in create mode
+    expect(screen.queryByLabelText(/stroke count/i)).not.toBeInTheDocument()
+  })
+
+  it('shows stroke count in edit mode', () => {
+    render(KanjiFormFields, { props: { ...defaultProps, mode: 'edit' } })
+
+    // Stroke count should appear in edit mode
+    expect(screen.getByLabelText(/stroke count/i)).toBeInTheDocument()
   })
 
   it('has personal notes placeholder', () => {

@@ -22,7 +22,7 @@ function createMockComponent(overrides: Partial<Component> = {}): Component {
     createdAt: new Date().toISOString(),
     description: 'Person radical',
     id: 1,
-    japaneseName: 'にんべん',
+    searchKeywords: 'にんべん',
     kangxiMeaning: null,
     kangxiNumber: null,
     radicalNameJapanese: null,
@@ -49,6 +49,7 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     notesSemantic: null,
     radicalId: null,
     radicalStrokeCount: null,
+    searchKeywords: null,
     strokeCount: 6,
     shortMeaning: null,
     strokeDiagramImage: null,
@@ -102,14 +103,16 @@ describe('ComponentSectionDetail', () => {
     expect(screen.getAllByText('Person radical').length).toBeGreaterThan(0)
   })
 
-  it('renders japanese name', () => {
-    const component = createMockComponent({ japaneseName: 'にんべん' })
+  it('renders description when present', () => {
+    const component = createMockComponent({
+      description: 'Person radical description'
+    })
 
     renderWithProviders(ComponentSectionDetail, {
       props: { component }
     })
 
-    expect(screen.getByText('にんべん')).toBeInTheDocument()
+    expect(screen.getByText('Person radical description')).toBeInTheDocument()
   })
 
   it('renders edit button with link', () => {

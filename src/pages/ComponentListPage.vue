@@ -3,10 +3,10 @@
  * ComponentListPage
  *
  * Route entry point for the component list.
- * Thin wrapper that delegates to the components module's root component.
+ * Thin wrapper that delegates to the component-list module's root component.
  */
 
-import ComponentListRoot from '@/modules/components/components/ComponentListRoot.vue'
+import ComponentListRoot from '@/modules/component-list/components/ComponentListRoot.vue'
 </script>
 
 <template>

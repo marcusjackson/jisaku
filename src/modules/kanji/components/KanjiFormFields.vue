@@ -4,6 +4,8 @@
  *
  * UI component containing all form fields for kanji create/edit.
  * Uses vee-validate's useField for field-level validation.
+ * In create mode, shows simplified form (character, stroke count, meaning, keywords).
+ * In edit mode, shows all fields.
  */
 
 import { useField } from 'vee-validate'
@@ -16,10 +18,16 @@ import BaseTextarea from '@/base/components/BaseTextarea.vue'
 
 import type { ComboboxOption } from '@/base/components/BaseCombobox.vue'
 
-defineProps<{
+interface Props {
   /** Available component options for the selector */
   componentOptions: ComboboxOption[]
-}>()
+  /** Form mode - create shows simplified form, edit shows all fields */
+  mode?: 'create' | 'edit'
+}
+
+withDefaults(defineProps<Props>(), {
+  mode: 'edit'
+})
 
 // Character field
 const { errorMessage: characterError, value: character } =
@@ -32,6 +40,9 @@ const { errorMessage: strokeCountError, value: strokeCount } = useField<
 
 // Short meaning field
 const { value: shortMeaning } = useField<string | undefined>('shortMeaning')
+
+// Search keywords field
+const { value: searchKeywords } = useField<string | undefined>('searchKeywords')
 
 // JLPT Level field
 const { value: jlptLevel } = useField<string | null>('jlptLevel')
@@ -100,27 +111,14 @@ const kenteiOptions = [
     <fieldset class="kanji-form-fields-section">
       <legend class="kanji-form-fields-legend">Basic Information</legend>
 
-      <div class="kanji-form-fields-row">
-        <div class="kanji-form-fields-group kanji-form-fields-group-character">
-          <BaseInput
-            v-model="character"
-            :error="characterError"
-            label="Character"
-            name="character"
-            required
-          />
-        </div>
-
-        <div class="kanji-form-fields-group kanji-form-fields-group-strokes">
-          <BaseInput
-            v-model.number="strokeCount"
-            :error="strokeCountError"
-            label="Stroke Count"
-            name="strokeCount"
-            required
-            type="number"
-          />
-        </div>
+      <div class="kanji-form-fields-group kanji-form-fields-group-full">
+        <BaseInput
+          v-model="character"
+          :error="characterError"
+          label="Character"
+          name="character"
+          required
+        />
       </div>
 
       <div class="kanji-form-fields-group">
@@ -131,132 +129,159 @@ const kenteiOptions = [
           placeholder="e.g., bright, clear"
         />
         <p class="kanji-form-fields-help">
-          Brief English meaning for search and display (optional).
+          Brief English meaning for display (optional).
         </p>
       </div>
 
-      <div class="kanji-form-fields-row">
-        <div class="kanji-form-fields-group">
-          <BaseSelect
-            v-model="jlptLevel"
-            label="JLPT Level"
-            name="jlptLevel"
-            :options="jlptOptions"
-            placeholder="Select level..."
-          />
-        </div>
-
-        <div class="kanji-form-fields-group">
-          <BaseSelect
-            v-model="joyoLevel"
-            label="Jōyō Level"
-            name="joyoLevel"
-            :options="joyoOptions"
-            placeholder="Select level..."
-          />
-        </div>
-      </div>
-
-      <div class="kanji-form-fields-row">
-        <div class="kanji-form-fields-group">
-          <BaseSelect
-            v-model="kenteiLevel"
-            label="Kanji Kentei Level"
-            name="kenteiLevel"
-            :options="kenteiOptions"
-            placeholder="Select level..."
-          />
-        </div>
-      </div>
-    </fieldset>
-
-    <!-- Components Section -->
-    <fieldset class="kanji-form-fields-section">
-      <legend class="kanji-form-fields-legend">Components</legend>
-
       <div class="kanji-form-fields-group">
-        <BaseComboboxMulti
-          v-model="componentIds"
-          label="Kanji Components"
-          name="componentIds"
-          :options="componentOptions"
-          placeholder="Search components..."
+        <BaseInput
+          v-model="searchKeywords"
+          label="Search Keywords"
+          name="searchKeywords"
+          placeholder="e.g., light, illuminate, sunny"
         />
         <p class="kanji-form-fields-help">
-          Select the building-block components that make up this kanji.
+          Additional search terms (optional, comma-separated).
         </p>
       </div>
+
+      <!-- Extended fields only shown in edit mode -->
+      <template v-if="mode === 'edit'">
+        <div class="kanji-form-fields-group">
+          <BaseInput
+            v-model.number="strokeCount"
+            :error="strokeCountError"
+            label="Stroke Count"
+            name="strokeCount"
+            type="number"
+          />
+        </div>
+        <div class="kanji-form-fields-row">
+          <div class="kanji-form-fields-group">
+            <BaseSelect
+              v-model="jlptLevel"
+              label="JLPT Level"
+              name="jlptLevel"
+              :options="jlptOptions"
+              placeholder="Select level..."
+            />
+          </div>
+
+          <div class="kanji-form-fields-group">
+            <BaseSelect
+              v-model="joyoLevel"
+              label="Jōyō Level"
+              name="joyoLevel"
+              :options="joyoOptions"
+              placeholder="Select level..."
+            />
+          </div>
+        </div>
+
+        <div class="kanji-form-fields-row">
+          <div class="kanji-form-fields-group">
+            <BaseSelect
+              v-model="kenteiLevel"
+              label="Kanji Kentei Level"
+              name="kenteiLevel"
+              :options="kenteiOptions"
+              placeholder="Select level..."
+            />
+          </div>
+        </div>
+      </template>
     </fieldset>
 
-    <!-- Stroke Images Section -->
-    <fieldset class="kanji-form-fields-section">
-      <legend class="kanji-form-fields-legend">Stroke Images</legend>
+    <!-- Extended sections only shown in edit mode -->
+    <template v-if="mode === 'edit'">
+      <!-- Components Section -->
+      <fieldset class="kanji-form-fields-section">
+        <legend class="kanji-form-fields-legend">Components</legend>
 
-      <div class="kanji-form-fields-row">
         <div class="kanji-form-fields-group">
-          <BaseFileInput
-            v-model="strokeDiagramImage"
-            accept="image/png,image/jpeg,image/gif"
-            label="Stroke Order Diagram"
-            name="strokeDiagramImage"
+          <BaseComboboxMulti
+            v-model="componentIds"
+            label="Kanji Components"
+            name="componentIds"
+            :options="componentOptions"
+            placeholder="Search components..."
+          />
+          <p class="kanji-form-fields-help">
+            Select the building-block components that make up this kanji.
+          </p>
+        </div>
+      </fieldset>
+
+      <!-- Stroke Images Section -->
+      <fieldset class="kanji-form-fields-section">
+        <legend class="kanji-form-fields-legend">Stroke Images</legend>
+
+        <div class="kanji-form-fields-row">
+          <div class="kanji-form-fields-group">
+            <BaseFileInput
+              v-model="strokeDiagramImage"
+              accept="image/png,image/jpeg,image/gif"
+              label="Stroke Order Diagram"
+              name="strokeDiagramImage"
+            />
+          </div>
+
+          <div class="kanji-form-fields-group">
+            <BaseFileInput
+              v-model="strokeGifImage"
+              accept="image/gif,image/png"
+              label="Animated Stroke Order"
+              name="strokeGifImage"
+            />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Notes Section -->
+      <fieldset class="kanji-form-fields-section">
+        <legend class="kanji-form-fields-legend">Notes</legend>
+
+        <div class="kanji-form-fields-group">
+          <BaseTextarea
+            v-model="notesEtymology"
+            label="Etymology & Origins"
+            name="notesEtymology"
+            placeholder="Origins, historical development, pictographic meaning..."
+            :rows="3"
           />
         </div>
 
         <div class="kanji-form-fields-group">
-          <BaseFileInput
-            v-model="strokeGifImage"
-            accept="image/gif,image/png"
-            label="Animated Stroke Order"
-            name="strokeGifImage"
+          <BaseTextarea
+            v-model="notesSemantic"
+            label="Semantic Analysis"
+            name="notesSemantic"
+            placeholder="Modern usage, compounds, semantic patterns..."
+            :rows="3"
           />
         </div>
-      </div>
-    </fieldset>
 
-    <!-- Notes Section -->
-    <fieldset class="kanji-form-fields-section">
-      <legend class="kanji-form-fields-legend">Notes</legend>
+        <div class="kanji-form-fields-group">
+          <BaseTextarea
+            v-model="notesEducationMnemonics"
+            label="Education & Mnemonics"
+            name="notesEducationMnemonics"
+            placeholder="Japanese education context, native mnemonics, teaching methods..."
+            :rows="3"
+          />
+        </div>
 
-      <div class="kanji-form-fields-group">
-        <BaseTextarea
-          v-model="notesEtymology"
-          label="Etymology & Origins"
-          name="notesEtymology"
-          placeholder="Origins, historical development, pictographic meaning..."
-          :rows="3"
-        />
-      </div>
-
-      <div class="kanji-form-fields-group">
-        <BaseTextarea
-          v-model="notesSemantic"
-          label="Semantic Analysis"
-          name="notesSemantic"
-          placeholder="Modern usage, compounds, semantic patterns..."
-          :rows="3"
-        />
-      </div>
-
-      <div class="kanji-form-fields-group">
-        <BaseTextarea
-          v-model="notesEducationMnemonics"
-          label="Education & Mnemonics"
-          name="notesEducationMnemonics"
-          placeholder="Japanese education context, native mnemonics, teaching methods..."
-          :rows="3"
-        />
-      </div>
-
-      <div class="kanji-form-fields-group">
-        <BaseTextarea
-          v-model="notesPersonal"
-          label="Personal Notes"
-          name="notesPersonal"
-          placeholder="Personal observations, learning notes, custom mnemonics..."
-          :rows="3"
-        />
-      </div>
-    </fieldset>
+        <div class="kanji-form-fields-group">
+          <BaseTextarea
+            v-model="notesPersonal"
+            label="Personal Notes"
+            name="notesPersonal"
+            placeholder="Personal observations, learning notes, custom mnemonics..."
+            :rows="3"
+          />
+        </div>
+      </fieldset>
+    </template>
   </div>
 </template>
 

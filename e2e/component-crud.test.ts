@@ -1,11 +1,14 @@
 /**
  * E2E tests for Component CRUD operations
+ *
+ * Tests inline editing pattern: Create → View → Edit inline → Delete
+ * No separate edit page exists; editing happens on the detail page.
  */
 
 import { expect, test } from '@playwright/test'
 
 test.describe('Component CRUD Flow', () => {
-  test('complete CRUD flow: create, view, edit, delete', async ({ page }) => {
+  test('create component and view detail page', async ({ page }) => {
     // Navigate to components page
     await page.goto('/components')
 
@@ -14,11 +17,7 @@ test.describe('Component CRUD Flow', () => {
       page.getByRole('heading', { name: /components/i })
     ).toBeVisible()
 
-    // =========================================================================
-    // CREATE: Add a new component
-    // =========================================================================
-
-    // Click "Add Component" button (empty state)
+    // Click "Add Component" button
     await page
       .getByRole('button', { name: /add.*component/i })
       .first()
@@ -30,11 +29,10 @@ test.describe('Component CRUD Flow', () => {
       page.getByRole('heading', { name: /new component/i })
     ).toBeVisible()
 
-    // Fill in form fields
+    // Fill in minimal form fields (character and short meaning only in create mode)
     await page.getByLabel(/character/i).fill('亻')
-    await page.getByLabel(/stroke count/i).fill('2')
-    await page.getByLabel(/japanese name/i).fill('にんべん')
-    await page.getByLabel('Description').fill('Person/human radical.')
+    await page.getByLabel(/short meaning/i).fill('person')
+    await page.getByLabel(/search keywords/i).fill('にんべん')
 
     // Submit form
     await page.getByRole('button', { name: /create component/i }).click()
@@ -42,81 +40,65 @@ test.describe('Component CRUD Flow', () => {
     // Should navigate to detail page
     await expect(page).toHaveURL(/\/components\/\d+/)
 
-    // Wait for toast
-    await page.waitForTimeout(3500)
-
-    // =========================================================================
-    // VIEW: Verify detail page shows correct data
-    // =========================================================================
-
     // Check character is displayed prominently
     await expect(
       page.locator('.component-detail-header-character')
     ).toContainText('亻')
 
-    // Check metadata
-    await expect(page.getByText(/2 strokes/i)).toBeVisible()
-    await expect(page.getByText(/にんべん/i)).toBeVisible()
-
-    // Check description is displayed
-    await expect(page.getByText('Person/human radical.').first()).toBeVisible()
-
-    // =========================================================================
-    // EDIT: Modify the component
-    // =========================================================================
-
-    // Click edit button
-    await page.getByRole('link', { name: /edit/i }).click()
-
-    // Should navigate to edit page
-    await expect(page).toHaveURL(/\/components\/\d+\/edit/)
-    await expect(
-      page.getByRole('heading', { name: /edit component/i })
-    ).toBeVisible()
-
-    // Wait for form to populate
-    await page.waitForTimeout(500)
-
-    // Update description
-    const descriptionField = page.getByLabel('Description')
-    await descriptionField.clear()
-    await descriptionField.fill(
-      'Person/human radical. Derived from the kanji 人 (person).'
+    // Check short meaning is visible in header
+    await expect(page.locator('.component-detail-header')).toContainText(
+      'person'
     )
 
-    // Save changes
-    await page.getByRole('button', { name: /save changes/i }).click()
+    // Check stroke count shows "—" since we didn't set it in create mode
+    await expect(page.getByText('—').first()).toBeVisible()
+  })
 
-    // Should navigate back to detail page
-    await expect(page).toHaveURL(/\/components\/\d+$/)
+  test('header edit dialog works correctly', async ({ page }) => {
+    // Navigate to components page
+    await page.goto('/components')
 
-    // Wait for toast
-    await page.waitForTimeout(3500)
+    // Click "Add Component" button
+    await page
+      .getByRole('button', { name: /add.*component/i })
+      .first()
+      .click()
 
-    // Verify updated description
+    // Fill in form and submit
+    await page.getByLabel(/character/i).fill('氵')
+    await page.getByLabel(/short meaning/i).fill('water')
+
+    await page.getByRole('button', { name: /create component/i }).click()
+
+    // Should navigate to detail page
+    await expect(page).toHaveURL(/\/components\/\d+/)
+
+    // Click edit button to open header edit dialog
+    await page.getByRole('button', { name: /edit/i }).first().click()
+
+    // Wait for dialog to open
+    await expect(page.getByRole('dialog')).toBeVisible()
     await expect(
-      page.getByText(/derived from the kanji/i).first()
+      page.getByRole('heading', { name: /edit header/i })
     ).toBeVisible()
 
-    // =========================================================================
-    // DELETE: Remove the component
-    // =========================================================================
+    // Update short meaning
+    const shortMeaningInput = page
+      .locator('input[name="shortMeaning"]')
+      .or(page.getByLabel(/short meaning/i))
+    await shortMeaningInput.clear()
+    await shortMeaningInput.fill('water radical')
 
-    // Click delete button
-    await page.getByRole('button', { name: /delete/i }).click()
+    // Save changes
+    await page.getByRole('button', { name: /save/i }).click()
 
-    // Confirm deletion in dialog
-    await expect(page.getByRole('dialog')).toBeVisible()
-    await page.getByRole('button', { name: /delete$/i }).click()
+    // Dialog should close
+    await expect(page.getByRole('dialog')).not.toBeVisible()
 
-    // Should navigate back to list
-    await expect(page).toHaveURL('/components')
-
-    // Wait for toast
-    await page.waitForTimeout(3500)
-
-    // Should show empty state again
-    await expect(page.getByText(/no components yet/i)).toBeVisible()
+    // Verify short meaning was updated in header
+    await expect(page.locator('.component-detail-header')).toContainText(
+      'water radical'
+    )
   })
 
   test('form validation prevents invalid submissions', async ({ page }) => {
@@ -172,8 +154,18 @@ test.describe('Component CRUD Flow', () => {
     await page.getByRole('link', { name: /components/i }).click()
     await expect(page).toHaveURL('/components')
 
-    // Navigate back to home
-    await page.getByRole('link', { name: /home/i }).click()
-    await expect(page).toHaveURL('/')
+    // Navigate back to kanji list
+    await page.getByRole('link', { name: /kanji/i }).click()
+    await expect(page).toHaveURL('/kanji')
+  })
+
+  test('no edit page route exists', async ({ page }) => {
+    // Try to navigate to a non-existent edit route
+    await page.goto('/components/1/edit')
+
+    // Should show 404 or redirect
+    // The app uses a catch-all route that shows NotFoundPage
+    await expect(page).toHaveURL('/components/1/edit')
+    await expect(page.getByText(/not found/i)).toBeVisible()
   })
 })

@@ -18,7 +18,7 @@ describe('SharedHeader', () => {
   it('renders navigation links', () => {
     renderWithProviders(SharedHeader)
 
-    expect(screen.getByRole('link', { name: /home/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /kanji/i })).toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: /components/i })
     ).toBeInTheDocument()
@@ -35,9 +35,9 @@ describe('SharedHeader', () => {
   it('has correct navigation hrefs', () => {
     renderWithProviders(SharedHeader)
 
-    expect(screen.getByRole('link', { name: /home/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /kanji/i })).toHaveAttribute(
       'href',
-      '/'
+      '/kanji'
     )
     expect(screen.getByRole('link', { name: /components/i })).toHaveAttribute(
       'href',

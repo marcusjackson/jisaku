@@ -15,7 +15,18 @@ test.describe('Settings Database Management', () => {
     await page.goto('/settings')
 
     // Wait for page to load
-    await expect(page.getByRole('heading', { name: /settings/i })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: /^settings$/i })
+    ).toBeVisible()
+
+    // Expand the Data Management section (collapsed by default)
+    // Click on the section trigger button which contains the heading
+    await page.getByRole('button', { name: /data management/i }).click()
+
+    // Wait for section content to be visible
+    await expect(
+      page.getByRole('heading', { name: /export database/i })
+    ).toBeVisible()
   })
 
   test('displays data management section', async ({ page }) => {
@@ -47,8 +58,10 @@ test.describe('Settings Database Management', () => {
       dataSection.getByRole('button', { name: /clear all data/i })
     ).toBeVisible()
 
-    // Check app version
-    await expect(page.getByText(/app version/i)).toBeVisible()
+    // Check version is visible in Appearance section (moved from database section)
+    await expect(
+      page.getByRole('heading', { name: /^version$/i })
+    ).toBeVisible()
   })
 
   test('export database downloads a file', async ({ page }) => {
@@ -171,12 +184,17 @@ test.describe('Settings Database Management', () => {
   })
 
   test('displays app version', async ({ page }) => {
-    // Check version is displayed
-    const versionText = page.locator('.settings-section-database-version-value')
+    // Check version is displayed in Appearance section
+    const versionText = page.locator(
+      '.settings-section-appearance-option-description',
+      {
+        hasText: /^v\d+\.\d+\.\d+$/
+      }
+    )
     await expect(versionText).toBeVisible()
 
     // Version should be in semver format
     const version = await versionText.textContent()
-    expect(version).toMatch(/^\d+\.\d+\.\d+/)
+    expect(version).toMatch(/^v\d+\.\d+\.\d+$/)
   })
 })

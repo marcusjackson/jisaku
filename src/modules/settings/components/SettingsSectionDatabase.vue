@@ -14,10 +14,6 @@ import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
 
 import { useDatabaseExport } from '../composables/use-database-export'
 
-// App version from Vite define (defined in vite.config.ts)
-declare const __APP_VERSION__: string
-const appVersion = __APP_VERSION__
-
 // Database export composable
 const {
   clearDatabase,
@@ -123,12 +119,7 @@ function handleClearCancel() {
 </script>
 
 <template>
-  <section class="settings-section-database">
-    <h2 class="settings-section-database-title">Data Management</h2>
-    <p class="settings-section-database-description">
-      Export your data for backup or import a previously exported database.
-    </p>
-
+  <div class="settings-section-database">
     <div class="settings-section-database-actions">
       <!-- Export -->
       <div class="settings-section-database-action">
@@ -186,14 +177,6 @@ function handleClearCancel() {
       </div>
     </div>
 
-    <!-- App Version -->
-    <div class="settings-section-database-version">
-      <span class="settings-section-database-version-label">App Version</span>
-      <span class="settings-section-database-version-value">{{
-        appVersion
-      }}</span>
-    </div>
-
     <!-- Import Confirmation Dialog -->
     <SharedConfirmDialog
       confirm-label="Import"
@@ -215,7 +198,7 @@ function handleClearCancel() {
       @cancel="handleClearCancel"
       @confirm="handleClearConfirm"
     />
-  </section>
+  </div>
 </template>
 
 <style scoped>
@@ -223,23 +206,6 @@ function handleClearCancel() {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background-color: var(--color-surface);
-}
-
-.settings-section-database-title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-}
-
-.settings-section-database-description {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
 }
 
 .settings-section-database-actions {
@@ -278,25 +244,5 @@ function handleClearCancel() {
   clip-path: inset(50%);
   border: 0;
   white-space: nowrap;
-}
-
-.settings-section-database-version {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: var(--spacing-sm);
-  padding-top: var(--spacing-md);
-  border-top: 1px solid var(--color-border);
-}
-
-.settings-section-database-version-label {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.settings-section-database-version-value {
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
 }
 </style>

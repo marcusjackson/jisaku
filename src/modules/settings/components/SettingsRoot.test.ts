@@ -79,8 +79,11 @@ describe('SettingsRoot', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Settings')
-    expect(wrapper.find('[data-testid="database-section"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="dev-tools"]').exists()).toBe(true)
+    // Check for section titles
+    expect(wrapper.text()).toContain('Appearance')
+    expect(wrapper.text()).toContain('Position Types')
+    expect(wrapper.text()).toContain('Data Management')
+    expect(wrapper.text()).toContain('Developer Tools')
   })
 
   it('calls initialize on mount', async () => {

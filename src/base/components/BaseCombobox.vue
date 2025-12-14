@@ -7,7 +7,7 @@
  * Supports searching/filtering options with keyboard navigation.
  */
 
-import { computed, ref, toRefs, useId } from 'vue'
+import { computed, ref, toRefs, useId, watch } from 'vue'
 
 import {
   ComboboxAnchor,
@@ -60,9 +60,23 @@ const model = defineModel<string | number | null>()
 
 const comboboxId = useId()
 const searchTerm = ref('')
+const inputValue = ref('')
 
 // Use Reka UI's filter utility for fuzzy matching
 const { contains } = useFilter({ sensitivity: 'base' })
+
+// Clear search term when model value changes from parent (e.g., form population)
+watch(model, () => {
+  searchTerm.value = ''
+  inputValue.value = ''
+})
+
+// Handle input changes - only update search term when user is typing
+function handleInputChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  inputValue.value = target.value
+  searchTerm.value = target.value
+}
 
 // Filter options based on search term across multiple keys
 const filteredOptions = computed(() => {
@@ -156,12 +170,12 @@ const comboboxRootProps = computed(() => {
       >
         <ComboboxInput
           :id="comboboxId"
-          v-model="searchTerm"
           :aria-describedby="error ? `${comboboxId}-error` : undefined"
           :aria-invalid="!!error"
           class="base-combobox-input"
           :display-value="getDisplayValue"
           :placeholder="placeholder ?? 'Search...'"
+          @input="handleInputChange"
         />
         <ComboboxTrigger
           aria-label="Toggle options"

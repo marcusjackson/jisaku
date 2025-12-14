@@ -3,41 +3,68 @@
  * ComponentListRoot
  *
  * Root component for the component list feature.
- * Handles database initialization, data fetching, and loading/error states.
- * Passes data down to ComponentListSectionGrid.
+ * Handles database initialization, data fetching, filtering, and loading/error states.
+ * Orchestrates filters and passes filtered data to ComponentListSectionGrid.
  */
 
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 
 import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
 import { useDatabase } from '@/shared/composables/use-database'
+import { useFilterPersistence } from '@/shared/composables/use-filter-persistence'
 
+import { useComponentFilters } from '../composables/use-component-filters'
 import { useComponentRepository } from '../composables/use-component-repository'
 
+import ComponentListSectionFilters from './ComponentListSectionFilters.vue'
 import ComponentListSectionGrid from './ComponentListSectionGrid.vue'
 
-import type { Component } from '@/shared/types/database-types'
+import type { Component, ComponentFilters } from '@/shared/types/database-types'
 
 // Database initialization
 const { initError, initialize, isInitialized, isInitializing } = useDatabase()
 
+// Filter persistence
+useFilterPersistence('component-list')
+
 // Repository for data access
-const { getAll } = useComponentRepository()
+const { search } = useComponentRepository()
+
+// Filter state
+const {
+  characterSearch,
+  clearFilters,
+  filters,
+  hasActiveFilters,
+  updateFilter
+} = useComponentFilters()
 
 // Local state
 const componentList = ref<Component[]>([])
 const fetchError = ref<Error | null>(null)
 
-// Fetch components when database is ready
+// Handler for filter updates from section component
+function handleFilterUpdate(key: keyof ComponentFilters, value: unknown) {
+  updateFilter(key, value)
+}
+
+// Fetch components with current filters
 function loadComponents() {
   try {
-    componentList.value = getAll()
+    componentList.value = search(filters.value)
   } catch (err) {
     fetchError.value = err instanceof Error ? err : new Error(String(err))
   }
 }
+
+// Re-fetch components when filters change
+watch(filters, () => {
+  if (isInitialized.value) {
+    loadComponents()
+  }
+})
 
 // Initialize on mount
 onMounted(async () => {
@@ -75,10 +102,17 @@ onMounted(async () => {
   </SharedPageContainer>
 
   <!-- Content -->
-  <ComponentListSectionGrid
-    v-else-if="isInitialized"
-    :component-list="componentList"
-  />
+  <div v-else-if="isInitialized">
+    <ComponentListSectionFilters
+      :character-search="characterSearch"
+      :filters="filters"
+      :has-active-filters="hasActiveFilters"
+      @clear-filters="clearFilters"
+      @update-filter="handleFilterUpdate"
+      @update:character-search="(val) => (characterSearch = val)"
+    />
+    <ComponentListSectionGrid :component-list="componentList" />
+  </div>
 </template>
 
 <style scoped>

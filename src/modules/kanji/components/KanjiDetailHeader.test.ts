@@ -24,6 +24,7 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     notesPersonal: null,
     identifier: null,
     radicalStrokeCount: null,
+    searchKeywords: null,
     radicalId: null,
     strokeCount: 4,
     shortMeaning: null,
@@ -43,31 +44,6 @@ describe('KanjiDetailHeader', () => {
     })
 
     expect(screen.getByText('水')).toBeInTheDocument()
-  })
-
-  it('renders back link', () => {
-    const kanji = createMockKanji()
-
-    renderWithProviders(KanjiDetailHeader, {
-      props: { kanji }
-    })
-
-    expect(
-      screen.getByRole('link', { name: /back to list/i })
-    ).toBeInTheDocument()
-  })
-
-  it('back link points to home', () => {
-    const kanji = createMockKanji()
-
-    renderWithProviders(KanjiDetailHeader, {
-      props: { kanji }
-    })
-
-    expect(screen.getByRole('link', { name: /back to list/i })).toHaveAttribute(
-      'href',
-      '/'
-    )
   })
 
   it('renders different characters correctly', () => {

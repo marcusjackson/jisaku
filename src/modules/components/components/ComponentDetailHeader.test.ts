@@ -17,7 +17,7 @@ function createMockComponent(overrides: Partial<Component> = {}): Component {
     strokeCount: 2,
     shortMeaning: null,
     sourceKanjiId: null,
-    japaneseName: null,
+    searchKeywords: null,
     description: null,
     canBeRadical: false,
     kangxiNumber: null,
@@ -47,17 +47,6 @@ describe('ComponentDetailHeader', () => {
       props: { component }
     })
 
-    expect(screen.getByText(/3 strokes/i)).toBeInTheDocument()
-  })
-
-  it('has back link to component list', () => {
-    const component = createMockComponent()
-
-    renderWithProviders(ComponentDetailHeader, {
-      props: { component }
-    })
-
-    const backLink = screen.getByRole('link', { name: /back to list/i })
-    expect(backLink).toHaveAttribute('href', '/components')
+    expect(screen.getByText('3 strokes')).toBeInTheDocument()
   })
 })

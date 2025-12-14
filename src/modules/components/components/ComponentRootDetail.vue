@@ -27,6 +27,7 @@ import type {
   Kanji,
   OccurrenceWithKanji
 } from '@/shared/types/database-types'
+import type { QuickCreateKanjiData } from '@/shared/validation/quick-create-kanji-schema'
 
 // Router
 const route = useRoute()
@@ -37,8 +38,13 @@ const { initError, initialize, isInitialized, isInitializing } = useDatabase()
 
 // Repository for data access
 const { getById, getLinkedKanjiCount, remove } = useComponentRepository()
-const { getById: getKanjiById } = useKanjiRepository()
 const {
+  create: createKanji,
+  getAll: getAllKanji,
+  getById: getKanjiById
+} = useKanjiRepository()
+const {
+  create: createOccurrence,
   getByComponentIdWithPosition,
   updateAnalysisNotes,
   updateIsRadical,
@@ -53,6 +59,7 @@ const component = ref<Component | null>(null)
 const sourceKanji = ref<Kanji | null>(null)
 const linkedKanjiCount = ref(0)
 const occurrences = ref<OccurrenceWithKanji[]>([])
+const allKanji = ref<Kanji[]>([])
 const fetchError = ref<Error | null>(null)
 const isDeleting = ref(false)
 
@@ -94,6 +101,9 @@ function loadComponent() {
           kanji
         }
       })
+
+      // Load all kanji for search
+      allKanji.value = getAllKanji()
     }
   } catch (err) {
     fetchError.value = err instanceof Error ? err : new Error(String(err))
@@ -167,6 +177,69 @@ function handleIsRadicalUpdate(occurrenceId: number, isRadical: boolean) {
   }
 }
 
+// Handle adding existing kanji to this component
+function handleAddKanji(kanjiId: number) {
+  if (!component.value) return
+
+  try {
+    const occurrence = createOccurrence(kanjiId, component.value.id)
+    const kanji = getKanjiById(kanjiId)
+    if (!kanji) {
+      throw new Error(`Kanji with id ${String(kanjiId)} not found`)
+    }
+
+    // Add to local state
+    occurrences.value.push({
+      ...occurrence,
+      kanji,
+      position: null
+    })
+    linkedKanjiCount.value += 1
+    success(`Kanji "${kanji.character}" linked to component`)
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle creating new kanji and linking to this component
+async function handleCreateKanji(data: QuickCreateKanjiData) {
+  if (!component.value) return
+
+  try {
+    // Create the kanji
+    const newKanji = createKanji({
+      character: data.character,
+      strokeCount: null,
+      shortMeaning: data.shortMeaning ?? null,
+      radicalId: null,
+      jlptLevel: null,
+      joyoLevel: null,
+      kenteiLevel: null
+    })
+
+    // Link it to this component
+    const occurrence = createOccurrence(newKanji.id, component.value.id)
+
+    // Add to local state
+    occurrences.value.push({
+      ...occurrence,
+      kanji: newKanji,
+      position: null
+    })
+    linkedKanjiCount.value += 1
+
+    // Refresh all kanji list
+    allKanji.value = getAllKanji()
+
+    success(`Kanji "${newKanji.character}" created and linked`)
+
+    // Navigate to the new kanji detail page
+    await router.push({ name: 'kanji-detail', params: { id: newKanji.id } })
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
 // Initialize on mount
 onMounted(async () => {
   try {
@@ -213,11 +286,14 @@ watch(componentId, () => {
   <!-- Content -->
   <ComponentSectionDetail
     v-else-if="isInitialized && component"
+    :all-kanji="allKanji"
     :component="component"
     :is-deleting="isDeleting"
     :linked-kanji-count="linkedKanjiCount"
     :occurrences="occurrences"
     :source-kanji="sourceKanji"
+    @add-kanji="handleAddKanji"
+    @create-kanji="handleCreateKanji"
     @delete="handleDelete"
     @update:analysis-notes="handleAnalysisNotesUpdate"
     @update:is-radical="handleIsRadicalUpdate"

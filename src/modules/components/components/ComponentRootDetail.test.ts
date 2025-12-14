@@ -50,6 +50,8 @@ vi.mock('@/shared/composables/use-toast', () => ({
 // Mock values for component occurrence repository
 const mockGetByComponentIdWithPosition = vi.fn()
 const mockUpdateAnalysisNotes = vi.fn()
+const mockCreateOccurrence = vi.fn()
+const mockRemoveOccurrence = vi.fn()
 
 // Mock the repository
 vi.mock('../composables/use-component-repository', () => ({
@@ -64,14 +66,21 @@ vi.mock('../composables/use-component-repository', () => ({
 // Mock component occurrence repository
 vi.mock('../composables/use-component-occurrence-repository', () => ({
   useComponentOccurrenceRepository: () => ({
+    create: mockCreateOccurrence,
     getByComponentIdWithPosition: mockGetByComponentIdWithPosition,
+    remove: mockRemoveOccurrence,
     updateAnalysisNotes: mockUpdateAnalysisNotes
   })
 }))
 
 // Mock the kanji repository
+const mockCreateKanji = vi.fn()
+const mockGetAllKanji = vi.fn().mockReturnValue([])
+
 vi.mock('@/modules/kanji-list/composables/use-kanji-repository', () => ({
   useKanjiRepository: () => ({
+    create: mockCreateKanji,
+    getAll: mockGetAllKanji,
     getById: mockGetKanjiById,
     getByIds: mockGetKanjiByIds
   })
@@ -100,7 +109,7 @@ function createMockComponent(overrides: Partial<Component> = {}): Component {
     createdAt: new Date().toISOString(),
     description: 'Person radical',
     id: 1,
-    japaneseName: 'にんべん',
+    searchKeywords: 'にんべん',
     sourceKanjiId: null,
     strokeCount: 2,
     shortMeaning: null,
@@ -127,6 +136,7 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     notesPersonal: 'Person kanji',
     identifier: null,
     radicalStrokeCount: null,
+    searchKeywords: null,
     radicalId: null,
     strokeCount: 2,
     shortMeaning: null,
@@ -182,11 +192,11 @@ describe('ComponentRootDetail', () => {
     expect(wrapper.text()).toContain('stroke')
   })
 
-  it('displays japanese name', async () => {
+  it('displays description when present', async () => {
     const wrapper = mount(ComponentRootDetail)
     await flushPromises()
 
-    expect(wrapper.text()).toContain('にんべん')
+    expect(wrapper.text()).toContain('Person radical')
   })
 
   it('shows error state when component not found', async () => {

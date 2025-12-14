@@ -75,13 +75,6 @@ describe('SettingsSectionDatabase', () => {
   }
 
   describe('rendering', () => {
-    it('renders section title and description', () => {
-      const wrapper = mountComponent()
-
-      expect(wrapper.text()).toContain('Data Management')
-      expect(wrapper.text()).toContain('Export your data for backup')
-    })
-
     it('renders export action', () => {
       const wrapper = mountComponent()
 
@@ -103,17 +96,6 @@ describe('SettingsSectionDatabase', () => {
 
       expect(wrapper.text()).toContain('Clear All Data')
       expect(wrapper.text()).toContain('Remove all kanji data')
-    })
-
-    it('renders app version', () => {
-      const wrapper = mountComponent()
-
-      expect(wrapper.text()).toContain('App Version')
-      // Version is defined in vite.config.ts, but in tests it may be undefined
-      // Just check the label exists
-      expect(
-        wrapper.find('.settings-section-database-version-label').exists()
-      ).toBe(true)
     })
 
     it('renders hidden file input', () => {

@@ -22,6 +22,7 @@ describe('RadicalFormModal', () => {
     vi.clearAllMocks()
     vi.mocked(useComponentRepository).mockReturnValue({
       getAll: vi.fn(),
+      search: vi.fn(),
       getById: vi.fn(),
       getByCharacter: vi.fn(),
       create: mockCreate,

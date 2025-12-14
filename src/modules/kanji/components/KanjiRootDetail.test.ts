@@ -44,27 +44,62 @@ vi.mock('@/shared/composables/use-toast', () => ({
   })
 }))
 
-// Mock values for component occurrence repository
-const mockGetByKanjiIdWithPosition = vi.fn()
-
-// Mock the repository
+// Mock the kanji repository
 vi.mock('@/modules/kanji-list/composables/use-kanji-repository', () => ({
   useKanjiRepository: () => ({
     getById: mockGetById,
     getLinkedComponents: mockGetLinkedComponents,
-    remove: mockRemove
+    remove: mockRemove,
+    updateHeaderFields: vi.fn(),
+    updateStrokeCount: vi.fn(),
+    updateJlptLevel: vi.fn(),
+    updateJoyoLevel: vi.fn(),
+    updateKenteiLevel: vi.fn(),
+    updateRadicalId: vi.fn(),
+    updateNotesEtymology: vi.fn(),
+    updateNotesSemantic: vi.fn(),
+    updateNotesEducation: vi.fn(),
+    updateNotesPersonal: vi.fn(),
+    updateStrokeImages: vi.fn()
   })
 }))
+
+// Mock values for component repository
+const mockGetComponentById = vi.fn()
+const mockCreateComponent = vi.fn()
+const mockGetAllComponents = vi.fn().mockReturnValue([])
+
+// Mock component repository
+vi.mock('@/modules/components/composables/use-component-repository', () => ({
+  useComponentRepository: () => ({
+    create: mockCreateComponent,
+    getAll: mockGetAllComponents,
+    getById: mockGetComponentById
+  })
+}))
+
+// Mock values for component occurrence repository
+const mockGetByKanjiIdWithPosition = vi.fn()
+const mockCreateOccurrence = vi.fn()
 
 // Mock component occurrence repository
 vi.mock(
   '@/modules/components/composables/use-component-occurrence-repository',
   () => ({
     useComponentOccurrenceRepository: () => ({
+      create: mockCreateOccurrence,
       getByKanjiIdWithPosition: mockGetByKanjiIdWithPosition
     })
   })
 )
+
+// Mock radical repository
+vi.mock('../composables/use-radical-repository', () => ({
+  useRadicalRepository: () => ({
+    getById: vi.fn().mockReturnValue(null),
+    getRadicalOptions: vi.fn().mockReturnValue([])
+  })
+}))
 
 // Mock router
 vi.mock('vue-router', () => ({
@@ -97,6 +132,7 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     notesPersonal: 'Sun, day',
     identifier: null,
     radicalStrokeCount: null,
+    searchKeywords: null,
     radicalId: null,
     strokeCount: 4,
     shortMeaning: null,

@@ -11,8 +11,10 @@ import { onMounted } from 'vue'
 import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
+import SharedSection from '@/shared/components/SharedSection.vue'
 import { useDatabase } from '@/shared/composables/use-database'
 
+import SettingsSectionAppearance from './SettingsSectionAppearance.vue'
 import SettingsSectionDatabase from './SettingsSectionDatabase.vue'
 import SettingsSectionDevTools from './SettingsSectionDevTools.vue'
 import SettingsSectionPositionTypes from './SettingsSectionPositionTypes.vue'
@@ -66,9 +68,48 @@ onMounted(async () => {
     </header>
 
     <div class="settings-root-content">
-      <SettingsSectionPositionTypes />
-      <SettingsSectionDatabase />
-      <SettingsSectionDevTools v-if="isDev" />
+      <!-- Appearance Section (non-collapsible, always visible) -->
+      <SharedSection title="Appearance">
+        <SettingsSectionAppearance />
+      </SharedSection>
+
+      <!-- Position Types Section (collapsible, collapsed by default) -->
+      <SharedSection
+        collapsible
+        :default-open="false"
+        title="Position Types"
+      >
+        <p class="settings-root-section-description">
+          Manage position types used to classify where components appear in
+          kanji (e.g., hen, tsukuri, kanmuri).
+        </p>
+        <SettingsSectionPositionTypes />
+      </SharedSection>
+
+      <!-- Data Management Section (collapsible) -->
+      <SharedSection
+        collapsible
+        :default-open="false"
+        title="Data Management"
+      >
+        <p class="settings-root-section-description">
+          Export your data for backup or import a previously exported database.
+        </p>
+        <SettingsSectionDatabase />
+      </SharedSection>
+
+      <!-- Developer Tools Section (collapsible, dev-only) -->
+      <SharedSection
+        v-if="isDev"
+        collapsible
+        :default-open="false"
+        title="Developer Tools"
+      >
+        <p class="settings-root-section-description">
+          Tools for development and testing. Use with caution.
+        </p>
+        <SettingsSectionDevTools />
+      </SharedSection>
     </div>
   </div>
 </template>
@@ -130,5 +171,11 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
+}
+
+.settings-root-section-description {
+  margin: 0 0 var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 </style>

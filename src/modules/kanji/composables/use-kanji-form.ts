@@ -45,6 +45,7 @@ export function useKanjiForm(options: UseKanjiFormOptions) {
       strokeDiagramImage: null,
       strokeGifImage: null,
       componentIds: [],
+      searchKeywords: '',
       ...initialValues
     },
     validationSchema: schema

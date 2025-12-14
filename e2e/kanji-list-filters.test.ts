@@ -177,7 +177,7 @@ test.describe('Kanji List Filters', () => {
       ).toHaveValue('')
 
       // URL should be clean
-      await expect(page).toHaveURL('/')
+      await expect(page).toHaveURL('/kanji')
     })
   })
 
@@ -185,6 +185,11 @@ test.describe('Kanji List Filters', () => {
     test('shows "no results" when filter returns empty', async ({ page }) => {
       // First add a kanji via settings (seed data)
       await page.goto('/settings')
+
+      // Expand Developer Tools section (collapsed by default)
+      await page.getByRole('button', { name: /developer tools/i }).click()
+
+      // Now click Seed Data button
       await page.getByRole('button', { name: /seed data/i }).click()
 
       // Wait for seed to complete

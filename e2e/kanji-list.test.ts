@@ -29,7 +29,7 @@ test.describe('Kanji List Page', () => {
     await expect(page.locator('header')).toBeVisible()
 
     // Navigation links should be present
-    await expect(page.getByRole('link', { name: /home/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /kanji/i })).toBeVisible()
     await expect(page.getByRole('link', { name: /components/i })).toBeVisible()
     await expect(page.getByRole('link', { name: /settings/i })).toBeVisible()
   })

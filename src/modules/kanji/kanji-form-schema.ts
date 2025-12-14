@@ -13,14 +13,21 @@ export const kanjiFormSchema = z.object({
     .max(1, 'Must be a single character'),
 
   strokeCount: z
-    .number({ required_error: 'Stroke count is required' })
+    .number()
     .int('Must be a whole number')
     .min(1, 'Must be at least 1')
-    .max(64, 'Must be at most 64'),
+    .max(64, 'Must be at most 64')
+    .nullable()
+    .optional(),
 
   shortMeaning: z.string().optional(),
 
-  jlptLevel: z.enum(['N5', 'N4', 'N3', 'N2', 'N1']).nullable().optional(),
+  searchKeywords: z.string().optional(),
+
+  jlptLevel: z
+    .enum(['N5', 'N4', 'N3', 'N2', 'N1', 'non-jlpt'])
+    .nullable()
+    .optional(),
 
   joyoLevel: z
     .enum([
@@ -30,7 +37,8 @@ export const kanjiFormSchema = z.object({
       'elementary4',
       'elementary5',
       'elementary6',
-      'secondary'
+      'secondary',
+      'non-joyo'
     ])
     .nullable()
     .optional(),

@@ -75,16 +75,17 @@ const hasError = computed(() => Boolean(props.error))
 
 .base-switch-root {
   position: relative;
+  box-sizing: border-box;
   width: 44px;
   height: 24px;
-  border-radius: 12px;
-  background-color: var(--color-border-primary);
+  border-radius: var(--radius-full);
+  background-color: var(--color-border);
   cursor: pointer;
   transition: background-color var(--transition-fast);
 }
 
 .base-switch-root:hover {
-  background-color: var(--color-border-secondary);
+  background-color: var(--color-gray-300);
 }
 
 .base-switch-root:focus-visible {
@@ -94,6 +95,10 @@ const hasError = computed(() => Boolean(props.error))
 
 .base-switch-root[data-state='checked'] {
   background-color: var(--color-primary);
+}
+
+.base-switch-root[data-state='checked']:hover {
+  background-color: var(--color-primary-hover);
 }
 
 .base-switch-root[data-disabled] {
@@ -106,18 +111,24 @@ const hasError = computed(() => Boolean(props.error))
 }
 
 .base-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
   display: block;
   width: 20px;
   height: 20px;
-  border-radius: 10px;
-  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface);
   box-shadow: var(--shadow-thumb);
-  transition: transform var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast);
   transform: translateX(2px);
 }
 
 .base-switch-root[data-state='checked'] .base-switch-thumb {
-  transform: translateX(22px);
+  background-color: var(--color-surface);
+  transform: translateX(20px);
 }
 
 .base-switch-label {

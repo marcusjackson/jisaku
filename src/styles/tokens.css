@@ -226,17 +226,54 @@
 }
 
 /* ========================================
- * Dark Mode (Future)
+ * Dark Mode
  * ======================================== */
 
-/* Future: dark mode override
 [data-theme='dark'] {
-  --color-background: #111827;
-  --color-surface: #1f2937;
-  --color-surface-elevated: #374151;
-  --color-text-primary: #f9fafb;
-  --color-text-secondary: #9ca3af;
-  --color-text-muted: #6b7280;
-  --color-border: #374151;
+  /* Background */
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-elevated: #334155;
+
+  /* Text */
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #0f172a;
+
+  /* Primary (accent - slightly lighter for better contrast) */
+  --color-primary: #60a5ba;
+  --color-primary-hover: #7bb8ca;
+  --color-primary-active: #4f8da0;
+
+  /* Semantic - adjust background variants for dark mode */
+  --color-success: #22c55e;
+  --color-success-bg: #14532d;
+  --color-warning: #fbbf24;
+  --color-warning-bg: #78350f;
+  --color-error: #f87171;
+  --color-error-bg: #7f1d1d;
+  --color-info: #60a5fa;
+  --color-info-bg: #1e3a8a;
+
+  /* Danger (destructive actions) */
+  --color-danger: #f87171;
+  --color-danger-hover: #ef4444;
+  --color-danger-active: #dc2626;
+  --color-danger-text: #fff;
+
+  /* Borders */
+  --color-border: #334155;
+  --color-border-focus: var(--color-primary);
+
+  /* Focus ring */
+  --color-focus-ring: rgb(96 165 186 / 40%);
+
+  /* Overlay */
+  --color-overlay: rgb(0 0 0 / 70%);
+
+  /* Component Tokens */
+  --input-bg: #1e293b;
+  --card-bg: #1e293b;
+  --button-secondary-hover-bg: #334155;
 }
-*/

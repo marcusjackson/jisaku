@@ -5,6 +5,10 @@ import BaseToast from '@/base/components/BaseToast.vue'
 
 import SharedHeader from '@/shared/components/SharedHeader.vue'
 import SharedUpdatePrompt from '@/shared/components/SharedUpdatePrompt.vue'
+import { useTheme } from '@/shared/composables/use-theme'
+
+// Initialize theme on app startup (applies saved or system preference)
+useTheme()
 </script>
 
 <template>

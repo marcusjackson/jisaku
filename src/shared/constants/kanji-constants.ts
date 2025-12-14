@@ -24,10 +24,18 @@ export const JLPT_OPTIONS: LevelOption<JlptLevel>[] = [
   { label: 'N4', value: 'N4' },
   { label: 'N3', value: 'N3' },
   { label: 'N2', value: 'N2' },
-  { label: 'N1 (Advanced)', value: 'N1' }
+  { label: 'N1 (Advanced)', value: 'N1' },
+  { label: 'Non-JLPT', value: 'non-jlpt' }
 ] as const
 
-export const JLPT_LEVELS: JlptLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'] as const
+export const JLPT_LEVELS: JlptLevel[] = [
+  'N5',
+  'N4',
+  'N3',
+  'N2',
+  'N1',
+  'non-jlpt'
+] as const
 
 // =============================================================================
 // Joyo Level Options
@@ -40,7 +48,8 @@ export const JOYO_OPTIONS: LevelOption<JoyoLevel>[] = [
   { label: '小4 (Grade 4)', value: 'elementary4' },
   { label: '小5 (Grade 5)', value: 'elementary5' },
   { label: '小6 (Grade 6)', value: 'elementary6' },
-  { label: '中学 (Secondary)', value: 'secondary' }
+  { label: '中学 (Secondary)', value: 'secondary' },
+  { label: 'Non-Joyo', value: 'non-joyo' }
 ] as const
 
 export const JOYO_LEVELS: JoyoLevel[] = [
@@ -50,5 +59,6 @@ export const JOYO_LEVELS: JoyoLevel[] = [
   'elementary4',
   'elementary5',
   'elementary6',
-  'secondary'
+  'secondary',
+  'non-joyo'
 ] as const

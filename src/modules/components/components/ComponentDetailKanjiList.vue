@@ -4,32 +4,65 @@
  *
  * UI component displaying kanji that use this component with occurrence metadata.
  * Shows position, radical flag, and allows inline editing of analysis notes.
+ * Includes "+ Add" button to link new kanji to this component.
  */
 
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import BaseButton from '@/base/components/BaseButton.vue'
 import BaseCheckbox from '@/base/components/BaseCheckbox.vue'
 import BaseInlineTextarea from '@/base/components/BaseInlineTextarea.vue'
 import BaseSelect from '@/base/components/BaseSelect.vue'
+
+import SharedEntitySearch from '@/shared/components/SharedEntitySearch.vue'
+import SharedQuickCreateKanji from '@/shared/components/SharedQuickCreateKanji.vue'
 
 import { usePositionTypeRepository } from '../composables/use-position-type-repository'
 
 import type { SelectOption } from '@/base/components/BaseSelect.vue'
 import type {
+  Kanji,
   OccurrenceWithKanji,
   PositionType
 } from '@/shared/types/database-types'
+import type { QuickCreateKanjiData } from '@/shared/validation/quick-create-kanji-schema'
+
+// Local interface matching SharedEntitySearch.EntityOption
+interface EntitySearchOption {
+  id: number
+  character: string
+  shortMeaning: string | null
+  strokeCount: number | null
+}
 
 const props = defineProps<{
   occurrences: OccurrenceWithKanji[]
+  componentId: number
+  /** Available kanji for search */
+  allKanji: Kanji[]
 }>()
 
 const emit = defineEmits<{
   'update:analysisNotes': [occurrenceId: number, analysisNotes: string | null]
   'update:position': [occurrenceId: number, positionTypeId: number | null]
   'update:isRadical': [occurrenceId: number, isRadical: boolean]
+  addKanji: [kanjiId: number]
+  createKanji: [data: QuickCreateKanjiData]
 }>()
+
+// IDs of kanji already linked to this component
+const excludedKanjiIds = computed(() => props.occurrences.map((o) => o.kanjiId))
+
+// Convert kanji to EntityOption format for search
+const kanjiOptions = computed<EntitySearchOption[]>(() =>
+  props.allKanji.map((k) => ({
+    id: k.id,
+    character: k.character,
+    shortMeaning: k.shortMeaning,
+    strokeCount: k.strokeCount
+  }))
+)
 
 // Position types for dropdown
 const { getAll: getAllPositionTypes } = usePositionTypeRepository()
@@ -57,6 +90,35 @@ const positionOptions = computed<SelectOption[]>(() => {
 // Track which occurrence's notes are being edited
 const editingOccurrenceId = ref<number | null>(null)
 
+// State for showing/hiding add kanji UI
+const showAddKanji = ref(false)
+const showQuickCreate = ref(false)
+const quickCreateSearchTerm = ref('')
+
+function handleToggleAddKanji() {
+  showAddKanji.value = !showAddKanji.value
+}
+
+function handleSelectKanji(entity: EntitySearchOption) {
+  emit('addKanji', entity.id)
+  showAddKanji.value = false
+}
+
+function handleCreateNewKanji(searchTerm: string) {
+  quickCreateSearchTerm.value = searchTerm
+  showQuickCreate.value = true
+}
+
+function handleQuickCreate(data: QuickCreateKanjiData) {
+  emit('createKanji', data)
+  showQuickCreate.value = false
+  showAddKanji.value = false
+}
+
+function handleQuickCreateCancel() {
+  showQuickCreate.value = false
+}
+
 function handleNotesUpdate(occurrenceId: number, notes: string | null) {
   emit('update:analysisNotes', occurrenceId, notes)
   editingOccurrenceId.value = null
@@ -78,9 +140,32 @@ function handleRadicalChange(occurrenceId: number, isRadical: boolean) {
 
 <template>
   <section class="component-detail-kanji-list">
-    <h3 class="component-detail-kanji-list-title">
-      Kanji Using This Component
-    </h3>
+    <div class="component-detail-kanji-list-header">
+      <h3 class="component-detail-kanji-list-title">
+        Kanji Using This Component
+      </h3>
+      <BaseButton
+        size="sm"
+        variant="secondary"
+        @click="handleToggleAddKanji"
+      >
+        {{ showAddKanji ? 'Cancel' : '+ Add' }}
+      </BaseButton>
+    </div>
+
+    <!-- Add Kanji UI -->
+    <div
+      v-if="showAddKanji"
+      class="component-detail-kanji-list-add-section"
+    >
+      <SharedEntitySearch
+        entity-type="kanji"
+        :exclude-ids="excludedKanjiIds"
+        :options="kanjiOptions"
+        @create-new="handleCreateNewKanji"
+        @select="handleSelectKanji"
+      />
+    </div>
 
     <div
       v-if="props.occurrences.length > 0"
@@ -149,6 +234,14 @@ function handleRadicalChange(occurrenceId: number, isRadical: boolean) {
     >
       No kanji are currently linked to this component.
     </p>
+
+    <!-- Quick Create Kanji Dialog -->
+    <SharedQuickCreateKanji
+      v-model:open="showQuickCreate"
+      :initial-character="quickCreateSearchTerm"
+      @cancel="handleQuickCreateCancel"
+      @create="handleQuickCreate"
+    />
   </section>
 </template>
 
@@ -159,11 +252,25 @@ function handleRadicalChange(occurrenceId: number, isRadical: boolean) {
   gap: var(--spacing-md);
 }
 
+.component-detail-kanji-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
 .component-detail-kanji-list-title {
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
+}
+
+.component-detail-kanji-list-add-section {
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-raised);
 }
 
 .component-detail-kanji-list-items {

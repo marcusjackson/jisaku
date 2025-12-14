@@ -6,6 +6,9 @@ export default defineConfig({
   testDir: './e2e',
   outputDir: './test-results',
 
+  // Global timeout for each test
+  timeout: 15 * 1000,
+
   // Run tests in parallel
   fullyParallel: true,
 

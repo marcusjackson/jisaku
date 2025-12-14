@@ -44,10 +44,10 @@ describe('ComponentFormFields', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders japanese name input', () => {
+  it('renders search keywords input', () => {
     render(ComponentFormFields, { props: defaultProps })
 
-    expect(screen.getByLabelText(/japanese name/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/search keywords/i)).toBeInTheDocument()
   })
 
   it('renders source kanji combobox', () => {

@@ -24,7 +24,6 @@ vi.mock('../composables/use-seed-data', () => ({
   })
 }))
 
-// Import after mocks
 import SettingsSectionDevTools from './SettingsSectionDevTools.vue'
 
 describe('SettingsSectionDevTools', () => {
@@ -63,13 +62,6 @@ describe('SettingsSectionDevTools', () => {
       }
     })
   }
-
-  it('renders section title and description', () => {
-    const wrapper = mountComponent()
-
-    expect(wrapper.text()).toContain('Developer Tools')
-    expect(wrapper.text()).toContain('Tools for development and testing')
-  })
 
   it('renders seed database action', () => {
     const wrapper = mountComponent()

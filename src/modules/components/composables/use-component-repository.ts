@@ -9,6 +9,7 @@ import { useDatabase } from '@/shared/composables/use-database'
 
 import type {
   Component,
+  ComponentFilters,
   CreateComponentInput,
   UpdateComponentInput
 } from '@/shared/types/database-types'
@@ -23,7 +24,7 @@ interface ComponentRow {
   stroke_count: number
   short_meaning: string | null
   source_kanji_id: number | null
-  japanese_name: string | null
+  search_keywords: string | null
   description: string | null
   can_be_radical: number | null
   kangxi_number: number | null
@@ -40,7 +41,7 @@ function mapRowToComponent(row: ComponentRow): Component {
     strokeCount: row.stroke_count,
     shortMeaning: row.short_meaning,
     sourceKanjiId: row.source_kanji_id,
-    japaneseName: row.japanese_name,
+    searchKeywords: row.search_keywords,
     description: row.description,
     canBeRadical: Boolean(row.can_be_radical),
     kangxiNumber: row.kangxi_number,
@@ -76,6 +77,8 @@ function resultToComponentList(
 export interface UseComponentRepository {
   /** Get all component entries */
   getAll: () => Component[]
+  /** Search components with filters */
+  search: (filters: ComponentFilters) => Component[]
   /** Get a component by ID */
   getById: (id: number) => Component | null
   /** Get a component by character */
@@ -100,6 +103,44 @@ export function useComponentRepository(): UseComponentRepository {
     return resultToComponentList(result)
   }
 
+  function search(filters: ComponentFilters): Component[] {
+    const conditions: string[] = []
+    const params: unknown[] = []
+
+    // Character search (searches character, short_meaning, and search_keywords)
+    if (filters.character) {
+      conditions.push(
+        '(character LIKE ? OR short_meaning LIKE ? OR search_keywords LIKE ?)'
+      )
+      const searchPattern = `%${filters.character}%`
+      params.push(searchPattern, searchPattern, searchPattern)
+    }
+
+    // Stroke count range
+    if (filters.strokeCountMin !== undefined) {
+      conditions.push('stroke_count >= ?')
+      params.push(filters.strokeCountMin)
+    }
+    if (filters.strokeCountMax !== undefined) {
+      conditions.push('stroke_count <= ?')
+      params.push(filters.strokeCountMax)
+    }
+
+    // Source kanji filter
+    if (filters.sourceKanjiId !== undefined) {
+      conditions.push('source_kanji_id = ?')
+      params.push(filters.sourceKanjiId)
+    }
+
+    // Build query
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+    const query = `SELECT * FROM components ${whereClause} ORDER BY id DESC`
+
+    const result = exec(query, params)
+    return resultToComponentList(result)
+  }
+
   function getById(id: number): Component | null {
     const result = exec('SELECT * FROM components WHERE id = ?', [id])
     const list = resultToComponentList(result)
@@ -116,7 +157,7 @@ export function useComponentRepository(): UseComponentRepository {
 
   function create(input: CreateComponentInput): Component {
     const sql = `
-      INSERT INTO components (character, stroke_count, short_meaning, source_kanji_id, japanese_name, description, can_be_radical, kangxi_number, kangxi_meaning, radical_name_japanese)
+      INSERT INTO components (character, stroke_count, short_meaning, source_kanji_id, search_keywords, description, can_be_radical, kangxi_number, kangxi_meaning, radical_name_japanese)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     run(sql, [
@@ -124,7 +165,7 @@ export function useComponentRepository(): UseComponentRepository {
       input.strokeCount,
       input.shortMeaning ?? null,
       input.sourceKanjiId ?? null,
-      input.japaneseName ?? null,
+      input.searchKeywords ?? null,
       input.description ?? null,
       input.canBeRadical ? 1 : 0,
       input.kangxiNumber ?? null,
@@ -162,9 +203,9 @@ export function useComponentRepository(): UseComponentRepository {
       fields.push('source_kanji_id = ?')
       values.push(input.sourceKanjiId)
     }
-    if (input.japaneseName !== undefined) {
-      fields.push('japanese_name = ?')
-      values.push(input.japaneseName)
+    if (input.searchKeywords !== undefined) {
+      fields.push('search_keywords = ?')
+      values.push(input.searchKeywords)
     }
     if (input.description !== undefined) {
       fields.push('description = ?')
@@ -239,6 +280,7 @@ export function useComponentRepository(): UseComponentRepository {
     getLinkedKanjiCount,
     getLinkedKanjiIds,
     remove,
+    search,
     update
   }
 }

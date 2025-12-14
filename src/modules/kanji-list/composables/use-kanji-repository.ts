@@ -10,6 +10,8 @@ import { useDatabase } from '@/shared/composables/use-database'
 import type {
   Component,
   CreateKanjiInput,
+  JlptLevel,
+  JoyoLevel,
   Kanji,
   KanjiFilters,
   UpdateKanjiInput
@@ -24,6 +26,7 @@ interface KanjiRow {
   character: string
   stroke_count: number
   short_meaning: string | null
+  search_keywords: string | null
   radical_id: number | null
   jlpt_level: string | null
   joyo_level: string | null
@@ -46,6 +49,7 @@ function mapRowToKanji(row: KanjiRow): Kanji {
     character: row.character,
     strokeCount: row.stroke_count,
     shortMeaning: row.short_meaning,
+    searchKeywords: row.search_keywords,
     radicalId: row.radical_id,
     jlptLevel: row.jlpt_level as Kanji['jlptLevel'],
     joyoLevel: row.joyo_level as Kanji['joyoLevel'],
@@ -91,7 +95,7 @@ interface ComponentRow {
   stroke_count: number
   short_meaning: string | null
   source_kanji_id: number | null
-  japanese_name: string | null
+  search_keywords: string | null
   description: string | null
   can_be_radical: number | null
   kangxi_number: number | null
@@ -108,7 +112,7 @@ function mapRowToComponent(row: ComponentRow): Component {
     strokeCount: row.stroke_count,
     shortMeaning: row.short_meaning,
     sourceKanjiId: row.source_kanji_id,
-    japaneseName: row.japanese_name,
+    searchKeywords: row.search_keywords,
     description: row.description,
     canBeRadical: Boolean(row.can_be_radical),
     kangxiNumber: row.kangxi_number,
@@ -164,6 +168,39 @@ export interface UseKanjiRepository {
   getLinkedComponents: (kanjiId: number) => Component[]
   /** Save component links for a kanji (replaces existing links) */
   saveComponentLinks: (kanjiId: number, componentIds: number[]) => void
+
+  // Field-level update methods for inline editing
+  /** Update header fields (character, shortMeaning, searchKeywords) */
+  updateHeaderFields: (
+    id: number,
+    character: string,
+    shortMeaning: string | null,
+    searchKeywords: string | null
+  ) => Kanji
+  /** Update stroke count */
+  updateStrokeCount: (id: number, strokeCount: number) => Kanji
+  /** Update JLPT level */
+  updateJlptLevel: (id: number, level: JlptLevel | null) => Kanji
+  /** Update Joyo level */
+  updateJoyoLevel: (id: number, level: JoyoLevel | null) => Kanji
+  /** Update Kentei level */
+  updateKenteiLevel: (id: number, level: string | null) => Kanji
+  /** Update radical ID */
+  updateRadicalId: (id: number, radicalId: number | null) => Kanji
+  /** Update etymology notes */
+  updateNotesEtymology: (id: number, notes: string | null) => Kanji
+  /** Update semantic notes */
+  updateNotesSemantic: (id: number, notes: string | null) => Kanji
+  /** Update education/mnemonics notes */
+  updateNotesEducation: (id: number, notes: string | null) => Kanji
+  /** Update personal notes */
+  updateNotesPersonal: (id: number, notes: string | null) => Kanji
+  /** Update stroke images */
+  updateStrokeImages: (
+    id: number,
+    diagram: Uint8Array | null,
+    gif: Uint8Array | null
+  ) => Kanji
 }
 
 export function useKanjiRepository(): UseKanjiRepository {
@@ -259,13 +296,14 @@ export function useKanjiRepository(): UseKanjiRepository {
 
   function create(input: CreateKanjiInput): Kanji {
     const sql = `
-      INSERT INTO kanjis (character, stroke_count, short_meaning, radical_id, jlpt_level, joyo_level, kanji_kentei_level, stroke_diagram_image, stroke_gif_image, notes_etymology, notes_semantic, notes_education_mnemonics, notes_personal, identifier, radical_stroke_count)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO kanjis (character, stroke_count, short_meaning, search_keywords, radical_id, jlpt_level, joyo_level, kanji_kentei_level, stroke_diagram_image, stroke_gif_image, notes_etymology, notes_semantic, notes_education_mnemonics, notes_personal, identifier, radical_stroke_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     run(sql, [
       input.character,
       input.strokeCount,
       input.shortMeaning ?? null,
+      input.searchKeywords ?? null,
       input.radicalId ?? null,
       input.jlptLevel ?? null,
       input.joyoLevel ?? null,
@@ -305,6 +343,10 @@ export function useKanjiRepository(): UseKanjiRepository {
     if (input.shortMeaning !== undefined) {
       fields.push('short_meaning = ?')
       values.push(input.shortMeaning)
+    }
+    if (input.searchKeywords !== undefined) {
+      fields.push('search_keywords = ?')
+      values.push(input.searchKeywords)
     }
     if (input.radicalId !== undefined) {
       fields.push('radical_id = ?')
@@ -375,6 +417,9 @@ export function useKanjiRepository(): UseKanjiRepository {
   }
 
   function remove(id: number): void {
+    // First delete all component occurrences for this kanji
+    run('DELETE FROM component_occurrences WHERE kanji_id = ?', [id])
+    // Then delete the kanji itself
     run('DELETE FROM kanjis WHERE id = ?', [id])
   }
 
@@ -441,6 +486,127 @@ export function useKanjiRepository(): UseKanjiRepository {
     })
   }
 
+  // =============================================================================
+  // Field-Level Update Methods
+  // =============================================================================
+
+  function updateHeaderFields(
+    id: number,
+    character: string,
+    shortMeaning: string | null,
+    searchKeywords: string | null
+  ): Kanji {
+    run(
+      'UPDATE kanjis SET character = ?, short_meaning = ?, search_keywords = ? WHERE id = ?',
+      [character, shortMeaning, searchKeywords, id]
+    )
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
+  function updateStrokeCount(id: number, strokeCount: number): Kanji {
+    run('UPDATE kanjis SET stroke_count = ? WHERE id = ?', [strokeCount, id])
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
+  function updateJlptLevel(id: number, level: JlptLevel | null): Kanji {
+    run('UPDATE kanjis SET jlpt_level = ? WHERE id = ?', [level, id])
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
+  function updateJoyoLevel(id: number, level: JoyoLevel | null): Kanji {
+    run('UPDATE kanjis SET joyo_level = ? WHERE id = ?', [level, id])
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
+  function updateKenteiLevel(id: number, level: string | null): Kanji {
+    run('UPDATE kanjis SET kanji_kentei_level = ? WHERE id = ?', [level, id])
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
+  function updateRadicalId(id: number, radicalId: number | null): Kanji {
+    run('UPDATE kanjis SET radical_id = ? WHERE id = ?', [radicalId, id])
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
+  function updateNotesEtymology(id: number, notes: string | null): Kanji {
+    run('UPDATE kanjis SET notes_etymology = ? WHERE id = ?', [notes, id])
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
+  function updateNotesSemantic(id: number, notes: string | null): Kanji {
+    run('UPDATE kanjis SET notes_semantic = ? WHERE id = ?', [notes, id])
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
+  function updateNotesEducation(id: number, notes: string | null): Kanji {
+    run('UPDATE kanjis SET notes_education_mnemonics = ? WHERE id = ?', [
+      notes,
+      id
+    ])
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
+  function updateNotesPersonal(id: number, notes: string | null): Kanji {
+    run('UPDATE kanjis SET notes_personal = ? WHERE id = ?', [notes, id])
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
+  function updateStrokeImages(
+    id: number,
+    diagram: Uint8Array | null,
+    gif: Uint8Array | null
+  ): Kanji {
+    run(
+      'UPDATE kanjis SET stroke_diagram_image = ?, stroke_gif_image = ? WHERE id = ?',
+      [diagram, gif, id]
+    )
+    const updated = getById(id)
+    if (!updated) {
+      throw new Error(`Kanji with id ${String(id)} not found`)
+    }
+    return updated
+  }
+
   return {
     create,
     getAll,
@@ -452,6 +618,18 @@ export function useKanjiRepository(): UseKanjiRepository {
     remove,
     saveComponentLinks,
     search,
-    update
+    update,
+    // Field-level updates
+    updateHeaderFields,
+    updateJlptLevel,
+    updateJoyoLevel,
+    updateKenteiLevel,
+    updateNotesEducation,
+    updateNotesEtymology,
+    updateNotesPersonal,
+    updateNotesSemantic,
+    updateRadicalId,
+    updateStrokeCount,
+    updateStrokeImages
   }
 }

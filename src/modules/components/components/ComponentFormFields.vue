@@ -34,8 +34,8 @@ const { errorMessage: strokeCountError, value: strokeCount } = useField<
 // Short meaning field
 const { value: shortMeaning } = useField<string | undefined>('shortMeaning')
 
-// Japanese name field
-const { value: japaneseName } = useField<string | undefined>('japaneseName')
+// Search keywords field
+const { value: searchKeywords } = useField<string | undefined>('searchKeywords')
 
 // Full description field
 const { value: description } = useField<string | undefined>('description')
@@ -98,19 +98,20 @@ const { value: radicalNameJapanese } = useField<string | undefined>(
         placeholder="e.g., sun, day"
       />
       <p class="component-form-fields-help">
-        Brief English meaning for search and display (optional).
+        Brief English meaning for display (optional).
       </p>
     </div>
 
-    <div class="component-form-fields-row">
-      <div class="component-form-fields-group">
-        <BaseInput
-          v-model="japaneseName"
-          label="Japanese Name"
-          name="japaneseName"
-          placeholder="e.g., にんべん"
-        />
-      </div>
+    <div class="component-form-fields-group">
+      <BaseInput
+        v-model="searchKeywords"
+        label="Search Keywords"
+        name="searchKeywords"
+        placeholder="e.g., にんべん, person radical"
+      />
+      <p class="component-form-fields-help">
+        Additional search terms (optional, comma-separated).
+      </p>
     </div>
 
     <div class="component-form-fields-group">

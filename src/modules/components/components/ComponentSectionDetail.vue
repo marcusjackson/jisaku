@@ -11,6 +11,7 @@ import { RouterLink } from 'vue-router'
 
 import BaseButton from '@/base/components/BaseButton.vue'
 
+import SharedBackButton from '@/shared/components/SharedBackButton.vue'
 import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
 
 import ComponentDetailHeader from './ComponentDetailHeader.vue'
@@ -22,6 +23,7 @@ import type {
   Kanji,
   OccurrenceWithKanji
 } from '@/shared/types/database-types'
+import type { QuickCreateKanjiData } from '@/shared/validation/quick-create-kanji-schema'
 
 interface Props {
   component: Component
@@ -29,13 +31,16 @@ interface Props {
   linkedKanjiCount?: number
   occurrences?: OccurrenceWithKanji[]
   sourceKanji?: Kanji | null
+  /** All available kanji for search */
+  allKanji?: Kanji[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isDeleting: false,
   linkedKanjiCount: 0,
   occurrences: () => [],
-  sourceKanji: null
+  sourceKanji: null,
+  allKanji: () => []
 })
 
 const emit = defineEmits<{
@@ -43,6 +48,8 @@ const emit = defineEmits<{
   'update:analysisNotes': [occurrenceId: number, analysisNotes: string | null]
   'update:position': [occurrenceId: number, positionTypeId: number | null]
   'update:isRadical': [occurrenceId: number, isRadical: boolean]
+  addKanji: [kanjiId: number]
+  createKanji: [data: QuickCreateKanjiData]
 }>()
 
 // Computed to handle exactOptionalPropertyTypes
@@ -89,10 +96,23 @@ function handlePositionUpdate(
 function handleIsRadicalUpdate(occurrenceId: number, isRadical: boolean) {
   emit('update:isRadical', occurrenceId, isRadical)
 }
+
+function handleAddKanji(kanjiId: number) {
+  emit('addKanji', kanjiId)
+}
+
+function handleCreateKanji(data: QuickCreateKanjiData) {
+  emit('createKanji', data)
+}
 </script>
 
 <template>
   <article class="component-section-detail">
+    <SharedBackButton
+      label="Back to Component List"
+      to="/components"
+    />
+
     <ComponentDetailHeader :component="props.component" />
 
     <div class="component-section-detail-content">
@@ -102,7 +122,11 @@ function handleIsRadicalUpdate(occurrenceId: number, isRadical: boolean) {
       />
 
       <ComponentDetailKanjiList
+        :all-kanji="props.allKanji"
+        :component-id="props.component.id"
         :occurrences="props.occurrences"
+        @add-kanji="handleAddKanji"
+        @create-kanji="handleCreateKanji"
         @update:analysis-notes="handleAnalysisNotesUpdate"
         @update:is-radical="handleIsRadicalUpdate"
         @update:position="handlePositionUpdate"
@@ -115,7 +139,7 @@ function handleIsRadicalUpdate(occurrenceId: number, isRadical: boolean) {
       </RouterLink>
       <BaseButton
         :disabled="deleteDisabled"
-        variant="danger"
+        variant="ghost"
         @click="handleDeleteClick"
       >
         {{ deleteDisabled ? 'Deleting...' : 'Delete' }}
@@ -134,6 +158,11 @@ function handleIsRadicalUpdate(occurrenceId: number, isRadical: boolean) {
       variant="danger"
       @cancel="handleDeleteCancel"
       @confirm="handleDeleteConfirm"
+    />
+
+    <SharedBackButton
+      label="Back to Component List"
+      to="/components"
     />
   </article>
 </template>
@@ -156,7 +185,7 @@ function handleIsRadicalUpdate(occurrenceId: number, isRadical: boolean) {
 
 .component-section-detail-actions {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-lg);
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
 }

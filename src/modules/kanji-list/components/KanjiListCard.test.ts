@@ -16,6 +16,7 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
     character: '日',
     strokeCount: 4,
     shortMeaning: null,
+    searchKeywords: null,
     radicalId: null,
     jlptLevel: null,
     joyoLevel: null,

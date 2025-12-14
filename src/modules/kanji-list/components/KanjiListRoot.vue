@@ -13,6 +13,7 @@ import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
 import { useDatabase } from '@/shared/composables/use-database'
+import { useFilterPersistence } from '@/shared/composables/use-filter-persistence'
 
 import { useComponentRepository } from '@/modules/components/composables/use-component-repository'
 import { useRadicalRepository } from '@/modules/kanji/composables/use-radical-repository'
@@ -30,6 +31,9 @@ import type {
 
 // Database initialization
 const { initError, initialize, isInitialized, isInitializing } = useDatabase()
+
+// Filter persistence
+useFilterPersistence('kanji-list')
 
 // Repositories for data access
 const { search } = useKanjiRepository()

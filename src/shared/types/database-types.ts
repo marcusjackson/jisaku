@@ -9,7 +9,7 @@
 // Enum Types
 // =============================================================================
 
-export type JlptLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1'
+export type JlptLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'non-jlpt'
 
 export type JoyoLevel =
   | 'elementary1'
@@ -19,6 +19,7 @@ export type JoyoLevel =
   | 'elementary5'
   | 'elementary6'
   | 'secondary'
+  | 'non-joyo'
 
 // =============================================================================
 // Entity Types
@@ -30,8 +31,9 @@ export type JoyoLevel =
 export interface Kanji {
   id: number
   character: string
-  strokeCount: number
+  strokeCount: number | null
   shortMeaning: string | null
+  searchKeywords: string | null
   radicalId: number | null
   jlptLevel: JlptLevel | null
   joyoLevel: JoyoLevel | null
@@ -54,10 +56,10 @@ export interface Kanji {
 export interface Component {
   id: number
   character: string
-  strokeCount: number
+  strokeCount: number | null
   shortMeaning: string | null
   sourceKanjiId: number | null
-  japaneseName: string | null
+  searchKeywords: string | null
   description: string | null
   canBeRadical: boolean
   kangxiNumber: number | null
@@ -187,8 +189,9 @@ export interface KanjiComponent {
 
 export interface CreateKanjiInput {
   character: string
-  strokeCount: number
+  strokeCount: number | null
   shortMeaning?: string | null
+  searchKeywords?: string | null
   radicalId?: number | null
   jlptLevel?: JlptLevel | null
   joyoLevel?: JoyoLevel | null
@@ -205,8 +208,9 @@ export interface CreateKanjiInput {
 
 export interface UpdateKanjiInput {
   character?: string
-  strokeCount?: number
+  strokeCount?: number | null
   shortMeaning?: string | null
+  searchKeywords?: string | null
   radicalId?: number | null
   jlptLevel?: JlptLevel | null
   joyoLevel?: JoyoLevel | null
@@ -223,10 +227,10 @@ export interface UpdateKanjiInput {
 
 export interface CreateComponentInput {
   character: string
-  strokeCount: number
+  strokeCount?: number | null
   shortMeaning?: string | null
   sourceKanjiId?: number | null
-  japaneseName?: string | null
+  searchKeywords?: string | null
   description?: string | null
   canBeRadical?: boolean
   kangxiNumber?: number | null
@@ -236,10 +240,10 @@ export interface CreateComponentInput {
 
 export interface UpdateComponentInput {
   character?: string
-  strokeCount?: number
+  strokeCount?: number | null
   shortMeaning?: string | null
   sourceKanjiId?: number | null
-  japaneseName?: string | null
+  searchKeywords?: string | null
   description?: string | null
   canBeRadical?: boolean
   kangxiNumber?: number | null

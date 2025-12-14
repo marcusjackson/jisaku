@@ -5,7 +5,7 @@
  * UI component displaying the main component character with stroke count.
  */
 
-import { RouterLink } from 'vue-router'
+import SharedSearchKeywordsIndicator from '@/shared/components/SharedSearchKeywordsIndicator.vue'
 
 import type { Component } from '@/shared/types/database-types'
 
@@ -16,24 +16,22 @@ defineProps<{
 
 <template>
   <header class="component-detail-header">
-    <RouterLink
-      class="component-detail-header-back"
-      to="/components"
-    >
-      ← Back to list
-    </RouterLink>
-
     <div class="component-detail-header-main">
       <span class="component-detail-header-character">
         {{ component.character }}
       </span>
       <div class="component-detail-header-info">
-        <span
-          v-if="component.shortMeaning"
-          class="component-detail-header-meaning"
-        >
-          {{ component.shortMeaning }}
-        </span>
+        <div class="component-detail-header-top">
+          <span
+            v-if="component.shortMeaning"
+            class="component-detail-header-meaning"
+          >
+            {{ component.shortMeaning }}
+          </span>
+          <SharedSearchKeywordsIndicator
+            :search-keywords="component.searchKeywords"
+          />
+        </div>
         <span class="component-detail-header-strokes">
           {{ component.strokeCount }} strokes
         </span>
@@ -77,6 +75,12 @@ defineProps<{
 .component-detail-header-info {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.component-detail-header-top {
+  display: flex;
+  align-items: center;
   gap: var(--spacing-xs);
 }
 

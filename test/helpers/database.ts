@@ -21,14 +21,15 @@ const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS kanjis (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     character TEXT NOT NULL UNIQUE,
-    stroke_count INTEGER NOT NULL CHECK (stroke_count > 0 AND stroke_count <= 64),
+    stroke_count INTEGER DEFAULT NULL,
     short_meaning TEXT,
+    search_keywords TEXT,
     radical_id INTEGER,
-    jlpt_level TEXT CHECK (jlpt_level IN ('N5', 'N4', 'N3', 'N2', 'N1')),
+    jlpt_level TEXT CHECK (jlpt_level IN ('N5', 'N4', 'N3', 'N2', 'N1', 'non-jlpt')),
     joyo_level TEXT CHECK (joyo_level IN (
       'elementary1', 'elementary2', 'elementary3',
       'elementary4', 'elementary5', 'elementary6',
-      'secondary'
+      'secondary', 'non-joyo'
     )),
     kanji_kentei_level TEXT,
     stroke_diagram_image BLOB,
@@ -47,10 +48,10 @@ const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS components (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     character TEXT NOT NULL,
-    stroke_count INTEGER NOT NULL CHECK (stroke_count > 0),
+    stroke_count INTEGER DEFAULT NULL,
     short_meaning TEXT,
     source_kanji_id INTEGER,
-    japanese_name TEXT,
+    search_keywords TEXT,
     description TEXT,
     can_be_radical BOOLEAN DEFAULT 0,
     kangxi_number INTEGER CHECK (kangxi_number >= 1 AND kangxi_number <= 214),
@@ -237,24 +238,24 @@ export function seedComponent(
     canBeRadical = false,
     character,
     description = null,
-    japaneseName = null,
     kangxiMeaning = null,
     kangxiNumber = null,
     radicalNameJapanese = null,
+    searchKeywords = null,
     shortMeaning = null,
     sourceKanjiId = null,
-    strokeCount
+    strokeCount = null
   } = data
 
   db.run(
-    `INSERT INTO components (character, stroke_count, short_meaning, source_kanji_id, japanese_name, description, can_be_radical, kangxi_number, kangxi_meaning, radical_name_japanese)
+    `INSERT INTO components (character, stroke_count, short_meaning, source_kanji_id, search_keywords, description, can_be_radical, kangxi_number, kangxi_meaning, radical_name_japanese)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       character,
       strokeCount,
       shortMeaning,
       sourceKanjiId,
-      japaneseName,
+      searchKeywords,
       description,
       canBeRadical ? 1 : 0,
       kangxiNumber,
@@ -320,22 +321,23 @@ function rowToKanji(row: unknown[]): Kanji {
   return {
     id: row[0] as number,
     character: row[1] as string,
-    strokeCount: row[2] as number,
+    strokeCount: row[2] as number | null,
     shortMeaning: row[3] as string | null,
-    radicalId: row[4] as number | null,
-    jlptLevel: row[5] as Kanji['jlptLevel'],
-    joyoLevel: row[6] as Kanji['joyoLevel'],
-    kenteiLevel: row[7] as string | null,
-    strokeDiagramImage: row[8] as Uint8Array | null,
-    strokeGifImage: row[9] as Uint8Array | null,
-    notesEtymology: row[10] as string | null,
-    notesSemantic: row[11] as string | null,
-    notesEducationMnemonics: row[12] as string | null,
-    notesPersonal: row[13] as string | null,
-    identifier: row[14] as number | null,
-    radicalStrokeCount: row[15] as number | null,
-    createdAt: row[16] as string,
-    updatedAt: row[17] as string
+    searchKeywords: row[4] as string | null,
+    radicalId: row[5] as number | null,
+    jlptLevel: row[6] as Kanji['jlptLevel'],
+    joyoLevel: row[7] as Kanji['joyoLevel'],
+    kenteiLevel: row[8] as string | null,
+    strokeDiagramImage: row[9] as Uint8Array | null,
+    strokeGifImage: row[10] as Uint8Array | null,
+    notesEtymology: row[11] as string | null,
+    notesSemantic: row[12] as string | null,
+    notesEducationMnemonics: row[13] as string | null,
+    notesPersonal: row[14] as string | null,
+    identifier: row[15] as number | null,
+    radicalStrokeCount: row[16] as number | null,
+    createdAt: row[17] as string,
+    updatedAt: row[18] as string
   }
 }
 
@@ -344,10 +346,10 @@ function rowToComponent(row: unknown[]): Component {
   return {
     id: row[0] as number,
     character: row[1] as string,
-    strokeCount: row[2] as number,
+    strokeCount: row[2] as number | null,
     shortMeaning: row[3] as string | null,
     sourceKanjiId: row[4] as number | null,
-    japaneseName: row[5] as string | null,
+    searchKeywords: row[5] as string | null,
     description: row[6] as string | null,
     canBeRadical: Boolean(row[7]),
     kangxiNumber: row[8] as number | null,

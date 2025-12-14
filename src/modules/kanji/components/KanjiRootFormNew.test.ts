@@ -118,11 +118,12 @@ describe('KanjiRootFormNew', () => {
     expect(wrapper.text()).toContain('Character')
   })
 
-  it('renders stroke count input label', async () => {
+  it('does not render stroke count in create mode', async () => {
     const wrapper = mount(KanjiRootFormNew)
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Stroke')
+    // Stroke count should not appear in create mode
+    expect(wrapper.text()).not.toContain('Stroke')
   })
 
   it('renders create button', async () => {

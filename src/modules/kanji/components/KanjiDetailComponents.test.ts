@@ -15,25 +15,30 @@ interface OccurrenceWithComponent extends ComponentOccurrenceWithPosition {
   component: Component
 }
 
+const createMockComponent = (
+  overrides: Partial<Component> = {}
+): Component => ({
+  canBeRadical: false,
+  character: '日',
+  createdAt: '2024-01-01',
+  description: 'sun',
+  id: 1,
+  searchKeywords: null,
+  kangxiMeaning: null,
+  kangxiNumber: null,
+  radicalNameJapanese: null,
+  sourceKanjiId: null,
+  strokeCount: 4,
+  shortMeaning: null,
+  updatedAt: '2024-01-01',
+  ...overrides
+})
+
 const createMockOccurrence = (
   overrides: Partial<OccurrenceWithComponent> = {}
 ): OccurrenceWithComponent => ({
   analysisNotes: null,
-  component: {
-    canBeRadical: false,
-    character: '日',
-    createdAt: '2024-01-01',
-    description: 'sun',
-    id: 1,
-    japaneseName: null,
-    kangxiMeaning: null,
-    kangxiNumber: null,
-    radicalNameJapanese: null,
-    sourceKanjiId: null,
-    strokeCount: 4,
-    shortMeaning: null,
-    updatedAt: '2024-01-01'
-  },
+  component: createMockComponent(),
   componentFormId: null,
   componentId: 1,
   createdAt: '2024-01-01',
@@ -49,65 +54,60 @@ const createMockOccurrence = (
 
 const mockOccurrences: OccurrenceWithComponent[] = [
   createMockOccurrence({
-    component: {
-      canBeRadical: false,
+    component: createMockComponent({
       character: '日',
-      createdAt: '2024-01-01',
       description: 'sun',
-      id: 1,
-      japaneseName: null,
-      kangxiMeaning: null,
-      kangxiNumber: null,
-      radicalNameJapanese: null,
-      sourceKanjiId: null,
-      strokeCount: 4,
-      shortMeaning: null,
-      updatedAt: '2024-01-01'
-    },
+      id: 1
+    }),
     componentId: 1,
     id: 1
   }),
   createMockOccurrence({
-    component: {
-      canBeRadical: false,
+    component: createMockComponent({
       character: '月',
-      createdAt: '2024-01-01',
       description: 'moon',
-      id: 2,
-      japaneseName: null,
-      kangxiMeaning: null,
-      kangxiNumber: null,
-      radicalNameJapanese: null,
-      sourceKanjiId: null,
-      strokeCount: 4,
-      shortMeaning: null,
-      updatedAt: '2024-01-01'
-    },
+      id: 2
+    }),
     componentId: 2,
     id: 2
   })
 ]
 
+const mockAllComponents: Component[] = [
+  createMockComponent({ character: '日', id: 1 }),
+  createMockComponent({ character: '月', id: 2 }),
+  createMockComponent({ character: '水', id: 3 })
+]
+
 describe('KanjiDetailComponents', () => {
   const defaultGlobal = {
     stubs: {
-      RouterLink: RouterLinkStub
+      RouterLink: RouterLinkStub,
+      SharedEntitySearch: { template: '<div>Entity Search</div>' },
+      SharedQuickCreateComponent: { template: '<div>Quick Create</div>' }
     }
   }
 
-  it('renders component title', () => {
+  const defaultProps = {
+    occurrences: mockOccurrences,
+    kanjiId: 1,
+    allComponents: mockAllComponents
+  }
+
+  it('renders Add button', () => {
     render(KanjiDetailComponents, {
       global: defaultGlobal,
-      props: { occurrences: mockOccurrences }
+      props: defaultProps
     })
 
-    expect(screen.getByText('Components')).toBeInTheDocument()
+    // Add button should be present
+    expect(screen.getByText('+ Add')).toBeInTheDocument()
   })
 
   it('renders all component characters', () => {
     render(KanjiDetailComponents, {
       global: defaultGlobal,
-      props: { occurrences: mockOccurrences }
+      props: defaultProps
     })
 
     expect(screen.getByText('日')).toBeInTheDocument()
@@ -117,22 +117,22 @@ describe('KanjiDetailComponents', () => {
   it('renders short meanings when available', () => {
     const occurrencesWithMeaning = [
       createMockOccurrence({
-        component: {
-          ...mockOccurrences[0]!.component,
+        component: createMockComponent({
+          character: '日',
           shortMeaning: 'sun, day'
-        }
+        })
       }),
       createMockOccurrence({
-        component: {
-          ...mockOccurrences[1]!.component,
+        component: createMockComponent({
+          character: '月',
           shortMeaning: 'moon, month'
-        }
+        })
       })
     ]
 
     render(KanjiDetailComponents, {
       global: defaultGlobal,
-      props: { occurrences: occurrencesWithMeaning }
+      props: { ...defaultProps, occurrences: occurrencesWithMeaning }
     })
 
     expect(screen.getByText('sun, day')).toBeInTheDocument()
@@ -142,7 +142,7 @@ describe('KanjiDetailComponents', () => {
   it('renders view links to component detail pages', () => {
     const wrapper = render(KanjiDetailComponents, {
       global: defaultGlobal,
-      props: { occurrences: mockOccurrences }
+      props: defaultProps
     })
 
     // RouterLinkStub renders as <a> elements
@@ -152,37 +152,30 @@ describe('KanjiDetailComponents', () => {
     expect(links).toHaveLength(2)
   })
 
-  it('does not render section when occurrences array is empty', () => {
+  it('renders empty state message when occurrences array is empty', () => {
     render(KanjiDetailComponents, {
       global: defaultGlobal,
-      props: { occurrences: [] }
+      props: { ...defaultProps, occurrences: [] }
     })
 
-    expect(screen.queryByText('Components')).not.toBeInTheDocument()
+    expect(
+      screen.getByText('No components linked. Click "+ Add" to add components.')
+    ).toBeInTheDocument()
   })
 
   it('handles component without short meaning', () => {
     const occurrenceWithoutMeaning = createMockOccurrence({
-      component: {
-        canBeRadical: false,
+      component: createMockComponent({
         character: '火',
-        createdAt: '2024-01-01',
         description: null,
         id: 3,
-        japaneseName: null,
-        kangxiMeaning: null,
-        kangxiNumber: null,
-        radicalNameJapanese: null,
-        sourceKanjiId: null,
-        strokeCount: 4,
-        shortMeaning: null,
-        updatedAt: '2024-01-01'
-      }
+        shortMeaning: null
+      })
     })
 
     render(KanjiDetailComponents, {
       global: defaultGlobal,
-      props: { occurrences: [occurrenceWithoutMeaning] }
+      props: { ...defaultProps, occurrences: [occurrenceWithoutMeaning] }
     })
 
     expect(screen.getByText('火')).toBeInTheDocument()
@@ -209,7 +202,7 @@ describe('KanjiDetailComponents', () => {
 
     render(KanjiDetailComponents, {
       global: defaultGlobal,
-      props: { occurrences: [occurrenceWithPosition] }
+      props: { ...defaultProps, occurrences: [occurrenceWithPosition] }
     })
 
     expect(screen.getByText('ε΄')).toBeInTheDocument()
@@ -222,7 +215,7 @@ describe('KanjiDetailComponents', () => {
 
     render(KanjiDetailComponents, {
       global: defaultGlobal,
-      props: { occurrences: [radicalOccurrence] }
+      props: { ...defaultProps, occurrences: [radicalOccurrence] }
     })
 
     expect(screen.getByText('🔶 Radical')).toBeInTheDocument()
@@ -235,7 +228,7 @@ describe('KanjiDetailComponents', () => {
 
     render(KanjiDetailComponents, {
       global: defaultGlobal,
-      props: { occurrences: [occurrenceWithNotes] }
+      props: { ...defaultProps, occurrences: [occurrenceWithNotes] }
     })
 
     // Analysis notes are NOT shown in simplified kanji page view
@@ -253,7 +246,7 @@ describe('KanjiDetailComponents', () => {
 
     const wrapper = render(KanjiDetailComponents, {
       global: defaultGlobal,
-      props: { occurrences: [basicOccurrence] }
+      props: { ...defaultProps, occurrences: [basicOccurrence] }
     })
 
     expect(

@@ -30,22 +30,10 @@ test.describe('Kanji CRUD Flow', () => {
       page.getByRole('heading', { name: /new kanji/i })
     ).toBeVisible()
 
-    // Fill in form fields
-    await page.getByLabel(/character/i).fill('水')
-    await page.getByLabel(/stroke count/i).fill('4')
-
-    // Select JLPT level
-    await page.getByRole('combobox', { name: /jlpt/i }).click()
-    await page.getByRole('option', { name: /n5/i }).click()
-
-    // Select Joyo level
-    await page.getByRole('combobox', { name: /jōyō/i }).click()
-    await page.getByRole('option', { name: /grade 1/i }).click()
-
-    // Add notes
-    await page
-      .getByLabel(/etymology/i)
-      .fill('Water. Pictograph of flowing water.')
+    // Fill in form fields (simplified create form - stroke count not required)
+    await page.getByLabel('Character').fill('水')
+    await page.getByLabel(/short meaning/i).fill('water')
+    await page.getByLabel(/search keywords/i).fill('aqua, fluid')
 
     // Submit form
     await page.getByRole('button', { name: /create kanji/i }).click()
@@ -65,53 +53,20 @@ test.describe('Kanji CRUD Flow', () => {
       '水'
     )
 
-    // Check metadata badges
-    await expect(page.getByText(/4 strokes/i)).toBeVisible()
-    await expect(page.locator('.kanji-detail-badges')).toContainText(/n5/i)
-
-    // Check notes are displayed
-    await expect(page.getByText(/flowing water/i)).toBeVisible()
-
-    // =========================================================================
-    // EDIT: Modify the kanji
-    // =========================================================================
-
-    // Click edit button
-    await page.getByRole('link', { name: /edit/i }).click()
-
-    // Should navigate to edit page
-    await expect(page).toHaveURL(/\/kanji\/\d+\/edit/)
-    await expect(
-      page.getByRole('heading', { name: /edit kanji/i })
-    ).toBeVisible()
-
-    // Wait for form to populate
-    await page.waitForTimeout(500)
-
-    // Update notes
-    const notesField = page.getByLabel(/etymology/i)
-    await notesField.clear()
-    await notesField.fill(
-      'Water. One of the most basic elements. Pictograph of flowing water.'
+    // Check short meaning is displayed
+    await expect(page.locator('.kanji-detail-header-meaning')).toContainText(
+      'water'
     )
 
-    // Save changes
-    await page.getByRole('button', { name: /save changes/i }).click()
-
-    // Should navigate back to detail page
-    await expect(page).toHaveURL(/\/kanji\/\d+$/)
-
-    // Wait for toast
-    await page.waitForTimeout(3500)
-
-    // Verify updated notes
-    await expect(
-      page.getByText(/one of the most basic elements/i)
-    ).toBeVisible()
+    // Check stroke count is displayed in Basic Information section
+    await expect(page.locator('text=Basic Information')).toBeVisible()
 
     // =========================================================================
-    // DELETE: Remove the kanji
+    // DELETE: Remove the kanji (skipping inline edit as it's tested separately)
     // =========================================================================
+
+    // Enable destructive mode to allow deletion
+    await page.locator('#destructive-mode-switch').click()
 
     // Click delete button
     await page.getByRole('button', { name: /delete/i }).click()
@@ -121,7 +76,7 @@ test.describe('Kanji CRUD Flow', () => {
     await page.getByRole('button', { name: /delete$/i }).click()
 
     // Should navigate back to list
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/kanji')
 
     // Wait for toast
     await page.waitForTimeout(3500)
@@ -161,7 +116,7 @@ test.describe('Kanji CRUD Flow', () => {
     await page.getByRole('button', { name: /cancel/i }).click()
 
     // Should go back to home
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/kanji')
   })
 
   test('back link navigates correctly', async ({ page }) => {
@@ -171,6 +126,6 @@ test.describe('Kanji CRUD Flow', () => {
     await page.getByRole('link', { name: /back/i }).click()
 
     // Should navigate to home
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/kanji')
   })
 })

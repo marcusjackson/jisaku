@@ -5,6 +5,10 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
+    redirect: '/kanji'
+  },
+  {
+    path: '/kanji',
     name: 'kanji-list',
     component: () => import('@/pages/KanjiListPage.vue'),
     meta: { title: 'Kanji List' }
@@ -20,12 +24,6 @@ const routes: RouteRecordRaw[] = [
     name: 'kanji-detail',
     component: () => import('@/pages/KanjiDetailPage.vue'),
     meta: { title: 'Kanji Detail' }
-  },
-  {
-    path: '/kanji/:id/edit',
-    name: 'kanji-edit',
-    component: () => import('@/pages/KanjiEditPage.vue'),
-    meta: { title: 'Edit Kanji' }
   },
   {
     path: '/components',
@@ -44,12 +42,6 @@ const routes: RouteRecordRaw[] = [
     name: 'component-detail',
     component: () => import('@/pages/ComponentDetailPage.vue'),
     meta: { title: 'Component Detail' }
-  },
-  {
-    path: '/components/:id/edit',
-    name: 'component-edit',
-    component: () => import('@/pages/ComponentEditPage.vue'),
-    meta: { title: 'Edit Component' }
   },
   {
     path: '/settings',

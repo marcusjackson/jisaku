@@ -12,3 +12,27 @@ import '@testing-library/jest-dom/vitest'
 Element.prototype.scrollIntoView = () => {
   // No-op for jsdom environment
 }
+
+// Mock matchMedia for jsdom (not implemented)
+// This is needed for theme detection with prefers-color-scheme
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {
+      // No-op for jsdom
+    },
+    removeListener: () => {
+      // No-op for jsdom
+    },
+    addEventListener: () => {
+      // No-op for jsdom
+    },
+    removeEventListener: () => {
+      // No-op for jsdom
+    },
+    dispatchEvent: () => true
+  })
+})

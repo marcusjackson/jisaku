@@ -3,10 +3,10 @@
  * ComponentDetailPage
  *
  * Route entry point for viewing a single component.
- * Thin wrapper that delegates to the components module's root component.
+ * Thin wrapper that delegates to the component module's root component.
  */
 
-import ComponentRootDetail from '@/modules/components/components/ComponentRootDetail.vue'
+import ComponentRootDetail from '@/modules/component/components/ComponentRootDetail.vue'
 </script>
 
 <template>

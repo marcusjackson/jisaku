@@ -3,9 +3,12 @@
  * KanjiDetailHeader
  *
  * UI component displaying the main kanji character with stroke count and radical info.
+ * Includes Edit button for opening header edit dialog.
  */
 
-import { RouterLink } from 'vue-router'
+import BaseButton from '@/base/components/BaseButton.vue'
+
+import SharedSearchKeywordsIndicator from '@/shared/components/SharedSearchKeywordsIndicator.vue'
 
 import type { Component, Kanji } from '@/shared/types/database-types'
 
@@ -13,26 +16,28 @@ defineProps<{
   kanji: Kanji
   radical?: Component | null
 }>()
+
+const emit = defineEmits<{
+  edit: []
+}>()
 </script>
 
 <template>
   <header class="kanji-detail-header">
-    <RouterLink
-      class="kanji-detail-header-back"
-      to="/"
-    >
-      ← Back to list
-    </RouterLink>
-
     <div class="kanji-detail-header-main">
       <span class="kanji-detail-header-character">{{ kanji.character }}</span>
       <div class="kanji-detail-header-info">
-        <span
-          v-if="kanji.shortMeaning"
-          class="kanji-detail-header-meaning"
-        >
-          {{ kanji.shortMeaning }}
-        </span>
+        <div class="kanji-detail-header-top">
+          <span
+            v-if="kanji.shortMeaning"
+            class="kanji-detail-header-meaning"
+          >
+            {{ kanji.shortMeaning }}
+          </span>
+          <SharedSearchKeywordsIndicator
+            :search-keywords="kanji.searchKeywords"
+          />
+        </div>
         <span
           v-if="radical"
           class="kanji-detail-header-radical"
@@ -48,6 +53,15 @@ defineProps<{
           >
         </span>
       </div>
+    </div>
+    <div class="kanji-detail-header-actions">
+      <BaseButton
+        size="sm"
+        variant="secondary"
+        @click="emit('edit')"
+      >
+        Edit
+      </BaseButton>
     </div>
   </header>
 </template>
@@ -76,6 +90,11 @@ defineProps<{
   gap: var(--spacing-md);
 }
 
+.kanji-detail-header-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
 .kanji-detail-header-character {
   color: var(--color-text-primary);
   font-family: var(--font-family-kanji);
@@ -86,7 +105,14 @@ defineProps<{
 
 .kanji-detail-header-info {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.kanji-detail-header-top {
+  display: flex;
+  align-items: center;
   gap: var(--spacing-xs);
 }
 

@@ -20,7 +20,7 @@ interface ComponentRow {
   stroke_count: number
   short_meaning: string | null
   description: string | null
-  japanese_name: string | null
+  search_keywords: string | null
   source_kanji_id: number | null
   can_be_radical: number
   kangxi_number: number | null
@@ -37,7 +37,7 @@ function mapRowToComponent(row: ComponentRow): Component {
     strokeCount: row.stroke_count,
     shortMeaning: row.short_meaning,
     description: row.description,
-    japaneseName: row.japanese_name,
+    searchKeywords: row.search_keywords,
     sourceKanjiId: row.source_kanji_id,
     canBeRadical: row.can_be_radical === 1,
     kangxiNumber: row.kangxi_number,
@@ -79,6 +79,8 @@ export interface UseRadicalRepository {
   getByNumber: (number: number) => Component | null
   /** Get a radical component by character */
   getByCharacter: (character: string) => Component | null
+  /** Get all components that can be radicals (alias for getAll, for clarity) */
+  getRadicalOptions: () => Component[]
 }
 
 export function useRadicalRepository(): UseRadicalRepository {
@@ -122,6 +124,7 @@ export function useRadicalRepository(): UseRadicalRepository {
     getAll,
     getByCharacter,
     getById,
-    getByNumber
+    getByNumber,
+    getRadicalOptions: getAll
   }
 }

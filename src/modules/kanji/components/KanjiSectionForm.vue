@@ -76,7 +76,10 @@ function handleCancel() {
     </header>
 
     <div class="kanji-section-form-content">
-      <KanjiFormFields :component-options="props.componentOptions" />
+      <KanjiFormFields
+        :component-options="props.componentOptions"
+        :mode="props.mode"
+      />
     </div>
 
     <div class="kanji-section-form-actions">
