@@ -65,11 +65,8 @@ const handleDialogUpdate = (newValue: boolean) => {
           {{ title }}
         </DialogTitle>
 
-        <DialogDescription
-          v-if="description"
-          class="base-dialog-description"
-        >
-          {{ description }}
+        <DialogDescription class="base-dialog-description">
+          {{ description || '' }}
         </DialogDescription>
 
         <slot />

@@ -140,11 +140,33 @@ export interface ComponentForm {
   componentId: number
   formCharacter: string
   formName: string | null
-  description: string | null
-  isPrimary: boolean
   strokeCount: number | null
+  usageNotes: string | null
+  displayOrder: number
   createdAt: string
   updatedAt: string
+}
+
+/**
+ * Input type for creating a component form
+ */
+export interface CreateComponentFormInput {
+  componentId: number
+  formCharacter: string
+  formName?: string | null
+  strokeCount?: number | null
+  usageNotes?: string | null
+  displayOrder?: number
+}
+
+/**
+ * Input type for updating a component form
+ */
+export interface UpdateComponentFormInput {
+  formName?: string | null
+  strokeCount?: number | null
+  usageNotes?: string | null
+  displayOrder?: number
 }
 
 /**
@@ -153,25 +175,262 @@ export interface ComponentForm {
 export interface ComponentGrouping {
   id: number
   componentId: number
-  componentFormId: number | null
   name: string
-  analysisNotes: string | null
+  description: string | null
   displayOrder: number
   createdAt: string
   updatedAt: string
 }
 
 /**
+ * ComponentGroupingWithMembers — Grouping with count of members
+ */
+export interface ComponentGroupingWithMembers extends ComponentGrouping {
+  occurrenceCount: number
+}
+
+/**
+ * ComponentGroupingMember — Junction table linking occurrences to groupings
+ */
+export interface ComponentGroupingMember {
+  id: number
+  groupingId: number
+  occurrenceId: number
+  displayOrder: number
+}
+
+/**
+ * Input type for creating a component grouping
+ */
+export interface CreateComponentGroupingInput {
+  componentId: number
+  name: string
+  description?: string | null
+  displayOrder?: number
+}
+
+/**
+ * Input type for updating a component grouping
+ */
+export interface UpdateComponentGroupingInput {
+  name?: string
+  description?: string | null
+  displayOrder?: number
+}
+
+/**
  * KanjiClassification — Links kanji to classification types
+ * Primary classification is determined by display_order (first = primary)
  */
 export interface KanjiClassification {
   id: number
   kanjiId: number
   classificationTypeId: number
-  isPrimary: boolean
-  notes: string | null
+  displayOrder: number
   createdAt: string
   updatedAt: string
+}
+
+/**
+ * KanjiClassificationWithType — Classification with joined type data
+ */
+export interface KanjiClassificationWithType extends KanjiClassification {
+  typeName: string
+  nameJapanese: string | null
+  nameEnglish: string | null
+  description: string | null
+  descriptionShort: string | null
+}
+
+/**
+ * Input type for creating a kanji classification
+ */
+export interface CreateKanjiClassificationInput {
+  kanjiId: number
+  classificationTypeId: number
+  displayOrder?: number
+}
+
+/**
+ * Input type for updating a kanji classification
+ */
+export interface UpdateKanjiClassificationInput {
+  classificationTypeId?: number
+  displayOrder?: number
+}
+
+// =============================================================================
+// Reading Types
+// =============================================================================
+
+/**
+ * Reading level for on-yomi and kun-yomi
+ * - '小' - Elementary school (default)
+ * - '中' - Junior high school
+ * - '高' - High school
+ * - '外' - 表外音訓 (non-standard reading)
+ */
+export type ReadingLevel = '小' | '中' | '高' | '外'
+
+/**
+ * OnReading — On-yomi reading for a kanji
+ */
+export interface OnReading {
+  id: number
+  kanjiId: number
+  reading: string
+  readingLevel: ReadingLevel
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * KunReading — Kun-yomi reading for a kanji (with optional okurigana)
+ */
+export interface KunReading {
+  id: number
+  kanjiId: number
+  reading: string
+  okurigana: string | null
+  readingLevel: ReadingLevel
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Input type for creating an on-yomi reading
+ */
+export interface CreateOnReadingInput {
+  kanjiId: number
+  reading: string
+  readingLevel?: ReadingLevel
+  displayOrder?: number
+}
+
+/**
+ * Input type for updating an on-yomi reading
+ */
+export interface UpdateOnReadingInput {
+  reading?: string
+  readingLevel?: ReadingLevel
+  displayOrder?: number
+}
+
+/**
+ * Input type for creating a kun-yomi reading
+ */
+export interface CreateKunReadingInput {
+  kanjiId: number
+  reading: string
+  okurigana?: string | null
+  readingLevel?: ReadingLevel
+  displayOrder?: number
+}
+
+/**
+ * Input type for updating a kun-yomi reading
+ */
+export interface UpdateKunReadingInput {
+  reading?: string
+  okurigana?: string | null
+  readingLevel?: ReadingLevel
+  displayOrder?: number
+}
+
+// =============================================================================
+// Meaning Types
+// =============================================================================
+
+/**
+ * KanjiMeaning — Core meaning entry for a kanji
+ */
+export interface KanjiMeaning {
+  id: number
+  kanjiId: number
+  meaningText: string
+  additionalInfo: string | null
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * KanjiMeaningReadingGroup — Optional reading grouping for meanings
+ */
+export interface KanjiMeaningReadingGroup {
+  id: number
+  kanjiId: number
+  readingText: string
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * KanjiMeaningGroupMember — Junction table linking meanings to reading groups
+ */
+export interface KanjiMeaningGroupMember {
+  id: number
+  readingGroupId: number
+  meaningId: number
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Input type for creating a kanji meaning
+ */
+export interface CreateKanjiMeaningInput {
+  kanjiId: number
+  meaningText: string
+  additionalInfo?: string | null
+  displayOrder?: number
+}
+
+/**
+ * Input type for updating a kanji meaning
+ */
+export interface UpdateKanjiMeaningInput {
+  meaningText?: string
+  additionalInfo?: string | null
+  displayOrder?: number
+}
+
+/**
+ * Input type for creating a reading group
+ */
+export interface CreateReadingGroupInput {
+  kanjiId: number
+  readingText: string
+  displayOrder?: number
+}
+
+/**
+ * Input type for updating a reading group
+ */
+export interface UpdateReadingGroupInput {
+  readingText?: string
+  displayOrder?: number
+}
+
+/**
+ * Input type for creating a group member assignment
+ */
+export interface CreateGroupMemberInput {
+  readingGroupId: number
+  meaningId: number
+  displayOrder?: number
+}
+
+/**
+ * MeaningWithGroup — Meaning with its group assignment info for display
+ */
+export interface MeaningWithGroup extends KanjiMeaning {
+  readingGroupId: number | null
+  orderInGroup: number | null
 }
 
 /**
@@ -305,6 +564,10 @@ export interface KanjiFilters {
   kenteiLevels?: string[]
   radicalId?: number
   componentId?: number
+  /** Filter kanji that have a matching on-yomi reading */
+  onYomi?: string
+  /** Filter kanji that have a matching kun-yomi reading */
+  kunYomi?: string
 }
 
 export interface ComponentFilters {
@@ -313,6 +576,95 @@ export interface ComponentFilters {
   strokeCountMin?: number
   strokeCountMax?: number
   sourceKanjiId?: number
+}
+
+// =============================================================================
+// Vocabulary Types
+// =============================================================================
+
+/**
+ * Vocabulary entity — Stores vocabulary words with readings and meanings
+ */
+export interface Vocabulary {
+  id: number
+  word: string
+  kana: string | null
+  shortMeaning: string | null
+  searchKeywords: string | null
+  jlptLevel: JlptLevel | null
+  isCommon: boolean
+  description: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * VocabKanji — Junction table linking vocabulary to constituent kanji
+ */
+export interface VocabKanji {
+  id: number
+  vocabId: number
+  kanjiId: number
+  analysisNotes: string | null
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * VocabKanjiWithKanji — Junction with full kanji data joined
+ */
+export interface VocabKanjiWithKanji extends VocabKanji {
+  kanji: Kanji
+}
+
+/**
+ * VocabKanjiWithVocab — Junction with full vocabulary data joined
+ */
+export interface VocabKanjiWithVocab extends VocabKanji {
+  vocabulary: Vocabulary
+}
+
+/**
+ * Input type for creating vocabulary
+ */
+export interface CreateVocabularyInput {
+  word: string
+  kana?: string | null
+  shortMeaning?: string | null
+  searchKeywords?: string | null
+  jlptLevel?: JlptLevel | null
+  isCommon?: boolean
+  description?: string | null
+}
+
+/**
+ * Input type for updating vocabulary header fields
+ */
+export interface UpdateVocabularyHeaderInput {
+  word?: string
+  kana?: string | null
+  shortMeaning?: string | null
+  searchKeywords?: string | null
+}
+
+/**
+ * Input type for updating vocabulary basic info fields
+ */
+export interface UpdateVocabularyBasicInfoInput {
+  jlptLevel?: JlptLevel | null
+  isCommon?: boolean
+  description?: string | null
+}
+
+/**
+ * Filters for vocabulary search
+ */
+export interface VocabularyFilters {
+  searchText?: string
+  jlptLevels?: JlptLevel[]
+  isCommon?: boolean
+  containsKanjiId?: number
 }
 
 // =============================================================================

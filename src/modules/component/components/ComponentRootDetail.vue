@@ -13,6 +13,8 @@ import { useRoute, useRouter } from 'vue-router'
 import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
+import { useComponentFormRepository } from '@/shared/composables/use-component-form-repository'
+import { useComponentGroupingRepository } from '@/shared/composables/use-component-grouping-repository'
 import { useComponentOccurrenceRepository } from '@/shared/composables/use-component-occurrence-repository'
 import { useComponentRepository } from '@/shared/composables/use-component-repository'
 import { useDatabase } from '@/shared/composables/use-database'
@@ -23,6 +25,9 @@ import ComponentSectionDetail from './ComponentSectionDetail.vue'
 
 import type {
   Component,
+  ComponentForm,
+  ComponentGroupingMember,
+  ComponentGroupingWithMembers,
   Kanji,
   OccurrenceWithKanji
 } from '@/shared/types/database-types'
@@ -47,10 +52,29 @@ const {
   create: createOccurrence,
   getByComponentIdWithPosition,
   remove: removeOccurrence,
+  reorderOccurrences: reorderOccurrenceIds,
   updateAnalysisNotes,
+  updateFormAssignment,
   updateIsRadical,
   updatePosition
 } = useComponentOccurrenceRepository()
+const {
+  create: createForm,
+  getByComponentId: getFormsByComponentId,
+  remove: removeFormById,
+  reorder: reorderFormIds,
+  update: updateFormById
+} = useComponentFormRepository()
+const {
+  addMember: addGroupingMember,
+  create: createGrouping,
+  getByComponentId: getGroupingsByComponentId,
+  getMembers: getGroupingMembers,
+  remove: removeGroupingById,
+  removeMember: removeGroupingMember,
+  reorder: reorderGroupingIds,
+  update: updateGroupingById
+} = useComponentGroupingRepository()
 
 // Database persistence
 const { persist } = useDatabase()
@@ -63,6 +87,9 @@ const component = ref<Component | null>(null)
 const sourceKanji = ref<Kanji | null>(null)
 const linkedKanjiCount = ref(0)
 const occurrences = ref<OccurrenceWithKanji[]>([])
+const forms = ref<ComponentForm[]>([])
+const groupings = ref<ComponentGroupingWithMembers[]>([])
+const groupingMembers = ref<Map<number, ComponentGroupingMember[]>>(new Map())
 const allKanji = ref<Kanji[]>([])
 const fetchError = ref<Error | null>(null)
 const isDeleting = ref(false)
@@ -107,6 +134,19 @@ function loadComponent() {
           kanji
         }
       })
+
+      // Load forms (visual variants)
+      forms.value = getFormsByComponentId(componentId.value)
+
+      // Load groupings (pattern analysis groups)
+      groupings.value = getGroupingsByComponentId(componentId.value)
+
+      // Load members for each grouping
+      const membersMap = new Map<number, ComponentGroupingMember[]>()
+      for (const grouping of groupings.value) {
+        membersMap.set(grouping.id, getGroupingMembers(grouping.id))
+      }
+      groupingMembers.value = membersMap
 
       // Load all kanji for search
       allKanji.value = getAllKanji()
@@ -178,6 +218,40 @@ function handleIsRadicalUpdate(occurrenceId: number, isRadical: boolean) {
       occurrence.isRadical = isRadical
     }
     success('Radical flag updated')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle form assignment update
+async function handleFormAssignmentUpdate(
+  occurrenceId: number,
+  formId: number | null
+) {
+  try {
+    updateFormAssignment(occurrenceId, formId)
+    await persist()
+    // Update local state
+    const occurrence = occurrences.value.find((o) => o.id === occurrenceId)
+    if (occurrence) {
+      occurrence.componentFormId = formId
+    }
+    success('Form assignment updated')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle occurrence reordering
+async function handleReorderOccurrences(occurrenceIds: number[]) {
+  try {
+    reorderOccurrenceIds(occurrenceIds)
+    await persist()
+    // Reorder local state
+    occurrences.value = occurrenceIds
+      .map((id) => occurrences.value.find((o) => o.id === id))
+      .filter((o): o is OccurrenceWithKanji => o !== undefined)
+    success('Order updated')
   } catch (err) {
     fetchError.value = err instanceof Error ? err : new Error(String(err))
   }
@@ -337,6 +411,229 @@ async function handleDescriptionUpdate(description: string | null) {
   }
 }
 
+// Handle adding a new form
+async function handleAddForm(data: {
+  formCharacter: string
+  formName: string | null
+  strokeCount: number | null
+  usageNotes: string | null
+}) {
+  if (!component.value) return
+
+  try {
+    const newForm = createForm({
+      componentId: component.value.id,
+      formCharacter: data.formCharacter,
+      formName: data.formName,
+      strokeCount: data.strokeCount,
+      usageNotes: data.usageNotes
+    })
+    await persist()
+    forms.value.push(newForm)
+    success(`Form "${data.formCharacter}" added`)
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle updating a form
+async function handleUpdateForm(
+  id: number,
+  data: {
+    formName: string | null
+    strokeCount: number | null
+    usageNotes: string | null
+  }
+) {
+  try {
+    updateFormById(id, data)
+    await persist()
+    // Update local state
+    const formIndex = forms.value.findIndex((f) => f.id === id)
+    if (formIndex !== -1) {
+      const existingForm = forms.value[formIndex]
+      if (existingForm) {
+        forms.value[formIndex] = {
+          ...existingForm,
+          formName: data.formName,
+          strokeCount: data.strokeCount,
+          usageNotes: data.usageNotes
+        }
+      }
+    }
+    success('Form updated')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle removing a form
+async function handleRemoveForm(id: number) {
+  try {
+    const form = forms.value.find((f) => f.id === id)
+    removeFormById(id)
+    await persist()
+    forms.value = forms.value.filter((f) => f.id !== id)
+    success(`Form "${form?.formCharacter ?? ''}" removed`)
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle reordering forms
+async function handleReorderForms(formIds: number[]) {
+  try {
+    reorderFormIds(formIds)
+    await persist()
+    // Reorder local state
+    forms.value = formIds
+      .map((id) => forms.value.find((f) => f.id === id))
+      .filter((f): f is ComponentForm => f !== undefined)
+    success('Forms reordered')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle adding a new grouping
+async function handleAddGrouping(data: {
+  name: string
+  description: string | null
+}) {
+  if (!component.value) return
+
+  try {
+    const newGrouping = createGrouping({
+      componentId: component.value.id,
+      name: data.name,
+      description: data.description
+    })
+    await persist()
+    groupings.value.push({
+      ...newGrouping,
+      occurrenceCount: 0
+    })
+    groupingMembers.value.set(newGrouping.id, [])
+    success(`Grouping "${data.name}" created`)
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle updating a grouping
+async function handleUpdateGrouping(
+  id: number,
+  data: { name: string; description: string | null }
+) {
+  try {
+    updateGroupingById(id, data)
+    await persist()
+    // Update local state
+    const groupingIndex = groupings.value.findIndex((g) => g.id === id)
+    if (groupingIndex !== -1) {
+      const existingGrouping = groupings.value[groupingIndex]
+      if (existingGrouping) {
+        groupings.value[groupingIndex] = {
+          ...existingGrouping,
+          name: data.name,
+          description: data.description
+        }
+      }
+    }
+    success('Grouping updated')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle removing a grouping
+async function handleRemoveGrouping(id: number) {
+  try {
+    const grouping = groupings.value.find((g) => g.id === id)
+    removeGroupingById(id)
+    await persist()
+    groupings.value = groupings.value.filter((g) => g.id !== id)
+    groupingMembers.value.delete(id)
+    success(`Grouping "${grouping?.name ?? ''}" removed`)
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle reordering groupings
+async function handleReorderGroupings(groupingIds: number[]) {
+  try {
+    reorderGroupingIds(groupingIds)
+    await persist()
+    // Reorder local state
+    groupings.value = groupingIds
+      .map((id) => groupings.value.find((g) => g.id === id))
+      .filter((g): g is ComponentGroupingWithMembers => g !== undefined)
+    success('Groupings reordered')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle adding a member to a grouping
+async function handleAddGroupingMember(
+  groupingId: number,
+  occurrenceId: number
+) {
+  try {
+    addGroupingMember(groupingId, occurrenceId)
+    await persist()
+
+    // Update local state
+    const members = groupingMembers.value.get(groupingId) ?? []
+    const newMember: ComponentGroupingMember = {
+      id: Date.now(), // Temporary ID
+      groupingId,
+      occurrenceId,
+      displayOrder: members.length
+    }
+    groupingMembers.value.set(groupingId, [...members, newMember])
+
+    // Update occurrence count
+    const grouping = groupings.value.find((g) => g.id === groupingId)
+    if (grouping) {
+      grouping.occurrenceCount += 1
+    }
+
+    success('Kanji added to grouping')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
+// Handle removing a member from a grouping
+async function handleRemoveGroupingMember(
+  groupingId: number,
+  occurrenceId: number
+) {
+  try {
+    removeGroupingMember(groupingId, occurrenceId)
+    await persist()
+
+    // Update local state
+    const members = groupingMembers.value.get(groupingId) ?? []
+    groupingMembers.value.set(
+      groupingId,
+      members.filter((m) => m.occurrenceId !== occurrenceId)
+    )
+
+    // Update occurrence count
+    const grouping = groupings.value.find((g) => g.id === groupingId)
+    if (grouping) {
+      grouping.occurrenceCount -= 1
+    }
+
+    success('Kanji removed from grouping')
+  } catch (err) {
+    fetchError.value = err instanceof Error ? err : new Error(String(err))
+  }
+}
+
 // Initialize on mount
 onMounted(async () => {
   try {
@@ -385,20 +682,35 @@ watch(componentId, () => {
     v-else-if="isInitialized && component"
     :all-kanji="allKanji"
     :component="component"
+    :forms="forms"
+    :grouping-members="groupingMembers"
+    :groupings="groupings"
     :is-deleting="isDeleting"
     :is-destructive-mode="isDestructiveMode"
     :linked-kanji-count="linkedKanjiCount"
     :occurrences="occurrences"
     :source-kanji="sourceKanji"
+    @add-form="handleAddForm"
+    @add-grouping="handleAddGrouping"
+    @add-grouping-member="handleAddGroupingMember"
     @add-kanji="handleAddKanji"
     @create-kanji="handleCreateKanji"
     @delete="handleDelete"
+    @remove-form="handleRemoveForm"
+    @remove-grouping="handleRemoveGrouping"
+    @remove-grouping-member="handleRemoveGroupingMember"
     @remove-kanji="handleRemoveKanji"
+    @reorder-forms="handleReorderForms"
+    @reorder-groupings="handleReorderGroupings"
+    @reorder-occurrences="handleReorderOccurrences"
     @update-basic-info="handleBasicInfoUpdate"
     @update-description="handleDescriptionUpdate"
     @update-destructive-mode="handleDestructiveModeUpdate"
+    @update-form="handleUpdateForm"
+    @update-grouping="handleUpdateGrouping"
     @update-header="handleHeaderUpdate"
     @update:analysis-notes="handleAnalysisNotesUpdate"
+    @update:form="handleFormAssignmentUpdate"
     @update:is-radical="handleIsRadicalUpdate"
     @update:position="handlePositionUpdate"
   />

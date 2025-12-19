@@ -132,7 +132,7 @@ describe('useToast', () => {
 
     addToast({ message: 'Test' })
 
-    expect(toasts.value[0]?.duration).toBe(5000)
+    expect(toasts.value[0]?.duration).toBe(2000)
   })
 
   it('allows custom duration', async () => {

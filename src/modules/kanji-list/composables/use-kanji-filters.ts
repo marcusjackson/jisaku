@@ -102,6 +102,10 @@ export interface UseKanjiFilters {
   characterSearch: Ref<string>
   /** Search keywords with debounce (for input binding) */
   searchKeywords: Ref<string>
+  /** On-yomi search with debounce (for input binding) */
+  onYomiSearch: Ref<string>
+  /** Kun-yomi search with debounce (for input binding) */
+  kunYomiSearch: Ref<string>
   /** Update a single filter value (pushes to URL) */
   updateFilter: (key: keyof KanjiFilters, value: unknown) => void
   /** Clear all filters (resets URL query params) */
@@ -118,6 +122,10 @@ export function useKanjiFilters(): UseKanjiFilters {
   const characterSearch = useDebounce('', 150)
   // Debounced search keywords (150ms default)
   const searchKeywords = useDebounce('', 150)
+  // Debounced on-yomi search (150ms default)
+  const onYomiSearch = useDebounce('', 150)
+  // Debounced kun-yomi search (150ms default)
+  const kunYomiSearch = useDebounce('', 150)
 
   // Parse filters from URL query params
   const filters = computed<KanjiFilters>(() => {
@@ -131,6 +139,16 @@ export function useKanjiFilters(): UseKanjiFilters {
     const keywords = searchKeywords.value
     if (keywords) {
       result.searchKeywords = keywords
+    }
+
+    const onYomi = onYomiSearch.value
+    if (onYomi) {
+      result.onYomi = onYomi
+    }
+
+    const kunYomi = kunYomiSearch.value
+    if (kunYomi) {
+      result.kunYomi = kunYomi
     }
 
     const strokeMin = parseNumber(route.query['strokeMin'])
@@ -215,6 +233,46 @@ export function useKanjiFilters(): UseKanjiFilters {
     }
   })
 
+  // Sync on-yomi search from URL on route change
+  watch(
+    () => route.query['onYomi'],
+    (newValue) => {
+      const parsed = parseString(newValue)
+      if (parsed !== onYomiSearch.value) {
+        onYomiSearch.value = parsed ?? ''
+      }
+    },
+    { immediate: true }
+  )
+
+  // Sync debounced on-yomi search to URL
+  watch(onYomiSearch, (newValue) => {
+    const currentUrlValue = parseString(route.query['onYomi'])
+    if (newValue !== currentUrlValue) {
+      updateQueryParam('onYomi', newValue || undefined)
+    }
+  })
+
+  // Sync kun-yomi search from URL on route change
+  watch(
+    () => route.query['kunYomi'],
+    (newValue) => {
+      const parsed = parseString(newValue)
+      if (parsed !== kunYomiSearch.value) {
+        kunYomiSearch.value = parsed ?? ''
+      }
+    },
+    { immediate: true }
+  )
+
+  // Sync debounced kun-yomi search to URL
+  watch(kunYomiSearch, (newValue) => {
+    const currentUrlValue = parseString(route.query['kunYomi'])
+    if (newValue !== currentUrlValue) {
+      updateQueryParam('kunYomi', newValue || undefined)
+    }
+  })
+
   // Update a single query param in the URL
   function updateQueryParam(key: string, value: unknown): void {
     const query: Record<string, string> = {}
@@ -254,7 +312,9 @@ export function useKanjiFilters(): UseKanjiFilters {
     joyoLevels: 'joyo',
     kenteiLevels: 'kentei',
     radicalId: 'radical',
-    componentId: 'component'
+    componentId: 'component',
+    onYomi: 'onYomi',
+    kunYomi: 'kunYomi'
   }
 
   // Update a specific filter
@@ -273,6 +333,18 @@ export function useKanjiFilters(): UseKanjiFilters {
       return
     }
 
+    // Handle on-yomi search specially (goes through debounce)
+    if (key === 'onYomi') {
+      onYomiSearch.value = typeof value === 'string' ? value : ''
+      return
+    }
+
+    // Handle kun-yomi search specially (goes through debounce)
+    if (key === 'kunYomi') {
+      kunYomiSearch.value = typeof value === 'string' ? value : ''
+      return
+    }
+
     updateQueryParam(queryKey, value)
   }
 
@@ -280,6 +352,8 @@ export function useKanjiFilters(): UseKanjiFilters {
   function clearFilters(): void {
     characterSearch.value = ''
     searchKeywords.value = ''
+    onYomiSearch.value = ''
+    kunYomiSearch.value = ''
     void router.replace({ query: {} })
   }
 
@@ -295,7 +369,9 @@ export function useKanjiFilters(): UseKanjiFilters {
       (f.joyoLevels && f.joyoLevels.length > 0) ??
       (f.kenteiLevels && f.kenteiLevels.length > 0) ??
       f.radicalId ??
-      f.componentId
+      f.componentId ??
+      f.onYomi ??
+      f.kunYomi
     )
   })
 
@@ -303,6 +379,8 @@ export function useKanjiFilters(): UseKanjiFilters {
     filters,
     characterSearch,
     searchKeywords,
+    onYomiSearch,
+    kunYomiSearch,
     updateFilter,
     clearFilters,
     hasActiveFilters

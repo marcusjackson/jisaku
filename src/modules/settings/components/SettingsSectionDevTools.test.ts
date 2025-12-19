@@ -15,7 +15,7 @@ const mockClear = vi.fn()
 const mockIsSeeding = ref(false)
 const mockIsClearing = ref(false)
 
-vi.mock('../composables/use-seed-data', () => ({
+vi.mock('@/shared/composables/use-seed-data', () => ({
   useSeedData: () => ({
     clear: mockClear,
     isClearing: mockIsClearing,

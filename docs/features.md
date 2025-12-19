@@ -1,6 +1,6 @@
 # Features
 
-This document describes the current and planned features for Jisaku.
+Overview of Jisaku's current capabilities.
 
 ---
 
@@ -8,205 +8,197 @@ This document describes the current and planned features for Jisaku.
 
 Jisaku supports **kanji curation and analysis** through three integrated areas:
 
-- **Kanji** — Entries with structured notes, classifications, and metadata
-- **Components** — Analysis of kanji building blocks and their patterns
-- **Vocabulary** — Integration of words and readings with kanji
+- **Kanji** — Entries with readings, meanings, classifications, and structured notes
+- **Components** — Analysis of kanji building blocks, their forms and patterns
+- **Vocabulary** — Words with kanji breakdown and reading analysis
 
 ---
 
-## Current Features
+## Kanji System
 
-### Kanji Management
+### Entry Management
 
 - Create, view, edit, and delete kanji entries
-- Stroke count and radical tracking
-- JLPT and Joyo level classification
-- Structured notes (etymology, cultural context, personal observations)
-- Stroke diagram and animation images
-- Link components to kanji with position analysis
-- Search and filter kanji by multiple criteria
+- Character uniqueness validation
+- Stroke count tracking (optional)
+- Kanji Kentei level classification
 
-### Component Analysis
+### Classification & Organization
 
-- Manage component (radical and sub-component) entries
-- Track component forms (visual variations)
-- Analyze component positions in kanji (hen, tsukuri, kanmuri, ashi, etc.)
-- Per-occurrence notes and analysis
-- Manual grouping for pattern discovery
-- Link components to kanji
+- JLPT level (N5–N1)
+- Joyo grade level (elementary 1–6, secondary, or none)
+- Radical assignment with 部首索引 ordering
+- Classification types: 象形文字, 指事文字, 会意文字, 形声文字, 仮借字
+- Custom identifier numbering
 
-### Data Management
+### Readings
 
-- Export database as SQLite file
-- Import database from SQLite file
-- Offline-first PWA with full app functionality offline
-- Installable to home screen
-- All data persists locally (no server)
-
-### Search & Organization
-
-- Filter kanji by stroke count (range)
-- Filter by JLPT level, Joyo level, or component
-- Filter by radical or other classifications
-- Search by exact character match
-- Persistent filter state in URL
-
-### User Interface
-
-- Responsive design (mobile, tablet, desktop)
-- Keyboard accessible
-- Header navigation with current page indication
-- Loading states and error handling
-- Form validation with inline error messages
-
----
-
-## Planned Features
-
-### Phase 1: Enhanced Components (In Progress)
-
-- Component forms management UI (multiple visual shapes)
-- Component occurrences with per-occurrence analysis
-- Position type selector with visual feedback
-- Manual component grouping interface
-- Radical identification and sorting by 部首索引
-
-### Phase 2: Readings System
-
-- On-yomi (音読み) readings per kanji
+- On-yomi (音読み) readings
 - Kun-yomi (訓読み) readings with okurigana support
-- Primary/common reading flags
-- Phonetic component analysis
-- Reading-specific notes and usage context
+- Reading grade levels: 小 (elementary), 中 (middle school), 高 (high school), 外 (uncommon)
+- Manual ordering and primary reading indication
 
-### Phase 3: Vocabulary System
+### Meanings
 
-- Vocabulary entries with readings and meanings
-- Link vocabulary to kanji
-- Track which kanji reading is used in which vocabulary
-- Vocabulary role assignment (meaning-bearer, sound-bearer, etc.)
-- Vocabulary-specific analysis and patterns
+- Multiple meanings per kanji with manual ordering
+- Optional grouping by reading
+- Language flexibility (Japanese or English meanings)
 
-### Phase 4: Additional Kanji Metadata
+### Visual & Notes
 
-- Multiple meanings per kanji (Kanjipedia-style)
-- Language support (Japanese and English meanings)
-- Related kanji (類義語, 対義語)
-- Kanji Kentei level support
+- Stroke order diagram images
+- Animated stroke order GIFs
+- Four note categories:
+  - Etymology (origins and historical development)
+  - Semantic analysis (modern usage, compounds, patterns)
+  - Education & mnemonics (how it's taught in Japan)
+  - Personal (your own observations)
 
-### Phase 5: Navigation & Polish
+### Search & Filtering
 
-- Bottom navigation bar
-- Home page with statistics
-- Enhanced search capabilities
-- Visual polishing and theme refinement
-
-### Phase 6: Advanced Features
-
-- Future enhancements and expansions
+- Filter by stroke count (min/max range)
+- Filter by JLPT level (multi-select)
+- Filter by Joyo grade (multi-select)
+- Filter by component
+- Filter by radical
+- Search by character or keywords
+- Filter state preserved in URL
 
 ---
 
-## Detailed Feature Breakdown
+## Component System
 
-### Kanji List Page (`/`)
+### Entry Management
 
-- Display all kanji in responsive grid/table
-- Show kanji character, stroke count, level badges
-- Click to navigate to detail page
-- "Add Kanji" button
-- Empty state when no kanji exist
+- Create, view, edit, and delete component entries
+- Character or multi-character components
+- Stroke count tracking (optional)
+- Source kanji linking (for derived components)
+- Radical identification flags
 
-**Filters:**
+### Forms (Visual Variants)
 
-- Stroke count (range)
-- JLPT level (multi-select)
-- Joyo level (multi-select)
-- Component (select from existing)
-- Radical (select from existing)
-- Filters persist in URL query params
+- Track different visual shapes of the same component
+- Examples: 水 (standalone) vs 氵 (left side) vs 氺 (bottom)
+- Each form has a name and optional description
+- Manual ordering
 
-**States:**
+### Occurrences
 
-- Loading spinner on initial load
-- Error message if database fails
-- Empty state and no-results state
+- Track where component appears in kanji
+- Position types: hen (偏), tsukuri (旁), kanmuri (冠), ashi (脚), tare (垂), nyou (繞), kamae (構)
+- Assign form variant used in each occurrence
+- Mark if component serves as radical in that kanji
+- Per-occurrence analysis notes
+- Manual ordering
 
-### Kanji Detail Page (`/kanji/:id`)
+### Groupings
 
-- Large kanji character display
-- Stroke count, radical, level badges
-- Stroke diagram image and GIF animation
-- Linked components list
-- Structured notes (etymology, cultural context, personal)
-- Edit and delete buttons
-- 404 state if not found
+- Create custom groups of occurrences for pattern analysis
+- Group by semantic patterns, phonetic patterns, or any user-defined criteria
+- Each grouping has a name and description
+- Occurrences can belong to multiple groups
 
-### Kanji Create/Edit Pages
+### Search & Filtering
 
-- Character input (unique, single character)
-- Stroke count (1-64)
-- Radical selector
-- JLPT and Joyo level selectors
-- Image uploads (stroke diagram and GIF)
-- Component multi-selector
-- Structured notes (three categories)
-- Form validation with inline errors
-- Success/error feedback
+- Search by character or keywords
+- Filter by stroke count range
+- Filter by source kanji
+- Filter by is-radical status
 
-### Component List Page (`/components`)
+---
 
-- Display all components in list/grid
-- Show character, description, source kanji
-- Click to view detail
-- "Add Component" button
-- Empty state
+## Vocabulary System
 
-### Component Detail Page (`/components/:id`)
+### Entry Management
 
-- Component character (large)
-- Stroke count and descriptions
-- Source kanji (if applicable)
-- List of kanji using this component
-- Edit and delete buttons
+- Create, view, edit, and delete vocabulary entries
+- Word field (kanji/kana as written)
+- Kana field for reading (optional)
+- Short meaning field
+- Description for extended notes
 
-### Component Management
+### Organization
 
-- Create/edit component forms
-- Character, stroke count, descriptions
-- Source kanji selector
-- Japanese name field
+- JLPT level classification (N5–N1 or non-JLPT)
+- Common word flag
+- Search keywords for additional matching
 
-### Settings Page (`/settings`)
+### Kanji Breakdown
 
-- Export database button (downloads with timestamp)
-- Import database button (with validation)
-- Clear all data button (with confirmation)
-- App version display
+- Link vocabulary to its constituent kanji
+- Ordered list with manual reordering
+- Per-kanji analysis notes
+- Navigation to linked kanji pages
+
+### Search & Filtering
+
+- Search by word, reading, or meaning
+- Filter by JLPT level
+- Filter by common flag
+- Filter by contained kanji
+
+---
+
+## Data Management
+
+### Export/Import
+
+- Export full database as SQLite file
+- Import database from SQLite file
+- Schema validation on import
+- Timestamped export filenames
+
+### Offline-First PWA
+
+- Full functionality without internet after first load
+- Installable to home screen
+- All data persists locally (no server dependency)
+- Service worker caching
+
+---
+
+## User Interface
+
+### Design
+
+- Clean, minimal interface
+- Responsive design (mobile, tablet, desktop)
+- CSS design tokens for consistent styling
+- Light theme (dark mode planned)
 
 ### Accessibility
 
-- All interactive elements keyboard accessible
+- Keyboard navigation throughout
 - Focus visible styles
-- ARIA labels for icon buttons
+- ARIA labels on interactive elements
 - WCAG AA color contrast
+
+### Navigation
+
+- Header with current page indication
+- Back buttons on detail pages (top and bottom)
+- Filter state preserved when navigating
+- Browser back button works correctly
+
+### Editing Patterns
+
+- Section-based editing (not mega-forms)
+- Inline editing for text fields
+- Dialog-based editing for structured data
+- Collapsible sections for lengthy content
+- Destructive mode toggle for delete actions
 
 ---
 
-## Technical Specifications
+## Technical Details
 
 ### Database
 
 - SQLite via sql.js (WebAssembly)
-- IndexedDB persistence
-- Foreign key constraints enabled
+- IndexedDB for persistence
 - Migration system for schema updates
-
-### Performance
-
-- Smooth scrolling with 100+ kanji
-- Responsive UI interactions
-- Optimized indexes for query performance
+- Foreign key constraints
 
 ### Browser Support
 
@@ -214,23 +206,8 @@ Jisaku supports **kanji curation and analysis** through three integrated areas:
 - Firefox (latest 2 versions)
 - Safari (latest 2 versions)
 
-### Offline Capability
+### Testing
 
-- Service worker caching
-- Full functionality offline after first load
-- Database persists across sessions
-
----
-
-## Definition of Done
-
-A feature is complete when:
-
-1. All acceptance criteria met
-2. Component tests pass
-3. E2E test covers happy path
-4. No TypeScript errors
-5. No ESLint/Stylelint errors
-6. Responsive and accessible
-7. Loading and error states handled
-8. Code reviewed
+- Unit tests with Vitest
+- E2E tests with Playwright
+- Component tests with Testing Library

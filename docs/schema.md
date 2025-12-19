@@ -26,7 +26,9 @@ The primary table storing kanji entries.
 | --------------------------- | ------- | ----------------------- | ------------------------------------------ |
 | `id`                        | INTEGER | PRIMARY KEY             | Unique identifier                          |
 | `character`                 | TEXT    | NOT NULL, UNIQUE        | The kanji character                        |
-| `stroke_count`              | INTEGER | NOT NULL, 1-64          | Number of strokes                          |
+| `stroke_count`              | INTEGER | nullable, 1-64          | Number of strokes                          |
+| `short_meaning`             | TEXT    | nullable                | Brief one-line meaning                     |
+| `search_keywords`           | TEXT    | nullable                | Additional searchable terms                |
 | `radical_id`                | INTEGER | FK to `components`      | Direct reference to radical (fast lookup)  |
 | `jlpt_level`                | TEXT    | N5/N4/N3/N2/N1          | JLPT classification                        |
 | `joyo_level`                | TEXT    | elementary1-6/secondary | Joyo grade level                           |
@@ -74,38 +76,40 @@ Reference table defining kanji classification types (prepopulated, user can add/
 - `ideograph` (指事文字): Abstract concepts shown graphically
 - `compound_ideograph` (会意文字): Combining meanings of components
 - `phono_semantic` (形声文字): Meaning component + sound component
+- `phonetic_loan` (仮借字): Borrowed character for sound alone
 
 ### `kanji_classifications`
 
 Links kanji to their classification types.
 
-| Column                   | Type    | Constraints                            | Description                         |
-| ------------------------ | ------- | -------------------------------------- | ----------------------------------- |
-| `id`                     | INTEGER | PRIMARY KEY                            | Unique identifier                   |
-| `kanji_id`               | INTEGER | NOT NULL, FK to `kanjis`               | Parent kanji                        |
-| `classification_type_id` | INTEGER | NOT NULL, FK to `classification_types` | Classification type                 |
-| `is_primary`             | BOOLEAN | DEFAULT 0                              | Is this the primary classification? |
-| `notes`                  | TEXT    | nullable                               | Classification notes                |
-| `created_at`             | TEXT    | DEFAULT now()                          | Creation timestamp                  |
-| `updated_at`             | TEXT    | DEFAULT now()                          | Last update timestamp               |
+| Column                   | Type    | Constraints                            | Description             |
+| ------------------------ | ------- | -------------------------------------- | ----------------------- |
+| `id`                     | INTEGER | PRIMARY KEY                            | Unique identifier       |
+| `kanji_id`               | INTEGER | NOT NULL, FK to `kanjis`               | Parent kanji            |
+| `classification_type_id` | INTEGER | NOT NULL, FK to `classification_types` | Classification type     |
+| `display_order`          | INTEGER | DEFAULT 0                              | Order (first = primary) |
+| `created_at`             | TEXT    | DEFAULT now()                          | Creation timestamp      |
+| `updated_at`             | TEXT    | DEFAULT now()                          | Last update timestamp   |
 
 **Index:** `idx_kanji_classifications_kanji` on `kanji_id`
+
+**Note:** Primary classification is the first one (display_order=1). Classification analysis notes go in `kanjis.notes_etymology` field instead of per-classification notes.
 
 ### `on_readings`
 
 On-yomi readings for kanji (multiple per kanji allowed).
 
-| Column          | Type    | Constraints              | Description                        |
-| --------------- | ------- | ------------------------ | ---------------------------------- |
-| `id`            | INTEGER | PRIMARY KEY              | Unique identifier                  |
-| `kanji_id`      | INTEGER | NOT NULL, FK to `kanjis` | Parent kanji                       |
-| `reading`       | TEXT    | NOT NULL                 | On reading (katakana)              |
-| `is_primary`    | BOOLEAN | DEFAULT 0                | Primary reading?                   |
-| `is_common`     | BOOLEAN | DEFAULT 1                | Commonly used?                     |
-| `notes`         | TEXT    | nullable                 | Usage notes, which vocab uses this |
-| `display_order` | INTEGER | DEFAULT 0                | Display order                      |
+| Column          | Type    | Constraints              | Description                         |
+| --------------- | ------- | ------------------------ | ----------------------------------- |
+| `id`            | INTEGER | PRIMARY KEY              | Unique identifier                   |
+| `kanji_id`      | INTEGER | NOT NULL, FK to `kanjis` | Parent kanji                        |
+| `reading`       | TEXT    | NOT NULL                 | On reading (katakana)               |
+| `reading_level` | TEXT    | NOT NULL, DEFAULT '小'   | Grade level: '小', '中', '高', '外' |
+| `display_order` | INTEGER | DEFAULT 0                | Display order (first = primary)     |
 
 **Index:** `idx_on_readings_kanji` on `kanji_id`
+
+**Note:** First reading (display_order=1) is the primary reading. No separate is_primary field.
 
 ### `kun_readings`
 
@@ -117,49 +121,66 @@ Kun-yomi readings for kanji (multiple per kanji allowed).
 | `kanji_id`      | INTEGER | NOT NULL, FK to `kanjis` | Parent kanji                           |
 | `reading`       | TEXT    | NOT NULL                 | Kun reading (hiragana)                 |
 | `okurigana`     | TEXT    | nullable                 | Trailing kana (e.g., "い" from "青い") |
-| `is_primary`    | BOOLEAN | DEFAULT 0                | Primary reading?                       |
-| `is_common`     | BOOLEAN | DEFAULT 1                | Commonly used?                         |
-| `notes`         | TEXT    | nullable                 | Usage notes                            |
-| `display_order` | INTEGER | DEFAULT 0                | Display order                          |
+| `reading_level` | TEXT    | NOT NULL, DEFAULT '小'   | Grade level: '小', '中', '高', '外'    |
+| `display_order` | INTEGER | DEFAULT 0                | Display order (first = primary)        |
 
 **Index:** `idx_kun_readings_kanji` on `kanji_id`
 
+**Note:** First reading (display_order=1) is the primary reading. No separate is_primary field.
+
 ### `kanji_meanings`
 
-Multiple meanings per kanji (Kanjipedia-style, ordered by frequency).
+Core meanings table. Meanings can optionally be grouped by reading.
 
-| Column           | Type    | Constraints              | Description                                |
-| ---------------- | ------- | ------------------------ | ------------------------------------------ |
-| `id`             | INTEGER | PRIMARY KEY              | Unique identifier                          |
-| `kanji_id`       | INTEGER | NOT NULL, FK to `kanjis` | Parent kanji                               |
-| `meaning_text`   | TEXT    | NOT NULL                 | The meaning description                    |
-| `language`       | TEXT    | DEFAULT 'ja'             | 'ja' (Japanese) or 'en' (English)          |
-| `on_reading_id`  | INTEGER | FK to `on_readings`      | Optional: meaning specific to this reading |
-| `kun_reading_id` | INTEGER | FK to `kun_readings`     | Optional: meaning specific to this reading |
-| `display_order`  | INTEGER | DEFAULT 0                | Order by frequency (common → rare)         |
-| `notes`          | TEXT    | nullable                 | Context, usage notes                       |
+| Column            | Type    | Constraints              | Description                        |
+| ----------------- | ------- | ------------------------ | ---------------------------------- |
+| `id`              | INTEGER | PRIMARY KEY              | Unique identifier                  |
+| `kanji_id`        | INTEGER | NOT NULL, FK to `kanjis` | Parent kanji                       |
+| `meaning_text`    | TEXT    | NOT NULL                 | Japanese meaning text              |
+| `additional_info` | TEXT    | nullable                 | Synonyms, antonyms, examples       |
+| `display_order`   | INTEGER | DEFAULT 0                | Order by frequency (common → rare) |
 
 **Index:** `idx_kanji_meanings_kanji` on `kanji_id`
 
 **Usage:**
 
 - Order by `display_order` - most common meanings first
-- `language = 'ja'` follows Kanjipedia style
-- Link to readings when meaning is reading-specific (e.g., different meanings for different on-yomi)
-- Include example vocab in `notes` or reference via vocab system
+- Always Japanese meanings
+- `additional_info` field for flexible related information
+- Meanings can be grouped by reading via `kanji_meaning_reading_groups` table (optional)
 
-### `kanji_meaning_related_kanji`
+### `kanji_meaning_reading_groups`
 
-Links meanings to similar (類) or opposite (対) kanji.
+Optional reading groupings for meanings. Most kanji don't need this.
 
-| Column              | Type    | Constraints                      | Description                       |
-| ------------------- | ------- | -------------------------------- | --------------------------------- |
-| `id`                | INTEGER | PRIMARY KEY                      | Unique identifier                 |
-| `meaning_id`        | INTEGER | NOT NULL, FK to `kanji_meanings` | The meaning                       |
-| `related_kanji_id`  | INTEGER | NOT NULL, FK to `kanjis`         | Related kanji                     |
-| `relationship_type` | TEXT    | NOT NULL                         | 'similar' (類) or 'opposite' (対) |
+| Column          | Type    | Constraints              | Description                  |
+| --------------- | ------- | ------------------------ | ---------------------------- |
+| `id`            | INTEGER | PRIMARY KEY              | Unique identifier            |
+| `kanji_id`      | INTEGER | NOT NULL, FK to `kanjis` | Parent kanji                 |
+| `reading_text`  | TEXT    | NOT NULL                 | Reading label (e.g., "メイ") |
+| `display_order` | INTEGER | DEFAULT 0                | Order of reading groups      |
 
-**Index:** `idx_meaning_related_kanji_meaning` on `meaning_id`
+**Index:** `idx_meaning_reading_groups_kanji` on `kanji_id`
+
+**Note:** `reading_text` is free-form text input, not a foreign key to readings tables.
+
+### `kanji_meaning_group_members`
+
+Junction table assigning meanings to reading groups.
+
+| Column             | Type    | Constraints                      | Description        |
+| ------------------ | ------- | -------------------------------- | ------------------ |
+| `id`               | INTEGER | PRIMARY KEY                      | Unique identifier  |
+| `reading_group_id` | INTEGER | NOT NULL, FK to `reading_groups` | Reading group      |
+| `meaning_id`       | INTEGER | NOT NULL, FK to `kanji_meanings` | Meaning            |
+| `display_order`    | INTEGER | DEFAULT 0                        | Order within group |
+
+**Indexes:**
+
+- `idx_meaning_group_members_group` on `reading_group_id`
+- `idx_meaning_group_members_meaning` on `meaning_id`
+
+**Note:** Each meaning can only belong to one reading group. Unassigned meanings display separately.
 
 ---
 
@@ -173,7 +194,9 @@ Building blocks of kanji (radicals and sub-components).
 | ----------------------- | ------- | --------------- | ---------------------------------------- |
 | `id`                    | INTEGER | PRIMARY KEY     | Unique identifier                        |
 | `character`             | TEXT    | NOT NULL        | Component character                      |
-| `stroke_count`          | INTEGER | NOT NULL        | Stroke count                             |
+| `stroke_count`          | INTEGER | nullable        | Stroke count                             |
+| `short_meaning`         | TEXT    | nullable        | Brief 1-3 word meaning                   |
+| `search_keywords`       | TEXT    | nullable        | Additional searchable terms              |
 | `source_kanji_id`       | INTEGER | FK to `kanjis`  | If component is also a kanji             |
 | `description`           | TEXT    | nullable        | General description (all forms)          |
 | `can_be_radical`        | BOOLEAN | DEFAULT 0       | Can this function as radical?            |
@@ -242,7 +265,7 @@ Reference table defining component position types (prepopulated, user can add/ed
 
 ### `component_occurrences`
 
-Each row = one appearance of a component in a kanji. Replaces MVP's `kanji_components`.
+Each row = one appearance of a component in a kanji.
 
 | Column              | Type    | Constraints                  | Description                                     |
 | ------------------- | ------- | ---------------------------- | ----------------------------------------------- |
@@ -321,20 +344,9 @@ Junction table linking occurrences to groupings (many-to-many).
 
 **Important:** One occurrence can be in multiple groups.
 
-### `component_reading_contributions`
+### `component_reading_contributions` (Not Implemented)
 
-Tracks phonetic component analysis (which components contribute to which readings).
-
-| Column                    | Type    | Constraints                             | Description                                     |
-| ------------------------- | ------- | --------------------------------------- | ----------------------------------------------- |
-| `id`                      | INTEGER | PRIMARY KEY                             | Unique identifier                               |
-| `component_occurrence_id` | INTEGER | NOT NULL, FK to `component_occurrences` | The occurrence                                  |
-| `on_reading_id`           | INTEGER | FK to `on_readings`                     | On reading contributed to                       |
-| `kun_reading_id`          | INTEGER | FK to `kun_readings`                    | Kun reading contributed to                      |
-| `contribution_type`       | TEXT    | enum                                    | provides_sound/influences_sound/no_contribution |
-| `analysis_notes`          | TEXT    | nullable                                | **User's analysis of contribution**             |
-
-**Constraint:** At least one of `on_reading_id` or `kun_reading_id` must be set.
+Phonetic component contribution tracking is not currently implemented. Users can document phonetic analysis in `component_occurrences.analysis_notes` instead. May be added in a future version if needed.
 
 ---
 
@@ -344,19 +356,25 @@ Tracks phonetic component analysis (which components contribute to which reading
 
 Vocabulary entries.
 
-| Column             | Type    | Constraints   | Description                  |
-| ------------------ | ------- | ------------- | ---------------------------- |
-| `id`               | INTEGER | PRIMARY KEY   | Unique identifier            |
-| `word`             | TEXT    | NOT NULL      | The word (e.g., "水泳")      |
-| `reading_hiragana` | TEXT    | NOT NULL      | Reading (e.g., "すいえい")   |
-| `jlpt_level`       | TEXT    | nullable      | N5/N4/N3/N2/N1               |
-| `frequency_rank`   | INTEGER | nullable      | Corpus frequency rank        |
-| `is_common`        | BOOLEAN | DEFAULT 0     | User's personal flag         |
-| `description`      | TEXT    | nullable      | General notes about the word |
-| `created_at`       | TEXT    | DEFAULT now() | Creation timestamp           |
-| `updated_at`       | TEXT    | DEFAULT now() | Last update timestamp        |
+| Column            | Type    | Constraints      | Description                  |
+| ----------------- | ------- | ---------------- | ---------------------------- |
+| `id`              | INTEGER | PRIMARY KEY      | Unique identifier            |
+| `word`            | TEXT    | NOT NULL, UNIQUE | The word (e.g., "水泳")      |
+| `kana`            | TEXT    | nullable         | Reading (e.g., "すいえい")   |
+| `short_meaning`   | TEXT    | nullable         | Brief one-line meaning       |
+| `search_keywords` | TEXT    | nullable         | Additional searchable terms  |
+| `jlpt_level`      | TEXT    | nullable         | N5/N4/N3/N2/N1/non-jlpt      |
+| `is_common`       | BOOLEAN | DEFAULT 0        | User's common word flag      |
+| `description`     | TEXT    | nullable         | General notes about the word |
+| `created_at`      | TEXT    | DEFAULT now()    | Creation timestamp           |
+| `updated_at`      | TEXT    | DEFAULT now()    | Last update timestamp        |
 
 **Index:** `idx_vocabulary_word` on `word`
+
+**Notes:**
+
+- `kana` is nullable for flexibility
+- `jlpt_level` includes "non-jlpt" option for non-JLPT vocabulary
 
 ### `vocab_kanji`
 
@@ -367,42 +385,20 @@ Links vocabulary to constituent kanji with analysis.
 | `id`             | INTEGER | PRIMARY KEY                  | Unique identifier                                  |
 | `vocab_id`       | INTEGER | NOT NULL, FK to `vocabulary` | The vocabulary                                     |
 | `kanji_id`       | INTEGER | NOT NULL, FK to `kanjis`     | The kanji                                          |
-| `kanji_role`     | TEXT    | nullable, enum               | meaning_bearer/sound_bearer/both/decorative        |
 | `analysis_notes` | TEXT    | nullable                     | **User's analysis of how kanji functions in word** |
 | `display_order`  | INTEGER | DEFAULT 0                    | Order in word                                      |
+| `created_at`     | TEXT    | DEFAULT now()                | Creation timestamp                                 |
+| `updated_at`     | TEXT    | DEFAULT now()                | Last update timestamp                              |
 
 **Indexes:**
 
 - `idx_vocab_kanji_vocab` on `vocab_id`
 - `idx_vocab_kanji_kanji` on `kanji_id`
+- `UNIQUE(vocab_id, kanji_id)`
 
-**Note:** `kanji_role` is optional - user can omit if not useful.
+**Notes:**
 
-### `vocab_kanji_readings`
-
-Tracks which reading of a kanji is used in which vocab.
-
-| Column           | Type    | Constraints                   | Description                            |
-| ---------------- | ------- | ----------------------------- | -------------------------------------- |
-| `id`             | INTEGER | PRIMARY KEY                   | Unique identifier                      |
-| `vocab_kanji_id` | INTEGER | NOT NULL, FK to `vocab_kanji` | The vocab-kanji link                   |
-| `on_reading_id`  | INTEGER | FK to `on_readings`           | On reading used                        |
-| `kun_reading_id` | INTEGER | FK to `kun_readings`          | Kun reading used                       |
-| `analysis_notes` | TEXT    | nullable                      | **How reading manifests in this word** |
-
-**Constraint:** At least one of `on_reading_id` or `kun_reading_id` must be set.
-
-### `vocab_meanings`
-
-Multiple meanings per vocabulary entry.
-
-| Column          | Type    | Constraints                  | Description            |
-| --------------- | ------- | ---------------------------- | ---------------------- |
-| `id`            | INTEGER | PRIMARY KEY                  | Unique identifier      |
-| `vocab_id`      | INTEGER | NOT NULL, FK to `vocabulary` | Parent vocabulary      |
-| `meaning`       | TEXT    | NOT NULL                     | Translation/definition |
-| `language`      | TEXT    | DEFAULT 'en'                 | Language code (en/ja)  |
-| `display_order` | INTEGER | DEFAULT 0                    | Display order          |
+- Analysis of how each kanji functions in the word can be documented in `analysis_notes`
 
 ---
 
@@ -427,7 +423,6 @@ component_occurrences
 ├── belongs to kanji
 ├── belongs to component
 ├── may belong to component_form
-├── may have component_reading_contributions
 └── may be in many component_grouping_members
 
 vocabulary
@@ -516,16 +511,6 @@ WHERE vk.kanji_id = ?
 ORDER BY v.is_common DESC, v.frequency_rank ASC;
 ```
 
-### Get phonetic components for a reading
-
-```sql
-SELECT c.character, crc.contribution_type, crc.analysis_notes
-FROM component_reading_contributions crc
-JOIN component_occurrences co ON co.id = crc.component_occurrence_id
-JOIN components c ON c.id = co.component_id
-WHERE crc.on_reading_id = ?;
-```
-
 ### Find components that can be radicals but never are
 
 ```sql
@@ -550,26 +535,22 @@ HAVING form_count > 1;
 
 ## Migration History
 
-1. **Version 1** (001-initial.sql): Initial schema - kanjis, components, kanji_components
-2. **Version 2** (002-note-categories.sql): Split notes into etymology/semantic/education_mnemonics/personal
-3. **Version 3** (003-component-overhaul.sql):
-   - Component forms, per-occurrence analysis, groupings
-   - Restore radical_id FK on kanjis
-   - Add classification_types and position_types reference tables
-   - Add sorting fields (identifier, radical_stroke_count)
-4. **Version 4** (004-readings-system.sql - TBD):
-   - on_readings table (multiple per kanji)
-   - kun_readings table (with okurigana support)
-   - component_reading_contributions table
-5. **Version 5** (005-vocabulary-system.sql - TBD):
-   - vocabulary table
-   - vocab_kanji junction with analysis
-   - vocab_meanings table
-   - vocab_kanji_readings tracking
-6. **Version 6** (006-kanji-metadata.sql - TBD):
-   - kanji_meanings table (multiple meanings per kanji)
-   - kanji_meaning_related_kanji table (類/対 relationships)
-   - kanji_kentei_level field enhancements
+1. **001-initial.sql**: Initial schema - kanjis, components, kanji_components
+2. **002-note-categories.sql**: Split notes into etymology/semantic/education_mnemonics/personal
+3. **003-component-overhaul.sql**: Component forms, per-occurrence analysis, groupings, position_types reference table
+4. **004-add-kentei-level.sql**: Added kanji_kentei_level to kanjis table
+5. **005-short-meaning.sql**: Added short_meaning to kanjis and components
+6. **006-component-search-keywords.sql**: Added search_keywords to components
+7. **007-kanji-search-keywords.sql**: Added search_keywords to kanjis
+8. **008-nullable-stroke-count.sql**: Made stroke_count nullable on kanjis
+9. **009-component-nullable-stroke-count.sql**: Made stroke_count nullable on components
+10. **010-non-jlpt-joyo.sql**: Added non-jlpt option to jlpt_level constraint
+11. **011-readings.sql**: on_readings and kun_readings tables
+12. **012-meanings.sql**: kanji_meanings, kanji_meaning_reading_groups, kanji_meaning_group_members tables
+13. **013-classifications-system.sql**: classification_types and kanji_classifications tables
+14. **014-component-forms.sql**: component_forms table (visual variants)
+15. **015-component-groupings.sql**: component_groupings and component_grouping_members tables
+16. **016-vocabulary-system.sql**: vocabulary and vocab_kanji tables
 
 ---
 

@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest'
 
 import SharedEntitySearch from './SharedEntitySearch.vue'
 
-import type { EntityOption } from './SharedEntitySearch.vue'
+import type { EntityOption } from '@/shared/types/component-types'
 
 describe('SharedEntitySearch', () => {
   const mockOptions: EntityOption[] = [

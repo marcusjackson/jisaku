@@ -27,22 +27,36 @@ For me, the process of researching and writing entries is where the learning hap
 
 ### Current
 
-- Kanji entries with structured notes (etymology, cultural context, personal observations)
-- Component decomposition and analysis
-- Organization by JLPT levels, Joyo grades, stroke counts
-- Fully offline, installable as a PWA
-- Export/import as SQLite file
+**Kanji Management:**
 
-### Planned
+- Create, edit, and organize kanji entries
+- Readings (on-yomi and kun-yomi with grade levels)
+- Multiple meanings with ordering and reading groupings
+- Classifications (象形文字, 指事文字, 会意文字, 形声文字, 仮借字)
+- JLPT and Joyo level organization
+- Stroke order diagrams and animations
+- Structured notes (etymology, semantic analysis, education & mnemonics, personal)
 
-- Component forms (how shapes change: 水 → 氵)
-- Position tracking (hen, tsukuri, etc.)
-- Per-occurrence notes for each component appearance
-- Manual groupings for pattern analysis
-- Readings system (on-yomi, kun-yomi)
-- Meanings (Japanese dictionary influenced, ordered by frequency)
-- Vocabulary integration
-- Phonetic component analysis
+**Component Analysis:**
+
+- Track kanji building blocks and radicals
+- Component forms (visual variants like 水 → 氵 → 氺)
+- Occurrence tracking with position types (hen, tsukuri, kanmuri, etc.)
+- Per-occurrence analysis notes
+- Custom groupings for pattern discovery
+
+**Vocabulary System:**
+
+- Vocabulary entries with readings and meanings
+- Kanji breakdown showing constituent characters
+- Integration with kanji pages
+- JLPT level classification and filtering
+
+**Offline & Data:**
+
+- Fully offline, installable as PWA
+- Export/import database as SQLite file
+- All data stored locally in your browser
 
 ---
 
@@ -86,8 +100,10 @@ src/
 ├── modules/                    # Feature modules
 │   ├── kanji/                  # Kanji CRUD and analysis
 │   ├── kanji-list/             # Kanji browsing and search
-│   ├── components/             # Component management and analysis
-│   ├── vocabulary/             # Vocabulary system
+│   ├── component/              # Component management and analysis
+│   ├── component-list/         # Component browsing and search
+│   ├── vocabulary/             # Vocabulary CRUD
+│   ├── vocabulary-list/        # Vocabulary browsing and search
 │   └── settings/               # App settings, DB export/import
 ├── base/                       # Generic, reusable components
 │   ├── components/             # BaseButton, BaseInput, etc.
@@ -106,7 +122,6 @@ src/
 └── styles/                     # Global styles, design tokens
 
 docs/                           # Documentation
-scripts/                        # Dev scripts (seeding, etc.)
 e2e/                            # Playwright E2E tests
 ```
 
@@ -144,19 +159,42 @@ pnpm lint:css     # Lint CSS
 pnpm format       # Format code
 ```
 
+### Development Workflow
+
+For efficient development, use the provided Makefile for running checks on specific files or changed files:
+
+```bash
+# Run all checks on changed files only
+make check-changed
+
+# Run all fixes on changed files only
+make fix-changed
+
+# Run tests on changed files + tests for changed source files
+make test-changed
+
+# Run checks on specific files
+make check FILES="src/components/MyComponent.vue src/utils/helpers.ts"
+
+# Run individual tools on specific files
+make lint FILES="src/foo.ts"
+make lint-css FILES="src/bar.vue"
+make format FILES="src/baz.ts"
+```
+
+This is much faster than running full checks when working on specific features. Use the pnpm scripts above for comprehensive runs or CI.
+
 ---
 
 ## 📖 Documentation
 
-- **[Features](docs/features.md)** — Current and planned features
+- **[Features](docs/features.md)** — Current features overview
 - **[Architecture](docs/architecture.md)** — Module structure, patterns
 - **[Conventions](docs/conventions.md)** — Naming, coding standards
 - **[Schema](docs/schema.md)** — Database schema reference
 - **[Testing](docs/testing.md)** — Testing strategy and patterns
 - **[Design Tokens](docs/design-tokens.md)** — Theming and styling
-- **[Phase 1: Component System Overhaul](docs/plan/v1-implementation-plan.md#phase-1-component-system-overhaul)** — Enhanced components, forms, and analysis
-- **[Phase 2: Readings System](docs/plan/v1-implementation-plan.md#phase-2-readings-system)** — On-yomi, kun-yomi support
-- **[Phase 3: Vocabulary System](docs/plan/v1-implementation-plan.md#phase-3-vocabulary-system)** — Vocabulary entries and linking
+- **[Future Ideas](docs/future-ideas.md)** — Potential features and enhancements
 
 ---
 

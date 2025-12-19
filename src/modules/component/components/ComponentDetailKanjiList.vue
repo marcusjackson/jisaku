@@ -3,8 +3,9 @@
  * ComponentDetailKanjiList
  *
  * UI component displaying kanji that use this component with occurrence metadata.
- * Shows position, radical flag, and allows inline editing of analysis notes.
+ * Shows position, form assignment, radical flag, and allows inline editing of analysis notes.
  * Includes "+ Add" button to link new kanji to this component.
+ * Arrow buttons (↑↓) allow reordering of occurrences.
  */
 
 import { computed, onMounted, ref } from 'vue'
@@ -21,6 +22,7 @@ import { usePositionTypeRepository } from '@/shared/composables/use-position-typ
 
 import type { SelectOption } from '@/base/components/BaseSelect.vue'
 import type {
+  ComponentForm,
   Kanji,
   OccurrenceWithKanji,
   PositionType
@@ -42,15 +44,19 @@ const props = defineProps<{
   allKanji: Kanji[]
   /** Whether destructive mode is enabled (shows delete buttons) */
   isDestructiveMode?: boolean
+  /** Available forms for this component */
+  forms?: ComponentForm[]
 }>()
 
 const emit = defineEmits<{
   'update:analysisNotes': [occurrenceId: number, analysisNotes: string | null]
   'update:position': [occurrenceId: number, positionTypeId: number | null]
   'update:isRadical': [occurrenceId: number, isRadical: boolean]
+  'update:form': [occurrenceId: number, formId: number | null]
   addKanji: [kanjiId: number]
   createKanji: [data: QuickCreateKanjiData]
   removeKanji: [occurrenceId: number]
+  reorderOccurrences: [occurrenceIds: number[]]
 }>()
 
 // IDs of kanji already linked to this component
@@ -85,6 +91,20 @@ const positionOptions = computed<SelectOption[]>(() => {
     ...positionTypes.value.map((pt) => ({
       label: pt.nameJapanese ?? pt.nameEnglish ?? pt.positionName,
       value: String(pt.id)
+    }))
+  ]
+})
+
+// Form options for dropdown
+const formOptions = computed<SelectOption[]>(() => {
+  const forms = props.forms ?? []
+  return [
+    { label: 'None', value: 'none' },
+    ...forms.map((f) => ({
+      label: f.formName
+        ? `${f.formCharacter} (${f.formName})`
+        : f.formCharacter,
+      value: String(f.id)
     }))
   ]
 })
@@ -138,6 +158,48 @@ function handlePositionChange(
 function handleRadicalChange(occurrenceId: number, isRadical: boolean) {
   emit('update:isRadical', occurrenceId, isRadical)
 }
+
+function handleFormChange(
+  occurrenceId: number,
+  formId: string | null | undefined
+) {
+  const numericId = !formId || formId === 'none' ? null : Number(formId)
+  emit('update:form', occurrenceId, numericId)
+}
+
+function handleMoveUp(index: number) {
+  if (index === 0) return
+
+  const newOrder = [...props.occurrences]
+  const temp = newOrder[index]
+  const prev = newOrder[index - 1]
+  if (!temp || !prev) return
+
+  newOrder[index] = prev
+  newOrder[index - 1] = temp
+
+  emit(
+    'reorderOccurrences',
+    newOrder.map((o) => o.id)
+  )
+}
+
+function handleMoveDown(index: number) {
+  if (index === props.occurrences.length - 1) return
+
+  const newOrder = [...props.occurrences]
+  const temp = newOrder[index]
+  const next = newOrder[index + 1]
+  if (!temp || !next) return
+
+  newOrder[index] = next
+  newOrder[index + 1] = temp
+
+  emit(
+    'reorderOccurrences',
+    newOrder.map((o) => o.id)
+  )
+}
 </script>
 
 <template>
@@ -174,68 +236,110 @@ function handleRadicalChange(occurrenceId: number, isRadical: boolean) {
       class="component-detail-kanji-list-items"
     >
       <div
-        v-for="occurrence in props.occurrences"
+        v-for="(occurrence, index) in props.occurrences"
         :key="occurrence.id"
         class="component-detail-kanji-list-item"
       >
-        <div class="component-detail-kanji-list-item-header">
-          <RouterLink
-            class="component-detail-kanji-list-kanji-link"
-            :to="`/kanji/${occurrence.kanji.id}`"
+        <div class="component-detail-kanji-list-item-reorder">
+          <BaseButton
+            :disabled="index === 0"
+            size="sm"
+            variant="secondary"
+            @click="handleMoveUp(index)"
           >
-            {{ occurrence.kanji.character }}
-          </RouterLink>
-          <button
-            v-if="props.isDestructiveMode"
-            class="component-detail-kanji-list-delete-button"
-            title="Remove kanji from component"
-            @click="emit('removeKanji', occurrence.id)"
+            ↑
+          </BaseButton>
+          <BaseButton
+            :disabled="index === props.occurrences.length - 1"
+            size="sm"
+            variant="secondary"
+            @click="handleMoveDown(index)"
           >
-            ✕
-          </button>
+            ↓
+          </BaseButton>
         </div>
 
-        <div class="component-detail-kanji-list-item-controls">
-          <div class="component-detail-kanji-list-control-group">
-            <BaseSelect
-              label="Position"
-              :model-value="
-                occurrence.positionTypeId
-                  ? String(occurrence.positionTypeId)
-                  : 'none'
-              "
-              :name="`position-${occurrence.id}`"
-              :options="positionOptions"
+        <div class="component-detail-kanji-list-item-content">
+          <div class="component-detail-kanji-list-item-header">
+            <RouterLink
+              class="component-detail-kanji-list-kanji-link"
+              :to="`/kanji/${occurrence.kanji.id}`"
+            >
+              {{ occurrence.kanji.character }}
+            </RouterLink>
+            <button
+              v-if="props.isDestructiveMode"
+              class="component-detail-kanji-list-delete-button"
+              title="Remove kanji from component"
+              @click="emit('removeKanji', occurrence.id)"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="component-detail-kanji-list-item-controls">
+            <div class="component-detail-kanji-list-control-group">
+              <BaseSelect
+                label="Position"
+                :model-value="
+                  occurrence.positionTypeId
+                    ? String(occurrence.positionTypeId)
+                    : 'none'
+                "
+                :name="`position-${occurrence.id}`"
+                :options="positionOptions"
+                @update:model-value="
+                  (value: string | null | undefined) =>
+                    handlePositionChange(occurrence.id, value)
+                "
+              />
+            </div>
+
+            <div
+              v-if="(props.forms ?? []).length > 0"
+              class="component-detail-kanji-list-control-group"
+            >
+              <BaseSelect
+                label="Form"
+                :model-value="
+                  occurrence.componentFormId
+                    ? String(occurrence.componentFormId)
+                    : 'none'
+                "
+                :name="`form-${occurrence.id}`"
+                :options="formOptions"
+                @update:model-value="
+                  (value: string | null | undefined) =>
+                    handleFormChange(occurrence.id, value)
+                "
+              />
+            </div>
+
+            <div
+              class="component-detail-kanji-list-control-group component-detail-kanji-list-radical-control"
+            >
+              <BaseCheckbox
+                label="Is Radical"
+                :model-value="occurrence.isRadical"
+                :name="`radical-${occurrence.id}`"
+                @update:model-value="
+                  (value: boolean | 'indeterminate') =>
+                    handleRadicalChange(occurrence.id, value as boolean)
+                "
+              />
+            </div>
+          </div>
+
+          <div class="component-detail-kanji-list-item-notes">
+            <BaseInlineTextarea
+              :model-value="occurrence.analysisNotes || ''"
+              placeholder="Add analysis notes..."
               @update:model-value="
-                (value: string | null | undefined) =>
-                  handlePositionChange(occurrence.id, value)
+                (value: string) =>
+                  handleNotesUpdate(occurrence.id, value || null)
               "
             />
           </div>
-
-          <div
-            class="component-detail-kanji-list-control-group component-detail-kanji-list-radical-control"
-          >
-            <BaseCheckbox
-              label="Is Radical"
-              :model-value="occurrence.isRadical"
-              :name="`radical-${occurrence.id}`"
-              @update:model-value="
-                (value: boolean | 'indeterminate') =>
-                  handleRadicalChange(occurrence.id, value as boolean)
-              "
-            />
-          </div>
-        </div>
-
-        <div class="component-detail-kanji-list-item-notes">
-          <BaseInlineTextarea
-            :model-value="occurrence.analysisNotes || ''"
-            placeholder="Add analysis notes..."
-            @update:model-value="
-              (value: string) => handleNotesUpdate(occurrence.id, value || null)
-            "
-          />
         </div>
       </div>
     </div>
@@ -293,12 +397,26 @@ function handleRadicalChange(occurrenceId: number, isRadical: boolean) {
 
 .component-detail-kanji-list-item {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+  align-items: flex-start;
+  gap: var(--spacing-md);
   padding: var(--spacing-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
+}
+
+.component-detail-kanji-list-item-reorder {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--spacing-xs);
+}
+
+.component-detail-kanji-list-item-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--spacing-sm);
 }
 
 .component-detail-kanji-list-item-header {

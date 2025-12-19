@@ -81,20 +81,112 @@ vi.mock('@/shared/composables/use-component-repository', () => ({
 // Mock values for component occurrence repository
 const mockGetByKanjiIdWithPosition = vi.fn()
 const mockCreateOccurrence = vi.fn()
+const mockRemoveOccurrence = vi.fn()
+const mockUpdateIsRadical = vi.fn()
 
 // Mock component occurrence repository
 vi.mock('@/shared/composables/use-component-occurrence-repository', () => ({
   useComponentOccurrenceRepository: () => ({
     create: mockCreateOccurrence,
-    getByKanjiIdWithPosition: mockGetByKanjiIdWithPosition
+    getByKanjiIdWithPosition: mockGetByKanjiIdWithPosition,
+    remove: mockRemoveOccurrence,
+    updateIsRadical: mockUpdateIsRadical
+  })
+}))
+
+// Mock reading repository
+vi.mock('@/shared/composables/use-reading-repository', () => ({
+  useReadingRepository: () => ({
+    getOnReadingsByKanjiId: vi.fn().mockReturnValue([]),
+    getOnReadingById: vi.fn(),
+    createOnReading: vi.fn(),
+    updateOnReading: vi.fn(),
+    removeOnReading: vi.fn(),
+    reorderOnReadings: vi.fn(),
+    getKunReadingsByKanjiId: vi.fn().mockReturnValue([]),
+    getKunReadingById: vi.fn(),
+    createKunReading: vi.fn(),
+    updateKunReading: vi.fn(),
+    removeKunReading: vi.fn(),
+    reorderKunReadings: vi.fn()
+  })
+}))
+
+// Mock meaning repository
+vi.mock('@/shared/composables/use-meaning-repository', () => ({
+  useMeaningRepository: () => ({
+    getMeaningsByKanjiId: vi.fn().mockReturnValue([]),
+    getMeaningById: vi.fn(),
+    createMeaning: vi.fn(),
+    updateMeaning: vi.fn(),
+    removeMeaning: vi.fn(),
+    reorderMeanings: vi.fn(),
+    getReadingGroupsByKanjiId: vi.fn().mockReturnValue([]),
+    getReadingGroupById: vi.fn(),
+    createReadingGroup: vi.fn(),
+    updateReadingGroup: vi.fn(),
+    removeReadingGroup: vi.fn(),
+    reorderReadingGroups: vi.fn(),
+    removeAllReadingGroups: vi.fn(),
+    getGroupMembersByGroupId: vi.fn().mockReturnValue([]),
+    getGroupMembersByKanjiId: vi.fn().mockReturnValue([]),
+    addMeaningToGroup: vi.fn(),
+    removeMeaningFromGroup: vi.fn(),
+    reorderMeaningsInGroup: vi.fn(),
+    isGroupingEnabled: vi.fn().mockReturnValue(false),
+    getUnassignedMeanings: vi.fn().mockReturnValue([]),
+    deleteEmptyGroups: vi.fn()
+  })
+}))
+
+// Mock classification repository
+vi.mock('@/shared/composables/use-classification-repository', () => ({
+  useClassificationRepository: () => ({
+    getAllClassificationTypes: vi.fn().mockReturnValue([]),
+    getClassificationTypeById: vi.fn().mockReturnValue(null),
+    getClassificationsByKanjiId: vi.fn().mockReturnValue([]),
+    getClassificationById: vi.fn().mockReturnValue(null),
+    getPrimaryClassification: vi.fn().mockReturnValue(null),
+    getPrimaryClassificationsForKanji: vi.fn().mockReturnValue(new Map()),
+    createClassification: vi.fn(),
+    updateClassification: vi.fn(),
+    removeClassification: vi.fn(),
+    reorderClassifications: vi.fn()
   })
 }))
 
 // Mock radical repository
-vi.mock('../composables/use-radical-repository', () => ({
+vi.mock('@/shared/composables/use-radical-repository', () => ({
   useRadicalRepository: () => ({
     getById: vi.fn().mockReturnValue(null),
     getRadicalOptions: vi.fn().mockReturnValue([])
+  })
+}))
+
+// Mock vocab-kanji repository
+vi.mock('@/shared/composables/use-vocab-kanji-repository', () => ({
+  useVocabKanjiRepository: () => ({
+    create: vi.fn(),
+    getByKanjiIdWithVocab: vi.fn().mockReturnValue([]),
+    getByVocabId: vi.fn().mockReturnValue([]),
+    remove: vi.fn(),
+    removeByVocabAndKanji: vi.fn(),
+    updateAnalysisNotes: vi.fn(),
+    reorder: vi.fn()
+  })
+}))
+
+// Mock vocabulary repository
+vi.mock('@/shared/composables/use-vocabulary-repository', () => ({
+  useVocabularyRepository: () => ({
+    create: vi.fn(),
+    getAll: vi.fn().mockReturnValue([]),
+    getById: vi.fn().mockReturnValue(null),
+    getByWord: vi.fn().mockReturnValue(null),
+    search: vi.fn().mockReturnValue([]),
+    updateHeaderFields: vi.fn(),
+    updateBasicInfoField: vi.fn(),
+    remove: vi.fn()
   })
 }))
 

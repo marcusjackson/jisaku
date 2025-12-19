@@ -12,8 +12,7 @@ import { ref } from 'vue'
 import BaseButton from '@/base/components/BaseButton.vue'
 
 import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
-
-import { useSeedData } from '../composables/use-seed-data'
+import { useSeedData } from '@/shared/composables/use-seed-data'
 
 const { clear, isClearing, isSeeding, seed } = useSeedData()
 

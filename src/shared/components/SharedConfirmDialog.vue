@@ -64,6 +64,9 @@ function handleCancel() {
     :title="props.title"
     @close="handleCancel"
   >
+    <!-- Default slot for custom content (e.g., form fields) -->
+    <slot />
+
     <template #footer>
       <div class="shared-confirm-dialog-actions">
         <BaseButton

@@ -28,14 +28,10 @@ import {
   useFilter
 } from 'reka-ui'
 
-export type EntityType = 'kanji' | 'component'
+// Re-export types from component-types for backward compatibility
+export type { EntityOption, EntityType } from '@/shared/types/component-types'
 
-export interface EntityOption {
-  id: number
-  character: string
-  shortMeaning: string | null
-  strokeCount: number | null
-}
+import type { EntityOption, EntityType } from '@/shared/types/component-types'
 
 const props = withDefaults(
   defineProps<{
@@ -100,7 +96,9 @@ const filteredOptions = computed(() => {
 // Format option for display
 function formatOption(opt: EntityOption): string {
   const meaning = opt.shortMeaning ? ` — ${opt.shortMeaning}` : ''
-  return `${opt.character}${meaning} (${String(opt.strokeCount)}画)`
+  const stroke =
+    opt.strokeCount !== null ? ` (${String(opt.strokeCount)}画)` : ''
+  return `${meaning}${stroke}`
 }
 
 // Handle selection

@@ -362,28 +362,39 @@ function handleStrokeMaxInput(value: string | number | undefined) {
 }
 
 .component-list-filters-actions {
-  position: absolute;
-  top: 50%;
-  left: var(--spacing-md);
   display: flex;
-  justify-content: flex-end;
-  transform: translateY(-50%);
+  justify-content: flex-start;
 }
 
 .component-list-filters-bottom {
   position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
 }
 
 .component-list-filters-collapse {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .component-list-filters-collapsed-actions {
   display: flex;
   justify-content: flex-end;
   padding: 0 var(--spacing-md) var(--spacing-md);
+}
+
+@media (width <= 480px) {
+  .component-list-filters-bottom {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .component-list-filters-actions,
+  .component-list-filters-collapse {
+    justify-content: center;
+  }
 }
 </style>

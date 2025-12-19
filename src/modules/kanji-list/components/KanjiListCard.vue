@@ -9,10 +9,15 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import type { Kanji } from '@/shared/types/database-types'
+import type {
+  Kanji,
+  KanjiClassificationWithType
+} from '@/shared/types/database-types'
 
 const props = defineProps<{
   kanji: Kanji
+  /** Primary classification for this kanji (optional, null if none) */
+  classification?: KanjiClassificationWithType | null
 }>()
 
 const jlptBadgeClass = computed(() => {
@@ -45,6 +50,24 @@ const joyoLabel = computed(() => {
 const kenteiLabel = computed(() => {
   return props.kanji.kenteiLevel ?? null
 })
+
+/**
+ * Get abbreviated classification label for badge display
+ */
+const classificationLabel = computed(() => {
+  if (!props.classification?.nameJapanese) return null
+  const abbreviations: Record<string, string> = {
+    象形文字: '象形',
+    指事文字: '指事',
+    会意文字: '会意',
+    形声文字: '形声',
+    仮借字: '仮借'
+  }
+  return (
+    abbreviations[props.classification.nameJapanese] ??
+    props.classification.nameJapanese
+  )
+})
 </script>
 
 <template>
@@ -62,14 +85,13 @@ const kenteiLabel = computed(() => {
         {{ kanji.shortMeaning }}
       </span>
 
-      <span
-        v-if="kanji.strokeCount"
-        class="kanji-list-card-strokes"
-      >
-        {{ kanji.strokeCount }}画数
-      </span>
-
       <div class="kanji-list-card-badges">
+        <span
+          v-if="classificationLabel"
+          class="kanji-list-card-badge kanji-list-card-badge-classification"
+        >
+          {{ classificationLabel }}
+        </span>
         <span
           v-if="kanji.jlptLevel"
           class="kanji-list-card-badge"
@@ -146,11 +168,6 @@ const kenteiLabel = computed(() => {
   white-space: nowrap;
 }
 
-.kanji-list-card-strokes {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
 .kanji-list-card-badges {
   display: flex;
   flex-wrap: wrap;
@@ -163,6 +180,12 @@ const kenteiLabel = computed(() => {
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+}
+
+/* Classification type badge */
+.kanji-list-card-badge-classification {
+  background-color: var(--color-primary-bg);
+  color: var(--color-primary);
 }
 
 /* JLPT level colors */

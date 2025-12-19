@@ -100,6 +100,10 @@ export interface UseComponentOccurrenceRepository {
   updatePosition: (occurrenceId: number, positionTypeId: number | null) => void
   /** Toggle radical flag for an occurrence (auto-syncs kanji.radical_id) */
   updateIsRadical: (occurrenceId: number, isRadical: boolean) => void
+  /** Update form assignment for an occurrence */
+  updateFormAssignment: (occurrenceId: number, formId: number | null) => void
+  /** Reorder occurrences for a component (swaps display_order of two items) */
+  reorderOccurrences: (occurrenceIds: number[]) => void
 }
 
 export function useComponentOccurrenceRepository(): UseComponentOccurrenceRepository {
@@ -375,6 +379,25 @@ export function useComponentOccurrenceRepository(): UseComponentOccurrenceReposi
     run('DELETE FROM component_occurrences WHERE id = ?', [occurrenceId])
   }
 
+  function updateFormAssignment(
+    occurrenceId: number,
+    formId: number | null
+  ): void {
+    run(
+      'UPDATE component_occurrences SET component_form_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [formId, occurrenceId]
+    )
+  }
+
+  function reorderOccurrences(occurrenceIds: number[]): void {
+    occurrenceIds.forEach((id, index) => {
+      run(
+        'UPDATE component_occurrences SET display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [index, id]
+      )
+    })
+  }
+
   return {
     create,
     getByComponentId,
@@ -382,7 +405,9 @@ export function useComponentOccurrenceRepository(): UseComponentOccurrenceReposi
     getByKanjiId,
     getByKanjiIdWithPosition,
     remove,
+    reorderOccurrences,
     updateAnalysisNotes,
+    updateFormAssignment,
     updateIsRadical,
     updatePosition
   }

@@ -1,6 +1,6 @@
 # Architecture
 
-This document describes the architectural structure, component patterns, and data flow for the Kanji Dictionary Curation App.
+This document describes the architectural structure, component patterns, and data flow for Jisaku.
 
 ---
 
@@ -31,14 +31,22 @@ src/
 │   │   ├── components/
 │   │   ├── composables/
 │   │   └── kanji-list-types.ts
-│   ├── components/             # Component management (the kanji building blocks)
+│   ├── component/              # Component CRUD (detail, new)
 │   │   ├── components/
 │   │   ├── composables/
 │   │   └── component-types.ts
-│   ├── vocabulary/             # Vocabulary and words (planned)
+│   ├── component-list/         # Component browsing and search
+│   │   ├── components/
+│   │   ├── composables/
+│   │   └── component-list-types.ts
+│   ├── vocabulary/             # Vocabulary CRUD (detail)
 │   │   ├── components/
 │   │   ├── composables/
 │   │   └── vocabulary-types.ts
+│   ├── vocabulary-list/        # Vocabulary browsing and search
+│   │   ├── components/
+│   │   ├── composables/
+│   │   └── vocabulary-list-types.ts
 │   └── settings/               # App settings, DB export/import
 │       ├── components/
 │       ├── composables/
@@ -61,9 +69,11 @@ src/
 │   ├── KanjiListPage.vue
 │   ├── KanjiDetailPage.vue
 │   ├── KanjiNewPage.vue
-│   ├── KanjiEditPage.vue
 │   ├── ComponentListPage.vue
 │   ├── ComponentDetailPage.vue
+│   ├── ComponentNewPage.vue
+│   ├── VocabularyListPage.vue
+│   ├── VocabularyDetailPage.vue
 │   ├── VocabularyListPage.vue  # Planned
 │   └── SettingsPage.vue
 │

@@ -6,11 +6,7 @@
  * Provides CRUD operations for position types used in component occurrences.
  */
 
-import { computed, onMounted, ref } from 'vue'
-
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
-import { z } from 'zod'
+import { onMounted, ref } from 'vue'
 
 import BaseButton from '@/base/components/BaseButton.vue'
 import BaseDialog from '@/base/components/BaseDialog.vue'
@@ -41,46 +37,35 @@ const editingPositionType = ref<PositionType | null>(null)
 const deletingPositionType = ref<PositionType | null>(null)
 const deleteUsageCount = ref(0)
 
-// Form schema
-const positionTypeSchema = toTypedSchema(
-  z.object({
-    positionName: z
-      .string()
-      .min(1, 'Position name is required')
-      .max(50, 'Position name must be 50 characters or less'),
-    nameJapanese: z
-      .string()
-      .max(100, 'Japanese name must be 100 characters or less')
-      .optional(),
-    nameEnglish: z
-      .string()
-      .max(100, 'English name must be 100 characters or less')
-      .optional(),
-    description: z
-      .string()
-      .max(500, 'Description must be 500 characters or less')
-      .optional(),
-    descriptionShort: z
-      .string()
-      .max(100, 'Short description must be 100 characters or less')
-      .optional()
-  })
-)
-
-// Form
-const { errors, handleSubmit, resetForm, setFieldValue, values } = useForm({
-  validationSchema: positionTypeSchema,
-  initialValues: {
-    positionName: '',
-    nameJapanese: undefined,
-    nameEnglish: undefined,
-    description: undefined,
-    descriptionShort: undefined
-  }
+// Local edit state (for form values during edit)
+const editFormValues = ref<{
+  positionName: string
+  nameJapanese: string | undefined
+  nameEnglish: string | undefined
+  description: string | undefined
+  descriptionShort: string | undefined
+}>({
+  positionName: '',
+  nameJapanese: undefined,
+  nameEnglish: undefined,
+  description: undefined,
+  descriptionShort: undefined
 })
 
-// Computed to handle exactOptionalPropertyTypes
-const createDisabled = computed(() => false)
+// Local create state (for form values during create)
+const createFormValues = ref<{
+  positionName: string
+  nameJapanese: string | undefined
+  nameEnglish: string | undefined
+  description: string | undefined
+  descriptionShort: string | undefined
+}>({
+  positionName: '',
+  nameJapanese: undefined,
+  nameEnglish: undefined,
+  description: undefined,
+  descriptionShort: undefined
+})
 
 function loadPositionTypes() {
   try {
@@ -93,73 +78,108 @@ function loadPositionTypes() {
 
 // Create handlers
 function handleCreateClick() {
-  resetForm()
+  createFormValues.value = {
+    positionName: '',
+    nameJapanese: undefined,
+    nameEnglish: undefined,
+    description: undefined,
+    descriptionShort: undefined
+  }
   showCreateDialog.value = true
 }
 
-const onCreateSubmit = handleSubmit((formValues) => {
+function handleCreateSubmit() {
+  if (!createFormValues.value.positionName.trim()) {
+    errorToast('Position name is required')
+    return
+  }
   try {
     create({
-      positionName: formValues.positionName,
-      nameJapanese: formValues.nameJapanese ?? null,
-      nameEnglish: formValues.nameEnglish ?? null,
-      description: formValues.description ?? null,
-      descriptionShort: formValues.descriptionShort ?? null
+      positionName: createFormValues.value.positionName,
+      nameJapanese: createFormValues.value.nameJapanese ?? null,
+      nameEnglish: createFormValues.value.nameEnglish ?? null,
+      description: createFormValues.value.description ?? null,
+      descriptionShort: createFormValues.value.descriptionShort ?? null
     })
     success('Position type created')
     showCreateDialog.value = false
+    createFormValues.value = {
+      positionName: '',
+      nameJapanese: undefined,
+      nameEnglish: undefined,
+      description: undefined,
+      descriptionShort: undefined
+    }
     loadPositionTypes()
-    resetForm()
   } catch (err) {
     errorToast(
       err instanceof Error ? err.message : 'Failed to create position type'
     )
   }
-})
+}
 
 function handleCreateCancel() {
   showCreateDialog.value = false
-  resetForm()
+  createFormValues.value = {
+    positionName: '',
+    nameJapanese: undefined,
+    nameEnglish: undefined,
+    description: undefined,
+    descriptionShort: undefined
+  }
 }
 
 // Edit handlers
 function handleEditClick(positionType: PositionType) {
-  editingPositionType.value = positionType
-  setFieldValue('positionName', positionType.positionName)
-  setFieldValue('nameJapanese', positionType.nameJapanese ?? undefined)
-  setFieldValue('nameEnglish', positionType.nameEnglish ?? undefined)
-  setFieldValue('description', positionType.description ?? undefined)
-  setFieldValue('descriptionShort', positionType.descriptionShort ?? undefined)
+  // Create a copy to avoid modifying readonly props
+  editingPositionType.value = {
+    id: positionType.id,
+    positionName: positionType.positionName,
+    nameJapanese: positionType.nameJapanese,
+    nameEnglish: positionType.nameEnglish,
+    description: positionType.description,
+    descriptionShort: positionType.descriptionShort,
+    displayOrder: positionType.displayOrder,
+    createdAt: positionType.createdAt,
+    updatedAt: positionType.updatedAt
+  }
+  // Set local edit form values
+  editFormValues.value = {
+    positionName: positionType.positionName,
+    nameJapanese: positionType.nameJapanese ?? undefined,
+    nameEnglish: positionType.nameEnglish ?? undefined,
+    description: positionType.description ?? undefined,
+    descriptionShort: positionType.descriptionShort ?? undefined
+  }
   showEditDialog.value = true
 }
 
-const onEditSubmit = handleSubmit((formValues) => {
+function handleEditSubmit() {
+  // Direct submit without form validation
   if (!editingPositionType.value) return
 
   try {
     update(editingPositionType.value.id, {
-      positionName: formValues.positionName,
-      nameJapanese: formValues.nameJapanese ?? null,
-      nameEnglish: formValues.nameEnglish ?? null,
-      description: formValues.description ?? null,
-      descriptionShort: formValues.descriptionShort ?? null
+      positionName: editFormValues.value.positionName,
+      nameJapanese: editFormValues.value.nameJapanese ?? null,
+      nameEnglish: editFormValues.value.nameEnglish ?? null,
+      description: editFormValues.value.description ?? null,
+      descriptionShort: editFormValues.value.descriptionShort ?? null
     })
     success('Position type updated')
     showEditDialog.value = false
     editingPositionType.value = null
     loadPositionTypes()
-    resetForm()
   } catch (err) {
     errorToast(
       err instanceof Error ? err.message : 'Failed to update position type'
     )
   }
-})
+}
 
 function handleEditCancel() {
   showEditDialog.value = false
   editingPositionType.value = null
-  resetForm()
 }
 
 // Delete handlers
@@ -258,7 +278,6 @@ onMounted(() => {
   <div class="settings-section-position-types">
     <div class="settings-section-position-types-actions">
       <BaseButton
-        :disabled="createDisabled"
         variant="primary"
         @click="handleCreateClick"
       >
@@ -308,6 +327,12 @@ onMounted(() => {
           >
             {{ positionType.descriptionShort }}
           </p>
+          <p
+            v-if="positionType.description"
+            class="settings-section-position-types-item-description"
+          >
+            {{ positionType.description }}
+          </p>
         </div>
 
         <div class="settings-section-position-types-item-actions">
@@ -347,17 +372,16 @@ onMounted(() => {
 
     <!-- Create Dialog -->
     <BaseDialog
-      :is-open="showCreateDialog"
+      :open="showCreateDialog"
       title="Add Position Type"
       @close="handleCreateCancel"
     >
       <form
         class="settings-section-position-types-form"
-        @submit.prevent="onCreateSubmit"
+        @submit.prevent="handleCreateSubmit"
       >
         <BaseInput
-          v-model="values.positionName"
-          :error="errors.positionName"
+          v-model="createFormValues.positionName"
           label="Position Name"
           name="positionName"
           placeholder="e.g., hen"
@@ -365,32 +389,28 @@ onMounted(() => {
         />
 
         <BaseInput
-          v-model="values.nameJapanese"
-          :error="errors.nameJapanese"
+          v-model="createFormValues.nameJapanese"
           label="Japanese Name"
           name="nameJapanese"
           placeholder="e.g., へん"
         />
 
         <BaseInput
-          v-model="values.nameEnglish"
-          :error="errors.nameEnglish"
+          v-model="createFormValues.nameEnglish"
           label="English Name"
           name="nameEnglish"
           placeholder="e.g., left side"
         />
 
         <BaseInput
-          v-model="values.descriptionShort"
-          :error="errors.descriptionShort"
+          v-model="createFormValues.descriptionShort"
           label="Short Description"
           name="descriptionShort"
           placeholder="e.g., Left side of character"
         />
 
         <BaseTextarea
-          v-model="values.description"
-          :error="errors.description"
+          v-model="createFormValues.description"
           label="Full Description"
           name="description"
           placeholder="Detailed explanation..."
@@ -417,46 +437,41 @@ onMounted(() => {
 
     <!-- Edit Dialog -->
     <BaseDialog
-      :is-open="showEditDialog"
+      :open="showEditDialog"
       title="Edit Position Type"
       @close="handleEditCancel"
     >
       <form
         class="settings-section-position-types-form"
-        @submit.prevent="onEditSubmit"
+        @submit.prevent="handleEditSubmit"
       >
         <BaseInput
-          v-model="values.positionName"
-          :error="errors.positionName"
+          v-model="editFormValues.positionName"
           label="Position Name"
           name="positionName"
           required
         />
 
         <BaseInput
-          v-model="values.nameJapanese"
-          :error="errors.nameJapanese"
+          v-model="editFormValues.nameJapanese"
           label="Japanese Name"
           name="nameJapanese"
         />
 
         <BaseInput
-          v-model="values.nameEnglish"
-          :error="errors.nameEnglish"
+          v-model="editFormValues.nameEnglish"
           label="English Name"
           name="nameEnglish"
         />
 
         <BaseInput
-          v-model="values.descriptionShort"
-          :error="errors.descriptionShort"
+          v-model="editFormValues.descriptionShort"
           label="Short Description"
           name="descriptionShort"
         />
 
         <BaseTextarea
-          v-model="values.description"
-          :error="errors.description"
+          v-model="editFormValues.description"
           label="Full Description"
           name="description"
           :rows="3"
@@ -574,6 +589,7 @@ onMounted(() => {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  white-space: pre-wrap;
 }
 
 .settings-section-position-types-item-actions {

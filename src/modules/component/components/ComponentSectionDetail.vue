@@ -18,12 +18,17 @@ import SharedSection from '@/shared/components/SharedSection.vue'
 
 import ComponentDetailBasicInfo from './ComponentDetailBasicInfo.vue'
 import ComponentDetailDescription from './ComponentDetailDescription.vue'
+import ComponentDetailForms from './ComponentDetailForms.vue'
+import ComponentDetailGroupings from './ComponentDetailGroupings.vue'
 import ComponentDetailHeader from './ComponentDetailHeader.vue'
 import ComponentDetailKanjiList from './ComponentDetailKanjiList.vue'
 import ComponentHeaderEditDialog from './ComponentHeaderEditDialog.vue'
 
 import type {
   Component,
+  ComponentForm,
+  ComponentGroupingMember,
+  ComponentGroupingWithMembers,
   Kanji,
   OccurrenceWithKanji
 } from '@/shared/types/database-types'
@@ -31,6 +36,9 @@ import type { QuickCreateKanjiData } from '@/shared/validation/quick-create-kanj
 
 interface Props {
   component: Component
+  forms?: ComponentForm[]
+  groupings?: ComponentGroupingWithMembers[]
+  groupingMembers?: Map<number, ComponentGroupingMember[]>
   isDeleting?: boolean
   isDestructiveMode?: boolean
   linkedKanjiCount?: number
@@ -41,6 +49,9 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  forms: () => [],
+  groupings: () => [],
+  groupingMembers: () => new Map(),
   isDeleting: false,
   isDestructiveMode: false,
   linkedKanjiCount: 0,
@@ -54,9 +65,11 @@ const emit = defineEmits<{
   'update:analysisNotes': [occurrenceId: number, analysisNotes: string | null]
   'update:position': [occurrenceId: number, positionTypeId: number | null]
   'update:isRadical': [occurrenceId: number, isRadical: boolean]
+  'update:form': [occurrenceId: number, formId: number | null]
   addKanji: [kanjiId: number]
   createKanji: [data: QuickCreateKanjiData]
   removeKanji: [occurrenceId: number]
+  reorderOccurrences: [occurrenceIds: number[]]
   updateDestructiveMode: [enabled: boolean]
   updateHeader: [
     data: {
@@ -67,6 +80,35 @@ const emit = defineEmits<{
   ]
   updateBasicInfo: [field: string, value: string | number | boolean | null]
   updateDescription: [description: string | null]
+  // Form events
+  addForm: [
+    data: {
+      formCharacter: string
+      formName: string | null
+      strokeCount: number | null
+      usageNotes: string | null
+    }
+  ]
+  updateForm: [
+    id: number,
+    data: {
+      formName: string | null
+      strokeCount: number | null
+      usageNotes: string | null
+    }
+  ]
+  removeForm: [id: number]
+  reorderForms: [formIds: number[]]
+  // Grouping events
+  addGrouping: [data: { name: string; description: string | null }]
+  updateGrouping: [
+    id: number,
+    data: { name: string; description: string | null }
+  ]
+  removeGrouping: [id: number]
+  reorderGroupings: [groupingIds: number[]]
+  addGroupingMember: [groupingId: number, occurrenceId: number]
+  removeGroupingMember: [groupingId: number, occurrenceId: number]
 }>()
 
 // Computed to handle exactOptionalPropertyTypes
@@ -129,6 +171,17 @@ function handleIsRadicalUpdate(occurrenceId: number, isRadical: boolean) {
   emit('update:isRadical', occurrenceId, isRadical)
 }
 
+function handleFormAssignmentUpdate(
+  occurrenceId: number,
+  formId: number | null
+) {
+  emit('update:form', occurrenceId, formId)
+}
+
+function handleReorderOccurrences(occurrenceIds: number[]) {
+  emit('reorderOccurrences', occurrenceIds)
+}
+
 function handleAddKanji(kanjiId: number) {
   emit('addKanji', kanjiId)
 }
@@ -177,6 +230,63 @@ function handleRemoveKanjiCancel() {
   showRemoveKanjiDialog.value = false
   kanjiToRemove.value = null
 }
+
+// Form handlers
+function handleAddForm(data: {
+  formCharacter: string
+  formName: string | null
+  strokeCount: number | null
+  usageNotes: string | null
+}) {
+  emit('addForm', data)
+}
+
+function handleUpdateForm(
+  id: number,
+  data: {
+    formName: string | null
+    strokeCount: number | null
+    usageNotes: string | null
+  }
+) {
+  emit('updateForm', id, data)
+}
+
+function handleRemoveForm(id: number) {
+  emit('removeForm', id)
+}
+
+function handleReorderForms(formIds: number[]) {
+  emit('reorderForms', formIds)
+}
+
+// Grouping handlers
+function handleAddGrouping(data: { name: string; description: string | null }) {
+  emit('addGrouping', data)
+}
+
+function handleUpdateGrouping(
+  id: number,
+  data: { name: string; description: string | null }
+) {
+  emit('updateGrouping', id, data)
+}
+
+function handleRemoveGrouping(id: number) {
+  emit('removeGrouping', id)
+}
+
+function handleReorderGroupings(groupingIds: number[]) {
+  emit('reorderGroupings', groupingIds)
+}
+
+function handleAddGroupingMember(groupingId: number, occurrenceId: number) {
+  emit('addGroupingMember', groupingId, occurrenceId)
+}
+
+function handleRemoveGroupingMember(groupingId: number, occurrenceId: number) {
+  emit('removeGroupingMember', groupingId, occurrenceId)
+}
 </script>
 
 <template>
@@ -213,6 +323,23 @@ function handleRemoveKanjiCancel() {
         />
       </SharedSection>
 
+      <!-- Forms (visual variants, collapsible) -->
+      <SharedSection
+        collapsible
+        default-open
+        :title="`Forms (${props.forms.length})`"
+      >
+        <ComponentDetailForms
+          :component-id="props.component.id"
+          :forms="props.forms"
+          :is-destructive-mode="props.isDestructiveMode"
+          @add="handleAddForm"
+          @remove="handleRemoveForm"
+          @reorder="handleReorderForms"
+          @update="handleUpdateForm"
+        />
+      </SharedSection>
+
       <!-- Appears in Kanji (collapsible) -->
       <SharedSection
         collapsible
@@ -222,14 +349,38 @@ function handleRemoveKanjiCancel() {
         <ComponentDetailKanjiList
           :all-kanji="props.allKanji"
           :component-id="props.component.id"
+          :forms="props.forms"
           :is-destructive-mode="props.isDestructiveMode"
           :occurrences="props.occurrences"
           @add-kanji="handleAddKanji"
           @create-kanji="handleCreateKanji"
           @remove-kanji="handleRemoveKanjiClick"
+          @reorder-occurrences="handleReorderOccurrences"
           @update:analysis-notes="handleAnalysisNotesUpdate"
+          @update:form="handleFormAssignmentUpdate"
           @update:is-radical="handleIsRadicalUpdate"
           @update:position="handlePositionUpdate"
+        />
+      </SharedSection>
+
+      <!-- Groupings (pattern analysis, collapsible) -->
+      <SharedSection
+        collapsible
+        default-open
+        :title="`Groupings (${props.groupings.length})`"
+      >
+        <ComponentDetailGroupings
+          :component-id="props.component.id"
+          :grouping-members="props.groupingMembers"
+          :groupings="props.groupings"
+          :is-destructive-mode="props.isDestructiveMode"
+          :occurrences="props.occurrences"
+          @add="handleAddGrouping"
+          @add-member="handleAddGroupingMember"
+          @remove="handleRemoveGrouping"
+          @remove-member="handleRemoveGroupingMember"
+          @reorder="handleReorderGroupings"
+          @update="handleUpdateGrouping"
         />
       </SharedSection>
     </div>

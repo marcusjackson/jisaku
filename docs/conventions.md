@@ -528,15 +528,10 @@ docs/
 ├── schema.md               # Database schema reference
 ├── testing.md              # Testing strategy and patterns
 ├── design-tokens.md        # CSS variables and theming
-├── features.md             # Feature list (evolving)
-└── plan/                   # Implementation planning
-    ├── v1-implementation-plan.md       # Post-MVP phases 1-6
-    ├── v1-task-breakdown.md            # Task tracking
-    ├── post-mvp-checklist.md           # Feature progress
-    └── post-mvp-megacatalog.md         # Full feature catalog
+├── features.md             # Current features
+├── future-ideas.md         # Potential enhancements
+└── reference/              # External reference docs (Reka UI, etc.)
 ```
-
-The `docs/plan/` folder is used for tracking post-MVP work and implementation planning. Keep this folder and its contents as the working ground for phases 1-6.
 
 ---
 

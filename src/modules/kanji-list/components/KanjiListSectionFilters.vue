@@ -16,6 +16,8 @@ import KanjiFilterComponent from './KanjiFilterComponent.vue'
 import KanjiFilterJlptLevel from './KanjiFilterJlptLevel.vue'
 import KanjiFilterJoyoLevel from './KanjiFilterJoyoLevel.vue'
 import KanjiFilterKenteiLevel from './KanjiFilterKenteiLevel.vue'
+import KanjiFilterKunYomi from './KanjiFilterKunYomi.vue'
+import KanjiFilterOnYomi from './KanjiFilterOnYomi.vue'
 import KanjiFilterRadical from './KanjiFilterRadical.vue'
 import KanjiFilterSearchKeywords from './KanjiFilterSearchKeywords.vue'
 import KanjiFilterStrokeRange from './KanjiFilterStrokeRange.vue'
@@ -29,6 +31,10 @@ const props = defineProps<{
   characterSearch: string
   /** Search keywords value (debounced separately) */
   searchKeywords: string
+  /** On-yomi search value (debounced separately) */
+  onYomiSearch: string
+  /** Kun-yomi search value (debounced separately) */
+  kunYomiSearch: string
   /** Whether any filters are active */
   hasActiveFilters: boolean
   /** Available components for filter dropdown */
@@ -42,6 +48,10 @@ const emit = defineEmits<{
   'update:characterSearch': [value: string]
   /** Update search keywords input */
   'update:searchKeywords': [value: string]
+  /** Update on-yomi search input */
+  'update:onYomiSearch': [value: string]
+  /** Update kun-yomi search input */
+  'update:kunYomiSearch': [value: string]
   /** Update a filter value */
   updateFilter: [key: keyof KanjiFilters, value: unknown]
   /** Clear all filters */
@@ -89,6 +99,8 @@ const activeFilterCount = computed(() => {
     count++
   if (props.filters.radicalId) count++
   if (props.filters.componentId) count++
+  if (props.filters.onYomi) count++
+  if (props.filters.kunYomi) count++
   return count
 })
 </script>
@@ -147,6 +159,16 @@ const activeFilterCount = computed(() => {
         <KanjiFilterSearchKeywords
           :model-value="searchKeywords"
           @update:model-value="emit('update:searchKeywords', $event)"
+        />
+
+        <KanjiFilterOnYomi
+          :model-value="onYomiSearch"
+          @update:model-value="emit('update:onYomiSearch', $event)"
+        />
+
+        <KanjiFilterKunYomi
+          :model-value="kunYomiSearch"
+          @update:model-value="emit('update:kunYomiSearch', $event)"
         />
 
         <KanjiFilterStrokeRange
@@ -318,28 +340,39 @@ const activeFilterCount = computed(() => {
 }
 
 .kanji-list-filters-actions {
-  position: absolute;
-  top: 50%;
-  left: var(--spacing-md);
   display: flex;
-  justify-content: flex-end;
-  transform: translateY(-50%);
+  justify-content: flex-start;
 }
 
 .kanji-list-filters-bottom {
   position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
 }
 
 .kanji-list-filters-collapse {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .kanji-list-filters-collapsed-actions {
   display: flex;
   justify-content: flex-end;
   padding: 0 var(--spacing-md) var(--spacing-md);
+}
+
+@media (width <= 480px) {
+  .kanji-list-filters-bottom {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .kanji-list-filters-actions,
+  .kanji-list-filters-collapse {
+    justify-content: center;
+  }
 }
 </style>

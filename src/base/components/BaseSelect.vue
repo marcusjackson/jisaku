@@ -92,7 +92,10 @@ const selectRootProps = computed(() => {
           { 'base-select-trigger-error': !!error }
         ]"
       >
-        <SelectValue :placeholder="placeholder ?? 'Select...'" />
+        <SelectValue
+          class="base-select-value"
+          :placeholder="placeholder ?? 'Select...'"
+        />
         <span
           aria-hidden="true"
           class="base-select-icon"
@@ -218,6 +221,12 @@ const selectRootProps = computed(() => {
 .base-select-trigger-error:focus {
   border: var(--input-border-error);
   box-shadow: var(--focus-ring-error);
+}
+
+.base-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .base-select-icon {

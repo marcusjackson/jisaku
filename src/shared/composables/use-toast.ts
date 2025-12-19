@@ -8,6 +8,12 @@
 import { ref } from 'vue'
 
 // =============================================================================
+// Constants
+// =============================================================================
+
+export const DEFAULT_TOAST_DURATION = 2000 // Central duration constant (in ms)
+
+// =============================================================================
 // Types
 // =============================================================================
 
@@ -64,7 +70,7 @@ export function useToast(): UseToast {
       type: input.type ?? 'info',
       title: input.title,
       message: input.message,
-      duration: input.duration ?? 5000
+      duration: input.duration ?? DEFAULT_TOAST_DURATION
     }
     toasts.value.push(toast)
     return id

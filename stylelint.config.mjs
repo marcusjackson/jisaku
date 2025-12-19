@@ -122,11 +122,11 @@ export default {
       }
     ],
 
-    // Selector naming (kebab-case for classes)
+    // Selector naming (kebab-case with BEM support for classes)
     'selector-class-pattern': [
-      '^[a-z][a-z0-9]*(-[a-z0-9]+)*$',
+      '^[a-z][a-z0-9]*(-[a-z0-9]+)*(--[a-z0-9]+(-[a-z0-9]+)*)?$',
       {
-        message: 'Class selectors should be kebab-case'
+        message: 'Class selectors should be kebab-case (BEM modifiers allowed)'
       }
     ],
 

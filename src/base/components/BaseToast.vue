@@ -16,7 +16,10 @@ import {
   ToastViewport
 } from 'reka-ui'
 
-import { useToast } from '@/shared/composables/use-toast'
+import {
+  DEFAULT_TOAST_DURATION,
+  useToast
+} from '@/shared/composables/use-toast'
 
 import type { Toast } from '@/shared/composables/use-toast'
 
@@ -34,7 +37,7 @@ function handleOpenChange(open: boolean, id: string): void {
 </script>
 
 <template>
-  <ToastProvider :duration="5000">
+  <ToastProvider :duration="DEFAULT_TOAST_DURATION">
     <ToastRoot
       v-for="toast in toasts"
       :key="toast.id"

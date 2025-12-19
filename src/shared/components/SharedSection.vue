@@ -157,6 +157,7 @@ if (!props.defaultOpen) {
 
 .shared-section-trigger {
   display: flex;
+  flex-grow: 1;
   align-items: center;
   gap: var(--spacing-xs);
   padding: 0;

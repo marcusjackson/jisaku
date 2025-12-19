@@ -2,13 +2,39 @@
  * Tests for KanjiListSectionGrid component
  */
 
+import { ref } from 'vue'
+
 import { renderWithProviders } from '@test/helpers/render'
+import userEvent from '@testing-library/user-event'
 import { screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import KanjiListSectionGrid from './KanjiListSectionGrid.vue'
 
 import type { Kanji } from '@/shared/types/database-types'
+
+// Mock useSeedData
+const mockSeed = vi.fn()
+const mockIsSeeding = ref(false)
+
+vi.mock('@/shared/composables/use-seed-data', () => ({
+  useSeedData: () => ({
+    isSeeding: mockIsSeeding,
+    seed: mockSeed,
+    seedDataCounts: { kanji: 18, components: 8, positionTypes: 8 }
+  })
+}))
+
+// Mock useToast
+const mockShowSuccess = vi.fn()
+const mockShowError = vi.fn()
+
+vi.mock('@/shared/composables/use-toast', () => ({
+  useToast: () => ({
+    error: mockShowError,
+    success: mockShowSuccess
+  })
+}))
 
 function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
   return {
@@ -36,6 +62,11 @@ function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
 }
 
 describe('KanjiListSectionGrid', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockIsSeeding.value = false
+  })
+
   it('renders the page title', () => {
     renderWithProviders(KanjiListSectionGrid, {
       props: { kanjiList: [] }
@@ -106,5 +137,87 @@ describe('KanjiListSectionGrid', () => {
     })
 
     expect(screen.getByText('小1')).toBeInTheDocument()
+  })
+
+  // Seed button tests - only visible in development mode
+  // Note: import.meta.env.DEV is true in test environment
+  it('shows seed button when database is empty in dev mode', () => {
+    renderWithProviders(KanjiListSectionGrid, {
+      props: { kanjiList: [] }
+    })
+
+    expect(
+      screen.getByRole('button', { name: /seed data/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/load example kanji and components for testing/i)
+    ).toBeInTheDocument()
+  })
+
+  it('does not show seed button when kanji exist', () => {
+    const kanjiList = [createMockKanji({ id: 1, character: '日' })]
+
+    renderWithProviders(KanjiListSectionGrid, {
+      props: { kanjiList }
+    })
+
+    expect(
+      screen.queryByRole('button', { name: /seed data/i })
+    ).not.toBeInTheDocument()
+  })
+
+  it('calls seed function when seed button is clicked', async () => {
+    const user = userEvent.setup()
+    mockSeed.mockResolvedValue(undefined)
+
+    renderWithProviders(KanjiListSectionGrid, {
+      props: { kanjiList: [] }
+    })
+
+    const seedButton = screen.getByRole('button', { name: /seed data/i })
+    await user.click(seedButton)
+
+    expect(mockSeed).toHaveBeenCalled()
+  })
+
+  it('shows success message after seeding', async () => {
+    const user = userEvent.setup()
+    mockSeed.mockResolvedValue(undefined)
+
+    renderWithProviders(KanjiListSectionGrid, {
+      props: { kanjiList: [] }
+    })
+
+    const seedButton = screen.getByRole('button', { name: /seed data/i })
+    await user.click(seedButton)
+
+    expect(mockShowSuccess).toHaveBeenCalledWith(
+      'Database seeded successfully! Refresh to see data.'
+    )
+  })
+
+  it('emits refresh event after successful seeding', async () => {
+    const user = userEvent.setup()
+    mockSeed.mockResolvedValue(undefined)
+
+    const result = renderWithProviders(KanjiListSectionGrid, {
+      props: { kanjiList: [] }
+    })
+
+    const seedButton = screen.getByRole('button', { name: /seed data/i })
+    await user.click(seedButton)
+
+    expect(result.emitted()).toHaveProperty('refresh')
+  })
+
+  it('disables seed button while seeding', () => {
+    mockIsSeeding.value = true
+
+    renderWithProviders(KanjiListSectionGrid, {
+      props: { kanjiList: [] }
+    })
+
+    const seedButton = screen.getByRole('button', { name: /seeding/i })
+    expect(seedButton).toBeDisabled()
   })
 })

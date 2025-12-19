@@ -20,17 +20,25 @@ Project-specific instructions for GitHub Copilot Agent mode.
 
 ```
 src/
-├── modules/           # Feature modules (kanji, kanji-list, component, component-list, settings)
+├── modules/           # Feature modules (kanji, component, vocabulary, settings)
 ├── base/              # Generic primitives (works in ANY Vue project)
 ├── shared/            # App-specific shared code
 ├── pages/             # Route entry points (thin wrappers)
 └── db/                # Database setup and migrations
-docs/
-├── plan/v1/          # V1 master implementation plans (foundational reading)
-└── plan/v1-tasks/    # Individual task files (one per implementation task)
+docs/                  # Project documentation
 .github/
 └── instructions/      # Mandatory coding standards and patterns
 ```
+
+## Before Starting Any Task
+
+**Complete these steps before beginning any implementation:**
+
+1. **Read all mandatory instruction files** (see MANDATORY READS section below)
+2. **Review relevant documentation** in `docs/` folder (architecture, schema, features)
+3. **Understand the task requirements** completely before writing any code
+4. **Ensure pnpm is installed** (`pnpm --version` should show 9.15.1 or similar)
+5. **Start dev server** if not already running (`pnpm dev`)
 
 ## MANDATORY READS - Start Here
 
@@ -44,25 +52,25 @@ docs/
 
 These establish the foundation for all code quality and consistency.
 
-## V1 Master Planning Documents
+## Project Documentation
 
-Read in order before starting any V1 implementation task:
+When working on features, consult the documentation in `docs/`:
 
-1. `docs/plan/v1/00-overview.md` - Overview, entity balance, short_meaning field
-2. `docs/plan/v1/01-page-organization.md` - Page structure and organization patterns
-3. `docs/plan/v1/02-ui-patterns.md` - Section-based editing, destructive action safety
-4. `docs/plan/v1/03-kanji-system.md` - Kanji readings, meanings, classifications
-5. `docs/plan/v1/04-component-system.md` - Component page as occurrence analysis hub
-6. `docs/plan/v1/05-vocabulary-system.md` - Vocabulary system with kanji breakdown
-7. `docs/plan/v1/06-base-components.md` - Required base components for V1
+- `docs/architecture.md` - System design, component patterns, module structure
+- `docs/schema.md` - Database schema and relationships
+- `docs/features.md` - Current features overview
+- `docs/conventions.md` - Naming, coding standards, file organization
+- `docs/testing.md` - Testing philosophy and patterns
+- `docs/design-tokens.md` - CSS variables and theming
+- `docs/future-ideas.md` - Potential enhancements (for inspiration)
 
-**Key v1 Principles:**
+**Key Architectural Principles:**
 
-- Kanji, components, and vocab are **equal peers** (not kanji-centric)
-- Component occurrence analysis happens on **component page**, not kanji page
+- Kanji, components, and vocabulary are **equal entities** (not kanji-centric)
 - All entities have `short_meaning` and `search_keywords` fields
-- Quick-create forms are minimal (character, strokes, short_meaning only)
 - Section-based editing on detail pages (not mega-forms)
+- Module isolation - features don't directly import from each other
+- Base code in `base/` is generic; shared code in `shared/` is app-specific
 
 ## Testing Requirements
 
@@ -73,10 +81,12 @@ If not, install it via `npm install -g pnpm@9.15.1`.
 
 **You must do ALL of the following:**
 
-1. **Update seed data** - Ensure test data is up to date for browser verification
-2. **Run full checks** - `pnpm ci:full` (includes tests, lint, and type-check)
-3. **Verify manually** - Test your work in the Playwright MCP browser
-4. **Take screenshots** - Screenshot only work you did in this session (for verification)
+1. **Update seed data** - If modifying the DB schema, update the use-seed-data composable
+2. **Run full checks** - `pnpm ci:full` (includes unit tests, E2E tests, lint, and type-check)
+3. **Self-verify with Playwright MCP server** - Use MCP browser tools to test your changes interactively
+   - Load seed data first (Settings → Developer Tools → Seed Data button)
+   - Test all user interactions
+4. **Take screenshots** - Capture all visual changes/additions made in this session
 5. **All must pass** - Zero test failures, zero lint errors, zero type errors
 
 ### Every Code Change Must Pass Tests
@@ -108,44 +118,50 @@ KanjiForm.test.ts    ← unit test
 
 E2E tests are in `e2e/` folder.
 
-## Manual Playwright Verification
+## Testing & Verification
 
-When E2E tests pass but you want to verify visually, use **headed mode**:
+### Two Types of Testing
 
-```bash
-# Run specific test file in headed mode (visible browser)
-pnpm exec playwright test e2e/kanji-crud.test.ts --headed
+This project uses **two complementary approaches** for quality assurance:
 
-# Run specific test by name
-pnpm exec playwright test -g "creates a new kanji" --headed
+1. **E2E Tests (Automated Regression Testing)**
+   - Run via `pnpm test:e2e` in headless mode
+   - Automated test suites in `e2e/` folder
+   - Must pass before marking any task complete
+   - Purpose: Catch regressions, ensure existing functionality works
 
-# Debug mode (step through with inspector)
-pnpm exec playwright test e2e/kanji-crud.test.ts --debug
-```
+2. **Playwright MCP Server (Self-Verification in Browser)**
+   - Interactive browser-based verification using Playwright MCP server
+   - Playwright MCP server is **enabled by default in your GitHub Copilot Agent environment**
+   - Use MCP browser tools to navigate, interact, and screenshot the running app
+   - Purpose: Visual verification, exploratory testing, screenshot documentation
+   - Learn more: [microsoft/playwright-mcp](https://github.com/microsoft/playwright-mcp)
 
-### Playwright MCP Browser Verification
+**Both are required** - E2E tests ensure nothing breaks, MCP server verification ensures your changes work correctly.
+
+### Self-Verification with Playwright MCP Server
 
 **REQUIRED before finishing any UI-changing task:**
 
-1. Open the MCP browser and navigate to the app
-2. Verify seed data is loaded (go to Settings → Developer Tools → Seed Data button)
-3. Test all scenarios covered by your changes
-4. Take screenshots of the relevant work (only what you changed in this session)
-5. Verify keyboard navigation works (Tab through form fields, etc.)
-6. Verify error states display correctly
-7. Verify loading states work as expected
+1. **Start dev server** if not running (`pnpm dev` - typically runs on http://localhost:5173)
+2. **Use Playwright MCP server tools** to open a browser and navigate to the running app
+3. **Load seed data first** - The database starts empty. Use the "Seed Data" button in settings to load sample data
+4. **Test all scenarios** covered by your changes - interact with the UI as a user would
+5. **Take screenshots** - Capture all major visual additions/modifications made in this session
+6. **Verify interactions** - Test keyboard navigation (Tab, Enter, Escape), error states, loading states
 
-### Taking Screenshots
+**Note:** "Playwright MCP browser" or "MCP browser" refers to using the Playwright MCP server for browser-based self-verification. You have access to Playwright MCP server tools by default.
 
-For debugging or verification:
+### Optional: E2E Test Debugging
+
+If E2E tests fail and you need to debug them visually:
 
 ```bash
-# In test code - add this temporarily:
-await page.screenshot({ path: 'debug-screenshot.png' })
+# Run specific test in headed mode (visible browser)
+pnpm exec playwright test e2e/kanji-crud.test.ts --headed
 
-# Or use Playwright's trace viewer for failed tests:
-pnpm exec playwright test --trace on
-pnpm exec playwright show-trace test-results/[test-folder]/trace.zip
+# Debug mode (step through with inspector)
+pnpm exec playwright test e2e/kanji-crud.test.ts --debug
 ```
 
 ## Common Implementation Mistakes
@@ -166,8 +182,8 @@ pnpm exec playwright show-trace test-results/[test-folder]/trace.zip
 
 **Most Common Mistakes:**
 
-1. **Mega-forms instead of section-based** - Putting all fields in one mega-form instead of breaking into SharedSections
-   - **Fix**: Follow the V1 pattern: Root fetches data → Section arranges layout → UI components display/edit individual sections
+1. **Mega-forms instead of section-based** - Putting all fields in one mega-form instead of breaking into sections
+   - **Fix**: Follow the pattern: Root fetches data → Section arranges layout → UI components display/edit individual sections
 
 2. **Missing test mocks** - Adding new fields but forgetting to update mock factories
    - **Fix**: Update all factory functions with the new field before running tests
@@ -192,13 +208,16 @@ pnpm exec playwright show-trace test-results/[test-folder]/trace.zip
 
 **Most Common Mistakes:**
 
-1. **Skipping seed data update** - Tests pass but manual verification fails due to missing test data
-   - **Fix**: Before manual testing, go to Settings → Developer Tools and click "Seed Data" button
+1. **Skipping seed data during MCP verification** - Database starts empty, causing verification to fail
+   - **Fix**: When using Playwright MCP server for verification, first use the "Seed Data" button in settings
 
-2. **Forgetting E2E test updates** - Changing UI but not updating playwright tests
+2. **Not updating seed data file** - Adding new entities but not adding example data to use-seed-data.ts
+   - **Fix**: Update use-seed-data.ts with representative examples of new entities
+
+3. **Forgetting E2E test updates** - Changing UI but not updating playwright tests
    - **Fix**: If you modify selectors, labels, or workflows, update corresponding E2E tests
 
-3. **Not running full checks** - Running only unit tests and missing lint/type errors
+4. **Not running full checks** - Running only unit tests and missing lint/type errors
    - **Fix**: Always run `pnpm ci:full` before marking task complete, not just `pnpm test`
 
 ### Type Safety
@@ -247,7 +266,7 @@ Follow Conventional Commits:
 <type>(<scope>): <subject>
 
 Types: feat, fix, docs, style, refactor, test, chore, perf
-Scopes: kanji, kanji-list, components, settings, base, shared, db, ui, router
+Scopes: kanji, kanji-list, component, component-list, vocabulary, vocabulary-list, settings, base, shared, db, ui, router
 ```
 
 Examples:
@@ -255,7 +274,7 @@ Examples:
 ```
 feat(kanji): add stroke count validation
 fix(kanji-list): correct filter reset behavior
-test(components): add unit tests for ComponentCard
+test(component): add unit tests for ComponentCard
 ```
 
 ## Package Manager: pnpm Only
@@ -270,48 +289,60 @@ This project uses **pnpm exclusively**. Do not use `npm` or `yarn`.
 
 ## Common Commands
 
+**ALWAYS use Makefile commands for targeted checks** (specific files or changed files) instead of running full checks unnecessarily:
+
 ```bash
-pnpm dev              # Start dev server
-pnpm build            # Production build
-pnpm test             # Run unit tests
-pnpm test:e2e         # Run E2E tests (headless)
-pnpm lint             # Lint all files
-pnpm type-check       # TypeScript check
+# Targeted checks (PREFERRED for development)
+make check-changed      # Run all checks on changed files only
+make fix-changed        # Run all fixes on changed files only
+make test-changed       # Run tests on changed + source files
+make check FILES="..."  # Run checks on specific files
+make lint FILES="..."   # Lint specific files
+
+# Full checks (use for final verification or CI)
+pnpm ci:full            # All checks + all tests
+pnpm check              # Lint, type-check, format on all files
+pnpm test               # All unit tests
+pnpm test:e2e           # All E2E tests
+
+# Development
+pnpm dev                # Start dev server
 ```
 
 ## Implementation Workflow
 
-For each V1 implementation task:
+For each task:
 
 1. **Read mandatory instruction files** (see MANDATORY READS section above)
-2. **Read V1 master planning documents** (in order, see V1 Master Planning Documents)
-3. **Open the task file** from `docs/plan/v1-tasks/phase-X.Y-*.md`
-4. **Understand the task** thoroughly before writing any code
-5. **Implement** the changes following all project guidelines
-6. **Write/update tests** (unit and/or E2E as appropriate)
-7. **Run all tests** - unit, E2E, lint, and type-check must pass
-8. **Verify manually** if UI changes (use headed Playwright or MCP browser)
-9. **Commit** with conventional commit message
-10. **Update task status** in the task file's status section
+2. **Review relevant documentation** (`docs/architecture.md`, `docs/schema.md`, etc.)
+3. **Understand the task requirements** thoroughly before writing any code
+4. **Implement** the changes following all project guidelines
+5. **Write/update tests** (unit and/or E2E as appropriate)
+6. **Run all tests** - unit, E2E, lint, and type-check must pass
+7. **Self-verify with Playwright MCP server** (for UI changes) - interact with the app, take screenshots
+8. **Commit** with conventional commit message
 
-### Task Files
+### Task Delivery
 
-Task files are located in `docs/plan/v1-tasks/`:
+Tasks are typically provided in chat messages and may reference:
 
-- Each task has a dedicated markdown file with complete specifications
-- Task files reference the V1 master documents as context
-- Task files specify exact files to create, modify, and delete
-- Task files include implementation details and data flow diagrams
-- Task files have migration checklists to track progress
-
-Example task file: `docs/plan/v1-tasks/phase-4.5-kanji-detail-refactor.md`
+- Documentation in `docs/` folder
+- Database schema (`docs/schema.md`)
+- Existing code patterns from similar modules
+- Feature ideas from `docs/future-ideas.md`
 
 ### Code Quality Checklist (Before Every Commit)
+
+#### Development Workflow
+
+- [ ] Use `make check-changed` or `make check FILES="..."` for targeted checks during development
+- [ ] Only run full checks (`pnpm ci:full`) before committing or for final verification
+- [ ] Use `make test-changed` to run relevant tests when modifying code
 
 Use this checklist to verify each task is complete:
 
 - [ ] Read all mandatory instruction files
-- [ ] Understand the task file completely
+- [ ] Understand the task requirements completely
 - [ ] No TypeScript `any` types - all types explicit
 - [ ] CSS uses design token variables from `tokens.css`
 - [ ] Components follow Root/Section/UI hierarchy
@@ -324,5 +355,6 @@ Use this checklist to verify each task is complete:
 - [ ] E2E tests pass (`pnpm test:e2e`)
 - [ ] No lint errors (`pnpm lint`)
 - [ ] No type errors (`pnpm type-check`)
-- [ ] Manual verification done (if UI changes)
+- [ ] Self-verification with Playwright MCP server done (if UI changes)
+- [ ] Screenshots taken of visual changes
 - [ ] Commit message follows conventions

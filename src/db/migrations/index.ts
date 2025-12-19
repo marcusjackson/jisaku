@@ -15,6 +15,11 @@ import migration007 from './007-kanji-search-keywords.sql?raw'
 import migration008 from './008-nullable-stroke-count.sql?raw'
 import migration009 from './009-component-nullable-stroke-count.sql?raw'
 import migration010 from './010-non-jlpt-joyo.sql?raw'
+import migration011 from './011-readings.sql?raw'
+import migration012 from './012-meanings.sql?raw'
+import migration014 from './014-component-forms.sql?raw'
+import migration015 from './015-component-groupings.sql?raw'
+import migration016 from './016-vocabulary-system.sql?raw'
 
 import type { Database } from 'sql.js'
 
@@ -191,6 +196,113 @@ function runMigration010(db: Database): void {
 }
 
 /**
+ * Run migration 011 with conditional logic
+ * Adds on_readings and kun_readings tables for the readings system
+ */
+function runMigration011(db: Database): void {
+  // Check if tables already exist
+  const tablesResult = db.exec(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='on_readings'"
+  )
+  const hasOnReadings = (tablesResult[0]?.values.length ?? 0) > 0
+
+  if (!hasOnReadings) {
+    db.run(migration011)
+  } else {
+    // Tables already exist, just set version
+    db.run('PRAGMA user_version = 11')
+  }
+}
+
+/**
+ * Run migration 012 with conditional logic
+ * Adds meanings tables: kanji_meanings, kanji_meaning_reading_groups, kanji_meaning_group_members
+ */
+function runMigration012(db: Database): void {
+  // Check if tables already exist
+  const tablesResult = db.exec(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='kanji_meanings'"
+  )
+  const hasKanjiMeanings = (tablesResult[0]?.values.length ?? 0) > 0
+
+  if (!hasKanjiMeanings) {
+    db.run(migration012)
+  } else {
+    // Tables already exist, just set version
+    db.run('PRAGMA user_version = 12')
+  }
+}
+
+/**
+ * Run migration 013 with conditional logic
+ * Adds display_order to kanji_classifications, adds phonetic_loan type
+ */
+function runMigration013(db: Database): void {
+  // Check if display_order column already exists in kanji_classifications
+  const columns = getTableColumns(db, 'kanji_classifications')
+
+  if (!columns.includes('display_order')) {
+    db.run(
+      'ALTER TABLE kanji_classifications ADD COLUMN display_order INTEGER DEFAULT 0'
+    )
+    // Migrate existing is_primary data to display_order
+    db.run(
+      'UPDATE kanji_classifications SET display_order = CASE WHEN is_primary = 1 THEN 0 ELSE 1 END'
+    )
+  }
+
+  // Add phonetic_loan type if not exists
+  const typeResult = db.exec(
+    "SELECT id FROM classification_types WHERE type_name = 'phonetic_loan'"
+  )
+  if ((typeResult[0]?.values.length ?? 0) === 0) {
+    db.run(
+      `INSERT INTO classification_types (type_name, name_japanese, name_english, description, description_short, display_order) 
+       VALUES ('phonetic_loan', '仮借字', 'Phonetic Loan', 'Borrowed character for sound alone, original meaning ignored', 'Borrowed for sound', 5)`
+    )
+  }
+
+  db.run('PRAGMA user_version = 13')
+}
+
+/**
+ * Run migration 014 with conditional logic
+ * Adds component_forms table for visual variants of semantic components
+ */
+function runMigration014(db: Database): void {
+  // Always run migration 014 - it handles dropping existing table and recreating with correct schema
+  db.run(migration014)
+}
+
+/**
+ * Run migration 015 with conditional logic
+ * Adds component_groupings and component_grouping_members tables
+ */
+function runMigration015(db: Database): void {
+  // Always run migration 015 - it handles dropping existing tables and recreating with correct schema
+  db.run(migration015)
+}
+
+/**
+ * Run migration 016 with conditional logic
+ * Adds vocabulary and vocab_kanji tables for vocabulary management
+ */
+function runMigration016(db: Database): void {
+  // Check if vocabulary table already exists
+  const tablesResult = db.exec(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='vocabulary'"
+  )
+  const hasVocabulary = (tablesResult[0]?.values.length ?? 0) > 0
+
+  if (!hasVocabulary) {
+    db.run(migration016)
+  } else {
+    // Table already exists, just set version
+    db.run('PRAGMA user_version = 16')
+  }
+}
+
+/**
  * Run all pending migrations on the database
  */
 export function runMigrations(db: Database): void {
@@ -249,6 +361,36 @@ export function runMigrations(db: Database): void {
     // Migration 010: Add non-jlpt and non-joyo to check constraints
     if (currentVersion < 10) {
       runMigration010(db)
+    }
+
+    // Migration 011: Add readings system (on_readings, kun_readings)
+    if (currentVersion < 11) {
+      runMigration011(db)
+    }
+
+    // Migration 012: Add meanings system (kanji_meanings, kanji_meaning_reading_groups, kanji_meaning_group_members)
+    if (currentVersion < 12) {
+      runMigration012(db)
+    }
+
+    // Migration 013: Classifications system (display_order, phonetic_loan type)
+    if (currentVersion < 13) {
+      runMigration013(db)
+    }
+
+    // Migration 014: Component forms (visual variants of semantic components)
+    if (currentVersion < 14) {
+      runMigration014(db)
+    }
+
+    // Migration 015: Component groupings (pattern analysis groups)
+    if (currentVersion < 15) {
+      runMigration015(db)
+    }
+
+    // Migration 016: Vocabulary system (vocabulary, vocab_kanji tables)
+    if (currentVersion < 16) {
+      runMigration016(db)
     }
   } catch (error) {
     // If migration fails, log error but don't crash the app

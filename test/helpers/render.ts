@@ -33,6 +33,8 @@ const testRoutes: RouteRecordRaw[] = [
   { path: '/components', component: { template: '<div />' } },
   { path: '/components/:id', component: { template: '<div />' } },
   { path: '/components/:id/edit', component: { template: '<div />' } },
+  { path: '/vocabulary', component: { template: '<div />' } },
+  { path: '/vocabulary/:id', component: { template: '<div />' } },
   { path: '/settings', component: { template: '<div />' } }
 ]
 

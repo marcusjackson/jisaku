@@ -17,7 +17,8 @@ import type { Toast } from '@/shared/composables/use-toast'
 
 // Mock the useToast composable
 vi.mock('@/shared/composables/use-toast', () => ({
-  useToast: vi.fn()
+  useToast: vi.fn(),
+  DEFAULT_TOAST_DURATION: 2000
 }))
 
 describe('BaseToast', () => {

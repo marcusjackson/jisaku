@@ -86,6 +86,36 @@ vi.mock('@/shared/composables/use-kanji-repository', () => ({
   })
 }))
 
+// Mock component form repository
+const mockGetFormsByComponentId = vi.fn().mockReturnValue([])
+
+vi.mock('@/shared/composables/use-component-form-repository', () => ({
+  useComponentFormRepository: () => ({
+    create: vi.fn(),
+    getByComponentId: mockGetFormsByComponentId,
+    remove: vi.fn(),
+    reorder: vi.fn(),
+    update: vi.fn()
+  })
+}))
+
+// Mock component grouping repository
+const mockGetGroupingsByComponentId = vi.fn().mockReturnValue([])
+const mockGetGroupingMembers = vi.fn().mockReturnValue([])
+
+vi.mock('@/shared/composables/use-component-grouping-repository', () => ({
+  useComponentGroupingRepository: () => ({
+    addMember: vi.fn(),
+    create: vi.fn(),
+    getByComponentId: mockGetGroupingsByComponentId,
+    getMembers: mockGetGroupingMembers,
+    remove: vi.fn(),
+    removeMember: vi.fn(),
+    reorder: vi.fn(),
+    update: vi.fn()
+  })
+}))
+
 // Mock router
 vi.mock('vue-router', () => ({
   RouterLink: {
@@ -163,6 +193,9 @@ describe('ComponentRootDetail', () => {
     mockUpdateAnalysisNotes.mockImplementation(() => {
       // Empty implementation for mock
     })
+    mockGetFormsByComponentId.mockReturnValue([])
+    mockGetGroupingsByComponentId.mockReturnValue([])
+    mockGetGroupingMembers.mockReturnValue([])
   })
 
   afterEach(() => {

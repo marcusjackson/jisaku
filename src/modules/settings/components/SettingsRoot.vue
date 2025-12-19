@@ -15,6 +15,7 @@ import SharedSection from '@/shared/components/SharedSection.vue'
 import { useDatabase } from '@/shared/composables/use-database'
 
 import SettingsSectionAppearance from './SettingsSectionAppearance.vue'
+import SettingsSectionClassificationTypes from './SettingsSectionClassificationTypes.vue'
 import SettingsSectionDatabase from './SettingsSectionDatabase.vue'
 import SettingsSectionDevTools from './SettingsSectionDevTools.vue'
 import SettingsSectionPositionTypes from './SettingsSectionPositionTypes.vue'
@@ -84,6 +85,19 @@ onMounted(async () => {
           kanji (e.g., hen, tsukuri, kanmuri).
         </p>
         <SettingsSectionPositionTypes />
+      </SharedSection>
+
+      <!-- Classification Types Section (collapsible, collapsed by default) -->
+      <SharedSection
+        collapsible
+        :default-open="false"
+        title="Classification Types"
+      >
+        <p class="settings-root-section-description">
+          Manage classification types used to categorize kanji formation (e.g.,
+          pictograph, ideograph, phono-semantic).
+        </p>
+        <SettingsSectionClassificationTypes />
       </SharedSection>
 
       <!-- Data Management Section (collapsible) -->

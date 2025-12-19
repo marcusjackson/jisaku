@@ -2,7 +2,7 @@
 -- Date: 2025-12-10
 -- Description: Adds search_keywords TEXT column to components table,
 --              copies japanese_name data to search_keywords, then drops japanese_name column.
---              Per V1 plan: display_meaning for primary display, search_keywords for additional terms.
+--              short_meaning provides primary display text, search_keywords adds additional search terms.
 
 -- Add search_keywords column to components table
 ALTER TABLE components ADD COLUMN search_keywords TEXT;

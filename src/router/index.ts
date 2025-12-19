@@ -44,6 +44,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Component Detail' }
   },
   {
+    path: '/vocabulary',
+    name: 'vocabulary-list',
+    component: () => import('@/pages/VocabularyListPage.vue'),
+    meta: { title: 'Vocabulary List' }
+  },
+  {
+    path: '/vocabulary/:id',
+    name: 'vocabulary-detail',
+    component: () => import('@/pages/VocabularyDetailPage.vue'),
+    meta: { title: 'Vocabulary Detail' }
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/pages/SettingsPage.vue'),

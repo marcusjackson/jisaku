@@ -30,6 +30,8 @@ const defaultProps = {
   filters: {} as KanjiFilters,
   characterSearch: '',
   searchKeywords: '',
+  onYomiSearch: '',
+  kunYomiSearch: '',
   hasActiveFilters: false,
   components: mockComponents,
   radicals: mockRadicals

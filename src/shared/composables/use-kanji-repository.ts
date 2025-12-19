@@ -271,6 +271,20 @@ export function useKanjiRepository(): UseKanjiRepository {
       params.push(filters.componentId)
     }
 
+    if (filters.onYomi) {
+      conditions.push(
+        `id IN (SELECT kanji_id FROM on_readings WHERE reading LIKE ?)`
+      )
+      params.push(`%${filters.onYomi}%`)
+    }
+
+    if (filters.kunYomi) {
+      conditions.push(
+        `id IN (SELECT kanji_id FROM kun_readings WHERE (reading || COALESCE(okurigana, '')) LIKE ?)`
+      )
+      params.push(`%${filters.kunYomi}%`)
+    }
+
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
     const sql = `SELECT * FROM kanjis ${whereClause} ORDER BY created_at DESC`

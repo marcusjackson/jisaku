@@ -1,5 +1,6 @@
 import eslint from '@eslint/js'
 import eslintConfigPrettier from 'eslint-config-prettier'
+import importPlugin from 'eslint-plugin-import'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import sortDestructureKeys from 'eslint-plugin-sort-destructure-keys'
 import vitest from 'eslint-plugin-vitest'
@@ -84,6 +85,19 @@ export default tseslint.config(
     },
     rules: {
       'sort-destructure-keys/sort-destructure-keys': 'error'
+    }
+  },
+
+  // Import plugin for validating imports
+  {
+    plugins: {
+      import: importPlugin
+    },
+    settings: {
+      'import/resolver': 'typescript'
+    },
+    rules: {
+      'import/no-unresolved': ['error', { ignore: ['^virtual:'] }]
     }
   },
 

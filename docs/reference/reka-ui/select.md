@@ -395,7 +395,7 @@ import {
 
 ### Controlling the value displayed in the trigger
 
-By default the trigger display the selected item's text (no longer automatically render `ItemText`'s content like in v1).
+By default the trigger displays the selected item's text.
 
 If you need to render other than plain text, you can control the component using `v-model` props (or accessing `SelectValue`'s slotProps) and passing `slot` to `SelectValue`. Remember to make sure what you put in there is accessible.
 

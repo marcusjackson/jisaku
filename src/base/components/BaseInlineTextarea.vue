@@ -120,6 +120,7 @@ function handleCancel() {
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
   text-align: left;
+  white-space: pre-wrap;
   cursor: pointer;
   transition: all var(--transition-fast);
 }

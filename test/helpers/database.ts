@@ -91,12 +91,13 @@ const SCHEMA_SQL = `
     component_id INTEGER NOT NULL,
     form_character TEXT NOT NULL,
     form_name TEXT,
-    description TEXT,
-    is_primary BOOLEAN DEFAULT 0,
     stroke_count INTEGER,
+    usage_notes TEXT,
+    display_order INTEGER DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE
+    FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE,
+    UNIQUE(component_id, form_character)
   );
 
   CREATE TABLE IF NOT EXISTS component_occurrences (
@@ -119,35 +120,122 @@ const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS component_groupings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     component_id INTEGER NOT NULL,
-    component_form_id INTEGER,
     name TEXT NOT NULL,
-    analysis_notes TEXT,
+    description TEXT,
     display_order INTEGER DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE,
-    FOREIGN KEY (component_form_id) REFERENCES component_forms(id) ON DELETE CASCADE
+    FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS component_grouping_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     grouping_id INTEGER NOT NULL,
     occurrence_id INTEGER NOT NULL,
     display_order INTEGER DEFAULT 0,
-    PRIMARY KEY (grouping_id, occurrence_id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (grouping_id) REFERENCES component_groupings(id) ON DELETE CASCADE,
-    FOREIGN KEY (occurrence_id) REFERENCES component_occurrences(id) ON DELETE CASCADE
+    FOREIGN KEY (occurrence_id) REFERENCES component_occurrences(id) ON DELETE CASCADE,
+    UNIQUE(grouping_id, occurrence_id)
   );
 
   CREATE TABLE IF NOT EXISTS kanji_classifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     kanji_id INTEGER NOT NULL,
     classification_type_id INTEGER NOT NULL,
-    is_primary BOOLEAN DEFAULT 0,
-    notes TEXT,
+    display_order INTEGER DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (kanji_id) REFERENCES kanjis(id) ON DELETE CASCADE,
     FOREIGN KEY (classification_type_id) REFERENCES classification_types(id) ON DELETE CASCADE
+  );
+
+  -- Readings tables (migration 011)
+  CREATE TABLE IF NOT EXISTS on_readings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kanji_id INTEGER NOT NULL,
+    reading TEXT NOT NULL,
+    reading_level TEXT NOT NULL DEFAULT '小' CHECK (reading_level IN ('小', '中', '高', '外')),
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (kanji_id) REFERENCES kanjis(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS kun_readings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kanji_id INTEGER NOT NULL,
+    reading TEXT NOT NULL,
+    okurigana TEXT,
+    reading_level TEXT NOT NULL DEFAULT '小' CHECK (reading_level IN ('小', '中', '高', '外')),
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (kanji_id) REFERENCES kanjis(id) ON DELETE CASCADE
+  );
+
+  -- Meanings tables (migration 012)
+  CREATE TABLE IF NOT EXISTS kanji_meanings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kanji_id INTEGER NOT NULL,
+    meaning_text TEXT NOT NULL,
+    additional_info TEXT,
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (kanji_id) REFERENCES kanjis(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS kanji_meaning_reading_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kanji_id INTEGER NOT NULL,
+    reading_text TEXT NOT NULL,
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (kanji_id) REFERENCES kanjis(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS kanji_meaning_group_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reading_group_id INTEGER NOT NULL,
+    meaning_id INTEGER NOT NULL,
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (reading_group_id) REFERENCES kanji_meaning_reading_groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (meaning_id) REFERENCES kanji_meanings(id) ON DELETE CASCADE,
+    UNIQUE(reading_group_id, meaning_id)
+  );
+
+  -- Vocabulary tables (migration 016)
+  CREATE TABLE IF NOT EXISTS vocabulary (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    word TEXT NOT NULL UNIQUE,
+    kana TEXT NOT NULL,
+    romaji TEXT,
+    short_meaning TEXT,
+    search_keywords TEXT,
+    jlpt_level TEXT CHECK(jlpt_level IN ('N5', 'N4', 'N3', 'N2', 'N1', 'non-jlpt') OR jlpt_level IS NULL),
+    frequency_rank INTEGER,
+    is_common INTEGER DEFAULT 0 CHECK(is_common IN (0, 1)),
+    description TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS vocab_kanji (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    vocab_id INTEGER NOT NULL,
+    kanji_id INTEGER NOT NULL,
+    analysis_notes TEXT,
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (vocab_id) REFERENCES vocabulary(id) ON DELETE CASCADE,
+    FOREIGN KEY (kanji_id) REFERENCES kanjis(id) ON DELETE CASCADE,
+    UNIQUE(vocab_id, kanji_id)
   );
 
   -- Prepopulate reference tables
@@ -155,7 +243,8 @@ const SCHEMA_SQL = `
   ('pictograph', '象形文字', 'Pictograph', 'Pictures of physical objects', 1),
   ('ideograph', '指事文字', 'Ideograph', 'Abstract concepts shown graphically', 2),
   ('compound_ideograph', '会意文字', 'Compound Ideograph', 'Combining meanings of components', 3),
-  ('phono_semantic', '形声文字', 'Phono-semantic', 'Meaning component + sound component', 4);
+  ('phono_semantic', '形声文字', 'Phono-semantic', 'Meaning component + sound component', 4),
+  ('phonetic_loan', '仮借字', 'Phonetic Loan', 'Borrowed for sound', 5);
 
   INSERT INTO position_types (position_name, name_japanese, name_english, description_short, display_order) VALUES
   ('hen', '偏', 'Left side', 'Component on left side of kanji', 1),
@@ -358,4 +447,215 @@ function rowToComponent(row: unknown[]): Component {
     createdAt: row[11] as string,
     updatedAt: row[12] as string
   }
+}
+
+/**
+ * Seed an on-yomi reading into the test database
+ */
+export function seedOnReading(
+  db: Database,
+  kanjiId: number,
+  data: {
+    reading: string
+    readingLevel?: '小' | '中' | '高' | '外'
+    displayOrder?: number
+  }
+): number {
+  const { displayOrder = 0, reading, readingLevel = '小' } = data
+
+  db.run(
+    `INSERT INTO on_readings (kanji_id, reading, reading_level, display_order)
+     VALUES (?, ?, ?, ?)`,
+    [kanjiId, reading, readingLevel, displayOrder]
+  )
+
+  const result = db.exec('SELECT last_insert_rowid() as id')
+  return result[0]?.values[0]?.[0] as number
+}
+
+/**
+ * Seed a kun-yomi reading into the test database
+ */
+export function seedKunReading(
+  db: Database,
+  kanjiId: number,
+  data: {
+    reading: string
+    okurigana?: string | null
+    readingLevel?: '小' | '中' | '高' | '外'
+    displayOrder?: number
+  }
+): number {
+  const {
+    displayOrder = 0,
+    okurigana = null,
+    reading,
+    readingLevel = '小'
+  } = data
+
+  db.run(
+    `INSERT INTO kun_readings (kanji_id, reading, okurigana, reading_level, display_order)
+     VALUES (?, ?, ?, ?, ?)`,
+    [kanjiId, reading, okurigana, readingLevel, displayOrder]
+  )
+
+  const result = db.exec('SELECT last_insert_rowid() as id')
+  return result[0]?.values[0]?.[0] as number
+}
+
+/**
+ * Seed a meaning into the test database
+ */
+export function seedMeaning(
+  db: Database,
+  kanjiId: number,
+  data: {
+    meaningText: string
+    additionalInfo?: string | null
+    displayOrder?: number
+  }
+): number {
+  const { additionalInfo = null, displayOrder = 0, meaningText } = data
+
+  db.run(
+    `INSERT INTO kanji_meanings (kanji_id, meaning_text, additional_info, display_order)
+     VALUES (?, ?, ?, ?)`,
+    [kanjiId, meaningText, additionalInfo, displayOrder]
+  )
+
+  const result = db.exec('SELECT last_insert_rowid() as id')
+  return result[0]?.values[0]?.[0] as number
+}
+
+/**
+ * Seed a reading group into the test database
+ */
+export function seedReadingGroup(
+  db: Database,
+  kanjiId: number,
+  data: {
+    readingText: string
+    displayOrder?: number
+  }
+): number {
+  const { displayOrder = 0, readingText } = data
+
+  db.run(
+    `INSERT INTO kanji_meaning_reading_groups (kanji_id, reading_text, display_order)
+     VALUES (?, ?, ?)`,
+    [kanjiId, readingText, displayOrder]
+  )
+
+  const result = db.exec('SELECT last_insert_rowid() as id')
+  return result[0]?.values[0]?.[0] as number
+}
+
+/**
+ * Seed a group member (assign meaning to group) into the test database
+ */
+export function seedGroupMember(
+  db: Database,
+  readingGroupId: number,
+  meaningId: number,
+  displayOrder = 0
+): number {
+  db.run(
+    `INSERT INTO kanji_meaning_group_members (reading_group_id, meaning_id, display_order)
+     VALUES (?, ?, ?)`,
+    [readingGroupId, meaningId, displayOrder]
+  )
+
+  const result = db.exec('SELECT last_insert_rowid() as id')
+  return result[0]?.values[0]?.[0] as number
+}
+
+/**
+ * Seed a classification into the test database
+ */
+export function seedClassification(
+  db: Database,
+  kanjiId: number,
+  data: {
+    classificationTypeId: number
+    displayOrder?: number
+  }
+): number {
+  const { classificationTypeId, displayOrder = 0 } = data
+
+  db.run(
+    `INSERT INTO kanji_classifications (kanji_id, classification_type_id, display_order)
+     VALUES (?, ?, ?)`,
+    [kanjiId, classificationTypeId, displayOrder]
+  )
+
+  const result = db.exec('SELECT last_insert_rowid() as id')
+  return result[0]?.values[0]?.[0] as number
+}
+
+/**
+ * Seed a vocabulary entry into the test database
+ */
+export function seedVocabulary(
+  db: Database,
+  data: {
+    word: string
+    kana?: string | null
+    shortMeaning?: string | null
+    searchKeywords?: string | null
+    jlptLevel?: string | null
+    isCommon?: boolean
+    description?: string | null
+  }
+): number {
+  const {
+    description = null,
+    isCommon = false,
+    jlptLevel = null,
+    kana = null,
+    searchKeywords = null,
+    shortMeaning = null,
+    word
+  } = data
+
+  db.run(
+    `INSERT INTO vocabulary (word, kana, short_meaning, search_keywords,
+                             jlpt_level, is_common, description)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      word,
+      kana,
+      shortMeaning,
+      searchKeywords,
+      jlptLevel,
+      isCommon ? 1 : 0,
+      description
+    ]
+  )
+
+  const result = db.exec('SELECT last_insert_rowid() as id')
+  return result[0]?.values[0]?.[0] as number
+}
+
+/**
+ * Seed a vocab-kanji junction entry into the test database
+ */
+export function seedVocabKanji(
+  db: Database,
+  vocabId: number,
+  kanjiId: number,
+  data: {
+    analysisNotes?: string | null
+    displayOrder?: number
+  } = {}
+): number {
+  const { analysisNotes = null, displayOrder = 0 } = data
+
+  db.run(
+    `INSERT INTO vocab_kanji (vocab_id, kanji_id, analysis_notes, display_order)
+     VALUES (?, ?, ?, ?)`,
+    [vocabId, kanjiId, analysisNotes, displayOrder]
+  )
+
+  const result = db.exec('SELECT last_insert_rowid() as id')
+  return result[0]?.values[0]?.[0] as number
 }

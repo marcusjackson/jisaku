@@ -12,13 +12,14 @@ import { onMounted, ref, watch } from 'vue'
 import BaseSpinner from '@/base/components/BaseSpinner.vue'
 
 import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
+import { useClassificationRepository } from '@/shared/composables/use-classification-repository'
 import { useComponentRepository } from '@/shared/composables/use-component-repository'
 import { useDatabase } from '@/shared/composables/use-database'
 import { useFilterPersistence } from '@/shared/composables/use-filter-persistence'
+import { useKanjiRepository } from '@/shared/composables/use-kanji-repository'
 import { useRadicalRepository } from '@/shared/composables/use-radical-repository'
 
 import { useKanjiFilters } from '../composables/use-kanji-filters'
-import { useKanjiRepository } from '../composables/use-kanji-repository'
 
 import KanjiListSectionFilters from './KanjiListSectionFilters.vue'
 import KanjiListSectionGrid from './KanjiListSectionGrid.vue'
@@ -26,6 +27,7 @@ import KanjiListSectionGrid from './KanjiListSectionGrid.vue'
 import type {
   Component,
   Kanji,
+  KanjiClassificationWithType,
   KanjiFilters
 } from '@/shared/types/database-types'
 
@@ -39,6 +41,7 @@ useFilterPersistence('kanji-list')
 const { search } = useKanjiRepository()
 const { getAll: getAllComponents } = useComponentRepository()
 const { getAll: getAllRadicals } = useRadicalRepository()
+const { getPrimaryClassificationsForKanji } = useClassificationRepository()
 
 // Filter state
 const {
@@ -46,6 +49,8 @@ const {
   clearFilters,
   filters,
   hasActiveFilters,
+  kunYomiSearch,
+  onYomiSearch,
   searchKeywords,
   updateFilter
 } = useKanjiFilters()
@@ -54,6 +59,9 @@ const {
 const kanjiList = ref<Kanji[]>([])
 const components = ref<Component[]>([])
 const radicals = ref<Component[]>([])
+const classifications = ref<Map<number, KanjiClassificationWithType | null>>(
+  new Map()
+)
 const fetchError = ref<Error | null>(null)
 
 // Handler for filter updates from section component
@@ -65,6 +73,9 @@ function handleFilterUpdate(key: keyof KanjiFilters, value: unknown) {
 function loadKanji() {
   try {
     kanjiList.value = search(filters.value)
+    // Load primary classifications for all kanji in the list
+    const kanjiIds = kanjiList.value.map((k) => k.id)
+    classifications.value = getPrimaryClassificationsForKanji(kanjiIds)
   } catch (err) {
     fetchError.value = err instanceof Error ? err : new Error(String(err))
   }
@@ -94,6 +105,13 @@ watch(filters, () => {
     loadKanji()
   }
 })
+
+// Handler for seed data refresh
+function handleRefresh() {
+  loadComponents()
+  loadRadicals()
+  loadKanji()
+}
 
 // Initialize on mount
 onMounted(async () => {
@@ -139,17 +157,23 @@ onMounted(async () => {
       :components="components"
       :filters="filters"
       :has-active-filters="hasActiveFilters"
+      :kun-yomi-search="kunYomiSearch"
+      :on-yomi-search="onYomiSearch"
       :radicals="radicals"
       :search-keywords="searchKeywords"
       @clear-filters="clearFilters"
       @update-filter="handleFilterUpdate"
       @update:character-search="characterSearch = $event"
+      @update:kun-yomi-search="kunYomiSearch = $event"
+      @update:on-yomi-search="onYomiSearch = $event"
       @update:search-keywords="searchKeywords = $event"
     />
 
     <KanjiListSectionGrid
+      :classifications="classifications"
       :has-active-filters="hasActiveFilters"
       :kanji-list="kanjiList"
+      @refresh="handleRefresh"
     />
   </SharedPageContainer>
 </template>
