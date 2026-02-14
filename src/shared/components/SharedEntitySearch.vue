@@ -1,13 +1,14 @@
 <script setup lang="ts">
+/* eslint-disable max-lines -- Complex search/filter/create UI component */
 /**
  * SharedEntitySearch
  *
- * A searchable component for finding and selecting existing entities.
+ * A searchable combobox for finding and selecting existing entities.
  * Includes a "Create New" option that triggers the quick-create flow.
  *
  * Features:
  * - Search by character or meaning
- * - Keyboard navigation
+ * - Keyboard navigation via Reka UI Combobox
  * - "Create New" option at bottom
  * - Exclude already-linked IDs
  */
@@ -28,10 +29,16 @@ import {
   useFilter
 } from 'reka-ui'
 
-// Re-export types from component-types for backward compatibility
-export type { EntityOption, EntityType } from '@/shared/types/component-types'
+/** Entity type for entity search */
+export type EntityType = 'kanji' | 'component'
 
-import type { EntityOption, EntityType } from '@/shared/types/component-types'
+/** Entity option for entity search */
+export interface EntityOption {
+  id: number
+  character: string
+  shortMeaning: string | null
+  strokeCount: number | null
+}
 
 const props = withDefaults(
   defineProps<{
@@ -70,19 +77,13 @@ const { contains } = useFilter({ sensitivity: 'base' })
 
 // Filter options based on search term and exclusions
 const filteredOptions = computed(() => {
-  // First, filter out excluded IDs
   let filtered = props.options.filter(
     (opt) => !props.excludeIds.includes(opt.id)
   )
 
-  // Then filter by search term if any
   if (searchTerm.value.trim()) {
     filtered = filtered.filter((opt) => {
-      // Search in character
-      if (contains(opt.character, searchTerm.value)) {
-        return true
-      }
-      // Search in short meaning
+      if (contains(opt.character, searchTerm.value)) return true
       if (opt.shortMeaning && contains(opt.shortMeaning, searchTerm.value)) {
         return true
       }
@@ -101,16 +102,23 @@ function formatOption(opt: EntityOption): string {
   return `${meaning}${stroke}`
 }
 
-// Handle selection
-function handleSelect(option: EntityOption | null) {
+// Handle selection - can be triggered by update:model-value or @select
+function handleSelect(option: EntityOption | null): void {
   if (option) {
     emit('select', option)
     searchTerm.value = ''
   }
 }
 
+// Handle item select event directly (more reliable than update:model-value)
+function handleItemSelect(event: Event, option: EntityOption): void {
+  // Prevent default to avoid double-firing with update:model-value
+  event.preventDefault()
+  handleSelect(option)
+}
+
 // Handle "Create New" click
-function handleCreateNew() {
+function handleCreateNew(): void {
   emit('createNew', searchTerm.value.trim())
   searchTerm.value = ''
 }
@@ -126,15 +134,6 @@ const entityTypeName = computed(() => {
       return 'Entity'
   }
 })
-
-// Build props object for ComboboxRoot
-const comboboxRootProps = computed(() => {
-  const rootProps: Record<string, unknown> = {
-    disabled: props.disabled,
-    ignoreFilter: true // We're doing custom filtering
-  }
-  return rootProps
-})
 </script>
 
 <template>
@@ -148,7 +147,8 @@ const comboboxRootProps = computed(() => {
     </label>
 
     <ComboboxRoot
-      v-bind="comboboxRootProps"
+      :disabled="disabled ?? false"
+      ignore-filter
       :model-value="null"
       @update:model-value="handleSelect"
     >
@@ -186,12 +186,12 @@ const comboboxRootProps = computed(() => {
           :side-offset="4"
         >
           <ComboboxViewport class="shared-entity-search-viewport">
-            <!-- Entity Results -->
             <ComboboxItem
               v-for="option in filteredOptions"
               :key="option.id"
               class="shared-entity-search-item"
               :value="option"
+              @select="(event: Event) => handleItemSelect(event, option)"
             >
               <ComboboxItemIndicator
                 class="shared-entity-search-item-indicator"
@@ -217,12 +217,10 @@ const comboboxRootProps = computed(() => {
               }}</span>
             </ComboboxItem>
 
-            <!-- Empty state -->
             <ComboboxEmpty class="shared-entity-search-empty">
               No {{ entityTypeName.toLowerCase() }} found
             </ComboboxEmpty>
 
-            <!-- Create New Option -->
             <div class="shared-entity-search-create-separator" />
             <button
               class="shared-entity-search-create-button"
@@ -315,11 +313,8 @@ const comboboxRootProps = computed(() => {
 }
 </style>
 
-<!-- 
-  Global styles for content rendered via Portal/Teleport.
-  These cannot be scoped because the content is rendered outside the component tree.
--->
 <style>
+/* Global styles for portaled content */
 .shared-entity-search-content {
   z-index: var(--z-dropdown);
   min-width: 250px;

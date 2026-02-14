@@ -1,17 +1,42 @@
-import { fireEvent, render, screen } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+/**
+ * Tests for BaseFileInput component
+ *
+ * TDD tests for file upload with preview and validation.
+ * Note: jsdom has limitations with File API (arrayBuffer) and DragEvent,
+ * so file upload is tested via modelValue prop and E2E tests cover the rest.
+ */
+
+import userEvent from '@testing-library/user-event'
+import { render, screen, waitFor } from '@testing-library/vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import BaseFileInput from './BaseFileInput.vue'
 
+// Mock URL.createObjectURL and revokeObjectURL
+const mockCreateObjectURL = vi.fn()
+const mockRevokeObjectURL = vi.fn()
+
 describe('BaseFileInput', () => {
-  // Mock URL.createObjectURL since it's not available in jsdom
   beforeEach(() => {
-    global.URL.createObjectURL = vi.fn(() => 'blob:mock-url')
-    global.URL.revokeObjectURL = vi.fn()
+    vi.clearAllMocks()
+    mockCreateObjectURL.mockReturnValue('blob:test-url')
+    globalThis.URL.createObjectURL = mockCreateObjectURL
+    globalThis.URL.revokeObjectURL = mockRevokeObjectURL
   })
 
-  describe('rendering', () => {
-    it('renders with label', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  describe('core file input functionality (Task 1.1)', () => {
+    it('renders file input with drop zone', () => {
+      render(BaseFileInput)
+
+      expect(screen.getByTestId('file-input-drop-zone')).toBeInTheDocument()
+      expect(screen.getByRole('button')).toBeInTheDocument()
+    })
+
+    it('renders with label when provided', () => {
       render(BaseFileInput, {
         props: { label: 'Upload Image' }
       })
@@ -19,187 +44,198 @@ describe('BaseFileInput', () => {
       expect(screen.getByText('Upload Image')).toBeInTheDocument()
     })
 
-    it('renders empty state by default', () => {
-      render(BaseFileInput)
-
-      expect(
-        screen.getByText('Drop image here or click to browse')
-      ).toBeInTheDocument()
-    })
-
-    it('renders hidden file input', () => {
-      render(BaseFileInput)
-
-      const input = document.querySelector('input[type="file"]')
-      expect(input).toBeInTheDocument()
-    })
-
-    it('passes accept prop to file input', () => {
-      render(BaseFileInput, {
-        props: { accept: 'image/*' }
-      })
-
-      const input = document.querySelector('input[type="file"]')
-      expect(input).toHaveAttribute('accept', 'image/*')
-    })
-
-    it('shows max size in hint text', () => {
-      render(BaseFileInput, {
-        props: { maxSizeBytes: 5 * 1024 * 1024 } // 5MB
-      })
-
-      expect(screen.getByText(/PNG, JPG, GIF up to 5MB/)).toBeInTheDocument()
-    })
-  })
-
-  describe('disabled state', () => {
-    it('applies disabled styles when disabled', () => {
-      render(BaseFileInput, {
-        props: { disabled: true }
-      })
-
-      const dropZone = document.querySelector('[role="button"]')
-      expect(dropZone).toHaveAttribute('aria-disabled', 'true')
-      expect(dropZone).toHaveAttribute('tabindex', '-1')
-    })
-
-    it('disables file input when disabled', () => {
-      render(BaseFileInput, {
-        props: { disabled: true }
-      })
-
-      const input = document.querySelector('input[type="file"]')
-      expect(input).toBeDisabled()
-    })
-  })
-
-  describe('error state', () => {
-    it('displays error message', () => {
-      render(BaseFileInput, {
-        props: { error: 'Invalid file type' }
-      })
-
-      expect(screen.getByRole('alert')).toHaveTextContent('Invalid file type')
-    })
-
-    it('associates error with drop zone via aria-describedby', () => {
-      render(BaseFileInput, {
-        props: { error: 'Invalid file' }
-      })
-
-      const dropZone = document.querySelector('[role="button"]')
-      const errorId = dropZone?.getAttribute('aria-describedby')
-      expect(errorId).toBeTruthy()
-      expect(document.getElementById(errorId!)).toHaveTextContent(
-        'Invalid file'
-      )
-    })
-
-    it('applies error class to drop zone', () => {
-      render(BaseFileInput, {
-        props: { error: 'Error message' }
-      })
-
-      const dropZone = document.querySelector('[role="button"]')
-      expect(dropZone).toHaveClass('base-file-input-drop-zone-error')
-    })
-  })
-
-  describe('preview state', () => {
-    it('shows preview when modelValue is provided', () => {
-      const testData = new Uint8Array([1, 2, 3, 4])
-      render(BaseFileInput, {
-        props: { modelValue: testData }
-      })
-
-      // Preview should show image
-      const previewImage = document.querySelector('img[alt="Preview"]')
-      expect(previewImage).toBeInTheDocument()
-      expect(previewImage).toHaveAttribute('src', 'blob:mock-url')
-    })
-
-    it('shows remove button when file is present', () => {
-      const testData = new Uint8Array([1, 2, 3, 4])
-      render(BaseFileInput, {
-        props: { modelValue: testData }
-      })
-
-      expect(
-        screen.getByRole('button', { name: /remove/i })
-      ).toBeInTheDocument()
-    })
-  })
-
-  describe('file removal', () => {
-    it('emits null when remove button is clicked', async () => {
-      const onUpdate = vi.fn()
-      const testData = new Uint8Array([1, 2, 3, 4])
+    it('displays preview when modelValue is provided', async () => {
+      const testData = new Uint8Array([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a
+      ]) // PNG magic bytes
 
       render(BaseFileInput, {
         props: {
-          modelValue: testData,
+          modelValue: testData
+        }
+      })
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('file-input-preview')).toBeInTheDocument()
+      })
+
+      expect(mockCreateObjectURL).toHaveBeenCalled()
+    })
+
+    it('revokes previous blob URL when data changes', async () => {
+      const data1 = new Uint8Array([0x89, 0x50, 0x4e, 0x47])
+      const data2 = new Uint8Array([0xff, 0xd8, 0xff])
+
+      mockCreateObjectURL.mockReturnValueOnce('blob:url1')
+      mockCreateObjectURL.mockReturnValueOnce('blob:url2')
+
+      const { rerender } = render(BaseFileInput, {
+        props: { modelValue: data1 }
+      })
+
+      await waitFor(() => {
+        expect(mockCreateObjectURL).toHaveBeenCalledTimes(1)
+      })
+
+      await rerender({ modelValue: data2 })
+
+      await waitFor(() => {
+        expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:url1')
+        expect(mockCreateObjectURL).toHaveBeenCalledTimes(2)
+      })
+    })
+
+    it('provides remove button to clear the file', async () => {
+      const user = userEvent.setup()
+      const onUpdate = vi.fn()
+
+      render(BaseFileInput, {
+        props: {
+          modelValue: new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
           'onUpdate:modelValue': onUpdate
         }
       })
 
-      const removeButton = screen.getByRole('button', { name: /remove/i })
-      await fireEvent.click(removeButton)
+      await waitFor(() => {
+        expect(screen.getByTestId('file-input-remove')).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByTestId('file-input-remove'))
 
       expect(onUpdate).toHaveBeenCalledWith(null)
     })
-  })
 
-  describe('keyboard accessibility', () => {
-    it('triggers file input on Enter key', async () => {
+    it('shows empty state when no file is uploaded', () => {
       render(BaseFileInput)
 
-      const dropZone = document.querySelector('[role="button"]')!
-      const input = document.querySelector('input[type="file"]')!
-      const clickSpy = vi.spyOn(input as HTMLInputElement, 'click')
-
-      await fireEvent.keyDown(dropZone, { key: 'Enter' })
-
-      expect(clickSpy).toHaveBeenCalled()
-    })
-
-    it('triggers file input on Space key', async () => {
-      render(BaseFileInput)
-
-      const dropZone = document.querySelector('[role="button"]')!
-      const input = document.querySelector('input[type="file"]')!
-      const clickSpy = vi.spyOn(input as HTMLInputElement, 'click')
-
-      await fireEvent.keyDown(dropZone, { key: ' ' })
-
-      expect(clickSpy).toHaveBeenCalled()
-    })
-
-    it('is focusable', () => {
-      render(BaseFileInput)
-
-      const dropZone = document.querySelector('[role="button"]')
-      expect(dropZone).toHaveAttribute('tabindex', '0')
+      expect(screen.getByText(/drag.*drop|click.*upload/i)).toBeInTheDocument()
     })
   })
 
-  describe('drag and drop visual feedback', () => {
-    it('adds dragging class on dragover', async () => {
-      render(BaseFileInput)
+  describe('blob URL cleanup (Task 1.1)', () => {
+    it('revokes blob URL on unmount', async () => {
+      const data = new Uint8Array([0x89, 0x50, 0x4e, 0x47])
+      mockCreateObjectURL.mockReturnValue('blob:cleanup-test')
 
-      const dropZone = document.querySelector('[role="button"]')!
-      await fireEvent.dragOver(dropZone)
+      const { unmount } = render(BaseFileInput, {
+        props: { modelValue: data }
+      })
 
-      expect(dropZone).toHaveClass('base-file-input-drop-zone-dragging')
+      await waitFor(() => {
+        expect(mockCreateObjectURL).toHaveBeenCalled()
+      })
+
+      unmount()
+
+      expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:cleanup-test')
+    })
+  })
+
+  describe('MIME type detection (Task 1.1)', () => {
+    it('detects PNG from magic bytes', async () => {
+      // PNG magic bytes: 89 50 4E 47 0D 0A 1A 0A
+      const pngData = new Uint8Array([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a
+      ])
+
+      render(BaseFileInput, {
+        props: { modelValue: pngData }
+      })
+
+      await waitFor(() => {
+        expect(mockCreateObjectURL).toHaveBeenCalled()
+      })
+
+      // Check that blob was created with image/png type
+      const blobArg = mockCreateObjectURL.mock.calls[0]?.[0] as Blob
+      expect(blobArg).toBeInstanceOf(Blob)
+      expect(blobArg.type).toBe('image/png')
     })
 
-    it('removes dragging class on dragleave', async () => {
+    it('detects JPEG from magic bytes', async () => {
+      // JPEG magic bytes: FF D8 FF
+      const jpegData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00])
+
+      render(BaseFileInput, {
+        props: { modelValue: jpegData }
+      })
+
+      await waitFor(() => {
+        expect(mockCreateObjectURL).toHaveBeenCalled()
+      })
+
+      const blobArg = mockCreateObjectURL.mock.calls[0]?.[0] as Blob
+      expect(blobArg).toBeInstanceOf(Blob)
+      expect(blobArg.type).toBe('image/jpeg')
+    })
+
+    it('detects GIF from magic bytes', async () => {
+      // GIF magic bytes: 47 49 46 38
+      const gifData = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61])
+
+      render(BaseFileInput, {
+        props: { modelValue: gifData }
+      })
+
+      await waitFor(() => {
+        expect(mockCreateObjectURL).toHaveBeenCalled()
+      })
+
+      const blobArg = mockCreateObjectURL.mock.calls[0]?.[0] as Blob
+      expect(blobArg).toBeInstanceOf(Blob)
+      expect(blobArg.type).toBe('image/gif')
+    })
+  })
+
+  describe('validation and accessibility (Task 1.2)', () => {
+    it('has accessible file input with correct accept attribute', () => {
+      render(BaseFileInput, {
+        props: { accept: 'image/gif' }
+      })
+
+      const input = screen.getByTestId('file-input-hidden')
+      expect(input).toHaveAttribute('accept', 'image/gif')
+    })
+
+    it('disables the input when disabled prop is true', () => {
+      render(BaseFileInput, {
+        props: { disabled: true }
+      })
+
+      const input = screen.getByTestId('file-input-hidden')
+      expect(input).toBeDisabled()
+    })
+
+    it('shows error message when provided via prop', () => {
+      render(BaseFileInput, {
+        props: { error: 'Invalid file type' }
+      })
+
+      expect(screen.getByText('Invalid file type')).toBeInTheDocument()
+    })
+
+    it('has a focusable browse button', () => {
       render(BaseFileInput)
 
-      const dropZone = document.querySelector('[role="button"]')!
-      await fireEvent.dragOver(dropZone)
-      await fireEvent.dragLeave(dropZone)
+      const browseButton = screen.getByRole('button', { name: /browse/i })
+      expect(browseButton).toBeInTheDocument()
+      // Button should not be disabled
+      expect(browseButton).not.toBeDisabled()
+    })
 
-      expect(dropZone).not.toHaveClass('base-file-input-drop-zone-dragging')
+    it('has remove button with proper aria-label', async () => {
+      render(BaseFileInput, {
+        props: {
+          modelValue: new Uint8Array([0x89, 0x50, 0x4e, 0x47])
+        }
+      })
+
+      await waitFor(() => {
+        expect(screen.getByTestId('file-input-remove')).toBeInTheDocument()
+      })
+
+      const removeButton = screen.getByLabelText('Remove file')
+      expect(removeButton).toBeInTheDocument()
     })
   })
 })

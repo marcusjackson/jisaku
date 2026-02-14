@@ -11,23 +11,23 @@ import BaseTextarea from './BaseTextarea.vue'
 describe('BaseTextarea', () => {
   it('renders with label', () => {
     render(BaseTextarea, {
-      props: { label: 'Notes' }
+      props: { label: 'Description' }
     })
 
-    expect(screen.getByLabelText('Notes')).toBeInTheDocument()
+    expect(screen.getByLabelText('Description')).toBeInTheDocument()
   })
 
   it('renders without label', () => {
     render(BaseTextarea, {
-      props: { placeholder: 'Enter notes...' }
+      props: { placeholder: 'Enter description' }
     })
 
-    expect(screen.getByPlaceholderText('Enter notes...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Enter description')).toBeInTheDocument()
   })
 
   it('displays required indicator', () => {
     render(BaseTextarea, {
-      props: { label: 'Notes', required: true }
+      props: { label: 'Description', required: true }
     })
 
     expect(screen.getByText('*')).toBeInTheDocument()
@@ -35,10 +35,10 @@ describe('BaseTextarea', () => {
 
   it('renders error message', () => {
     render(BaseTextarea, {
-      props: { error: 'Notes are required', label: 'Notes' }
+      props: { error: 'This field is required', label: 'Description' }
     })
 
-    expect(screen.getByText('Notes are required')).toBeInTheDocument()
+    expect(screen.getByText('This field is required')).toBeInTheDocument()
     expect(screen.getByRole('textbox')).toHaveAttribute(
       'aria-describedby',
       expect.stringContaining('error')
@@ -47,7 +47,7 @@ describe('BaseTextarea', () => {
 
   it('disables textarea when disabled prop is true', () => {
     render(BaseTextarea, {
-      props: { disabled: true, label: 'Notes' }
+      props: { disabled: true, label: 'Description' }
     })
 
     expect(screen.getByRole('textbox')).toBeDisabled()
@@ -59,37 +59,55 @@ describe('BaseTextarea', () => {
 
     render(BaseTextarea, {
       props: {
-        label: 'Notes',
+        label: 'Description',
         modelValue: '',
         'onUpdate:modelValue': onUpdate
       }
     })
 
-    await user.type(screen.getByRole('textbox'), 'Test note')
+    await user.type(screen.getByRole('textbox'), 'Test text')
     expect(onUpdate).toHaveBeenCalled()
-  })
-
-  it('renders with custom rows', () => {
-    render(BaseTextarea, {
-      props: { label: 'Notes', rows: 8 }
-    })
-
-    expect(screen.getByRole('textbox')).toHaveAttribute('rows', '8')
   })
 
   it('applies error styling when error is present', () => {
     render(BaseTextarea, {
-      props: { error: 'Error message', label: 'Notes' }
+      props: { error: 'Error', label: 'Description' }
     })
 
-    expect(screen.getByRole('textbox')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('textbox')).toHaveClass('base-textarea-field-error')
   })
 
-  it('has default rows of 4', () => {
+  it('applies disabled styling when disabled', () => {
     render(BaseTextarea, {
-      props: { label: 'Notes' }
+      props: { disabled: true, label: 'Description' }
+    })
+
+    expect(screen.getByRole('textbox')).toHaveClass(
+      'base-textarea-field-disabled'
+    )
+  })
+
+  it('passes name attribute to textarea', () => {
+    render(BaseTextarea, {
+      props: { label: 'Description', name: 'description' }
+    })
+
+    expect(screen.getByRole('textbox')).toHaveAttribute('name', 'description')
+  })
+
+  it('uses default rows when not specified', () => {
+    render(BaseTextarea, {
+      props: { label: 'Description' }
     })
 
     expect(screen.getByRole('textbox')).toHaveAttribute('rows', '4')
+  })
+
+  it('uses custom rows when specified', () => {
+    render(BaseTextarea, {
+      props: { label: 'Description', rows: 6 }
+    })
+
+    expect(screen.getByRole('textbox')).toHaveAttribute('rows', '6')
   })
 })

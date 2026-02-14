@@ -24,7 +24,7 @@ import {
 
 const props = defineProps<{
   /** Initial character value (optional, for pre-filling) */
-  initialCharacter?: string
+  initialCharacter?: string | undefined
 }>()
 
 const emit = defineEmits<{
@@ -80,7 +80,7 @@ const onSubmit = handleSubmit((formValues: QuickCreateComponentData) => {
   open.value = false
 })
 
-function handleCancel() {
+function handleCancel(): void {
   resetForm()
   emit('cancel')
   open.value = false

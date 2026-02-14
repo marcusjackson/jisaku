@@ -6,6 +6,26 @@ A personal tool for building your own Japanese language reference through resear
 
 ---
 
+## ⚠️ Refactoring In Progress
+
+This project is undergoing a major UI refactoring. Two versions are available during the transition:
+
+| Version    | URL Prefix  | Status                              |
+| ---------- | ----------- | ----------------------------------- |
+| **New UI** | `/`         | Under construction (coming soon)    |
+| **Legacy** | `/legacy/*` | Fully functional, existing features |
+
+**What this means:**
+
+- The app defaults to the legacy UI at `/legacy/kanji`
+- New routes will show a "Coming Soon" placeholder
+- All existing functionality remains available via legacy routes
+- Once new UI is complete, legacy will be removed
+
+See `docs/refactor/` for detailed migration plans.
+
+---
+
 ## What This Is
 
 This is a tool I built for myself to research and document kanji. Instead of consuming pre-made dictionary content, I wanted to build my own reference by hand — researching etymologies, analyzing components, documenting patterns as I find them.
@@ -97,32 +117,32 @@ Built with Vue 3, TypeScript, and sql.js (SQLite in WebAssembly). Everything run
 
 ```
 src/
-├── modules/                    # Feature modules
-│   ├── kanji/                  # Kanji CRUD and analysis
-│   ├── kanji-list/             # Kanji browsing and search
-│   ├── component/              # Component management and analysis
-│   ├── component-list/         # Component browsing and search
-│   ├── vocabulary/             # Vocabulary CRUD
-│   ├── vocabulary-list/        # Vocabulary browsing and search
-│   └── settings/               # App settings, DB export/import
+├── api/                        # API layer (repositories, types) - NEW
+│   ├── kanji/                  # Kanji repository
+│   ├── component/              # Component repository
+│   ├── vocabulary/             # Vocabulary repository
+│   └── ...                     # Other entity repositories
+├── modules/                    # Feature modules (NEW UI)
+├── pages/                      # Route entry points (NEW UI)
 ├── base/                       # Generic, reusable components
-│   ├── components/             # BaseButton, BaseInput, etc.
-│   ├── composables/            # useLocalStorage, useMediaQuery, etc.
-│   └── utils/                  # Generic utilities
 ├── shared/                     # App-specific shared code
-│   ├── components/             # SharedHeader, SharedPageContainer
-│   ├── composables/            # useDatabase, useNotification
-│   ├── types/                  # Database types, app types
-│   ├── utils/                  # Kanji formatters, DB helpers
-│   ├── validation/             # Common zod schemas
-│   └── constants/              # App-wide constants
-├── pages/                      # Route entry points
-├── router/                     # Vue Router configuration
-├── assets/                     # Static assets
-└── styles/                     # Global styles, design tokens
+├── db/                         # Database layer
+├── router/                     # Vue Router (dual routing)
+├── styles/                     # Global styles, design tokens
+└── legacy/                     # Legacy UI (during refactoring)
+    ├── modules/                # Legacy feature modules
+    ├── pages/                  # Legacy route entry points
+    ├── base/                   # Legacy base components
+    ├── shared/                 # Legacy shared code
+    └── styles/                 # Legacy styles
 
-docs/                           # Documentation
-e2e/                            # Playwright E2E tests
+e2e/
+├── legacy/                     # Legacy E2E tests
+└── (new tests will go here)
+
+docs/
+├── refactor/                   # Refactoring plans and guidelines
+└── ...                         # Other documentation
 ```
 
 ## 🚀 Getting Started
@@ -149,14 +169,16 @@ pnpm dev
 ### Available Scripts
 
 ```bash
-pnpm dev          # Start dev server
-pnpm build        # Build for production
-pnpm preview      # Preview production build
-pnpm test         # Run unit tests
-pnpm test:e2e     # Run E2E tests
-pnpm lint         # Lint code
-pnpm lint:css     # Lint CSS
-pnpm format       # Format code
+pnpm dev            # Start dev server
+pnpm build          # Build for production
+pnpm preview        # Preview production build
+pnpm test           # Run unit tests
+pnpm test:e2e       # Run E2E tests (new UI)
+pnpm test:e2e:legacy  # Run E2E tests (legacy UI)
+pnpm lint           # Lint code (excludes legacy)
+pnpm lint:legacy    # Lint legacy code
+pnpm lint:css       # Lint CSS
+pnpm format         # Format code
 ```
 
 ### Development Workflow

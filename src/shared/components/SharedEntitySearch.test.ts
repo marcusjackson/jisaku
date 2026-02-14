@@ -1,87 +1,84 @@
 /**
  * Tests for SharedEntitySearch component
  *
- * Note: SharedEntitySearch uses Reka UI ComboboxPortal which renders outside the component tree.
+ * Note: SharedEntitySearch uses Reka UI Combobox with portal.
  * These tests use Vue Test Utils with stubs to avoid portal issues.
  * Full behavior is tested via E2E tests.
  */
 
 import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import SharedEntitySearch from './SharedEntitySearch.vue'
 
-import type { EntityOption } from '@/shared/types/component-types'
+import type { EntityOption } from './SharedEntitySearch.vue'
+
+// Mock Reka UI components that use portals
+vi.mock('reka-ui', () => ({
+  ComboboxAnchor: {
+    template: '<div class="combobox-anchor"><slot /></div>'
+  },
+  ComboboxContent: {
+    props: ['position', 'sideOffset'],
+    template: '<div class="combobox-content"><slot /></div>'
+  },
+  ComboboxEmpty: {
+    template: '<div class="combobox-empty"><slot /></div>'
+  },
+  ComboboxInput: {
+    props: ['id', 'modelValue', 'placeholder'],
+    emits: ['update:modelValue'],
+    template: `<input 
+      :id="id"
+      :value="modelValue" 
+      :placeholder="placeholder"
+      @input="$emit('update:modelValue', $event.target.value)"
+      data-testid="search-input"
+    />`
+  },
+  ComboboxItem: {
+    props: ['value'],
+    template:
+      '<div class="combobox-item" @click="$emit(\'click\')"><slot /></div>'
+  },
+  ComboboxItemIndicator: {
+    template: '<span class="combobox-item-indicator"><slot /></span>'
+  },
+  ComboboxPortal: {
+    template: '<div class="combobox-portal"><slot /></div>'
+  },
+  ComboboxRoot: {
+    props: ['modelValue', 'disabled', 'ignoreFilter'],
+    emits: ['update:modelValue'],
+    template: '<div class="combobox-root"><slot /></div>'
+  },
+  ComboboxTrigger: {
+    props: ['ariaLabel'],
+    template:
+      '<button class="combobox-trigger" :aria-label="ariaLabel"><slot /></button>'
+  },
+  ComboboxViewport: {
+    template: '<div class="combobox-viewport"><slot /></div>'
+  },
+  useFilter: () => ({
+    contains: (text: string, search: string) =>
+      text.toLowerCase().includes(search.toLowerCase())
+  })
+}))
 
 describe('SharedEntitySearch', () => {
   const mockOptions: EntityOption[] = [
-    { id: 1, character: '日', shortMeaning: 'sun, day', strokeCount: 4 },
-    { id: 2, character: '月', shortMeaning: 'moon, month', strokeCount: 4 },
-    { id: 3, character: '水', shortMeaning: 'water', strokeCount: 4 },
-    { id: 4, character: '火', shortMeaning: 'fire', strokeCount: 4 },
-    { id: 5, character: '木', shortMeaning: null, strokeCount: 4 }
+    { id: 1, character: '明', shortMeaning: 'bright', strokeCount: 8 },
+    { id: 2, character: '暗', shortMeaning: 'dark', strokeCount: 13 },
+    { id: 3, character: '日', shortMeaning: 'sun', strokeCount: 4 }
   ]
 
   function mountComponent(props = {}) {
     return mount(SharedEntitySearch, {
       props: {
-        entityType: 'kanji',
+        entityType: 'kanji' as const,
         options: mockOptions,
         ...props
-      },
-      global: {
-        stubs: {
-          ComboboxRoot: {
-            props: ['modelValue', 'disabled', 'ignoreFilter'],
-            emits: ['update:modelValue'],
-            template: `
-              <div data-testid="combobox-root">
-                <slot />
-              </div>
-            `
-          },
-          ComboboxAnchor: {
-            template: '<div class="anchor"><slot /></div>'
-          },
-          ComboboxInput: {
-            props: ['modelValue', 'placeholder', 'id'],
-            emits: ['update:modelValue'],
-            template: `
-              <input 
-                :id="id"
-                :value="modelValue" 
-                :placeholder="placeholder"
-                @input="$emit('update:modelValue', $event.target.value)"
-                data-testid="search-input"
-              />
-            `
-          },
-          ComboboxTrigger: {
-            props: ['ariaLabel'],
-            template: '<button aria-label="Toggle options"><slot /></button>'
-          },
-          ComboboxPortal: {
-            template: '<div data-testid="portal"><slot /></div>'
-          },
-          ComboboxContent: {
-            props: ['position', 'sideOffset'],
-            template: '<div data-testid="content"><slot /></div>'
-          },
-          ComboboxViewport: {
-            template: '<div data-testid="viewport"><slot /></div>'
-          },
-          ComboboxItem: {
-            props: ['value'],
-            template:
-              '<div class="item" data-testid="option" @click="$emit(\'select\', value)"><slot /></div>'
-          },
-          ComboboxItemIndicator: {
-            template: '<span class="indicator"><slot /></span>'
-          },
-          ComboboxEmpty: {
-            template: '<div class="empty" data-testid="empty"><slot /></div>'
-          }
-        }
       }
     })
   }
@@ -92,56 +89,52 @@ describe('SharedEntitySearch', () => {
   })
 
   it('renders with custom placeholder', () => {
-    const wrapper = mountComponent({ placeholder: 'Search kanji...' })
-    expect(
-      wrapper.find('[data-testid="search-input"]').attributes('placeholder')
-    ).toBe('Search kanji...')
+    const wrapper = mountComponent({ placeholder: 'Find kanji...' })
+    const input = wrapper.find('[data-testid="search-input"]')
+    expect(input.attributes('placeholder')).toBe('Find kanji...')
   })
 
   it('renders label when provided', () => {
-    const wrapper = mountComponent({ label: 'Add Component' })
-    expect(wrapper.text()).toContain('Add Component')
+    const wrapper = mountComponent({ label: 'Search Kanji' })
+    expect(wrapper.find('.shared-entity-search-label').text()).toBe(
+      'Search Kanji'
+    )
   })
 
-  it('renders options', () => {
+  it('renders all options when no search term', () => {
     const wrapper = mountComponent()
-    const options = wrapper.findAll('[data-testid="option"]')
-    expect(options.length).toBe(5)
+    const items = wrapper.findAll('.combobox-item')
+    expect(items).toHaveLength(mockOptions.length)
   })
 
-  it('renders "Create New" button', () => {
+  it('renders create new button', () => {
     const wrapper = mountComponent()
-    expect(wrapper.text()).toContain('Create New Kanji')
+    const createButton = wrapper.find('.shared-entity-search-create-button')
+    expect(createButton.exists()).toBe(true)
+    expect(createButton.text()).toContain('Create New Kanji')
   })
 
-  it('renders empty state message for kanji', () => {
-    const wrapper = mountComponent({ options: [] })
-    expect(wrapper.text()).toContain('No kanji found')
-  })
-
-  it('renders empty state message for component', () => {
-    const wrapper = mountComponent({ entityType: 'component', options: [] })
-    expect(wrapper.text()).toContain('No component found')
-  })
-
-  it('emits createNew event when create button clicked', async () => {
+  it('emits createNew when create button is clicked', async () => {
     const wrapper = mountComponent()
     const createButton = wrapper.find('.shared-entity-search-create-button')
     await createButton.trigger('click')
     expect(wrapper.emitted('createNew')).toBeTruthy()
-    expect(wrapper.emitted('createNew')?.[0]).toEqual([''])
   })
 
   it('excludes specified IDs from options', () => {
     const wrapper = mountComponent({ excludeIds: [1, 2] })
-    // The component should filter out options with IDs 1 and 2
-    const options = wrapper.findAll('[data-testid="option"]')
-    // Should have 3 options instead of 5
-    expect(options.length).toBe(3)
+    const items = wrapper.findAll('.combobox-item')
+    expect(items).toHaveLength(1)
   })
 
-  it('shows entity type in create button', () => {
+  it('shows component entity type name', () => {
     const wrapper = mountComponent({ entityType: 'component' })
-    expect(wrapper.text()).toContain('Create New Component')
+    const createButton = wrapper.find('.shared-entity-search-create-button')
+    expect(createButton.text()).toContain('Create New Component')
+  })
+
+  it('displays empty message for component type', () => {
+    const wrapper = mountComponent({ entityType: 'component', options: [] })
+    expect(wrapper.find('.combobox-empty').text()).toBe('No component found')
   })
 })

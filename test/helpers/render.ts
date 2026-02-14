@@ -35,7 +35,15 @@ const testRoutes: RouteRecordRaw[] = [
   { path: '/components/:id/edit', component: { template: '<div />' } },
   { path: '/vocabulary', component: { template: '<div />' } },
   { path: '/vocabulary/:id', component: { template: '<div />' } },
-  { path: '/settings', component: { template: '<div />' } }
+  { path: '/settings', component: { template: '<div />' } },
+  // Legacy routes for version toggle testing
+  { path: '/legacy', component: { template: '<div />' } },
+  { path: '/legacy/kanji', component: { template: '<div />' } },
+  { path: '/legacy/components', component: { template: '<div />' } },
+  { path: '/legacy/vocabulary', component: { template: '<div />' } },
+  { path: '/legacy/settings', component: { template: '<div />' } },
+  // Coming soon for new UI testing
+  { path: '/coming-soon', component: { template: '<div />' } }
 ]
 
 /**

@@ -36,3 +36,33 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => true
   })
 })
+
+// Mock ResizeObserver for jsdom (not implemented)
+// This is needed for Reka UI Tooltip and other components
+class ResizeObserverMock {
+  observe() {
+    // No-op
+  }
+  unobserve() {
+    // No-op
+  }
+  disconnect() {
+    // No-op
+  }
+}
+global.ResizeObserver = ResizeObserverMock
+
+// Mock URL.createObjectURL and revokeObjectURL for jsdom
+// This is needed for blob URL creation in file input components
+let urlCounter = 0
+const urlMap = new Map<string, Blob>()
+
+global.URL.createObjectURL = (blob: Blob): string => {
+  const url = `blob:mock-url-${String(urlCounter++)}`
+  urlMap.set(url, blob)
+  return url
+}
+
+global.URL.revokeObjectURL = (url: string): void => {
+  urlMap.delete(url)
+}

@@ -2,62 +2,82 @@
 /**
  * SettingsSectionDevTools
  *
- * Section component for developer tools in settings.
- * Provides seed/clear/reset database functionality.
+ * Section component for developer tools (DEV mode only).
+ * Handles seed and clear operations via events.
  */
 
-import { computed } from 'vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import BaseButton from '@/base/components/BaseButton.vue'
 
 import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
-import { useSeedData } from '@/shared/composables/use-seed-data'
+import SharedSection from '@/shared/components/SharedSection.vue'
 
-const { clear, isClearing, isSeeding, seed } = useSeedData()
+interface Props {
+  isSeeding: boolean
+  isClearing: boolean
+}
 
-// Clear confirmation dialog
+const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  'seed-data': []
+  'clear-data': []
+}>()
+
 const showClearDialog = ref(false)
 
-function handleClearClick() {
+const seedDisabled = computed(() => props.isSeeding || props.isClearing)
+const clearDisabled = computed(() => props.isClearing || props.isSeeding)
+
+function handleSeedClick(): void {
+  emit('seed-data')
+}
+
+function handleClearClick(): void {
   showClearDialog.value = true
 }
 
-function handleClearConfirm() {
+function handleClearConfirm(): void {
   showClearDialog.value = false
-  void clear()
+  emit('clear-data')
 }
 
-function handleClearCancel() {
+function handleClearCancel(): void {
   showClearDialog.value = false
 }
-
-// Computed to handle exactOptionalPropertyTypes
-const seedDisabled = computed(() => isSeeding.value || isClearing.value)
-const clearDisabled = computed(() => isClearing.value || isSeeding.value)
 </script>
 
 <template>
-  <div class="settings-section-dev-tools">
-    <div class="settings-section-dev-tools-actions">
-      <div class="settings-section-dev-tools-action">
-        <h3 class="settings-section-dev-tools-action-title">Seed Database</h3>
-        <p class="settings-section-dev-tools-action-description">
+  <SharedSection
+    collapsible
+    :default-open="false"
+    test-id="settings-dev-tools"
+    title="Developer Tools"
+  >
+    <p class="description">
+      Tools for testing and development. Only visible in development mode.
+    </p>
+
+    <div class="dev-tools-actions">
+      <div class="action">
+        <h3 class="action-title">Seed Database</h3>
+        <p class="action-description">
           Add sample kanji data for testing and development.
         </p>
         <BaseButton
           :disabled="seedDisabled"
           :loading="isSeeding"
           variant="secondary"
-          @click="seed"
+          @click="handleSeedClick"
         >
           {{ isSeeding ? 'Seeding...' : 'Seed Data' }}
         </BaseButton>
       </div>
 
-      <div class="settings-section-dev-tools-action">
-        <h3 class="settings-section-dev-tools-action-title">Clear Database</h3>
-        <p class="settings-section-dev-tools-action-description">
+      <div class="action">
+        <h3 class="action-title">Clear Database</h3>
+        <p class="action-description">
           Remove all kanji data. This cannot be undone.
         </p>
         <BaseButton
@@ -74,44 +94,46 @@ const clearDisabled = computed(() => isClearing.value || isSeeding.value)
     <SharedConfirmDialog
       confirm-label="Clear All"
       description="This will permanently delete all kanji data. This action cannot be undone."
-      :is-open="showClearDialog"
+      :open="showClearDialog"
       title="Clear All Data"
       variant="danger"
       @cancel="handleClearCancel"
       @confirm="handleClearConfirm"
+      @update:open="(val) => (showClearDialog = val)"
     />
-  </div>
+  </SharedSection>
 </template>
 
 <style scoped>
-.settings-section-dev-tools {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
+.description {
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
-.settings-section-dev-tools-actions {
+.dev-tools-actions {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  margin-top: var(--spacing-sm);
 }
 
-.settings-section-dev-tools-action {
+.action {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background);
 }
 
-.settings-section-dev-tools-action-title {
-  margin: 0;
+.action-title {
   color: var(--color-text-primary);
   font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
 }
 
-.settings-section-dev-tools-action-description {
-  margin: 0;
+.action-description {
+  margin-bottom: var(--spacing-sm);
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
 }

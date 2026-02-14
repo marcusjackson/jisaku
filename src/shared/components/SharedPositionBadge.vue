@@ -6,23 +6,21 @@
  * Shows the Japanese name or English name, with full description on hover.
  */
 
-import type { PositionType } from '@/shared/types/database-types'
+import type { PositionType } from '@/api/position/position-types'
 
 const props = defineProps<{
   position: PositionType
 }>()
 
 // Use Japanese name if available, fallback to English, fallback to position name
-const displayName =
+const displayName: string =
   props.position.nameJapanese ??
   props.position.nameEnglish ??
   props.position.positionName
 
-// Use short description for tooltip if available, fallback to full description
-const tooltipText =
-  props.position.descriptionShort ??
-  props.position.description ??
-  props.position.positionName
+// Use description for tooltip, fallback to position name
+const tooltipText: string =
+  props.position.description ?? props.position.positionName
 </script>
 
 <template>

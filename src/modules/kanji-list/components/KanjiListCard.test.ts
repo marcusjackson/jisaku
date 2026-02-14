@@ -1,5 +1,7 @@
 /**
- * Tests for KanjiListCard component
+ * KanjiListCard Tests
+ *
+ * Tests for kanji card display component.
  */
 
 import { renderWithProviders } from '@test/helpers/render'
@@ -8,126 +10,104 @@ import { describe, expect, it } from 'vitest'
 
 import KanjiListCard from './KanjiListCard.vue'
 
-import type { Kanji } from '@/shared/types/database-types'
+import type { Kanji } from '@/api/kanji'
 
-function createMockKanji(overrides: Partial<Kanji> = {}): Kanji {
-  return {
+const mockKanji: Kanji = {
+  id: 1,
+  character: '山',
+  shortMeaning: 'mountain',
+  searchKeywords: null,
+  strokeCount: 3,
+  jlptLevel: 'N5',
+  joyoLevel: 'elementary1',
+  kanjiKenteiLevel: '10',
+  radicalId: null,
+  strokeDiagramImage: null,
+  strokeGifImage: null,
+  notesEtymology: null,
+  notesSemantic: null,
+  notesEducationMnemonics: null,
+  notesPersonal: null,
+  identifier: null,
+  radicalStrokeCount: null,
+  createdAt: '2024-01-01',
+  updatedAt: '2024-01-01'
+}
+
+const mockClassification = {
+  id: 1,
+  kanjiId: 1,
+  classificationTypeId: 1,
+  displayOrder: 1,
+  classificationType: {
     id: 1,
-    character: '日',
-    strokeCount: 4,
-    shortMeaning: null,
-    searchKeywords: null,
-    radicalId: null,
-    jlptLevel: null,
-    joyoLevel: null,
-    kenteiLevel: null,
-    strokeDiagramImage: null,
-    strokeGifImage: null,
-    notesEtymology: null,
-    notesSemantic: null,
-    notesEducationMnemonics: null,
-    notesPersonal: null,
-    identifier: null,
-    radicalStrokeCount: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    ...overrides
+    typeName: 'pictograph',
+    nameJapanese: '象形文字',
+    nameEnglish: null,
+    description: null,
+    descriptionShort: null,
+    displayOrder: 1
   }
 }
 
 describe('KanjiListCard', () => {
-  it('renders kanji character prominently', () => {
-    const kanji = createMockKanji({ character: '日' })
-
+  it('renders kanji character', () => {
     renderWithProviders(KanjiListCard, {
-      props: { kanji }
+      props: { kanji: mockKanji }
     })
 
-    expect(screen.getByText('日')).toBeInTheDocument()
+    expect(screen.getByText('山')).toBeInTheDocument()
   })
 
-  it('displays JLPT level badge when set', () => {
-    const kanji = createMockKanji({ jlptLevel: 'N5' })
-
+  it('renders short meaning', () => {
     renderWithProviders(KanjiListCard, {
-      props: { kanji }
+      props: { kanji: mockKanji }
     })
 
-    expect(screen.getByText('N5')).toBeInTheDocument()
+    expect(screen.getByText('mountain')).toBeInTheDocument()
   })
 
-  it('does not display JLPT badge when not set', () => {
-    const kanji = createMockKanji({ jlptLevel: null })
-
+  it('renders kentei level badge', () => {
     renderWithProviders(KanjiListCard, {
-      props: { kanji }
+      props: { kanji: mockKanji }
     })
 
-    expect(screen.queryByText(/N[1-5]/)).not.toBeInTheDocument()
+    expect(screen.getByText('10級')).toBeInTheDocument()
   })
 
-  it('displays Joyo level badge with Japanese label', () => {
-    const testCases: { expected: string; joyoLevel: Kanji['joyoLevel'] }[] = [
-      { expected: '小1', joyoLevel: 'elementary1' },
-      { expected: '小2', joyoLevel: 'elementary2' },
-      { expected: '小3', joyoLevel: 'elementary3' },
-      { expected: '小4', joyoLevel: 'elementary4' },
-      { expected: '小5', joyoLevel: 'elementary5' },
-      { expected: '小6', joyoLevel: 'elementary6' },
-      { expected: '中学', joyoLevel: 'secondary' }
-    ]
-
-    for (const { expected, joyoLevel } of testCases) {
-      const kanji = createMockKanji({ joyoLevel })
-
-      const result = renderWithProviders(KanjiListCard, {
-        props: { kanji }
-      })
-
-      expect(screen.getByText(expected)).toBeInTheDocument()
-      result.unmount()
-    }
-  })
-
-  it('does not display Joyo badge when not set', () => {
-    const kanji = createMockKanji({ joyoLevel: null })
-
+  it('renders classification badge when provided', () => {
     renderWithProviders(KanjiListCard, {
-      props: { kanji }
+      props: {
+        kanji: mockKanji,
+        classification: mockClassification
+      }
     })
 
-    expect(screen.queryByText(/小[1-6]|中学/)).not.toBeInTheDocument()
+    // Abbreviated as 象形
+    expect(screen.getByText('象形')).toBeInTheDocument()
   })
 
-  it('displays Kentei level badge when set', () => {
-    const kanji = createMockKanji({ kenteiLevel: '3級' })
-
+  it('links to kanji detail page', () => {
     renderWithProviders(KanjiListCard, {
-      props: { kanji }
+      props: { kanji: mockKanji }
     })
 
-    expect(screen.getByText('3級')).toBeInTheDocument()
-  })
-
-  it('does not display Kentei badge when not set', () => {
-    const kanji = createMockKanji({ kenteiLevel: null })
-
-    renderWithProviders(KanjiListCard, {
-      props: { kanji }
-    })
-
-    expect(screen.queryByText(/[1-9]級|準[12]級/)).not.toBeInTheDocument()
-  })
-
-  it('renders as a link to kanji detail page', () => {
-    const kanji = createMockKanji({ id: 42 })
-
-    renderWithProviders(KanjiListCard, {
-      props: { kanji }
-    })
-
-    // The RouterLink stub renders as an anchor tag with href
     const link = screen.getByRole('link')
-    expect(link).toHaveAttribute('href', '/kanji/42')
+    expect(link).toHaveAttribute('href', '/kanji/1')
+  })
+
+  it('does not render missing optional fields', () => {
+    const kanjiWithoutOptional: Kanji = {
+      ...mockKanji,
+      shortMeaning: null,
+      kanjiKenteiLevel: null
+    }
+
+    renderWithProviders(KanjiListCard, {
+      props: { kanji: kanjiWithoutOptional }
+    })
+
+    expect(screen.queryByText('mountain')).not.toBeInTheDocument()
+    expect(screen.queryByText(/級/)).not.toBeInTheDocument()
   })
 })

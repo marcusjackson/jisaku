@@ -11,6 +11,8 @@ import { computed } from 'vue'
 import { SwitchRoot, SwitchThumb } from 'reka-ui'
 
 interface Props {
+  /** Aria label for accessibility */
+  ariaLabel?: string
   /** Disable the switch */
   disabled?: boolean
   /** Error message */
@@ -20,6 +22,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  ariaLabel: '',
   disabled: false,
   error: '',
   label: ''
@@ -35,6 +38,7 @@ const hasError = computed(() => Boolean(props.error))
     <div class="base-switch-wrapper">
       <SwitchRoot
         v-model="checked"
+        :aria-label="ariaLabel || label"
         v-bind="disabled ? { disabled: true } : {}"
         class="base-switch-root"
         :class="{

@@ -1,53 +1,59 @@
-import { renderWithProviders } from '@test/helpers/render'
-import { screen } from '@testing-library/vue'
+/**
+ * SharedBackButton tests
+ */
+
+import { createMemoryHistory, createRouter } from 'vue-router'
+
+import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
 import SharedBackButton from './SharedBackButton.vue'
 
+function createTestRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { template: '<div />' } },
+      { path: '/kanji', component: { template: '<div />' } },
+      { path: '/components', component: { template: '<div />' } }
+    ]
+  })
+}
+
 describe('SharedBackButton', () => {
-  it('renders button with label', () => {
-    renderWithProviders(SharedBackButton, {
-      props: {
-        to: '/kanji',
-        label: 'Back to Kanji List'
+  function mountButton(props: { to: string; label: string }) {
+    const router = createTestRouter()
+    return mount(SharedBackButton, {
+      props,
+      global: {
+        plugins: [router],
+        stubs: {
+          BaseButton: {
+            template: '<button><slot /></button>',
+            props: ['variant']
+          }
+        }
       }
     })
+  }
 
-    expect(screen.getByRole('button')).toHaveTextContent('Back to Kanji List')
+  it('renders with label', () => {
+    const wrapper = mountButton({ to: '/kanji', label: 'Back to Kanji List' })
+    expect(wrapper.text()).toContain('Back to Kanji List')
   })
 
-  it('renders back arrow icon', () => {
-    renderWithProviders(SharedBackButton, {
-      props: {
-        to: '/kanji',
-        label: 'Back to Kanji List'
-      }
-    })
-
-    expect(screen.getByText('←')).toBeInTheDocument()
+  it('contains a link element', () => {
+    const wrapper = mountButton({ to: '/kanji', label: 'Back to Kanji List' })
+    expect(wrapper.find('a').exists()).toBe(true)
   })
 
-  it('renders as RouterLink with correct to prop', () => {
-    renderWithProviders(SharedBackButton, {
-      props: {
-        to: '/components',
-        label: 'Back to Components'
-      }
-    })
-
-    // Just verify the component renders without errors
-    expect(screen.getByText('Back to Components')).toBeInTheDocument()
+  it('displays the back arrow icon', () => {
+    const wrapper = mountButton({ to: '/components', label: 'Back' })
+    expect(wrapper.text()).toContain('←')
   })
 
-  it('has ghost variant button', () => {
-    renderWithProviders(SharedBackButton, {
-      props: {
-        to: '/kanji',
-        label: 'Back'
-      }
-    })
-
-    const button = screen.getByRole('button')
-    expect(button).toHaveClass('base-button-ghost')
+  it('link has correct href', () => {
+    const wrapper = mountButton({ to: '/kanji', label: 'Back' })
+    expect(wrapper.find('a').attributes('href')).toBe('/kanji')
   })
 })

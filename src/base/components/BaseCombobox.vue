@@ -2,7 +2,7 @@
 /**
  * BaseCombobox
  *
- * A searchable select/combobox component built on Reka UI Combobox primitives.
+ * A searchable single-select combobox built on Reka UI Combobox primitives.
  * Works with vee-validate through v-model.
  * Supports searching/filtering options with keyboard navigation.
  */
@@ -27,7 +27,8 @@ export interface ComboboxOption {
   value: string | number
   label: string
   disabled?: boolean
-  [key: string]: unknown // Allow additional fields for multi-field search
+  /** Additional fields for multi-field search */
+  [key: string]: unknown
 }
 
 const props = defineProps<{
@@ -60,21 +61,18 @@ const model = defineModel<string | number | null>()
 
 const comboboxId = useId()
 const searchTerm = ref('')
-const inputValue = ref('')
 
 // Use Reka UI's filter utility for fuzzy matching
 const { contains } = useFilter({ sensitivity: 'base' })
 
-// Clear search term when model value changes from parent (e.g., form population)
+// Clear search term when dropdown closes or selection changes
 watch(model, () => {
   searchTerm.value = ''
-  inputValue.value = ''
 })
 
-// Handle input changes - only update search term when user is typing
-function handleInputChange(event: Event) {
+// Handle input changes - update search term when user is typing
+function handleInputChange(event: Event): void {
   const target = event.target as HTMLInputElement
-  inputValue.value = target.value
   searchTerm.value = target.value
 }
 
@@ -87,23 +85,22 @@ const filteredOptions = computed(() => {
   const keys = searchKeys.value ?? ['label']
 
   return options.value.filter((option) => {
-    // Check if any of the specified keys match the search term
     return keys.some((key) => {
-      const value = option[key]
-      if (typeof value === 'string') {
-        return contains(value, searchTerm.value)
+      const val = option[key]
+      if (typeof val === 'string') {
+        return contains(val, searchTerm.value)
       }
       return false
     })
   })
 })
 
-// Get currently selected option (returns null instead of undefined for type safety)
+// Get currently selected option
 const selectedOption = computed(
   () => options.value.find((opt) => opt.value === model.value) ?? null
 )
 
-// Default display function
+// Default display function - shows empty string when no selection
 const getDisplayValue = computed(() => {
   if (props.displayValue) {
     return props.displayValue
@@ -112,7 +109,7 @@ const getDisplayValue = computed(() => {
 })
 
 // Handle selection
-function handleSelect(option: ComboboxOption) {
+function handleSelect(option: ComboboxOption): void {
   model.value = option.value
   searchTerm.value = ''
 }
@@ -204,9 +201,14 @@ const comboboxRootProps = computed(() => {
           :side-offset="4"
         >
           <ComboboxViewport class="base-combobox-viewport">
-            <ComboboxEmpty class="base-combobox-empty">
-              No results found
-            </ComboboxEmpty>
+            <slot
+              name="empty"
+              :search-term="searchTerm"
+            >
+              <ComboboxEmpty class="base-combobox-empty">
+                No results found
+              </ComboboxEmpty>
+            </slot>
 
             <ComboboxItem
               v-for="option in filteredOptions"
@@ -229,9 +231,13 @@ const comboboxRootProps = computed(() => {
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
               </ComboboxItemIndicator>
-              <span class="base-combobox-item-text">{{
-                getOptionDisplayText(option)
-              }}</span>
+              <span class="base-combobox-item-text">
+                <slot
+                  name="option"
+                  :option="option"
+                  >{{ getOptionDisplayText(option) }}</slot
+                >
+              </span>
             </ComboboxItem>
           </ComboboxViewport>
         </ComboboxContent>

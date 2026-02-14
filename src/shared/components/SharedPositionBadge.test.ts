@@ -7,21 +7,18 @@ import { describe, expect, it } from 'vitest'
 
 import SharedPositionBadge from './SharedPositionBadge.vue'
 
-import type { PositionType } from '@/shared/types/database-types'
+import type { PositionType } from '@/api/position/position-types'
 
 describe('SharedPositionBadge', () => {
   const createMockPosition = (
     overrides: Partial<PositionType> = {}
   ): PositionType => ({
-    createdAt: '2025-01-01T00:00:00Z',
     description: 'Full description',
-    descriptionShort: 'Short desc',
     displayOrder: 0,
     id: 1,
     nameEnglish: 'Left side',
     nameJapanese: 'ε΄',
     positionName: 'hen',
-    updatedAt: '2025-01-01T00:00:00Z',
     ...overrides
   })
 
@@ -71,22 +68,9 @@ describe('SharedPositionBadge', () => {
     expect(screen.getByText('hen')).toBeInTheDocument()
   })
 
-  it('shows short description in tooltip', () => {
+  it('shows description in tooltip', () => {
     const position = createMockPosition({
-      descriptionShort: 'Short tooltip text'
-    })
-    render(SharedPositionBadge, {
-      props: { position }
-    })
-
-    const badge = screen.getByText('ε΄')
-    expect(badge).toHaveAttribute('title', 'Short tooltip text')
-  })
-
-  it('shows full description in tooltip when short description is null', () => {
-    const position = createMockPosition({
-      description: 'Full description text',
-      descriptionShort: null
+      description: 'Full description text'
     })
     render(SharedPositionBadge, {
       props: { position }
@@ -96,10 +80,9 @@ describe('SharedPositionBadge', () => {
     expect(badge).toHaveAttribute('title', 'Full description text')
   })
 
-  it('shows position name in tooltip when both descriptions are null', () => {
+  it('shows position name in tooltip when description is null', () => {
     const position = createMockPosition({
       description: null,
-      descriptionShort: null,
       positionName: 'hen'
     })
     render(SharedPositionBadge, {

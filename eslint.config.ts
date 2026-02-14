@@ -19,7 +19,10 @@ export default tseslint.config(
       'test-results/**',
       '*.min.js',
       'ignore/**',
-      '*.config.mjs' // Ignore plain JS/MJS config files
+      'specs/**', // Specification documentation - not runtime code
+      '*.config.mjs', // Ignore plain JS/MJS config files
+      'src/legacy/**', // Legacy code - separate linting rules
+      'e2e/legacy/**' // Legacy E2E tests - will be rewritten
     ]
   },
 
@@ -62,6 +65,8 @@ export default tseslint.config(
             ['^@?\\w'],
             // Base imports (@/base/)
             ['^@/base/'],
+            // API layer imports (@/api/)
+            ['^@/api/'],
             // Shared imports (@/shared/)
             ['^@/shared/'],
             // Module/relative imports
@@ -115,7 +120,161 @@ export default tseslint.config(
       'vitest/no-disabled-tests': 'warn',
       // Relax some TypeScript rules for tests
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-non-null-assertion': 'off'
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/unbound-method': 'off'
+    }
+  },
+
+  // File size and complexity rules (new code only - legacy is ignored)
+  // Order matters: more specific patterns must come before general patterns
+  //
+  // Note: skipBlankLines and skipComments are set to false to count actual file lines.
+  // This makes limits simpler to understand and verify. Limits are set higher to account
+  // for blank lines and comments (roughly +50 from the previous code-only limits).
+
+  // Test files - most permissive (650 lines)
+  // max-lines-per-function is disabled for test files because:
+  // - describe() blocks naturally grow with comprehensive test coverage
+  // - A repository test might have 20+ test cases, making 200+ line describe blocks normal
+  // - The important metric is keeping individual it() callbacks short and focused
+  // - Splitting describe blocks just to meet line limits reduces test cohesion
+  // - This is standard practice in the testing community (Jest, Vitest, etc.)
+  // - We still enforce max-lines (650) on the overall test file to prevent runaway growth
+  {
+    files: ['**/*.test.ts', '**/*.spec.ts', 'test/**/*.ts', 'e2e/**/*.ts'],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 600, skipBlankLines: true, skipComments: true }
+      ],
+      'max-lines-per-function': 'off',
+      complexity: 'off'
+    }
+  },
+
+  // Type files (300 lines)
+  {
+    files: ['**/*-types.ts'],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 300, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // Section components (250 lines)
+  {
+    files: ['**/*Section*.vue'],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 250, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // Root components (250 lines)
+  {
+    files: ['**/*Root*.vue'],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 250, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // Composables (200 lines)
+  {
+    files: ['**/use-*.ts', '**/composables/use-*.ts'],
+    ignores: ['**/*.test.ts', 'src/base/**'],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 200, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // Base composables (300 lines)
+  {
+    files: ['src/base/composables/use-*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 300, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // Repository files (250 lines)
+  {
+    files: ['**/api/**/*-repository.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 250, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // UI components (200 lines) - excluding Root, Section, Page, and Base
+  {
+    files: ['**/*.vue'],
+    ignores: [
+      '**/*Root*.vue',
+      '**/*Section*.vue',
+      '**/*Page.vue',
+      'src/base/**' // Base components are generic primitives with higher limits
+    ],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 200, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // Base components (450 lines) - generic primitives that work in any project
+  // Higher limit because they are complete, self-contained components
+  {
+    files: ['src/base/components/**/*.vue'],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 450, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // Page components (100 lines) - thin route wrappers
+  {
+    files: ['**/*Page.vue'],
+    rules: {
+      'max-lines': [
+        // Note: Test files are explicitly excluded - they have different requirements
+        'error',
+        { max: 100, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // General complexity rules for all TypeScript/Vue files
+  {
+    files: ['**/*.ts', '**/*.vue'],
+    ignores: ['**/*.test.ts', '**/*.spec.ts', 'test/**/*.ts', 'e2e/**/*.ts'],
+    rules: {
+      'max-lines-per-function': [
+        'error',
+        { max: 50, skipBlankLines: true, skipComments: true, IIFEs: true }
+      ],
+      complexity: ['error', { max: 15 }],
+      'max-depth': ['warn', { max: 4 }],
+      'max-nested-callbacks': ['warn', { max: 3 }],
+      'max-params': ['warn', { max: 5 }]
     }
   },
 

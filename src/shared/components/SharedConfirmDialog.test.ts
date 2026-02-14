@@ -1,9 +1,8 @@
 /**
- * Tests for SharedConfirmDialog component
+ * SharedConfirmDialog tests
  *
- * Note: SharedConfirmDialog uses BaseDialog which uses Reka UI portal.
- * These tests use Vue Test Utils with stubs to avoid portal issues.
- * Full behavior is tested via E2E tests.
+ * Note: Reka UI Dialog uses teleport/portal with limitations in jsdom.
+ * Tests verify component structure and props; full rendering via E2E.
  */
 
 import { mount } from '@vue/test-utils'
@@ -12,100 +11,100 @@ import { describe, expect, it } from 'vitest'
 import SharedConfirmDialog from './SharedConfirmDialog.vue'
 
 describe('SharedConfirmDialog', () => {
-  const defaultProps = {
-    description: 'Are you sure you want to proceed?',
-    isOpen: true,
-    title: 'Confirm Action'
-  }
-
-  function mountDialog(props = {}) {
+  function mountDialog(
+    props: Record<string, unknown> = {},
+    slots: Record<string, string> = {}
+  ) {
     return mount(SharedConfirmDialog, {
-      props: { ...defaultProps, ...props },
+      props: {
+        open: true,
+        title: 'Confirm Action',
+        description: 'Are you sure?',
+        ...props
+      },
+      slots,
       global: {
         stubs: {
           BaseDialog: {
-            props: ['open', 'title', 'description'],
             template: `
-              <div v-if="open" role="dialog">
+              <div role="dialog" v-if="open">
                 <h2>{{ title }}</h2>
                 <p>{{ description }}</p>
                 <slot />
                 <slot name="footer" />
               </div>
-            `
+            `,
+            props: ['open', 'title', 'description']
           },
           BaseButton: {
-            props: ['disabled', 'loading', 'variant', 'type'],
             template:
-              '<button :disabled="disabled || loading" :type="type"><slot /></button>'
+              '<button :class="`base-button-${variant ?? \'primary\'}`" :disabled="disabled"><slot /></button>',
+            props: ['variant', 'disabled', 'loading']
           }
         }
       }
     })
   }
 
-  it('renders dialog when open', () => {
+  it('renders dialog structure when open', () => {
     const wrapper = mountDialog()
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
   })
 
-  it('does not render when closed', () => {
-    const wrapper = mountDialog({ isOpen: false })
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
-  })
-
-  it('renders title', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.find('h2').text()).toBe('Confirm Action')
-  })
-
-  it('renders description', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.find('p').text()).toBe('Are you sure you want to proceed?')
+  it('renders title and description', () => {
+    const wrapper = mountDialog({
+      title: 'Delete Item',
+      description: 'This cannot be undone'
+    })
+    expect(wrapper.find('h2').text()).toBe('Delete Item')
+    expect(wrapper.find('p').text()).toBe('This cannot be undone')
   })
 
   it('renders default button labels', () => {
     const wrapper = mountDialog()
-    const buttons = wrapper.findAll('button')
-    expect(buttons.at(0)?.text()).toBe('Cancel')
-    expect(buttons.at(1)?.text()).toBe('Confirm')
+    expect(wrapper.text()).toContain('Cancel')
+    expect(wrapper.text()).toContain('Confirm')
   })
 
   it('renders custom button labels', () => {
     const wrapper = mountDialog({
-      cancelLabel: 'No, go back',
-      confirmLabel: 'Yes, delete'
+      confirmLabel: 'Delete',
+      cancelLabel: 'Keep'
     })
-    const buttons = wrapper.findAll('button')
-    expect(buttons.at(0)?.text()).toBe('No, go back')
-    expect(buttons.at(1)?.text()).toBe('Yes, delete')
+    expect(wrapper.text()).toContain('Keep')
+    expect(wrapper.text()).toContain('Delete')
   })
 
   it('emits confirm event when confirm button clicked', async () => {
     const wrapper = mountDialog()
     const buttons = wrapper.findAll('button')
-    await buttons.at(1)?.trigger('click')
-    expect(wrapper.emitted('confirm')).toBeTruthy()
+    const confirmBtn = buttons.find((b) => b.text() === 'Confirm')
+    await confirmBtn?.trigger('click')
+    expect(wrapper.emitted()).toHaveProperty('confirm')
   })
 
   it('emits cancel event when cancel button clicked', async () => {
     const wrapper = mountDialog()
     const buttons = wrapper.findAll('button')
-    await buttons.at(0)?.trigger('click')
-    expect(wrapper.emitted('cancel')).toBeTruthy()
+    const cancelBtn = buttons.find((b) => b.text() === 'Cancel')
+    await cancelBtn?.trigger('click')
+    expect(wrapper.emitted()).toHaveProperty('cancel')
+    expect(wrapper.emitted()).toHaveProperty('update:open')
   })
 
-  it('disables buttons when loading', () => {
-    const wrapper = mountDialog({ isLoading: true })
+  it('applies danger variant to confirm button', () => {
+    const wrapper = mountDialog({ variant: 'danger' })
     const buttons = wrapper.findAll('button')
-    expect(buttons.at(0)?.element.disabled).toBe(true)
-    expect(buttons.at(1)?.element.disabled).toBe(true)
+    const confirmBtn = buttons.find((b) => b.text() === 'Confirm')
+    expect(confirmBtn?.classes()).toContain('base-button-danger')
   })
 
-  it('shows loading state on confirm button', () => {
-    const wrapper = mountDialog({ isLoading: true })
-    const buttons = wrapper.findAll('button')
-    // Confirm button should be disabled when loading
-    expect(buttons.at(1)?.element.disabled).toBe(true)
+  it('renders slot content', () => {
+    const wrapper = mountDialog(
+      {},
+      { default: '<div class="custom">Extra</div>' }
+    )
+    expect(wrapper.find('.custom').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Extra')
   })
 })

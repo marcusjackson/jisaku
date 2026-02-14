@@ -20,6 +20,7 @@ import migration012 from './012-meanings.sql?raw'
 import migration014 from './014-component-forms.sql?raw'
 import migration015 from './015-component-groupings.sql?raw'
 import migration016 from './016-vocabulary-system.sql?raw'
+import migration017 from './017-fix-kentei-level-format.sql?raw'
 
 import type { Database } from 'sql.js'
 
@@ -303,6 +304,92 @@ function runMigration016(db: Database): void {
 }
 
 /**
+ * Run migration 017
+ * Normalizes kanji kentei level format from full labels to type-safe keys
+ */
+function runMigration017(db: Database): void {
+  db.run(migration017)
+}
+
+/**
+ * Execute early migrations (versions 1-8)
+ */
+function applyEarlyMigrations(db: Database, currentVersion: number): void {
+  if (currentVersion < 1) {
+    db.run(migration001)
+  }
+  if (currentVersion < 2) {
+    runMigration002(db)
+  }
+  if (currentVersion < 3) {
+    runMigration003(db)
+  }
+  if (currentVersion < 4) {
+    runMigration004(db)
+  }
+  if (currentVersion < 5) {
+    runMigration005(db)
+  }
+  if (currentVersion < 6) {
+    runMigration006(db)
+  }
+  if (currentVersion < 7) {
+    runMigration007(db)
+  }
+  if (currentVersion < 8) {
+    runMigration008(db)
+  }
+}
+
+/**
+ * Execute middle migrations (versions 9-13)
+ */
+function applyMiddleMigrations(db: Database, currentVersion: number): void {
+  if (currentVersion < 9) {
+    runMigration009(db)
+  }
+  if (currentVersion < 10) {
+    runMigration010(db)
+  }
+  if (currentVersion < 11) {
+    runMigration011(db)
+  }
+  if (currentVersion < 12) {
+    runMigration012(db)
+  }
+  if (currentVersion < 13) {
+    runMigration013(db)
+  }
+}
+
+/**
+ * Execute late migrations (versions 14-17)
+ */
+function applyLateMigrations(db: Database, currentVersion: number): void {
+  if (currentVersion < 14) {
+    runMigration014(db)
+  }
+  if (currentVersion < 15) {
+    runMigration015(db)
+  }
+  if (currentVersion < 16) {
+    runMigration016(db)
+  }
+  if (currentVersion < 17) {
+    runMigration017(db)
+  }
+}
+
+/**
+ * Execute all pending migrations based on current schema version
+ */
+function applyPendingMigrations(db: Database, currentVersion: number): void {
+  applyEarlyMigrations(db, currentVersion)
+  applyMiddleMigrations(db, currentVersion)
+  applyLateMigrations(db, currentVersion)
+}
+
+/**
  * Run all pending migrations on the database
  */
 export function runMigrations(db: Database): void {
@@ -312,86 +399,7 @@ export function runMigrations(db: Database): void {
   const currentVersion = typeof versionValue === 'number' ? versionValue : 0
 
   try {
-    // Migration 001: Initial schema
-    if (currentVersion < 1) {
-      db.run(migration001)
-      // Version set by SQL file
-    }
-
-    // Migration 002: Split notes into categories
-    if (currentVersion < 2) {
-      runMigration002(db)
-    }
-
-    // Migration 003: Component system overhaul
-    if (currentVersion < 3) {
-      runMigration003(db)
-    }
-
-    // Migration 004: Add Kanji Kentei level
-    if (currentVersion < 4) {
-      runMigration004(db)
-    }
-
-    // Migration 005: Add short_meaning field
-    if (currentVersion < 5) {
-      runMigration005(db)
-    }
-
-    // Migration 006: Add search_keywords and remove japanese_name
-    if (currentVersion < 6) {
-      runMigration006(db)
-    }
-
-    // Migration 007: Add search_keywords to kanjis table
-    if (currentVersion < 7) {
-      runMigration007(db)
-    }
-
-    // Migration 008: Make stroke_count nullable in kanjis
-    if (currentVersion < 8) {
-      runMigration008(db)
-    }
-
-    // Migration 009: Make stroke_count nullable in components
-    if (currentVersion < 9) {
-      runMigration009(db)
-    }
-
-    // Migration 010: Add non-jlpt and non-joyo to check constraints
-    if (currentVersion < 10) {
-      runMigration010(db)
-    }
-
-    // Migration 011: Add readings system (on_readings, kun_readings)
-    if (currentVersion < 11) {
-      runMigration011(db)
-    }
-
-    // Migration 012: Add meanings system (kanji_meanings, kanji_meaning_reading_groups, kanji_meaning_group_members)
-    if (currentVersion < 12) {
-      runMigration012(db)
-    }
-
-    // Migration 013: Classifications system (display_order, phonetic_loan type)
-    if (currentVersion < 13) {
-      runMigration013(db)
-    }
-
-    // Migration 014: Component forms (visual variants of semantic components)
-    if (currentVersion < 14) {
-      runMigration014(db)
-    }
-
-    // Migration 015: Component groupings (pattern analysis groups)
-    if (currentVersion < 15) {
-      runMigration015(db)
-    }
-
-    // Migration 016: Vocabulary system (vocabulary, vocab_kanji tables)
-    if (currentVersion < 16) {
-      runMigration016(db)
-    }
+    applyPendingMigrations(db, currentVersion)
   } catch (error) {
     // If migration fails, log error but don't crash the app
     // The database will be in an inconsistent state, but the app can still function

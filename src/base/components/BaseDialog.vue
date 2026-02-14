@@ -133,7 +133,7 @@ const handleDialogUpdate = (newValue: boolean) => {
 .base-dialog-title {
   margin: 0 0 var(--spacing-2);
   color: var(--color-text-primary);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
 }
 

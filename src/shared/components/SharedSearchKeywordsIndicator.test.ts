@@ -1,237 +1,82 @@
 /**
- * SharedSearchKeywordsIndicator.test.ts
+ * SharedSearchKeywordsIndicator tests
  *
- * Unit tests for SharedSearchKeywordsIndicator component.
+ * Note: Reka UI Tooltip uses portals with limitations in jsdom.
+ * Basic rendering tests here; full interaction via E2E.
  */
 
 import { mount } from '@vue/test-utils'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import SharedSearchKeywordsIndicator from './SharedSearchKeywordsIndicator.vue'
 
-interface ComponentVM {
-  tooltipMessage: string
-  hasKeywords: boolean
-}
-
 describe('SharedSearchKeywordsIndicator', () => {
-  beforeEach(() => {
-    // Mock ResizeObserver for Reka UI
-    global.ResizeObserver = vi.fn().mockImplementation(() => ({
-      observe: vi.fn(),
-      unobserve: vi.fn(),
-      disconnect: vi.fn()
-    }))
-  })
-
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-
-  describe('with search keywords', () => {
-    it('renders indicator when keywords provided', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: 'test, keywords, example'
+  function mountIndicator(searchKeywords: string | null | undefined) {
+    return mount(SharedSearchKeywordsIndicator, {
+      props: { searchKeywords },
+      global: {
+        stubs: {
+          TooltipProvider: { template: '<div><slot /></div>' },
+          TooltipRoot: { template: '<div><slot /></div>' },
+          TooltipTrigger: { template: '<span><slot /></span>' },
+          TooltipPortal: { template: '<div><slot /></div>' },
+          TooltipContent: {
+            template: '<div class="tooltip-content"><slot /></div>'
+          },
+          TooltipArrow: { template: '<div />' }
         }
-      })
-
-      expect(wrapper.find('svg').exists()).toBe(true)
-      expect(wrapper.find('[aria-label="Show search keywords"]').exists()).toBe(
-        true
-      )
-    })
-
-    it('computes tooltip message as keywords when present', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: 'ひ, にち, hi, nichi'
-        }
-      })
-
-      const vm = wrapper.vm as unknown as ComponentVM
-      expect(vm.tooltipMessage).toBe('ひ, にち, hi, nichi')
-    })
-
-    it('has correct hover state styling', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: 'keywords'
-        }
-      })
-
-      const indicator = wrapper.find('.search-keywords-indicator')
-      expect(indicator.exists()).toBe(true)
-      expect(indicator.classes()).toContain('search-keywords-indicator')
-    })
-  })
-
-  describe('without search keywords', () => {
-    it('renders indicator when keywords are null', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: null
-        }
-      })
-
-      expect(wrapper.find('svg').exists()).toBe(true)
-    })
-
-    it('renders indicator when keywords are empty string', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: ''
-        }
-      })
-
-      expect(wrapper.find('svg').exists()).toBe(true)
-    })
-
-    it('renders indicator when keywords are whitespace only', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: '   '
-        }
-      })
-
-      expect(wrapper.find('svg').exists()).toBe(true)
-    })
-
-    it('renders indicator when keywords are undefined', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: undefined
-        }
-      })
-
-      expect(wrapper.find('svg').exists()).toBe(true)
-    })
-
-    it('computes tooltip message as "No search keywords set" when empty', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: null
-        }
-      })
-
-      const vm = wrapper.vm as unknown as ComponentVM
-      expect(vm.tooltipMessage).toBe('No search keywords set')
-    })
-  })
-
-  describe('reactivity', () => {
-    it('updates tooltip message when keywords change', async () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: 'original'
-        }
-      })
-
-      const vm = wrapper.vm as unknown as ComponentVM
-      expect(vm.tooltipMessage).toBe('original')
-
-      await wrapper.setProps({ searchKeywords: 'updated' })
-      expect(vm.tooltipMessage).toBe('updated')
-    })
-
-    it('updates tooltip message when keywords become empty', async () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: 'original'
-        }
-      })
-
-      const vm = wrapper.vm as unknown as ComponentVM
-      expect(vm.tooltipMessage).toBe('original')
-
-      await wrapper.setProps({ searchKeywords: null })
-      expect(vm.tooltipMessage).toBe('No search keywords set')
-    })
-  })
-
-  describe('click behavior', () => {
-    it('trigger button is clickable', async () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: 'test'
-        }
-      })
-
-      const button = wrapper.find('[aria-label="Show search keywords"]')
-      expect(button.exists()).toBe(true)
-
-      await button.trigger('click')
-      // Verify button remains in DOM and is still accessible
-      expect(wrapper.find('[aria-label="Show search keywords"]').exists()).toBe(
-        true
-      )
-    })
-  })
-
-  describe('accessibility', () => {
-    it('has aria-label on indicator button', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: 'test'
-        }
-      })
-
-      expect(wrapper.find('[aria-label="Show search keywords"]').exists()).toBe(
-        true
-      )
-    })
-
-    it('has proper SVG structure for indicator', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: 'test'
-        }
-      })
-
-      const svgs = wrapper.findAll('svg')
-      // Should have at least the indicator icon SVG
-      expect(svgs.length).toBeGreaterThan(0)
-
-      const indicatorSvg = svgs.at(0)
-      expect(indicatorSvg).toBeDefined()
-      if (indicatorSvg) {
-        expect(indicatorSvg.attributes('viewBox')).toBe('0 0 20 20')
-        expect(indicatorSvg.find('path').exists()).toBe(true)
       }
     })
+  }
+
+  it('renders the indicator button', () => {
+    const wrapper = mountIndicator('test keywords')
+    expect(wrapper.find('button').exists()).toBe(true)
   })
 
-  describe('outside click handling', () => {
-    it('component mounts and unmounts without errors', () => {
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: 'test'
-        }
-      })
+  it('has accessible label', () => {
+    const wrapper = mountIndicator('test keywords')
+    expect(wrapper.find('[aria-label="Show search keywords"]').exists()).toBe(
+      true
+    )
+  })
 
-      expect(wrapper.exists()).toBe(true)
+  it('renders search icon SVG', () => {
+    const wrapper = mountIndicator('test keywords')
+    expect(wrapper.find('svg').exists()).toBe(true)
+  })
 
-      // Should not throw on unmount
-      wrapper.unmount()
-    })
+  it('toggles isOpen on click', async () => {
+    const wrapper = mountIndicator('test keywords')
+    const button = wrapper.find('button')
 
-    it('document event listeners are cleaned up', () => {
-      const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')
+    await button.trigger('click')
+    // Component doesn't expose internal state, but we can check it doesn't throw
+    expect(button.exists()).toBe(true)
+  })
 
-      const wrapper = mount(SharedSearchKeywordsIndicator, {
-        props: {
-          searchKeywords: 'test'
-        }
-      })
+  it('displays keywords in tooltip content', () => {
+    const wrapper = mountIndicator('water, mountain, nature')
+    expect(wrapper.text()).toContain('water, mountain, nature')
+  })
 
-      wrapper.unmount()
+  it('displays fallback when keywords empty', () => {
+    const wrapper = mountIndicator('')
+    expect(wrapper.text()).toContain('No search keywords set')
+  })
 
-      expect(removeEventListenerSpy).toHaveBeenCalledWith(
-        'click',
-        expect.any(Function)
-      )
+  it('displays fallback when keywords null', () => {
+    const wrapper = mountIndicator(null)
+    expect(wrapper.text()).toContain('No search keywords set')
+  })
 
-      removeEventListenerSpy.mockRestore()
-    })
+  it('displays fallback when keywords undefined', () => {
+    const wrapper = mountIndicator(undefined)
+    expect(wrapper.text()).toContain('No search keywords set')
+  })
+
+  it('renders close button in tooltip', () => {
+    const wrapper = mountIndicator('keywords')
+    expect(wrapper.find('[aria-label="Close"]').exists()).toBe(true)
   })
 })

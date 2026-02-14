@@ -1,7 +1,3 @@
----
-applyTo: '**/*'
----
-
 # Commit Instructions
 
 Guidelines for writing commit messages following Conventional Commits.

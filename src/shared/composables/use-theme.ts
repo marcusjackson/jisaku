@@ -1,8 +1,12 @@
+/**
+ * useTheme
+ *
+ * Composable for managing app theme (light/dark mode).
+ * Uses localStorage to persist user preference, falls back to system preference.
+ */
+
 import { ref, watch } from 'vue'
 
-/**
- * Theme options for the app
- */
 export type Theme = 'light' | 'dark'
 
 const STORAGE_KEY = 'jisaku-theme'
@@ -11,7 +15,10 @@ const STORAGE_KEY = 'jisaku-theme'
  * Gets the system's preferred color scheme
  */
 function getSystemTheme(): Theme {
-  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  if (
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  ) {
     return 'dark'
   }
   return 'light'
@@ -21,6 +28,7 @@ function getSystemTheme(): Theme {
  * Gets the initial theme: user's saved preference or system preference
  */
 function getInitialTheme(): Theme {
+  if (typeof window === 'undefined') return 'light'
   const storedTheme = localStorage.getItem(STORAGE_KEY) as Theme | null
   if (storedTheme) {
     return storedTheme
@@ -32,6 +40,7 @@ function getInitialTheme(): Theme {
  * Applies the theme to the document
  */
 function applyTheme(theme: Theme): void {
+  if (typeof document === 'undefined') return
   if (theme === 'dark') {
     document.documentElement.dataset['theme'] = 'dark'
   } else {
@@ -48,31 +57,11 @@ applyTheme(theme.value)
 // Watch for changes and persist
 watch(theme, (newTheme) => {
   applyTheme(newTheme)
-  localStorage.setItem(STORAGE_KEY, newTheme)
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY, newTheme)
+  }
 })
 
-/**
- * Composable for managing app theme (light/dark mode)
- *
- * On first use, checks for saved preference in localStorage.
- * If no saved preference, uses system's preferred color scheme.
- * All subsequent uses share the same reactive state.
- *
- * @example
- * ```vue
- * <script setup>
- * import { useTheme } from '@/shared/composables/use-theme'
- *
- * const { theme, toggleTheme, setTheme } = useTheme()
- * </script>
- *
- * <template>
- *   <button @click="toggleTheme">
- *     Current: {{ theme }}
- *   </button>
- * </template>
- * ```
- */
 export function useTheme() {
   /**
    * Toggles between light and dark themes
@@ -89,8 +78,8 @@ export function useTheme() {
   }
 
   return {
+    setTheme,
     theme,
-    toggleTheme,
-    setTheme
+    toggleTheme
   }
 }

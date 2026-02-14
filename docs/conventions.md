@@ -1,6 +1,6 @@
 # Conventions
 
-This document defines the coding conventions, naming rules, and best practices for this codebase.
+Coding conventions, naming rules, and best practices for this codebase.
 
 ---
 
@@ -8,332 +8,159 @@ This document defines the coding conventions, naming rules, and best practices f
 
 ### Vue Components
 
-| Type                      | Pattern                           | Example                                          | Location   |
-| ------------------------- | --------------------------------- | ------------------------------------------------ | ---------- |
-| Root (single)             | `[Module]Root.vue`                | `KanjiListRoot.vue`                              | `modules/` |
-| Root (multiple)           | `[Module]Root[Descriptor].vue`    | `KanjiRootDetail.vue`, `KanjiRootForm.vue`       | `modules/` |
-| Section                   | `[Module]Section[Descriptor].vue` | `KanjiSectionDetail.vue`, `KanjiSectionForm.vue` | `modules/` |
-| UI                        | `[Module][Descriptor].vue`        | `KanjiCard.vue`, `KanjiForm.vue`                 | `modules/` |
-| UI (tightly coupled)      | `[Parent][Descriptor].vue`        | `KanjiFormFieldStrokeCount.vue`                  | `modules/` |
-| Base (Reka UI primitives) | `Base[Name].vue`                  | `BaseButton.vue`, `BaseInput.vue`                | `base/`    |
-| Shared (app-specific)     | `Shared[Name].vue`                | `SharedHeader.vue`, `SharedPageContainer.vue`    | `shared/`  |
-| Page                      | `[Module][Purpose]Page.vue`       | `KanjiDetailPage.vue`, `KanjiListPage.vue`       | `pages/`   |
+| Type     | Pattern                           | Example                    |
+| -------- | --------------------------------- | -------------------------- |
+| Root     | `[Module]Root[Descriptor].vue`    | `KanjiRootDetail.vue`      |
+| Section  | `[Module]Section[Descriptor].vue` | `KanjiSectionMeanings.vue` |
+| UI       | `[Module][Descriptor].vue`        | `KanjiCard.vue`            |
+| UI (sub) | `[Parent][Descriptor].vue`        | `KanjiMeaningItem.vue`     |
+| Base     | `Base[Name].vue`                  | `BaseButton.vue`           |
+| Shared   | `Shared[Name].vue`                | `SharedHeader.vue`         |
+| Page     | `[Module][Purpose]Page.vue`       | `KanjiDetailPage.vue`      |
 
 ### TypeScript Files
 
-| Type                 | Pattern                     | Example                      | Location   |
-| -------------------- | --------------------------- | ---------------------------- | ---------- |
-| Composables (module) | `use-[module]-[purpose].ts` | `use-kanji-repository.ts`    | `modules/` |
-| Composables (base)   | `use-[purpose].ts`          | `use-local-storage.ts`       | `base/`    |
-| Composables (shared) | `use-[purpose].ts`          | `use-database.ts`            | `shared/`  |
-| Types (module)       | `[module]-types.ts`         | `kanji-types.ts`             | `modules/` |
-| Types (shared)       | `[domain]-types.ts`         | `database-types.ts`          | `shared/`  |
-| Validation schemas   | `[module]-[form]-schema.ts` | `kanji-form-schema.ts`       | `modules/` |
-| Utils (base)         | `[purpose].ts`              | `format-date.ts`, `clamp.ts` | `base/`    |
-| Utils (shared)       | `[purpose].ts`              | `kanji-formatters.ts`        | `shared/`  |
-| Constants            | `[module]-constants.ts`     | `kanji-constants.ts`         | varies     |
-| Tests                | `[filename].test.ts`        | `KanjiForm.test.ts`          | colocated  |
+| Type       | Pattern                     | Example                   |
+| ---------- | --------------------------- | ------------------------- |
+| Composable | `use-[module]-[purpose].ts` | `use-kanji-repository.ts` |
+| Types      | `[module]-types.ts`         | `kanji-types.ts`          |
+| Schema     | `[module]-[form]-schema.ts` | `kanji-form-schema.ts`    |
+| Test       | `[filename].test.ts`        | `KanjiForm.test.ts`       |
 
-**Important**: Never use bare `types.ts` — always include the module or domain prefix to ensure unique filenames across the project.
+**Important**: Never use bare `types.ts` — always include module prefix.
 
 ### Directories
 
 - Use **kebab-case** for all directory names
-- Module directories match the feature name: `kanji/`, `kanji-list/`, `components/`
 
 ---
 
-## Vue Single File Components
+## File Size Limits
 
-### Script Setup
+| File Type  | Target Lines | Max Lines |
+| ---------- | ------------ | --------- |
+| Root       | 150-200      | 200       |
+| Section    | 150-250      | 250       |
+| UI         | 80-150       | 150       |
+| Composable | 100-200      | 200       |
+| Types      | 150-300      | 300       |
 
-Always use `<script setup lang="ts">`:
+**When exceeding limits:**
+
+- Root → Extract handlers to composable
+- Section → Split into ViewMode/EditMode
+- Composable → Split into queries/mutations
+
+---
+
+## SFC Structure
 
 ```vue
 <script setup lang="ts">
+// 1. Vue imports
 import { ref, computed } from 'vue'
+
+// 2. Third-party imports
+import { useForm } from 'vee-validate'
+
+// 3. Base imports
+import BaseButton from '@/base/components/BaseButton.vue'
+
+// 4. Shared imports
+import { useDatabase } from '@/shared/composables/use-database'
+
+// 5. Module imports (relative)
+import KanjiCard from './KanjiCard.vue'
+
+// 6. Type imports
 import type { Kanji } from '../kanji-types'
 
-const props = defineProps<{
-  kanji: Kanji
-}>()
+// Props
+const props = defineProps<{ kanji: Kanji }>()
 
-const emit = defineEmits<{
-  edit: []
-  delete: [id: number]
-}>()
+// Emits
+const emit = defineEmits<{ save: [kanji: Kanji] }>()
 
+// Composables
+const { findById } = useKanjiRepository()
+
+// Reactive state
 const isExpanded = ref(false)
+
+// Computed
+const displayName = computed(() => props.kanji.character)
+
+// Methods
+function handleSave() {
+  emit('save', props.kanji)
+}
 </script>
-```
 
-### Template
-
-```vue
 <template>
-  <div class="kanji-card">
-    <span class="kanji-character">{{ kanji.character }}</span>
-  </div>
+  <!-- Template -->
 </template>
-```
 
-### Styles
-
-Use scoped styles with CSS variables:
-
-```vue
 <style scoped>
-.kanji-card {
-  padding: var(--spacing-md);
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-}
-
-.kanji-character {
-  font-size: var(--font-size-4xl);
-  font-family: var(--font-family-kanji);
-}
+/* Scoped styles using CSS variables */
 </style>
 ```
-
-### Order in SFC
-
-1. `<script setup lang="ts">`
-2. `<template>`
-3. `<style scoped>`
 
 ---
 
 ## TypeScript
 
-### Strict Mode
-
-TypeScript strict mode is enabled. All code must be fully typed.
-
-### Type Imports
-
-Use `import type` for type-only imports:
+### Type vs Interface
 
 ```typescript
-import type { Kanji, KanjiSearchFilters } from '../kanji-types'
-import { ref, computed } from 'vue'
-```
-
-### Prefer Interfaces for Objects
-
-```typescript
-// ✅ Good
+// Interface for objects
 interface Kanji {
   id: number
   character: string
-  strokeCount: number
 }
 
-// ❌ Avoid for object shapes
-type Kanji = {
-  id: number
-  character: string
-  strokeCount: number
-}
+// Type for unions
+type JlptLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1'
 ```
 
-### Use Type for Unions/Primitives
+### Type Imports
 
 ```typescript
-type JlptLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | null
-type JoyoLevel =
-  | 'elementary1'
-  | 'elementary2'
-  | 'elementary3'
-  | 'elementary4'
-  | 'elementary5'
-  | 'elementary6'
-  | 'secondary'
-  | null
+import type { Kanji } from '../kanji-types'
 ```
 
 ### Avoid `any`
 
-Use `unknown` instead of `any` when type is truly unknown:
-
-```typescript
-// ✅ Good
-function parseJson(text: string): unknown {
-  return JSON.parse(text)
-}
-
-// ❌ Avoid
-function parseJson(text: string): any {
-  return JSON.parse(text)
-}
-```
-
----
-
-## Imports
-
-### Order
-
-1. Vue/framework imports
-2. Third-party libraries
-3. Base imports (absolute path with `@/base/`)
-4. Shared imports (absolute path with `@/shared/`)
-5. Module imports (relative path)
-6. Types (grouped at end with `import type`)
-
-```typescript
-// Vue
-import { ref, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
-
-// Third-party
-import { useForm } from 'vee-validate'
-
-// Base (generic, project-agnostic)
-import BaseButton from '@/base/components/BaseButton.vue'
-import { useLocalStorage } from '@/base/composables/use-local-storage'
-
-// Shared (app-specific)
-import SharedHeader from '@/shared/components/SharedHeader.vue'
-import { useDatabase } from '@/shared/composables/use-database'
-
-// Module (relative)
-import KanjiCard from './KanjiCard.vue'
-import { formatStrokeCount } from '../kanji-formatters'
-
-// Types
-import type { Kanji } from '../kanji-types'
-```
-
-### Path Aliases
-
-- `@/` → `src/`
-- `@/base/` for generic, project-agnostic code
-- `@/shared/` for app-specific shared code
-- Use relative paths within the same module
-
-```typescript
-// ✅ Base imports (generic)
-import BaseButton from '@/base/components/BaseButton.vue'
-import { useDebounce } from '@/base/composables/use-debounce'
-
-// ✅ Shared imports (app-specific)
-import { useDatabase } from '@/shared/composables/use-database'
-
-// ✅ Within same module
-import { useKanjiRepository } from '../composables/use-kanji-repository'
-import KanjiCard from './KanjiCard.vue'
-```
-
----
-
-## Composables
-
-### Naming
-
-- Prefix with `use-`
-- Use kebab-case: `use-kanji-repository.ts`
-- Function name uses camelCase: `useKanjiRepository`
-
-### Structure
-
-```typescript
-// use-kanji-repository.ts
-import { useDatabase } from '@/shared/composables/use-database'
-import type { Kanji, CreateKanjiInput } from '../kanji-types'
-
-export function useKanjiRepository() {
-  const db = useDatabase()
-
-  const findById = (id: number): Kanji | null => {
-    // implementation
-  }
-
-  const create = (input: CreateKanjiInput): Kanji => {
-    // implementation
-  }
-
-  return {
-    findById,
-    create
-    // ... other methods
-  }
-}
-```
-
-### Return Objects, Not Arrays
-
-```typescript
-// ✅ Good - named exports
-return { kanji, isLoading, error, refetch }
-
-// ❌ Avoid - positional returns
-return [kanji, isLoading, error, refetch]
-```
+Use `unknown` instead, then narrow with type guards.
 
 ---
 
 ## Props and Emits
 
-### Props Definition Style
-
-Choose the style based on component complexity:
-
-**Simple UI components (≤ 4 props)** — use inline type:
+**Simple components (≤4 props):**
 
 ```typescript
-// UI components with few props - inline is clean and readable
 const props = defineProps<{
   kanji: Kanji
   isEditable?: boolean
 }>()
-
-// With defaults
-const props = withDefaults(
-  defineProps<{
-    size?: 'sm' | 'md' | 'lg'
-    disabled?: boolean
-  }>(),
-  {
-    size: 'md',
-    disabled: false
-  }
-)
 ```
 
-**Root/Section components OR > 4 props** — use separate interface:
+**Complex components (>4 props):**
 
 ```typescript
-// Root/Section components or complex UIs - separate interface
 interface Props {
   kanjiList: Kanji[]
   filters: KanjiFilters
   isLoading: boolean
-  error: Error | null
-  onRetry?: () => void
 }
-
-const props = withDefaults(defineProps<Props>(), {
-  isLoading: false,
-  error: null
-})
+const props = defineProps<Props>()
 ```
 
-**Benefits of separate interface:**
-
-- Named type shows in IDE tooltips
-- Can export for test factories
-- Easier to refactor and document
-- Clearer separation of concerns
-
-### Emits
-
-Use `defineEmits` with TypeScript:
+**Emits:**
 
 ```typescript
 const emit = defineEmits<{
   save: [kanji: Kanji]
-  cancel: []
   delete: [id: number]
 }>()
 ```
@@ -342,207 +169,94 @@ const emit = defineEmits<{
 
 ## CSS
 
-### Use CSS Variables
-
-All colors, spacing, typography, and other design tokens must use CSS variables:
+### Always Use CSS Variables
 
 ```css
-/* ✅ Good */
+/* ✅ Correct */
 .card {
   padding: var(--spacing-md);
   background: var(--color-surface);
-  color: var(--color-text-primary);
 }
 
-/* ❌ Avoid hardcoded values */
+/* ❌ Wrong */
 .card {
   padding: 16px;
   background: #ffffff;
-  color: #333333;
 }
 ```
 
-### Scoped Styles
-
-Always use `<style scoped>` unless intentionally styling children:
+### Always Use Scoped Styles
 
 ```vue
 <style scoped>
-.my-component {
-  /* styles only apply to this component */
+.kanji-card {
+  /* ... */
 }
 </style>
 ```
 
-### Class Naming
+---
 
-Use descriptive, component-scoped class names:
+## Composables
 
-```css
-/* ✅ Good */
-.kanji-card {
-}
-.kanji-card-header {
-}
-.kanji-card-character {
-}
+### Naming
 
-/* ❌ Avoid generic names */
-.card {
-}
-.header {
-}
-.text {
-}
+- File: `use-[module]-[purpose].ts`
+- Function: `use[Module][Purpose]()`
+
+### Return Objects, Not Arrays
+
+```typescript
+// ✅ Correct
+return { kanji, isLoading, error }
+
+// ❌ Wrong
+return [kanji, isLoading, error]
 ```
 
 ---
 
 ## Error Handling
 
-### Forms
-
-Display inline errors below fields:
-
-```vue
-<template>
-  <div class="field">
-    <BaseInput
-      v-model="strokeCount"
-      :error="errors.strokeCount"
-    />
-    <span
-      v-if="errors.strokeCount"
-      class="field-error"
-    >
-      {{ errors.strokeCount }}
-    </span>
-  </div>
-</template>
-```
-
-### Database Operations
-
-Use toast notifications for operation feedback:
-
-```typescript
-try {
-  await kanjiRepo.delete(id)
-  toast.success('Kanji deleted')
-} catch (error) {
-  toast.error('Failed to delete kanji')
-}
-```
-
-### Loading States
-
-Reserve space to prevent layout shift:
-
-```vue
-<template>
-  <div class="page">
-    <div
-      v-if="isLoading"
-      class="loading-container"
-    >
-      <BaseSpinner />
-    </div>
-    <KanjiSectionDetail
-      v-else
-      :kanji="kanji"
-    />
-  </div>
-</template>
-```
+| Type            | Treatment                  |
+| --------------- | -------------------------- |
+| Form validation | Inline errors below fields |
+| DB operations   | Toast notification         |
+| Not found       | Empty state on page        |
 
 ---
 
-## Testing
+## Git Commits
 
-### Colocated Tests
-
-Place test files next to the code they test:
-
-```
-components/
-├── KanjiForm.vue
-├── KanjiForm.test.ts    # Test file alongside component
-└── ...
-```
-
-### Test File Naming
-
-```
-[filename].test.ts
-```
-
-See [Testing Strategy](./testing.md) for detailed patterns.
-
----
-
-## Git
-
-### Commit Messages
-
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+Follow Conventional Commits:
 
 ```
 <type>(<scope>): <subject>
-
-<body>
-
-<footer>
 ```
 
-**Types:**
+**Types:** feat, fix, docs, style, refactor, test, chore, perf
 
-- `feat` — New feature
-- `fix` — Bug fix
-- `docs` — Documentation only
-- `style` — Formatting, no code change
-- `refactor` — Code change that neither fixes nor adds
-- `test` — Adding or updating tests
-- `chore` — Tooling, dependencies, config
+**Scopes:** kanji, component, vocabulary, settings, base, shared, db
 
-**Example:**
-
-```
-feat(kanji): add stroke count validation
-
-Add zod schema validation for stroke count field.
-Ensures value is positive integer between 1-64.
-
-Closes #42
-```
-
-See [Commit Instructions](../.github/instructions/commits.md) for full guidelines.
+See `.github/instructions/commit.instructions.md` for full guidelines.
 
 ---
 
-## Documentation Structure
+## Code Quality Checklist
 
-```
-docs/
-├── architecture.md         # System design and patterns
-├── conventions.md          # Coding standards and guidelines
-├── schema.md               # Database schema reference
-├── testing.md              # Testing strategy and patterns
-├── design-tokens.md        # CSS variables and theming
-├── features.md             # Current features
-├── future-ideas.md         # Potential enhancements
-└── reference/              # External reference docs (Reka UI, etc.)
-```
-
----
-
-## Code Review Checklist
-
-Before submitting a PR:
-
-- [ ] All TypeScript types are explicit (no implicit `any`)
+- [ ] TypeScript strict — no `any`, all types explicit
 - [ ] CSS uses design token variables
 - [ ] Components follow Root/Section/UI hierarchy
-- [ ] Tests are colocated with code
-- [ ] Commit messages follow conventional format
-- [ ] No console.log statements
+- [ ] File under size limit for its type
+- [ ] Tests colocated with source files
 - [ ] Loading and error states handled
+- [ ] Keyboard accessible
+- [ ] No console.log statements
+
+---
+
+## Related Documentation
+
+- [Architecture](./architecture.md) — System design, component patterns
+- [Testing](./testing.md) — Testing strategy
+- [Design Tokens](./design-tokens.md) — CSS variables

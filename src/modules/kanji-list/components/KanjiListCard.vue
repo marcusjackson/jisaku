@@ -3,59 +3,30 @@
  * KanjiListCard
  *
  * UI component displaying a single kanji entry in the list.
- * Pure presentation — receives data via props, emits events for interactions.
+ * Shows: kanji character, short meaning, kentei level, primary classification.
  */
 
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import type {
-  Kanji,
-  KanjiClassificationWithType
-} from '@/shared/types/database-types'
+import { KENTEI_LABELS } from '../kanji-list-types'
+
+import type { KanjiClassification } from '@/api/classification'
+import type { Kanji } from '@/api/kanji'
 
 const props = defineProps<{
   kanji: Kanji
-  /** Primary classification for this kanji (optional, null if none) */
-  classification?: KanjiClassificationWithType | null
+  classification?: KanjiClassification | null
 }>()
 
-const jlptBadgeClass = computed(() => {
-  if (!props.kanji.jlptLevel) return ''
-  return `kanji-list-card-badge-jlpt-${props.kanji.jlptLevel.toLowerCase()}`
-})
-
-const jlptLabel = computed(() => {
-  if (!props.kanji.jlptLevel) return null
-  // Display 非JLPT for non-jlpt, otherwise show the level as-is
-  if (props.kanji.jlptLevel === 'non-jlpt') return '非JLPT'
-  return props.kanji.jlptLevel
-})
-
-const joyoLabel = computed(() => {
-  if (!props.kanji.joyoLevel) return null
-  const labels: Record<string, string> = {
-    elementary1: '小1',
-    elementary2: '小2',
-    elementary3: '小3',
-    elementary4: '小4',
-    elementary5: '小5',
-    elementary6: '小6',
-    secondary: '中学',
-    'non-joyo': '非常用'
-  }
-  return labels[props.kanji.joyoLevel] ?? null
-})
-
 const kenteiLabel = computed(() => {
-  return props.kanji.kenteiLevel ?? null
+  if (!props.kanji.kanjiKenteiLevel) return null
+  return KENTEI_LABELS[props.kanji.kanjiKenteiLevel]
 })
 
-/**
- * Get abbreviated classification label for badge display
- */
 const classificationLabel = computed(() => {
-  if (!props.classification?.nameJapanese) return null
+  const name = props.classification?.classificationType?.nameJapanese
+  if (!name) return null
   const abbreviations: Record<string, string> = {
     象形文字: '象形',
     指事文字: '指事',
@@ -63,16 +34,14 @@ const classificationLabel = computed(() => {
     形声文字: '形声',
     仮借字: '仮借'
   }
-  return (
-    abbreviations[props.classification.nameJapanese] ??
-    props.classification.nameJapanese
-  )
+  return abbreviations[name] ?? name
 })
 </script>
 
 <template>
   <RouterLink
     class="kanji-list-card"
+    data-testid="kanji-list-card"
     :to="`/kanji/${kanji.id}`"
   >
     <span class="kanji-list-card-character">{{ kanji.character }}</span>
@@ -91,19 +60,6 @@ const classificationLabel = computed(() => {
           class="kanji-list-card-badge kanji-list-card-badge-classification"
         >
           {{ classificationLabel }}
-        </span>
-        <span
-          v-if="kanji.jlptLevel"
-          class="kanji-list-card-badge"
-          :class="jlptBadgeClass"
-        >
-          {{ jlptLabel }}
-        </span>
-        <span
-          v-if="joyoLabel"
-          class="kanji-list-card-badge kanji-list-card-badge-joyo"
-        >
-          {{ joyoLabel }}
         </span>
         <span
           v-if="kenteiLabel"
@@ -182,51 +138,11 @@ const classificationLabel = computed(() => {
   font-weight: var(--font-weight-medium);
 }
 
-/* Classification type badge */
 .kanji-list-card-badge-classification {
   background-color: var(--color-primary-bg);
   color: var(--color-primary);
 }
 
-/* JLPT level colors */
-.kanji-list-card-badge-jlpt-n5 {
-  background-color: var(--color-success-bg);
-  color: var(--color-success);
-}
-
-.kanji-list-card-badge-jlpt-n4 {
-  background-color: var(--color-info-bg);
-  color: var(--color-info);
-}
-
-.kanji-list-card-badge-jlpt-n3 {
-  background-color: var(--color-warning-bg);
-  color: var(--color-warning);
-}
-
-.kanji-list-card-badge-jlpt-n2 {
-  background-color: var(--color-error-bg);
-  color: var(--color-primary);
-}
-
-.kanji-list-card-badge-jlpt-n1 {
-  background-color: var(--color-error-bg);
-  color: var(--color-error);
-}
-
-.kanji-list-card-badge-jlpt-non-jlpt {
-  border: var(--border-width) solid var(--color-border);
-  background-color: var(--color-surface-variant);
-  color: var(--color-text-muted);
-}
-
-/* Joyo level */
-.kanji-list-card-badge-joyo {
-  background-color: var(--color-background);
-  color: var(--color-text-secondary);
-}
-
-/* Kentei level */
 .kanji-list-card-badge-kentei {
   border: var(--border-width) solid var(--color-border);
   background-color: var(--color-surface-variant);

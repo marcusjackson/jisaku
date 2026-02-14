@@ -2,13 +2,38 @@
 /**
  * VocabularyDetailPage
  *
- * Route entry point for viewing a single vocabulary entry.
- * Delegates to VocabularyRootDetail for data fetching and orchestration.
+ * Page wrapper for the vocabulary detail module.
+ * Provides layout structure and manages theme.
  */
 
-import VocabularyRootDetail from '@/modules/vocabulary/components/VocabularyRootDetail.vue'
+import { BaseToast } from '@/base/components'
+
+import { SharedHeader } from '@/shared/components'
+import { useTheme } from '@/shared/composables'
+
+import { VocabDetailRoot } from '@/modules/vocab-detail'
+
+useTheme()
 </script>
 
 <template>
-  <VocabularyRootDetail />
+  <div class="vocabulary-detail-page">
+    <SharedHeader />
+    <main class="vocabulary-detail-page-main">
+      <VocabDetailRoot />
+    </main>
+    <BaseToast />
+  </div>
 </template>
+
+<style scoped>
+.vocabulary-detail-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.vocabulary-detail-page-main {
+  flex: 1;
+}
+</style>

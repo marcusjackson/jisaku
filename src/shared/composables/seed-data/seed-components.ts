@@ -44,14 +44,6 @@ export const SEED_COMPONENTS: SeedComponentData[] = [
     radicalNameJapanese: 'さんずい'
   },
   {
-    character: '扌',
-    strokeCount: 3,
-    shortMeaning: 'hand',
-    searchKeywords: 'てへん, hand radical',
-    description: 'Hand radical. Derived from 手.',
-    canBeRadical: false
-  },
-  {
     character: '口',
     strokeCount: 3,
     shortMeaning: 'mouth',
@@ -105,6 +97,17 @@ export const SEED_COMPONENTS: SeedComponentData[] = [
     kangxiNumber: 61,
     kangxiMeaning: 'heart',
     radicalNameJapanese: 'こころ'
+  },
+  {
+    character: '木',
+    strokeCount: 4,
+    shortMeaning: 'tree',
+    searchKeywords: 'き, tree radical',
+    description: 'Tree/wood radical.',
+    canBeRadical: true,
+    kangxiNumber: 75,
+    kangxiMeaning: 'tree',
+    radicalNameJapanese: 'き'
   }
 ]
 
@@ -119,7 +122,6 @@ export function seedComponents(
   run: (sql: string, params?: unknown[]) => void
 ): number {
   for (const component of SEED_COMPONENTS) {
-    // Look up source kanji ID if specified
     let sourceKanjiId: number | null = null
     if (component.sourceKanjiCharacter) {
       const result = exec('SELECT id FROM kanjis WHERE character = ?', [
@@ -158,10 +160,10 @@ export function seedComponentOccurrences(
   run: (sql: string, params?: unknown[]) => void
 ): void {
   const links: [string, string][] = [
-    ['海', '氵'], // sea contains water radical
-    ['花', '艹'], // flower contains grass radical
-    ['空', '宀'], // sky contains roof radical
-    ['愛', '心'] // love contains heart radical
+    ['海', '氵'],
+    ['花', '艹'],
+    ['空', '宀'],
+    ['愛', '心']
   ]
 
   for (const [kanjiChar, componentChar] of links) {
@@ -183,174 +185,4 @@ export function seedComponentOccurrences(
       )
     }
   }
-}
-
-/**
- * Seed data for component forms (visual variants)
- */
-export interface SeedComponentFormData {
-  componentCharacter: string
-  formCharacter: string
-  formName: string | null
-  strokeCount: number | null
-  usageNotes: string | null
-}
-
-export const SEED_COMPONENT_FORMS: SeedComponentFormData[] = [
-  {
-    componentCharacter: '氵',
-    formCharacter: '氵',
-    formName: 'sanzui (left)',
-    strokeCount: 3,
-    usageNotes: 'Standard form used on the left side of kanji'
-  },
-  {
-    componentCharacter: '氵',
-    formCharacter: '水',
-    formName: 'full water',
-    strokeCount: 4,
-    usageNotes: 'Full form used in standalone positions'
-  },
-  {
-    componentCharacter: '心',
-    formCharacter: '心',
-    formName: 'kokoro (bottom)',
-    strokeCount: 4,
-    usageNotes: 'Standard form used at the bottom of kanji'
-  },
-  {
-    componentCharacter: '心',
-    formCharacter: '忄',
-    formName: 'risshinben (left)',
-    strokeCount: 3,
-    usageNotes: 'Vertical form used on the left side of kanji'
-  },
-  {
-    componentCharacter: '心',
-    formCharacter: '⺗',
-    formName: 'shitashinzoko (bottom)',
-    strokeCount: 4,
-    usageNotes: 'Alternate bottom form with dots'
-  }
-]
-
-/**
- * Seeds component forms into the database
- */
-export function seedComponentForms(
-  exec: (sql: string, params?: unknown[]) => { values: unknown[][] }[],
-  run: (sql: string, params?: unknown[]) => void
-): number {
-  let seeded = 0
-  for (let i = 0; i < SEED_COMPONENT_FORMS.length; i++) {
-    const form = SEED_COMPONENT_FORMS[i]
-    if (!form) continue
-
-    const componentResult = exec(
-      'SELECT id FROM components WHERE character = ?',
-      [form.componentCharacter]
-    )
-    const componentId = componentResult[0]?.values[0]?.[0] as number | undefined
-
-    if (componentId) {
-      run(
-        `INSERT INTO component_forms (component_id, form_character, form_name, stroke_count, usage_notes, display_order)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          componentId,
-          form.formCharacter,
-          form.formName,
-          form.strokeCount,
-          form.usageNotes,
-          i
-        ]
-      )
-      seeded++
-    }
-  }
-  return seeded
-}
-
-/**
- * Seed data for component groupings (pattern analysis groups)
- */
-export interface SeedComponentGroupingData {
-  componentCharacter: string
-  name: string
-  description: string | null
-  memberKanji: string[] // kanji characters whose occurrences should be added
-}
-
-export const SEED_COMPONENT_GROUPINGS: SeedComponentGroupingData[] = [
-  {
-    componentCharacter: '氵',
-    name: 'Water-related meanings',
-    description:
-      'Kanji where the water radical indicates water/liquid semantics',
-    memberKanji: ['海']
-  }
-]
-
-/**
- * Seeds component groupings into the database
- */
-export function seedComponentGroupings(
-  exec: (sql: string, params?: unknown[]) => { values: unknown[][] }[],
-  run: (sql: string, params?: unknown[]) => void
-): number {
-  let seeded = 0
-  for (let i = 0; i < SEED_COMPONENT_GROUPINGS.length; i++) {
-    const grouping = SEED_COMPONENT_GROUPINGS[i]
-    if (!grouping) continue
-
-    const componentResult = exec(
-      'SELECT id FROM components WHERE character = ?',
-      [grouping.componentCharacter]
-    )
-    const componentId = componentResult[0]?.values[0]?.[0] as number | undefined
-
-    if (componentId) {
-      run(
-        `INSERT INTO component_groupings (component_id, name, description, display_order)
-         VALUES (?, ?, ?, ?)`,
-        [componentId, grouping.name, grouping.description, i]
-      )
-
-      // Get the new grouping ID
-      const groupingIdResult = exec('SELECT last_insert_rowid() as id')
-      const groupingId = groupingIdResult[0]?.values[0]?.[0] as
-        | number
-        | undefined
-
-      if (groupingId) {
-        // Add members
-        for (let j = 0; j < grouping.memberKanji.length; j++) {
-          const kanjiChar = grouping.memberKanji[j]
-          if (!kanjiChar) continue
-
-          // Find the occurrence ID for this kanji-component pair
-          const occResult = exec(
-            `SELECT co.id FROM component_occurrences co
-             JOIN kanjis k ON k.id = co.kanji_id
-             WHERE co.component_id = ? AND k.character = ?`,
-            [componentId, kanjiChar]
-          )
-          const occurrenceId = occResult[0]?.values[0]?.[0] as
-            | number
-            | undefined
-
-          if (occurrenceId) {
-            run(
-              `INSERT INTO component_grouping_members (grouping_id, occurrence_id, display_order)
-               VALUES (?, ?, ?)`,
-              [groupingId, occurrenceId, j]
-            )
-          }
-        }
-      }
-
-      seeded++
-    }
-  }
-  return seeded
 }

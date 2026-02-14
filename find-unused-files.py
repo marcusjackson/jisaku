@@ -40,6 +40,58 @@ from pathlib import Path
 from typing import List, Set, Optional
 
 
+def find_export_in_barrel(barrel_file: Path, export_name: str) -> Optional[Path]:
+    """
+    Find the actual file being exported from a barrel export (index.ts).
+    
+    For example, if index.ts has "export { default as BaseSwitch } from './BaseSwitch.vue'",
+    this will return the path to BaseSwitch.vue
+    
+    Args:
+        barrel_file: Path to the barrel export file (index.ts)
+        export_name: The name of the export being imported
+        
+    Returns:
+        Path to the actual source file, or None if not found
+    """
+    try:
+        with open(barrel_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except (UnicodeDecodeError, OSError):
+        return None
+    
+    # Match: export { ... export_name ... } from "path"
+    # Also match: export { default as export_name } from "path"
+    # Also match: export { import_name as export_name } from "path"
+    patterns = [
+        # Default export as name: export { default as BaseSwitch } from './BaseSwitch.vue'
+        rf'export\s+{{\s*default\s+as\s+{export_name}\s*}}\s+from\s+[\'"]([^\'"]+)[\'"]',
+        # Named export: export { BaseSwitch } from './BaseSwitch.vue'
+        rf'export\s+{{\s*{export_name}\s*}}\s+from\s+[\'"]([^\'"]+)[\'"]',
+        # Named export with alias: export { SomeComponent as BaseSwitch } from '...'
+        rf'export\s+{{\s*\w+\s+as\s+{export_name}\s*}}\s+from\s+[\'"]([^\'"]+)[\'"]',
+    ]
+    
+    barrel_dir = barrel_file.parent
+    
+    for pattern in patterns:
+        match = re.search(pattern, content)
+        if match:
+            exported_from = match.group(1)
+            # Resolve the path relative to the barrel file
+            target = barrel_dir / exported_from
+            
+            # Try as-is or with extensions
+            if target.exists():
+                return target
+            for ext in ['.ts', '.vue', '.js']:
+                candidate = target.parent / (target.name + ext)
+                if candidate.exists():
+                    return candidate
+    
+    return None
+
+
 def resolve_import(importing_file: Path, import_path: str, root: Path) -> Optional[Path]:
     """
     Resolve an import path to an absolute file path.
@@ -109,6 +161,49 @@ def find_all_files(root_dir: Path) -> List[Path]:
     return all_files
 
 
+def is_barrel_export(file_path: Path) -> bool:
+    """
+    Check if a file is a barrel export (only contains export statements).
+    
+    Args:
+        file_path: Path to the file to check
+        
+    Returns:
+        True if the file is a barrel export
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except (UnicodeDecodeError, OSError):
+        return False
+    
+    # Remove block comments
+    content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
+    # Remove single-line comments
+    content = re.sub(r'//.*$', '', content, flags=re.MULTILINE)
+    # Remove whitespace and newlines
+    content = ' '.join(content.split())
+    
+    # If file is empty after removing comments, it's not a barrel export
+    if not content.strip():
+        return False
+    
+    # Split by export statements and check each one
+    # A barrel export file should only have export statements
+    # Pattern: starts with export, then anything until next export or end
+    parts = re.split(r'\bexport\b', content)
+    
+    # First part (before first export) should be empty
+    if parts[0].strip():
+        return False
+    
+    # Should have at least one export
+    if len(parts) < 2:
+        return False
+    
+    return True
+
+
 def find_source_files(root_dir: Path) -> List[Path]:
     """
     Find source files that should be checked for usage.
@@ -138,14 +233,29 @@ def find_source_files(root_dir: Path) -> List[Path]:
         'src/main.ts',
         'src/env.d.ts',
         'src/App.vue',
-        'test/setup.ts'
+        'test/setup.ts',
+        'src/shared/components/index.ts',  # Barrel export for shared components
+        'src/shared/composables/index.ts',  # Barrel export for shared composables
+        'src/shared/validation/index.ts',  # Barrel export for shared validation
+        'src/shared/components/SharedSection.vue',  # Future component, not yet integrated
+        'src/base/components/index.ts',  # Barrel export for base components
+        'src/base/composables/index.ts',  # Barrel export for base composables
     }
 
     # Files with 'config' in the name
     config_pattern = re.compile(r'config', re.IGNORECASE)
 
     # Temporary ignores (consider checking in future)
-    temp_ignored_dirs = {'test/helpers', 'test/mocks', 'src/db', 'src/shared/composables/seed-data', 'src/shared/types'}
+    temp_ignored_dirs = {
+        'test/helpers',
+        'test/mocks',
+        'src/db',
+        'src/shared/composables/seed-data',
+        'src/shared/types',
+        'src/shared/validation',  # Files re-exported through barrel export
+        'src/api',  # API layer scaffolding (will be used in Phase 1)
+        'src/legacy'  # Legacy code frozen during refactoring
+    }
 
     for dirpath, dirnames, filenames in os.walk(root_dir):
         # Remove directories we want to skip from dirnames to prevent traversal
@@ -174,7 +284,13 @@ def find_source_files(root_dir: Path) -> List[Path]:
                 if config_pattern.search(filename):
                     continue
 
-                source_files.append(root_dir / rel_file)
+                file_path = root_dir / rel_file
+                
+                # Skip barrel export files (index.ts with only export statements)
+                if filename == 'index.ts' and is_barrel_export(file_path):
+                    continue
+
+                source_files.append(file_path)
 
     return source_files
 
@@ -200,18 +316,53 @@ def find_used_files(root_dir: Path) -> Set[Path]:
             except (UnicodeDecodeError, OSError):
                 continue
 
-            # Find import statements
-            # Matches: import ... from "path"
-            import_matches = re.findall(r'import\s+.*?from\s+[\'"]([^\'"]+)[\'"]', content)
+            # Find all import statements (including named imports)
+            # Pattern: import { Name1, Name2, ... } from "path"
+            # Pattern: import Name from "path"
+            # Pattern: import ... from "path"
+            
+            # First, extract all complete import statements
+            import_lines = re.findall(r'import\s+[^;]*?from\s+[\'"]([^\'"]+)[\'"]', content, re.DOTALL)
             # Also match dynamic imports: import("path")
-            dynamic_matches = re.findall(r'import\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)', content)
+            dynamic_imports = re.findall(r'import\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)', content)
 
-            all_imports = import_matches + dynamic_matches
+            all_imports = import_lines + dynamic_imports
 
-            for import_path in all_imports:
+            # Also find named imports separately
+            named_imports = re.findall(r'import\s*{([^}]+)}\s*from\s+[\'"]([^\'"]+)[\'"]', content, re.DOTALL)
+
+            # Process regular imports
+            for import_path in set(all_imports):
                 resolved = resolve_import(file_path, import_path, root_dir)
                 if resolved:
                     used_files.add(resolved)
+
+            # Process named imports - resolve the barrel and the actual exports
+            for imports_str, import_path in named_imports:
+                resolved = resolve_import(file_path, import_path, root_dir)
+                if resolved:
+                    used_files.add(resolved)
+                    
+                    # If resolved to a barrel export (index.ts), find the actual source files
+                    if resolved.name == 'index.ts' and resolved.exists():
+                        # Extract individual import names
+                        # Handle: "import as" pattern - the name after "as" is what we want
+                        names = []
+                        for part in imports_str.split(','):
+                            part = part.strip()
+                            if ' as ' in part:
+                                # Format: "import as alias" - we want the alias
+                                names.append(part.split(' as ')[-1].strip())
+                            else:
+                                # Just the name
+                                names.append(part)
+                        
+                        # For each imported name, find its source in the barrel
+                        for name in names:
+                            if name:  # Skip empty names
+                                source = find_export_in_barrel(resolved, name)
+                                if source:
+                                    used_files.add(source)
 
     return used_files
 
@@ -263,7 +414,15 @@ def find_orphaned_test_files(root_dir: Path) -> List[Path]:
     ignored_dirs = {'scripts', 'ignore', 'e2e'}
 
     # Temporary ignores
-    temp_ignored_dirs = {'test/helpers', 'test/mocks', 'src/db', 'src/shared/composables/seed-data', 'src/shared/types'}
+    temp_ignored_dirs = {
+        'test/helpers',
+        'test/mocks',
+        'src/db',
+        'src/shared/composables/seed-data',
+        'src/shared/types',
+        'src/api',  # API layer scaffolding (will be used in Phase 1)
+        'src/legacy'  # Legacy code frozen during refactoring
+    }
 
     for dirpath, dirnames, filenames in os.walk(root_dir):
         # Remove directories we want to skip from dirnames to prevent traversal

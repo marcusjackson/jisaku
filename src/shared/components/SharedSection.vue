@@ -2,16 +2,11 @@
 /**
  * SharedSection
  *
- * Generic section component with optional collapsible functionality.
+ * Generic section component with title, actions slot, and optional collapsible.
  * Used throughout the app for organizing content into sections.
- *
- * Features:
- * - Optional title and actions slot
- * - Collapsible mode using Reka UI
- * - Bottom collapse button when expanded (for long content)
  */
 
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import {
   CollapsibleContent,
@@ -19,47 +14,64 @@ import {
   CollapsibleTrigger
 } from 'reka-ui'
 
-import BaseButton from '@/base/components/BaseButton.vue'
+import { BaseButton } from '@/base/components'
 
 const props = defineProps<{
   /** Section title */
   title?: string
-  /** Enable collapsible functionality */
+  /** Enable collapsible functionality - defaults to false */
   collapsible?: boolean
-  /** Default open state (only applies when collapsible=true) */
+  /** Default open state (only applies when collapsible=true) - defaults to true */
   defaultOpen?: boolean
+  /** Test ID for E2E testing */
+  testId?: string
 }>()
 
-// Use model for controlling open state - defaults to true unless explicitly false
-const isOpen = ref(true)
+// Default values for optional boolean props
+const isCollapsible = computed(() => props.collapsible)
 
-// If defaultOpen is explicitly false, set to false
-if (!props.defaultOpen) {
-  isOpen.value = false
-}
+// Compute the initial open value:
+// - Default to open (true) unless defaultOpen is explicitly set to false
+const initialOpen = props.defaultOpen
+const isOpen = ref(initialOpen)
+
+// Sync with defaultOpen prop changes
+watch(
+  () => props.defaultOpen,
+  (val) => {
+    isOpen.value = !val ? false : true
+  }
+)
 </script>
 
 <template>
   <!-- Non-collapsible section -->
   <section
-    v-if="!collapsible"
+    v-if="!isCollapsible"
     class="shared-section"
+    :data-testid="testId"
   >
     <div
-      v-if="title || $slots['actions']"
+      v-if="title || $slots['actions'] || $slots['header-extra']"
       class="shared-section-header"
     >
-      <h2
-        v-if="title"
-        class="shared-section-title"
-      >
-        {{ title }}
-      </h2>
+      <div class="shared-section-title-row">
+        <h2
+          v-if="title"
+          class="shared-section-title"
+        >
+          {{ title }}
+        </h2>
+        <slot name="header-extra" />
+      </div>
       <div
         v-if="$slots['actions']"
         class="shared-section-actions"
       >
-        <slot name="actions" />
+        <slot
+          :is-open="true"
+          name="actions"
+        />
       </div>
     </div>
 
@@ -73,6 +85,8 @@ if (!props.defaultOpen) {
     v-else
     v-model:open="isOpen"
     class="shared-section shared-section-collapsible"
+    :data-testid="testId"
+    :unmount-on-hide="false"
   >
     <div class="shared-section-header">
       <CollapsibleTrigger class="shared-section-trigger">
@@ -80,18 +94,20 @@ if (!props.defaultOpen) {
           v-if="title"
           class="shared-section-title"
         >
-          <span class="shared-section-trigger-icon-wrapper">
-            <span class="shared-section-trigger-icon">▶</span>
-          </span>
+          <span class="shared-section-trigger-icon">▶</span>
           {{ title }}
         </h2>
+        <slot name="header-extra" />
       </CollapsibleTrigger>
 
       <div
         v-if="$slots['actions']"
         class="shared-section-actions"
       >
-        <slot name="actions" />
+        <slot
+          :is-open="isOpen"
+          name="actions"
+        />
       </div>
     </div>
 
@@ -100,7 +116,6 @@ if (!props.defaultOpen) {
         <slot />
       </div>
 
-      <!-- Bottom collapse button for long content -->
       <div class="shared-section-bottom-action">
         <CollapsibleTrigger as-child>
           <BaseButton
@@ -136,6 +151,12 @@ if (!props.defaultOpen) {
   font-weight: var(--font-weight-semibold);
 }
 
+.shared-section-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
 .shared-section-actions {
   display: flex;
   gap: var(--spacing-sm);
@@ -149,6 +170,7 @@ if (!props.defaultOpen) {
 
 /* Collapsible-specific styles */
 .shared-section-collapsible {
+  gap: unset;
   padding: var(--spacing-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -179,18 +201,13 @@ if (!props.defaultOpen) {
   outline: none;
 }
 
-.shared-section-trigger-icon-wrapper {
-  display: inline-flex;
-  transition: transform var(--transition-fast);
-}
-
 .shared-section-trigger-icon {
   display: inline-block;
   font-size: var(--font-size-sm);
+  transition: transform var(--transition-fast);
 }
 
-/* Rotate icon when open */
-[data-state='open'] .shared-section-trigger-icon-wrapper {
+[data-state='open'] .shared-section-trigger-icon {
   transform: rotate(90deg);
 }
 
@@ -198,13 +215,12 @@ if (!props.defaultOpen) {
   overflow: hidden;
 }
 
-/* Animation for collapsible content */
 .shared-section-collapsible-content[data-state='open'] {
-  animation: slide-down 300ms ease-out;
+  animation: slide-down 200ms ease-out;
 }
 
 .shared-section-collapsible-content[data-state='closed'] {
-  animation: slide-up 300ms ease-out;
+  animation: slide-up 200ms ease-out;
 }
 
 @keyframes slide-down {

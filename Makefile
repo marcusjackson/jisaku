@@ -66,8 +66,8 @@ check:
 fix:
 	make lint FILES="$(FILES)" && make lint-css FILES="$(FILES)" && make format FILES="$(FILES)" && make type-check-files FILES="$(FILES)"
 
-# Run on changed files (git diff --name-only)
-changed_files=$(shell git diff --name-only --diff-filter=ACMRTUXB)
+# Run on changed files (git diff --name-only + untracked)
+changed_files=$(shell git diff --name-only --diff-filter=ACMRTUXB && git ls-files --others --exclude-standard)
 
 # Test files logic for changed files
 # Source files that might have tests (exclude test files themselves)
@@ -88,3 +88,21 @@ fix-changed:
 # Run tests on changed files (including tests for changed source files)
 test-changed:
 	@if [ -n "$(test_files_to_run)" ]; then pnpm test $(test_files_to_run); fi
+
+# ============================================================================
+# Legacy Code Targets
+# ============================================================================
+# Legacy code is excluded from normal lint/check by default.
+# Use these targets to explicitly lint or test legacy code.
+
+# Lint legacy code (opt-in)
+lint-legacy:
+	pnpm eslint src/legacy e2e/legacy --fix
+
+# Check legacy code (no fix)
+check-legacy:
+	pnpm eslint src/legacy e2e/legacy
+
+# Run E2E tests on legacy UI
+test-e2e-legacy:
+	pnpm playwright test --project=legacy

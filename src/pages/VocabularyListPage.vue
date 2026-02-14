@@ -2,13 +2,39 @@
 /**
  * VocabularyListPage
  *
- * Route entry point for the vocabulary list.
- * Thin wrapper that delegates to the vocabulary-list module's root component.
+ * Page wrapper for the vocabulary list route.
+ * Applies theme, header, and layout wrapper.
  */
 
-import VocabularyListRoot from '@/modules/vocabulary-list/components/VocabularyListRoot.vue'
+import { BaseToast } from '@/base/components'
+
+import { SharedHeader } from '@/shared/components'
+import { useTheme } from '@/shared/composables'
+
+import VocabListRoot from '@/modules/vocab-list/components/VocabListRoot.vue'
+
+// Initialize theme on page load
+useTheme()
 </script>
 
 <template>
-  <VocabularyListRoot />
+  <div class="vocabulary-list-page">
+    <SharedHeader />
+    <main class="vocabulary-list-page-main">
+      <VocabListRoot />
+    </main>
+    <BaseToast />
+  </div>
 </template>
+
+<style scoped>
+.vocabulary-list-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.vocabulary-list-page-main {
+  flex: 1;
+}
+</style>

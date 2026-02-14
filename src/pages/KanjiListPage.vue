@@ -2,13 +2,39 @@
 /**
  * KanjiListPage
  *
- * Route entry point for the kanji list.
- * Thin wrapper that delegates to the kanji-list module's root component.
+ * Page wrapper for the kanji list route.
+ * Applies theme, header, and layout wrapper.
  */
 
+import { BaseToast } from '@/base/components'
+
+import { SharedHeader } from '@/shared/components'
+import { useTheme } from '@/shared/composables'
+
 import KanjiListRoot from '@/modules/kanji-list/components/KanjiListRoot.vue'
+
+// Initialize theme on page load
+useTheme()
 </script>
 
 <template>
-  <KanjiListRoot />
+  <div class="kanji-list-page">
+    <SharedHeader />
+    <main class="kanji-list-page-main">
+      <KanjiListRoot />
+    </main>
+    <BaseToast />
+  </div>
 </template>
+
+<style scoped>
+.kanji-list-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.kanji-list-page-main {
+  flex: 1;
+}
+</style>

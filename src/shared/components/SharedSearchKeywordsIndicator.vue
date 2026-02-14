@@ -2,13 +2,8 @@
 /**
  * SharedSearchKeywordsIndicator
  *
- * UI component displaying a subtle indicator when search_keywords has content.
- * Shows a small icon with tooltip displaying the keywords.
- * On desktop: Hovers to show tooltip (native behavior)
- * On mobile: Click to toggle tooltip open/close with close button for dismissal
- * Outside clicks also close the tooltip when open via click.
+ * Displays search icon with tooltip showing keywords. Click to toggle on mobile.
  */
-
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import {
@@ -21,52 +16,35 @@ import {
 } from 'reka-ui'
 
 const props = defineProps<{
-  /** The search keywords to display (null/empty won't show indicator) */
   searchKeywords: string | null | undefined
 }>()
 
 const isOpen = ref(false)
 const contentRef = ref<HTMLElement>()
 
-const hasKeywords = computed(() => {
-  return props.searchKeywords && props.searchKeywords.trim().length > 0
-})
-
 const tooltipMessage = computed(() => {
-  return hasKeywords.value ? props.searchKeywords : 'No search keywords set'
+  const trimmed = props.searchKeywords?.trim()
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should show fallback
+  return trimmed || 'No search keywords set'
 })
-
-const handleClick = () => {
-  isOpen.value = !isOpen.value
-}
-
-const handleClose = () => {
-  isOpen.value = false
-}
 
 const handleOutsideClick = (event: Event) => {
-  if (!isOpen.value) return // Only handle outside clicks when tooltip is open
-
+  if (!isOpen.value) return
   const target = event.target as Node
+  const trigger = document.querySelector('[aria-label="Show search keywords"]')
   if (
     contentRef.value &&
-    typeof contentRef.value.contains === 'function' &&
-    !contentRef.value.contains(target)
+    !contentRef.value.contains(target) &&
+    trigger &&
+    !trigger.contains(target)
   ) {
-    // Check if click is on the trigger button to avoid immediately closing on open click
-    const trigger = document.querySelector(
-      '[aria-label="Show search keywords"]'
-    )
-    if (trigger && !trigger.contains(target)) {
-      isOpen.value = false
-    }
+    isOpen.value = false
   }
 }
 
 onMounted(() => {
   document.addEventListener('click', handleOutsideClick)
 })
-
 onUnmounted(() => {
   document.removeEventListener('click', handleOutsideClick)
 })
@@ -78,15 +56,14 @@ onUnmounted(() => {
       <TooltipTrigger as-child>
         <button
           aria-label="Show search keywords"
-          class="search-keywords-indicator"
+          class="indicator"
           type="button"
-          @click="handleClick"
+          @click="isOpen = !isOpen"
         >
           <svg
-            class="search-keywords-indicator-icon"
+            class="indicator-icon"
             fill="currentColor"
             viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
           >
             <path
               clip-rule="evenodd"
@@ -98,43 +75,27 @@ onUnmounted(() => {
       </TooltipTrigger>
       <TooltipPortal>
         <TooltipContent
-          class="search-keywords-tooltip"
+          class="tooltip"
           :side-offset="5"
         >
           <div
             ref="contentRef"
-            class="search-keywords-tooltip-content-wrapper"
+            class="tooltip-wrapper"
           >
-            <div class="search-keywords-tooltip-header">
-              <div class="search-keywords-tooltip-title">Search Keywords</div>
+            <div class="tooltip-header">
+              <span class="tooltip-title">Search Keywords</span>
               <button
                 aria-label="Close"
-                class="search-keywords-tooltip-close"
+                class="tooltip-close"
                 type="button"
-                @click="handleClose"
+                @click="isOpen = false"
               >
-                <svg
-                  fill="none"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  width="16"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M4 4L12 12M12 4L4 12"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                  />
-                </svg>
+                ×
               </button>
             </div>
-            <div class="search-keywords-tooltip-content">
-              {{ tooltipMessage }}
-            </div>
+            <div class="tooltip-content">{{ tooltipMessage }}</div>
           </div>
-          <TooltipArrow class="search-keywords-tooltip-arrow" />
+          <TooltipArrow class="tooltip-arrow" />
         </TooltipContent>
       </TooltipPortal>
     </TooltipRoot>
@@ -142,7 +103,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.search-keywords-indicator {
+.indicator {
   display: inline-flex;
   align-items: center;
   padding: var(--spacing-1);
@@ -150,79 +111,64 @@ onUnmounted(() => {
   background: none;
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: color var(--transition-fast);
 }
 
-.search-keywords-indicator:hover {
+.indicator:hover {
   color: var(--color-text-secondary);
 }
 
-.search-keywords-indicator:focus-visible {
+.indicator:focus-visible {
   border-radius: var(--radius-sm);
   box-shadow: var(--focus-ring);
   outline: none;
 }
 
-.search-keywords-indicator-icon {
+.indicator-icon {
   width: 1rem;
   height: 1rem;
 }
 
-:deep(.search-keywords-tooltip) {
+:deep(.tooltip) {
   z-index: 50;
   max-width: 20rem;
   padding: var(--spacing-3);
-  overflow: hidden;
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
   box-shadow: var(--shadow-lg);
 }
 
-:deep(.search-keywords-tooltip-header) {
+:deep(.tooltip-header) {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-2);
 }
 
-:deep(.search-keywords-tooltip-title) {
+:deep(.tooltip-title) {
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
 }
 
-:deep(.search-keywords-tooltip-close) {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
+:deep(.tooltip-close) {
   padding: var(--spacing-1);
   border: none;
-  border-radius: var(--radius-sm);
   background: none;
   color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
   cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    color var(--transition-fast);
 }
 
-:deep(.search-keywords-tooltip-close:hover) {
-  background-color: var(--color-surface-hover);
+:deep(.tooltip-close:hover) {
   color: var(--color-text-primary);
 }
 
-:deep(.search-keywords-tooltip-close:focus-visible) {
-  box-shadow: var(--focus-ring);
-  outline: none;
-}
-
-:deep(.search-keywords-tooltip-content) {
+:deep(.tooltip-content) {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
 }
 
-:deep(.search-keywords-tooltip-arrow) {
+:deep(.tooltip-arrow) {
   fill: var(--color-surface);
 }
 </style>

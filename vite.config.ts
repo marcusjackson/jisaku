@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 import pkg from './package.json'
 
+/* eslint-disable max-lines-per-function */
 export default defineConfig(({ command }) => ({
   // Base path for GitHub Pages deployment
   // Only apply /jisaku/ base during production build on GitHub Actions
@@ -113,3 +114,4 @@ export default defineConfig(({ command }) => ({
     strictPort: true
   }
 }))
+/* eslint-enable max-lines-per-function */

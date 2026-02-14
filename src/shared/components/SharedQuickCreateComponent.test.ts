@@ -120,7 +120,7 @@ describe('SharedQuickCreateComponent', () => {
   })
 
   it('pre-fills character when initialCharacter provided', () => {
-    const wrapper = mountDialog({ initialCharacter: '亻' })
+    const wrapper = mountDialog({ initialCharacter: 'δΊ»' })
     // The component should have the initial character set in the form
     expect(wrapper.html()).toBeDefined()
   })

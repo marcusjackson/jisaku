@@ -4,241 +4,171 @@ applyTo: '**/*.vue'
 
 # Vue Component Instructions
 
-Guidelines for creating and modifying Vue components in this project.
+Guidelines for creating and modifying Vue components.
 
 ## Component Hierarchy
 
-This project uses a three-tier component hierarchy:
+Three-tier hierarchy with **strict file size limits**:
+
+| Tier    | Purpose                 | Max Lines | Pattern                           |
+| ------- | ----------------------- | --------- | --------------------------------- |
+| Root    | Page orchestration      | **250**   | `[Module]Root[Descriptor].vue`    |
+| Section | Layout, mode management | **250**   | `[Module]Section[Descriptor].vue` |
+| UI      | Presentation            | **200**   | `[Module][Descriptor].vue`        |
 
 ### Root Components
 
-- **Purpose**: Page-level orchestration, data fetching, error boundaries
-- **Naming**: `[Module]Root.vue` or `[Module]Root[Descriptor].vue`
-- **Location**: `src/modules/[module]/components/`
-- **Responsibilities**:
-  - Call repository composables to fetch data
-  - Handle loading and error states
-  - Pass data down to Section components
-  - Coordinate page-level actions
-
-### Section Components
-
-- **Purpose**: Logical groupings, layout, coordination between UI components
-- **Naming**: `[Module]Section[Descriptor].vue`
-- **Responsibilities**:
-  - Arrange UI components
-  - Handle section-specific logic
-  - Emit events up to Root
-
-### UI Components
-
-- **Purpose**: Presentational, reusable, focused on single concern
-- **Naming**: `[Module][Descriptor].vue`
-- **Responsibilities**:
-  - Display data passed via props
-  - Emit events for user interactions
-  - No direct data fetching
-
-## Naming Conventions
-
-| Type                  | Pattern                           | Example                           | Location                       |
-| --------------------- | --------------------------------- | --------------------------------- | ------------------------------ |
-| Root (single)         | `[Module]Root.vue`                | `KanjiListRoot.vue`               | `modules/[module]/components/` |
-| Root (multiple)       | `[Module]Root[Descriptor].vue`    | `KanjiRootDetail.vue`             | `modules/[module]/components/` |
-| Section               | `[Module]Section[Descriptor].vue` | `KanjiSectionDetail.vue`          | `modules/[module]/components/` |
-| UI                    | `[Module][Descriptor].vue`        | `KanjiCard.vue`, `KanjiForm.vue`  | `modules/[module]/components/` |
-| UI (tightly coupled)  | `[Parent][Descriptor].vue`        | `KanjiFormFieldStrokeCount.vue`   | `modules/[module]/components/` |
-| Base (primitives)     | `Base[Name].vue`                  | `BaseButton.vue`, `BaseInput.vue` | `base/components/`             |
-| Shared (app-specific) | `Shared[Name].vue`                | `SharedHeader.vue`                | `shared/components/`           |
-| Page                  | `[Module][Purpose]Page.vue`       | `KanjiDetailPage.vue`             | `pages/`                       |
-
-## Base vs Shared Components
-
-**Base components** (`base/components/`):
-
-- Generic UI primitives that work in ANY project
-- Built on Reka UI with styling
-- Examples: `BaseButton`, `BaseInput`, `BaseModal`, `BaseSelect`
-
-**Shared components** (`shared/components/`):
-
-- App-specific components used across modules
-- Reference app layout, navigation, or app concepts
-- Examples: `SharedHeader`, `SharedSidebar`, `SharedPageContainer`
-
-**Decision**: Ask "Would this work in a completely different Vue project?"
-
-- Yes → `base/components/`
-- No → `shared/components/`
-
-## SFC Structure
-
-Always use this order:
+- **One Root per page** (not multiple Roots)
+- Fetch data via repository composables
+- Handle loading/error states
+- Coordinate page-level actions
+- **Extract handlers to composables when approaching limit**
 
 ```vue
+<!-- Target: ~200-250 lines -->
 <script setup lang="ts">
-// 1. Vue/framework imports
-import { ref, computed } from 'vue'
-
-// 2. Third-party imports
-import { useForm } from 'vee-validate'
-
-// 3. Base imports (generic, project-agnostic)
-import BaseButton from '@/base/components/BaseButton.vue'
-
-// 4. Shared imports (app-specific)
-import { useDatabase } from '@/shared/composables/use-database'
-
-// 5. Module imports (relative path)
-import KanjiCard from './KanjiCard.vue'
-
-// 6. Type imports
-import type { Kanji } from '../kanji-types'
-
-// Props
-const props = defineProps<{
-  kanji: Kanji
-  isEditable?: boolean
-}>()
-
-// Emits
-const emit = defineEmits<{
-  save: [kanji: Kanji]
-  cancel: []
-}>()
-
-// Composables
-const { findById } = useKanjiRepository()
-
-// Reactive state
-const isExpanded = ref(false)
-
-// Computed
-const displayName = computed(() => props.kanji.character)
-
-// Methods
-function handleSave() {
-  emit('save', props.kanji)
-}
+const { state, handlers } = useKanjiDetail(props.kanjiId)
 </script>
 
 <template>
-  <!-- Template content -->
+  <SharedPageContainer :loading="state.isLoading">
+    <KanjiSectionMeanings @update="handlers.onUpdateMeaning" />
+  </SharedPageContainer>
+</template>
+```
+
+### Section Components
+
+- Orchestrate UI within a logical area
+- Manage view/edit modes
+- **Split by mode when approaching limit**
+
+```
+KanjiSectionMeanings.vue (orchestrator, ~150 lines)
+├── KanjiMeaningsViewMode.vue (~150 lines)
+├── KanjiMeaningsEditMode.vue (~200 lines)
+└── KanjiMeaningItem.vue (~80 lines)
+```
+
+### UI Components
+
+- Purely presentational
+- Props in, events out
+- No data fetching
+
+## When Files Exceed Limits
+
+### Root Too Large (>250 lines)
+
+Extract to composables:
+
+```typescript
+// use-kanji-detail-handlers.ts
+export function useKanjiDetailHandlers(kanji: Ref<Kanji | null>) {
+  const handleUpdateMeaning = async (id: number, text: string) => {
+    /* ... */
+  }
+  return { handleUpdateMeaning /* ... */ }
+}
+```
+
+### Section Too Large (>250 lines)
+
+Split by mode:
+
+```
+Before: KanjiDetailMeanings.vue (500 lines)
+After:
+├── KanjiSectionMeanings.vue (150 lines) - orchestrator
+├── KanjiMeaningsViewMode.vue (150 lines)
+└── KanjiMeaningsEditMode.vue (200 lines)
+```
+
+## Naming Conventions
+
+| Type    | Pattern                           | Example                    |
+| ------- | --------------------------------- | -------------------------- |
+| Root    | `[Module]Root[Descriptor].vue`    | `KanjiRootDetail.vue`      |
+| Section | `[Module]Section[Descriptor].vue` | `KanjiSectionMeanings.vue` |
+| UI      | `[Module][Descriptor].vue`        | `KanjiMeaningItem.vue`     |
+| Base    | `Base[Name].vue`                  | `BaseButton.vue`           |
+| Shared  | `Shared[Name].vue`                | `SharedHeader.vue`         |
+
+## SFC Structure
+
+```vue
+<script setup lang="ts">
+// 1. Vue imports
+// 2. Third-party imports
+// 3. Base imports (@/base/)
+// 4. Shared imports (@/shared/)
+// 5. Module imports (relative)
+// 6. Type imports
+
+// Props → Emits → Composables → State → Computed → Methods
+</script>
+
+<template>
+  <!-- Template -->
 </template>
 
 <style scoped>
-/* Scoped styles using CSS variables */
+/* CSS variables only */
 </style>
 ```
 
 ## Props and Emits
 
-Use TypeScript generics with `defineProps` and `defineEmits`.
-
-### Props Definition Style
-
-Choose the style based on component complexity:
-
-**Simple UI components (≤ 4 props)** — use inline type:
-
 ```typescript
-// UI components with few props - inline is clean and readable
+// Simple (≤4 props) - inline
 const props = defineProps<{
   kanji: Kanji
   isEditable?: boolean
 }>()
 
-// With defaults
-const props = withDefaults(
-  defineProps<{
-    size?: 'sm' | 'md' | 'lg'
-    disabled?: boolean
-  }>(),
-  {
-    size: 'md',
-    disabled: false
-  }
-)
-```
-
-**Root/Section components OR > 4 props** — use separate interface:
-
-```typescript
-// Root/Section components or complex UIs - separate interface
+// Complex (>4 props) - interface
 interface Props {
   kanjiList: Kanji[]
-  filters: KanjiFilters
+  filters: Filters
   isLoading: boolean
-  error: Error | null
-  onRetry?: () => void
 }
+const props = defineProps<Props>()
 
-const props = withDefaults(defineProps<Props>(), {
-  isLoading: false,
-  error: null
-})
-```
-
-**Benefits of separate interface:**
-
-- Named type shows in IDE tooltips
-- Can export for test factories
-- Easier to refactor and document
-- Clearer separation of concerns
-
-### Emits Definition
-
-```typescript
-// Typed emits
+// Emits
 const emit = defineEmits<{
   save: [kanji: Kanji]
   delete: [id: number]
-  cancel: []
 }>()
 ```
 
 ## Styling Rules
 
-1. Always use `<style scoped>`
-2. Always use CSS variables from design tokens
-3. Never hardcode colors, spacing, or font sizes
+1. **Always** use `<style scoped>`
+2. **Always** use CSS variables from design tokens
+3. **Never** hardcode colors, spacing, or font sizes
 
-```vue
-<style scoped>
+```css
 /* ✅ Correct */
 .card {
   padding: var(--spacing-md);
   background: var(--color-surface);
-  border-radius: var(--radius-md);
 }
 
-/* ❌ Wrong - hardcoded values */
+/* ❌ Wrong */
 .card {
   padding: 16px;
   background: #ffffff;
-  border-radius: 8px;
 }
-</style>
 ```
 
 ## Loading and Error States
 
-Root components must handle loading and error states:
+Root components must handle:
 
 ```vue
 <template>
-  <div
-    v-if="isLoading"
-    class="loading-container"
-  >
-    <BaseSpinner />
-  </div>
-  <div
-    v-else-if="error"
-    class="error-container"
-  >
-    <p>{{ error.message }}</p>
-  </div>
+  <div v-if="isLoading"><BaseSpinner /></div>
+  <div v-else-if="error">{{ error.message }}</div>
   <KanjiSectionDetail
     v-else
     :kanji="kanji"
@@ -246,21 +176,30 @@ Root components must handle loading and error states:
 </template>
 ```
 
-## Accessibility Requirements
+## Accessibility
 
-- All interactive elements must be keyboard accessible
-- Use semantic HTML elements
+- Interactive elements must be keyboard accessible
+- Use semantic HTML
 - Add ARIA labels to icon-only buttons
-- Ensure focus styles are visible
+- Ensure visible focus styles
 
 ```vue
-<template>
-  <button
-    type="button"
-    aria-label="Delete kanji"
-    @click="handleDelete"
-  >
-    <IconTrash />
-  </button>
-</template>
+<button type="button" aria-label="Delete kanji" @click="handleDelete">
+  <IconTrash />
+</button>
 ```
+
+## Quick Reference
+
+**Before creating/editing a component:**
+
+1. Check current line count
+2. If approaching limit, plan extraction first
+3. Root handlers → composable
+4. Section modes → separate components
+
+**File size targets:**
+
+- Root: 200-250 lines (250 max)
+- Section: 150-250 lines (250 max)
+- UI: 100-200 lines (200 max)

@@ -23,7 +23,6 @@ const props = defineProps<Props>()
 
 const route = useRoute()
 
-// Preserve query params from the current route when navigating back
 const toWithQuery = computed(() => ({
   path: props.to,
   query: route.query

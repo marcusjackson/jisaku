@@ -1,9 +1,6 @@
 /**
- * Database Test Helpers
- *
- * Utilities for creating and seeding test databases.
+ * Database Test Helpers - Utilities for creating and seeding test databases.
  */
-
 import initSqlJs from 'sql.js'
 
 import type {
@@ -11,13 +8,11 @@ import type {
   CreateComponentInput,
   CreateKanjiInput,
   Kanji
-} from '@/shared/types/database-types'
+} from '@/legacy/shared/types/database-types'
 import type { Database } from 'sql.js'
 
-// SQL for creating the schema (matches migration 003 schema)
 const SCHEMA_SQL = `
   PRAGMA foreign_keys = ON;
-
   CREATE TABLE IF NOT EXISTS kanjis (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     character TEXT NOT NULL UNIQUE,
@@ -44,7 +39,6 @@ const SCHEMA_SQL = `
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (radical_id) REFERENCES components(id) ON DELETE SET NULL
   );
-
   CREATE TABLE IF NOT EXISTS components (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     character TEXT NOT NULL,
@@ -61,7 +55,6 @@ const SCHEMA_SQL = `
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (source_kanji_id) REFERENCES kanjis(id) ON DELETE SET NULL
   );
-
   CREATE TABLE IF NOT EXISTS classification_types (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type_name TEXT NOT NULL UNIQUE,
@@ -73,7 +66,6 @@ const SCHEMA_SQL = `
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
-
   CREATE TABLE IF NOT EXISTS position_types (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     position_name TEXT NOT NULL UNIQUE,
@@ -85,7 +77,6 @@ const SCHEMA_SQL = `
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
-
   CREATE TABLE IF NOT EXISTS component_forms (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     component_id INTEGER NOT NULL,
@@ -99,7 +90,6 @@ const SCHEMA_SQL = `
     FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE,
     UNIQUE(component_id, form_character)
   );
-
   CREATE TABLE IF NOT EXISTS component_occurrences (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     kanji_id INTEGER NOT NULL,
@@ -116,7 +106,6 @@ const SCHEMA_SQL = `
     FOREIGN KEY (component_form_id) REFERENCES component_forms(id) ON DELETE SET NULL,
     FOREIGN KEY (position_type_id) REFERENCES position_types(id) ON DELETE SET NULL
   );
-
   CREATE TABLE IF NOT EXISTS component_groupings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     component_id INTEGER NOT NULL,
@@ -213,12 +202,10 @@ const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS vocabulary (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     word TEXT NOT NULL UNIQUE,
-    kana TEXT NOT NULL,
-    romaji TEXT,
+    kana TEXT,
     short_meaning TEXT,
     search_keywords TEXT,
     jlpt_level TEXT CHECK(jlpt_level IN ('N5', 'N4', 'N3', 'N2', 'N1', 'non-jlpt') OR jlpt_level IS NULL),
-    frequency_rank INTEGER,
     is_common INTEGER DEFAULT 0 CHECK(is_common IN (0, 1)),
     description TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -416,7 +403,7 @@ function rowToKanji(row: unknown[]): Kanji {
     radicalId: row[5] as number | null,
     jlptLevel: row[6] as Kanji['jlptLevel'],
     joyoLevel: row[7] as Kanji['joyoLevel'],
-    kenteiLevel: row[8] as string | null,
+    kenteiLevel: row[8] as Kanji['kenteiLevel'],
     strokeDiagramImage: row[9] as Uint8Array | null,
     strokeGifImage: row[10] as Uint8Array | null,
     notesEtymology: row[11] as string | null,

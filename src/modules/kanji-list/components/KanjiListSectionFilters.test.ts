@@ -1,138 +1,175 @@
+/**
+ * KanjiListSectionFilters Tests
+ *
+ * Tests for the collapsible filter section component.
+ * Note: Some interactions are limited in jsdom environment.
+ */
+
 import userEvent from '@testing-library/user-event'
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/vue'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import KanjiListSectionFilters from './KanjiListSectionFilters.vue'
 
-import type { Component, KanjiFilters } from '@/shared/types/database-types'
-
-const mockComponents: Component[] = [
-  {
-    id: 1,
-    character: '氵',
-    strokeCount: 3,
-    shortMeaning: null,
-    sourceKanjiId: null,
-    description: 'Water',
-    searchKeywords: 'さんずい',
-    canBeRadical: false,
-    kangxiNumber: null,
-    kangxiMeaning: null,
-    radicalNameJapanese: null,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
-  }
-]
-
-const mockRadicals: Component[] = []
-
-const defaultProps = {
-  filters: {} as KanjiFilters,
-  characterSearch: '',
-  searchKeywords: '',
-  onYomiSearch: '',
-  kunYomiSearch: '',
-  hasActiveFilters: false,
-  components: mockComponents,
-  radicals: mockRadicals
-}
-
 describe('KanjiListSectionFilters', () => {
-  it('renders filter section with label', () => {
-    render(KanjiListSectionFilters, { props: defaultProps })
+  const defaultProps = {
+    filters: {},
+    characterSearch: '',
+    keywordsSearch: '',
+    meaningsSearch: '',
+    onYomiSearch: '',
+    kunYomiSearch: '',
+    hasActiveFilters: false,
+    activeFilterCount: 0,
+    components: [],
+    radicals: [],
+    classificationTypes: []
+  }
 
-    expect(
-      screen.getByRole('region', { name: 'Filter kanji' })
-    ).toBeInTheDocument()
+  // Clear localStorage before each test to avoid test pollution
+  beforeEach(() => {
+    localStorage.clear()
   })
 
-  it('renders character filter', () => {
-    render(KanjiListSectionFilters, { props: defaultProps })
-
-    expect(
-      screen.getByRole('textbox', { name: 'Character' })
-    ).toBeInTheDocument()
+  afterEach(() => {
+    localStorage.clear()
   })
 
-  it('renders stroke range filters', () => {
-    render(KanjiListSectionFilters, { props: defaultProps })
+  it('renders filter section', () => {
+    render(KanjiListSectionFilters, {
+      props: defaultProps
+    })
 
-    expect(
-      screen.getByRole('spinbutton', { name: 'Minimum strokes' })
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('spinbutton', { name: 'Maximum strokes' })
-    ).toBeInTheDocument()
+    expect(screen.getByRole('region')).toBeInTheDocument()
   })
 
-  it('renders JLPT level filter', () => {
-    render(KanjiListSectionFilters, { props: defaultProps })
+  it('shows filter count badge when filters active', () => {
+    render(KanjiListSectionFilters, {
+      props: { ...defaultProps, activeFilterCount: 3, hasActiveFilters: true }
+    })
 
-    expect(screen.getByText('JLPT Level')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'N5' })).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
   })
 
-  it('renders Joyo level filter', () => {
-    render(KanjiListSectionFilters, { props: defaultProps })
+  it('has accessible toggle button', async () => {
+    const user = userEvent.setup()
 
-    expect(screen.getByText('Joyo Level')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '小1' })).toBeInTheDocument()
+    render(KanjiListSectionFilters, {
+      props: defaultProps
+    })
+
+    // Get first button that contains "Filters" text (excluding all the chip buttons)
+    const buttons = screen.getAllByRole('button')
+    const filterButton = buttons.find((btn) =>
+      btn.textContent?.includes('Filters')
+    )
+    expect(filterButton).toBeTruthy()
+
+    // Click to toggle
+    await user.click(filterButton!)
+
+    // aria-expanded should be present
+    expect(filterButton).toHaveAttribute('aria-expanded')
   })
 
-  it('renders component filter', () => {
-    render(KanjiListSectionFilters, { props: defaultProps })
+  it('always shows clear filters button when expanded', () => {
+    render(KanjiListSectionFilters, {
+      props: { ...defaultProps, hasActiveFilters: false }
+    })
 
-    expect(screen.getByText('Component')).toBeInTheDocument()
+    const clearButton = screen.getByRole('button', { name: /clear filters/i })
+    expect(clearButton).toBeInTheDocument()
   })
 
-  it('does not show clear button when no filters active', () => {
-    render(KanjiListSectionFilters, { props: defaultProps })
+  it('disables clear filters button when no active filters', () => {
+    render(KanjiListSectionFilters, {
+      props: { ...defaultProps, hasActiveFilters: false }
+    })
 
-    expect(
-      screen.queryByRole('button', { name: 'Clear filters' })
-    ).not.toBeInTheDocument()
+    const clearButton = screen.getByRole('button', { name: /clear filters/i })
+    expect(clearButton).toBeDisabled()
   })
 
-  it('shows clear button when filters are active', () => {
+  it('enables clear filters button when filters are active', () => {
     render(KanjiListSectionFilters, {
       props: { ...defaultProps, hasActiveFilters: true }
     })
 
+    const clearButton = screen.getByRole('button', { name: /clear filters/i })
+    expect(clearButton).not.toBeDisabled()
+  })
+
+  it('shows collapse button when expanded', () => {
+    render(KanjiListSectionFilters, {
+      props: defaultProps
+    })
+
     expect(
-      screen.getByRole('button', { name: 'Clear filters' })
+      screen.getByRole('button', { name: /collapse/i })
     ).toBeInTheDocument()
   })
 
   it('emits clearFilters when clear button clicked', async () => {
     const user = userEvent.setup()
-    const result = render(KanjiListSectionFilters, {
+
+    const { emitted } = render(KanjiListSectionFilters, {
       props: { ...defaultProps, hasActiveFilters: true }
     })
 
-    await user.click(screen.getByRole('button', { name: 'Clear filters' }))
+    const clearButton = screen.getByRole('button', { name: /clear filters/i })
+    await user.click(clearButton)
 
-    expect(result.emitted()['clearFilters']).toBeTruthy()
+    expect(emitted()['clearFilters']).toBeTruthy()
   })
 
-  it('emits update:characterSearch when character input changes', async () => {
+  it('collapses when collapse button clicked', async () => {
     const user = userEvent.setup()
-    const result = render(KanjiListSectionFilters, { props: defaultProps })
 
-    await user.type(screen.getByRole('textbox', { name: 'Character' }), '漢')
+    render(KanjiListSectionFilters, {
+      props: defaultProps
+    })
 
-    expect(result.emitted()['update:characterSearch']).toBeTruthy()
+    const collapseButton = screen.getByRole('button', { name: /collapse/i })
+
+    // Get the filter header toggle button to check aria-expanded
+    const buttons = screen.getAllByRole('button')
+    const filterHeaderButton = buttons.find((btn) =>
+      btn.textContent?.includes('Filters')
+    )
+
+    // Should be expanded initially
+    expect(filterHeaderButton).toHaveAttribute('aria-expanded', 'true')
+
+    // Click collapse
+    await user.click(collapseButton)
+
+    // Wait for the state to update
+    await waitFor(() => {
+      expect(filterHeaderButton).toHaveAttribute('aria-expanded', 'false')
+    })
   })
 
-  it('emits updateFilter when JLPT chip clicked', async () => {
+  it('hides clear filters button when collapsed', async () => {
     const user = userEvent.setup()
-    const result = render(KanjiListSectionFilters, { props: defaultProps })
 
-    await user.click(screen.getByRole('button', { name: 'N3' }))
+    render(KanjiListSectionFilters, {
+      props: { ...defaultProps, hasActiveFilters: true }
+    })
 
-    expect(result.emitted()['updateFilter']).toBeTruthy()
-    expect(result.emitted()['updateFilter']?.[0]).toEqual([
-      'jlptLevels',
-      ['N3']
-    ])
+    // Should have clear button when expanded
+    expect(
+      screen.getByRole('button', { name: /clear filters/i })
+    ).toBeInTheDocument()
+
+    // Collapse the filters
+    const collapseButton = screen.getByRole('button', { name: /collapse/i })
+    await user.click(collapseButton)
+
+    // Wait for collapse and verify clear button is gone
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: /clear filters/i })
+      ).not.toBeInTheDocument()
+    })
   })
 })

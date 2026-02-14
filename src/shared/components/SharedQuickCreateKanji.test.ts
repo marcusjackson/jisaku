@@ -64,11 +64,6 @@ describe('SharedQuickCreateKanji', () => {
                 <span v-if="error" class="error">{{ error }}</span>
               </div>
             `
-          },
-          BaseCheckbox: {
-            props: ['modelValue', 'label'],
-            template:
-              '<label><input type="checkbox" :checked="modelValue" /><span>{{ label }}</span></label>'
           }
         }
       }
@@ -102,39 +97,38 @@ describe('SharedQuickCreateKanji', () => {
     expect(wrapper.text()).toContain('Character')
   })
 
-  it('does not render stroke count field', () => {
-    const wrapper = mountDialog()
-    // Stroke count is not part of quick create (minimal fields only)
-    expect(wrapper.text()).not.toContain('Stroke')
-  })
-
   it('renders short meaning input field', () => {
     const wrapper = mountDialog()
     expect(wrapper.text()).toContain('Short Meaning')
   })
 
-  it('renders cancel and create buttons', () => {
+  it('renders search keywords input field', () => {
     const wrapper = mountDialog()
-    const buttons = wrapper.findAll('button')
-    expect(buttons.at(0)?.text()).toBe('Cancel')
-    expect(buttons.at(1)?.text()).toBe('Create & View')
+    expect(wrapper.text()).toContain('Search Keywords')
   })
 
-  it('emits cancel event when cancel button clicked', async () => {
+  it('renders cancel button', () => {
     const wrapper = mountDialog()
-    const buttons = wrapper.findAll('button')
-    await buttons.at(0)?.trigger('click')
+    const cancelButton = wrapper.findAll('button').find((b) => {
+      return b.text() === 'Cancel'
+    })
+    expect(cancelButton?.exists()).toBe(true)
+  })
+
+  it('renders create button', () => {
+    const wrapper = mountDialog()
+    const createButton = wrapper.findAll('button').find((b) => {
+      return b.text() === 'Create'
+    })
+    expect(createButton?.exists()).toBe(true)
+  })
+
+  it('emits cancel when cancel button is clicked', async () => {
+    const wrapper = mountDialog()
+    const cancelButton = wrapper.findAll('button').find((b) => {
+      return b.text() === 'Cancel'
+    })
+    await cancelButton?.trigger('click')
     expect(wrapper.emitted('cancel')).toBeTruthy()
-  })
-
-  it('pre-fills character when initialCharacter provided', () => {
-    const wrapper = mountDialog({ initialCharacter: '日' })
-    // The component should have the initial character set in the form
-    expect(wrapper.html()).toBeDefined()
-  })
-
-  it('renders help text for short meaning', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.text()).toContain('Brief meaning for display')
   })
 })

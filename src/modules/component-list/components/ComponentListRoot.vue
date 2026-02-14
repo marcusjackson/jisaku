@@ -3,84 +3,92 @@
  * ComponentListRoot
  *
  * Root component for the component list feature.
- * Handles database initialization, data fetching, filtering, and loading/error states.
- * Orchestrates filters and passes filtered data to ComponentListSectionGrid.
+ * Handles database initialization, data fetching, and loading/error states.
+ * Orchestrates filters, list, and dialog sections.
  */
 
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
-import BaseSpinner from '@/base/components/BaseSpinner.vue'
+import { BaseSpinner } from '@/base/components'
 
-import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
-import { useComponentRepository } from '@/shared/composables/use-component-repository'
 import { useDatabase } from '@/shared/composables/use-database'
-import { useFilterPersistence } from '@/shared/composables/use-filter-persistence'
 
-import { useComponentFilters } from '../composables/use-component-filters'
+import { useComponentListData } from '../composables/use-component-list-data'
+import { useComponentListState } from '../composables/use-component-list-state'
 
+import ComponentListSectionDialog from './ComponentListSectionDialog.vue'
 import ComponentListSectionFilters from './ComponentListSectionFilters.vue'
-import ComponentListSectionGrid from './ComponentListSectionGrid.vue'
+import ComponentListSectionList from './ComponentListSectionList.vue'
 
-import type { Component, ComponentFilters } from '@/shared/types/database-types'
+import type { ComponentListFilters } from '../component-list-types'
 
 // Database initialization
 const { initError, initialize, isInitialized, isInitializing } = useDatabase()
 
-// Filter persistence
-useFilterPersistence('component-list')
-
-// Repository for data access
-const { search } = useComponentRepository()
-
 // Filter state
 const {
+  activeFilterCount,
   characterSearch,
   clearFilters,
   filters,
   hasActiveFilters,
-  searchKeywords,
+  kangxiSearch,
+  keywordsSearch,
+  refreshTrigger,
+  triggerRefresh,
   updateFilter
-} = useComponentFilters()
+} = useComponentListState()
 
-// Local state
-const componentList = ref<Component[]>([])
-const fetchError = ref<Error | null>(null)
+// Data fetching
+const { componentList, fetchError, loadComponents } = useComponentListData()
 
-// Handler for filter updates from section component
-function handleFilterUpdate(key: keyof ComponentFilters, value: unknown) {
-  updateFilter(key, value)
-}
+const isDialogOpen = ref(false)
+const displayError = computed(() => initError.value ?? fetchError.value)
 
-// Fetch components with current filters
-function loadComponents() {
-  try {
-    componentList.value = search(filters.value)
-  } catch (err) {
-    fetchError.value = err instanceof Error ? err : new Error(String(err))
-  }
-}
+// Watch for filter changes
+watch(
+  filters,
+  () => {
+    if (isInitialized.value) loadComponents(filters.value)
+  },
+  { deep: true }
+)
 
-// Re-fetch components when filters change
-watch(filters, () => {
+// Watch for refresh trigger
+watch(refreshTrigger, () => {
   if (isInitialized.value) {
-    loadComponents()
+    loadComponents(filters.value)
   }
 })
+
+// Handle filter update from section component
+function handleFilterUpdate(
+  key: keyof ComponentListFilters,
+  value: unknown
+): void {
+  updateFilter(key, value as ComponentListFilters[typeof key])
+}
+
+// Handle component created
+function handleComponentCreated(): void {
+  isDialogOpen.value = false
+  triggerRefresh()
+}
 
 // Initialize on mount
 onMounted(async () => {
   try {
     await initialize()
-    loadComponents()
+    loadComponents(filters.value)
   } catch {
-    // Error is already captured in initError
+    // Error captured in initError
   }
 })
 </script>
 
 <template>
   <!-- Loading state -->
-  <SharedPageContainer
+  <div
     v-if="isInitializing"
     class="component-list-root-loading"
   >
@@ -88,75 +96,84 @@ onMounted(async () => {
       label="Loading database..."
       size="lg"
     />
-    <p class="component-list-root-loading-text">Loading database...</p>
-  </SharedPageContainer>
+  </div>
 
   <!-- Error state -->
-  <SharedPageContainer
-    v-else-if="initError || fetchError"
+  <div
+    v-else-if="displayError"
     class="component-list-root-error"
   >
-    <p class="component-list-root-error-title">Failed to load</p>
-    <p class="component-list-root-error-message">
-      {{ initError?.message || fetchError?.message }}
+    <p class="component-list-root-error-title">
+      An error occurred while loading data
     </p>
-  </SharedPageContainer>
+    <p class="component-list-root-error-message">{{ displayError.message }}</p>
+  </div>
 
   <!-- Content -->
-  <SharedPageContainer v-else-if="isInitialized">
+  <div
+    v-else-if="isInitialized"
+    class="component-list-root"
+  >
     <ComponentListSectionFilters
+      :active-filter-count="activeFilterCount"
       :character-search="characterSearch"
       :filters="filters"
       :has-active-filters="hasActiveFilters"
-      :search-keywords="searchKeywords"
+      :kangxi-search="kangxiSearch"
+      :keywords-search="keywordsSearch"
       @clear-filters="clearFilters"
       @update-filter="handleFilterUpdate"
-      @update:character-search="(val) => (characterSearch = val)"
-      @update:search-keywords="(val) => (searchKeywords = val)"
+      @update:character-search="characterSearch = $event"
+      @update:kangxi-search="kangxiSearch = $event"
+      @update:keywords-search="keywordsSearch = $event"
     />
-    <ComponentListSectionGrid
+
+    <ComponentListSectionList
       :component-list="componentList"
       :has-active-filters="hasActiveFilters"
+      @add-component="isDialogOpen = true"
+      @refresh="triggerRefresh"
     />
-  </SharedPageContainer>
+
+    <ComponentListSectionDialog
+      v-model:open="isDialogOpen"
+      @created="handleComponentCreated"
+    />
+  </div>
 </template>
 
 <style scoped>
-.component-list-root-loading {
+.component-list-root {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-md);
-  min-height: 50vh;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
 }
 
-.component-list-root-loading-text {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
+.component-list-root-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
 }
 
 .component-list-root-error {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   gap: var(--spacing-sm);
-  min-height: 50vh;
+  padding: var(--spacing-xl);
   text-align: center;
 }
 
 .component-list-root-error-title {
-  margin: 0;
-  color: var(--color-error);
-  font-size: var(--font-size-xl);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
 }
 
 .component-list-root-error-message {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
 }
 </style>

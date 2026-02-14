@@ -1,22 +1,56 @@
 /**
- * Tests for SharedHeader component
+ * SharedHeader tests
  */
 
-import { renderWithProviders } from '@test/helpers/render'
-import { screen } from '@testing-library/vue'
+import { createRouter, createWebHistory } from 'vue-router'
+
+import { render, screen } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
+
+import { ROUTES } from '@/router/routes'
 
 import SharedHeader from './SharedHeader.vue'
 
+// Create a minimal router for testing
+function createTestRouter() {
+  return createRouter({
+    history: createWebHistory(),
+    routes: [
+      { path: '/', component: { template: '<div>Home</div>' } },
+      { path: '/kanji', component: { template: '<div>Kanji</div>' } },
+      {
+        path: '/coming-soon',
+        component: { template: '<div>Coming Soon</div>' }
+      }
+    ]
+  })
+}
+
 describe('SharedHeader', () => {
   it('renders the app logo', () => {
-    renderWithProviders(SharedHeader)
+    const router = createTestRouter()
+    render(SharedHeader, {
+      global: { plugins: [router] }
+    })
 
     expect(screen.getByText('自作')).toBeInTheDocument()
   })
 
+  it('logo links to kanji list page', () => {
+    const router = createTestRouter()
+    render(SharedHeader, {
+      global: { plugins: [router] }
+    })
+
+    const logo = screen.getByText('自作')
+    expect(logo.closest('a')).toHaveAttribute('href', ROUTES.KANJI_LIST)
+  })
+
   it('renders navigation links', () => {
-    renderWithProviders(SharedHeader)
+    const router = createTestRouter()
+    render(SharedHeader, {
+      global: { plugins: [router] }
+    })
 
     expect(screen.getByRole('link', { name: /kanji/i })).toBeInTheDocument()
     expect(
@@ -26,15 +60,11 @@ describe('SharedHeader', () => {
     expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument()
   })
 
-  it('logo links to home page', () => {
-    renderWithProviders(SharedHeader)
-
-    const logo = screen.getByText('自作')
-    expect(logo.closest('a')).toHaveAttribute('href', '/')
-  })
-
   it('has correct navigation hrefs', () => {
-    renderWithProviders(SharedHeader)
+    const router = createTestRouter()
+    render(SharedHeader, {
+      global: { plugins: [router] }
+    })
 
     expect(screen.getByRole('link', { name: /kanji/i })).toHaveAttribute(
       'href',
@@ -55,7 +85,10 @@ describe('SharedHeader', () => {
   })
 
   it('has accessible navigation landmark', () => {
-    renderWithProviders(SharedHeader)
+    const router = createTestRouter()
+    render(SharedHeader, {
+      global: { plugins: [router] }
+    })
 
     expect(
       screen.getByRole('navigation', { name: /main navigation/i })
@@ -63,13 +96,19 @@ describe('SharedHeader', () => {
   })
 
   it('renders as header element', () => {
-    renderWithProviders(SharedHeader)
+    const router = createTestRouter()
+    render(SharedHeader, {
+      global: { plugins: [router] }
+    })
 
     expect(screen.getByRole('banner')).toBeInTheDocument()
   })
 
   it('settings link has accessible icon label', () => {
-    renderWithProviders(SharedHeader)
+    const router = createTestRouter()
+    render(SharedHeader, {
+      global: { plugins: [router] }
+    })
 
     const settingsLink = screen.getByRole('link', { name: /settings/i })
     expect(settingsLink).toHaveAttribute('aria-label', 'Settings')
@@ -77,11 +116,23 @@ describe('SharedHeader', () => {
   })
 
   it('renders settings icon', () => {
-    renderWithProviders(SharedHeader)
+    const router = createTestRouter()
+    render(SharedHeader, {
+      global: { plugins: [router] }
+    })
 
     const svg = screen
       .getByRole('link', { name: /settings/i })
       .querySelector('svg')
     expect(svg).toBeInTheDocument()
+  })
+
+  it('renders version toggle', () => {
+    const router = createTestRouter()
+    render(SharedHeader, {
+      global: { plugins: [router] }
+    })
+
+    expect(screen.getByRole('switch')).toBeInTheDocument()
   })
 })

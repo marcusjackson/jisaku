@@ -3,12 +3,12 @@
  * ComponentListCard
  *
  * UI component displaying a single component entry in the list.
- * Pure presentation — receives data via props.
+ * Shows: component character, short meaning, stroke count, and radical badge.
  */
 
 import { RouterLink } from 'vue-router'
 
-import type { Component } from '@/shared/types/database-types'
+import type { Component } from '@/api/component'
 
 defineProps<{
   component: Component
@@ -18,6 +18,7 @@ defineProps<{
 <template>
   <RouterLink
     class="component-list-card"
+    data-testid="component-list-card"
     :to="`/components/${component.id}`"
   >
     <span class="component-list-card-character">{{ component.character }}</span>
@@ -30,12 +31,36 @@ defineProps<{
         {{ component.shortMeaning }}
       </span>
 
-      <span
-        v-if="component.strokeCount != null"
-        class="component-list-card-strokes"
-      >
-        {{ component.strokeCount }}画
-      </span>
+      <div class="component-list-card-badges">
+        <!-- Radical badge -->
+        <span
+          v-if="component.canBeRadical"
+          aria-label="Can be radical"
+          class="component-list-card-badge component-list-card-badge-radical"
+          title="Can be radical"
+        >
+          <svg
+            fill="none"
+            height="12"
+            viewBox="0 0 16 16"
+            width="12"
+          >
+            <path
+              d="M8 1L10 6H15L11 9.5L12.5 15L8 11.5L3.5 15L5 9.5L1 6H6L8 1Z"
+              fill="currentColor"
+            />
+          </svg>
+          部首
+        </span>
+
+        <!-- Stroke count badge -->
+        <span
+          v-if="component.strokeCount != null"
+          class="component-list-card-badge component-list-card-badge-strokes"
+        >
+          {{ component.strokeCount }}画
+        </span>
+      </div>
     </div>
   </RouterLink>
 </template>
@@ -92,8 +117,31 @@ defineProps<{
   white-space: nowrap;
 }
 
-.component-list-card-strokes {
+.component-list-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-1);
+}
+
+.component-list-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.component-list-card-badge-radical {
+  background-color: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.component-list-card-badge-strokes {
+  border: var(--border-width) solid var(--color-border);
+  background-color: var(--color-surface-variant);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
 }
 </style>

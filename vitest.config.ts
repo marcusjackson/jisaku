@@ -25,9 +25,9 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
 
-    // Test file patterns
+    // Test file patterns (exclude legacy - will be rewritten)
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
-    exclude: ['node_modules', 'dist', 'e2e'],
+    exclude: ['node_modules', 'dist', 'e2e', 'src/legacy/**'],
 
     // Setup files
     setupFiles: ['test/setup.ts'],
@@ -42,7 +42,8 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/**/*.d.ts',
         'src/main.ts',
-        'src/**/*.stories.ts'
+        'src/**/*.stories.ts',
+        'src/legacy/**' // Legacy code - separate coverage
       ],
       thresholds: {
         statements: 70,

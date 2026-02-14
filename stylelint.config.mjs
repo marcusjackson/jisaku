@@ -124,7 +124,7 @@ export default {
 
     // Selector naming (kebab-case with BEM support for classes)
     'selector-class-pattern': [
-      '^[a-z][a-z0-9]*(-[a-z0-9]+)*(--[a-z0-9]+(-[a-z0-9]+)*)?$',
+      '^[a-z][a-z0-9]*(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?(--[a-z0-9]+(-[a-z0-9]+)*)?$',
       {
         message: 'Class selectors should be kebab-case (BEM modifiers allowed)'
       }
@@ -151,13 +151,22 @@ export default {
   },
   overrides: [
     {
-      files: ['src/styles/tokens.css'],
+      files: ['src/styles/tokens.css', 'src/legacy/styles/tokens.css'],
       rules: {
         // Allow hardcoded values only in tokens file
         'color-no-hex': null,
         'function-disallowed-list': null,
         'declaration-property-value-allowed-list': null
       }
+    },
+    {
+      files: ['src/legacy/**/*.vue', 'src/legacy/**/*.css'],
+      rules: {
+        // Relax rules for legacy code - frozen during refactoring
+        'order/properties-order': null,
+        'selector-class-pattern': null
+      }
     }
-  ]
+  ],
+  ignoreFiles: ['src/legacy/styles/**/*.css']
 }

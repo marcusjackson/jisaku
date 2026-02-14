@@ -7,7 +7,7 @@ export default defineConfig({
   outputDir: './test-results',
 
   // Global timeout for each test
-  timeout: 15 * 1000,
+  timeout: 8 * 1000,
 
   // Run tests in parallel
   fullyParallel: true,
@@ -36,9 +36,23 @@ export default defineConfig({
 
   // Configure projects for major browsers
   projects: [
+    // New UI tests (empty until we start building new UI)
     {
       name: 'chromium',
+      testMatch: '*.test.ts',
+      testIgnore: ['**/legacy/**', '**/visual/**'],
       use: { ...devices['Desktop Chrome'] }
+    },
+    // Legacy UI tests - run with pnpm test:e2e:legacy
+    {
+      name: 'legacy',
+      testDir: 'e2e/legacy',
+      testMatch: '**/*.test.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Legacy routes are now at /legacy/* prefix
+        baseURL: 'http://localhost:5173/legacy'
+      }
     },
     // Visual regression testing - single browser for consistency
     {

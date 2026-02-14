@@ -4,125 +4,62 @@ applyTo: '**/composables/**/*.ts,**/use-*.ts'
 
 # Composable Instructions
 
-Guidelines for creating and modifying composables in this project.
+Guidelines for creating and modifying composables.
+
+## File Size Limits
+
+| Type       | Target Lines | Max Lines |
+| ---------- | ------------ | --------- |
+| Repository | 200-250      | **250**   |
+| Handlers   | 100-150      | **150**   |
+| State      | 80-120       | **120**   |
+| Form       | 80-150       | **150**   |
 
 ## Naming
 
 - File: `use-[module]-[purpose].ts` (kebab-case)
 - Function: `use[Module][Purpose]` (camelCase)
-- Examples:
-  - `use-kanji-repository.ts` → `useKanjiRepository()`
-  - `use-kanji-form.ts` → `useKanjiForm()`
-  - `use-database.ts` → `useDatabase()`
+
+| Purpose         | Example                        |
+| --------------- | ------------------------------ |
+| Repository      | `use-kanji-repository.ts`      |
+| Detail state    | `use-kanji-detail-state.ts`    |
+| Detail handlers | `use-kanji-detail-handlers.ts` |
+| Form            | `use-kanji-form.ts`            |
 
 ## File Location
 
-| Type                  | Location                            | Examples                                  |
-| --------------------- | ----------------------------------- | ----------------------------------------- |
-| Module-specific       | `src/modules/[module]/composables/` | `use-kanji-repository.ts`                 |
-| Base (generic)        | `src/base/composables/`             | `use-local-storage.ts`, `use-debounce.ts` |
-| Shared (app-specific) | `src/shared/composables/`           | `use-database.ts`, `use-notification.ts`  |
+| Type            | Location                            |
+| --------------- | ----------------------------------- |
+| Module-specific | `src/modules/[module]/composables/` |
+| Base (generic)  | `src/base/composables/`             |
+| Shared (app)    | `src/shared/composables/`           |
 
-## Base vs Shared Composables
+**Decision:** Does it reference kanji, database, or app concepts?
 
-**Base composables** (`base/composables/`):
+- No → `base/`
+- Yes → `shared/` or module
 
-- Generic utilities that work in ANY project
-- No app-specific dependencies
-- Examples: `useLocalStorage`, `useMediaQuery`, `useDebounce`, `useClickOutside`
-
-**Shared composables** (`shared/composables/`):
-
-- App-specific logic shared across modules
-- May depend on database, app state, or app concepts
-- Examples: `useDatabase`, `useNotification`, `useAppState`
-
-**Decision**: Ask "Does this reference kanji, database, or app-specific concepts?"
-
-- No → `base/composables/`
-- Yes → `shared/composables/`
-
-## Structure
+## Repository Pattern
 
 ```typescript
-// use-kanji-repository.ts
-import { useDatabase } from '@/shared/composables/use-database'
-import type { Kanji, CreateKanjiInput, UpdateKanjiInput } from '../kanji-types'
-
-export function useKanjiRepository() {
-  const db = useDatabase()
-
-  const findById = (id: number): Kanji | null => {
-    // implementation
-  }
-
-  const findByCharacter = (char: string): Kanji | null => {
-    // implementation
-  }
-
-  const search = (filters: KanjiSearchFilters): Kanji[] => {
-    // implementation
-  }
-
-  const create = (input: CreateKanjiInput): Kanji => {
-    // implementation
-  }
-
-  const update = (id: number, input: UpdateKanjiInput): Kanji => {
-    // implementation
-  }
-
-  const remove = (id: number): void => {
-    // implementation
-  }
-
-  return {
-    findById,
-    findByCharacter,
-    search,
-    create,
-    update,
-    remove
-  }
-}
-```
-
-## Return Pattern
-
-Always return an object with named properties, never an array:
-
-```typescript
-// ✅ Correct - named properties
-return {
-  kanji,
-  isLoading,
-  error,
-  refetch
-}
-
-// ❌ Wrong - positional array
-return [kanji, isLoading, error, refetch]
-```
-
-## Repository Composables
-
-Each module should have a repository composable for database operations:
-
-```typescript
-// use-kanji-repository.ts
+// use-kanji-repository.ts (~200-250 lines)
 export function useKanjiRepository() {
   const db = useDatabase()
 
   return {
+    // Read operations
     findById: (id: number): Kanji | null => {
       /* ... */
     },
     findAll: (): Kanji[] => {
       /* ... */
     },
-    search: (filters: KanjiSearchFilters): Kanji[] => {
+    search: (filters: Filters): Kanji[] => {
       /* ... */
     },
+
+    // Write operations
     create: (input: CreateKanjiInput): Kanji => {
       /* ... */
     },
@@ -131,65 +68,112 @@ export function useKanjiRepository() {
     },
     remove: (id: number): void => {
       /* ... */
+    },
+
+    // Field-level updates (for inline editing)
+    updateShortMeaning: (id: number, value: string): void => {
+      /* ... */
+    },
+    updateStrokeCount: (id: number, value: number): void => {
+      /* ... */
     }
   }
 }
 ```
 
-## Form Composables
+## Handler Extraction Pattern
 
-For form handling, integrate with vee-validate:
+When Root component has too many handlers, extract:
+
+```typescript
+// use-kanji-detail-handlers.ts (~100-150 lines)
+export function useKanjiDetailHandlers(
+  kanji: Ref<Kanji | null>,
+  repo: ReturnType<typeof useKanjiRepository>
+) {
+  const handleUpdateMeaning = async (id: number, text: string) => {
+    await repo.updateMeaning(id, text)
+    // Update local state
+  }
+
+  const handleDeleteMeaning = async (id: number) => {
+    await repo.deleteMeaning(id)
+    // Update local state
+  }
+
+  return {
+    handleUpdateMeaning,
+    handleDeleteMeaning
+    // ... other handlers
+  }
+}
+```
+
+## State Extraction Pattern
+
+When Root has complex state, extract:
+
+```typescript
+// use-kanji-detail-state.ts (~80-120 lines)
+export function useKanjiDetailState(kanjiId: Ref<number>) {
+  const kanji = ref<Kanji | null>(null)
+  const isLoading = ref(true)
+  const error = ref<string | null>(null)
+  const editingSection = ref<string | null>(null)
+
+  // Load logic
+  const load = async () => {
+    /* ... */
+  }
+
+  return {
+    kanji,
+    isLoading,
+    error,
+    editingSection,
+    load
+  }
+}
+```
+
+## Splitting Large Composables
+
+When repository exceeds ~250 lines:
+
+```
+Before: use-kanji-repository.ts (400 lines)
+After:
+├── use-kanji-repository.ts (150 lines) - delegates
+├── use-kanji-queries.ts (120 lines) - read ops
+└── use-kanji-mutations.ts (130 lines) - write ops
+```
+
+## Return Pattern
+
+Always return objects, never arrays:
+
+```typescript
+// ✅ Correct
+return { kanji, isLoading, error }
+
+// ❌ Wrong
+return [kanji, isLoading, error]
+```
+
+## Form Composables
 
 ```typescript
 // use-kanji-form.ts
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
-import { kanjiFormSchema } from '../kanji-form-schema'
-import type { CreateKanjiInput } from '../kanji-types'
 
-export function useKanjiForm(initialValues?: Partial<CreateKanjiInput>) {
-  const { handleSubmit, errors, values, resetForm } = useForm({
+export function useKanjiForm(initialValues?: Partial<KanjiFormData>) {
+  const { handleSubmit, errors, values, resetForm, setFieldValue } = useForm({
     validationSchema: toTypedSchema(kanjiFormSchema),
-    initialValues: {
-      character: '',
-      strokeCount: undefined,
-      ...initialValues
-    }
+    initialValues: { character: '', ...initialValues }
   })
 
-  return {
-    handleSubmit,
-    errors,
-    values,
-    resetForm
-  }
-}
-```
-
-## Database Access
-
-All database access goes through the shared `useDatabase` composable:
-
-```typescript
-// shared/composables/use-database.ts
-export function useDatabase() {
-  // Returns the sql.js database instance
-  // Handles initialization, persistence to IndexedDB
-}
-```
-
-Module repositories use this:
-
-```typescript
-export function useKanjiRepository() {
-  const db = useDatabase()
-
-  const findById = (id: number): Kanji | null => {
-    const result = db.exec('SELECT * FROM kanjis WHERE id = ?', [id])
-    return result[0]?.values[0] ? mapRowToKanji(result[0].values[0]) : null
-  }
-
-  // ...
+  return { handleSubmit, errors, values, resetForm, setFieldValue }
 }
 ```
 
@@ -204,47 +188,33 @@ import type { Kanji, CreateKanjiInput } from '../kanji-types'
 
 export function useKanjiRepository() {
   const create = (input: CreateKanjiInput): Kanji => {
-    // TypeScript knows input shape and return type
+    /* ... */
   }
+  return { create }
 }
 ```
 
 ## Testing
 
-Place tests alongside composables:
+Tests colocated with composables:
 
 ```
 composables/
 ├── use-kanji-repository.ts
 ├── use-kanji-repository.test.ts
-├── use-kanji-form.ts
-└── use-kanji-form.test.ts
 ```
 
-Test example:
+## Quick Reference
 
-```typescript
-// use-kanji-repository.test.ts
-import { describe, it, expect, beforeEach } from 'vitest'
-import { useKanjiRepository } from './use-kanji-repository'
-import { createTestDatabase } from '@/test/helpers/database'
+**Before creating/editing a composable:**
 
-describe('useKanjiRepository', () => {
-  let repo: ReturnType<typeof useKanjiRepository>
+1. Check current line count
+2. If approaching limit, plan split first
+3. Repository: queries/mutations
+4. Root handlers: state/handlers
 
-  beforeEach(async () => {
-    const db = await createTestDatabase()
-    repo = useKanjiRepository(db)
-  })
+**File size targets:**
 
-  it('creates a kanji', () => {
-    const kanji = repo.create({
-      character: '水',
-      strokeCount: 4
-    })
-
-    expect(kanji.id).toBeDefined()
-    expect(kanji.character).toBe('水')
-  })
-})
-```
+- Repository: 200-250 lines (250 max)
+- Handlers: 100-150 lines (150 max)
+- State: 80-120 lines (120 max)

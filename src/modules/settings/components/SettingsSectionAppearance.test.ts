@@ -1,75 +1,109 @@
 /**
- * Tests for SettingsSectionAppearance component
+ * SettingsSectionAppearance Tests
  */
 
+import { defineComponent } from 'vue'
+
+import userEvent from '@testing-library/user-event'
 import { render, screen } from '@testing-library/vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import SettingsSectionAppearance from './SettingsSectionAppearance.vue'
 
-// Mock the theme composable
-vi.mock('@/shared/composables/use-theme', () => ({
-  useTheme: vi.fn(() => ({
-    theme: { value: 'light' },
-    toggleTheme: vi.fn()
-  }))
+// Mock BaseSwitch
+vi.mock('@/base/components', async (importOriginal) => {
+  const original = await importOriginal<Record<string, unknown>>()
+  const MockSwitch = defineComponent({
+    name: 'BaseSwitch',
+    props: {
+      modelValue: Boolean,
+      ariaLabel: { type: String, default: '' }
+    },
+    emits: ['update:modelValue'],
+    template: `
+      <button
+        :aria-label="ariaLabel"
+        :aria-checked="modelValue"
+        role="switch"
+        @click="$emit('update:modelValue', !modelValue)"
+      >
+        {{ modelValue ? 'On' : 'Off' }}
+      </button>
+    `
+  })
+  return { ...original, BaseSwitch: MockSwitch }
+})
+
+// Mock SharedSection
+vi.mock('@/shared/components/SharedSection.vue', () => ({
+  default: {
+    name: 'SharedSection',
+    props: ['title', 'testId'],
+    template: '<section><h2>{{ title }}</h2><slot /></section>'
+  }
 }))
 
-// Mock app version
-vi.stubGlobal('__APP_VERSION__', '1.0.0')
+// Mock APP_VERSION
+vi.mock('../utils/constants', () => ({
+  APP_VERSION: '1.0.0-test'
+}))
 
 describe('SettingsSectionAppearance', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
+  it('renders the section title', () => {
+    render(SettingsSectionAppearance, {
+      props: {
+        theme: 'light'
+      }
+    })
+    expect(screen.getByText('Appearance')).toBeInTheDocument()
   })
 
-  it('renders theme toggle section', () => {
-    render(SettingsSectionAppearance)
-
+  it('displays the theme toggle', () => {
+    render(SettingsSectionAppearance, {
+      props: {
+        theme: 'light'
+      }
+    })
     expect(screen.getByText('Theme')).toBeInTheDocument()
     expect(
-      screen.getByText(/Switch between light and dark mode/i)
+      screen.getByText('Switch between light and dark mode')
     ).toBeInTheDocument()
   })
 
-  it('renders version section', () => {
-    render(SettingsSectionAppearance)
-
-    expect(screen.getByText('Version')).toBeInTheDocument()
-    expect(screen.getByText('v1.0.0')).toBeInTheDocument()
+  it('displays the app version', () => {
+    render(SettingsSectionAppearance, {
+      props: {
+        theme: 'light'
+      }
+    })
+    expect(screen.getByText('App Version')).toBeInTheDocument()
+    expect(screen.getByText('1.0.0-test')).toBeInTheDocument()
   })
 
-  it('displays component structure', () => {
-    const { container } = render(SettingsSectionAppearance)
+  it('toggles theme when switch is clicked', async () => {
+    const user = userEvent.setup()
+    const { emitted } = render(SettingsSectionAppearance, {
+      props: {
+        theme: 'light'
+      }
+    })
 
-    // Check for the main component class
-    const settingsSection = container.querySelector(
-      '.settings-section-appearance'
-    )
-    expect(settingsSection).toBeInTheDocument()
+    const themeSwitch = screen.getByRole('switch')
+    expect(themeSwitch).toHaveAttribute('aria-checked', 'false')
+
+    await user.click(themeSwitch)
+
+    expect(emitted()['toggle-theme']).toBeTruthy()
   })
 
-  it('displays theme and version options', () => {
-    const { container } = render(SettingsSectionAppearance)
+  it('shows correct switch state for dark theme', () => {
+    render(SettingsSectionAppearance, {
+      props: {
+        theme: 'dark'
+      }
+    })
 
-    const options = container.querySelectorAll(
-      '.settings-section-appearance-option'
-    )
-    expect(options).toHaveLength(2) // Theme and Version
-  })
-
-  it('formats version with v prefix', () => {
-    render(SettingsSectionAppearance)
-
-    // Version should have 'v' prefix
-    expect(screen.getByText('v1.0.0')).toBeInTheDocument()
-  })
-
-  it('renders theme toggle control', () => {
-    const { container } = render(SettingsSectionAppearance)
-
-    // BaseSwitch should be present
-    const switchElement = container.querySelector('[role="switch"]')
-    expect(switchElement).toBeInTheDocument()
+    const themeSwitch = screen.getByRole('switch')
+    expect(themeSwitch).toHaveAttribute('aria-checked', 'true')
   })
 })

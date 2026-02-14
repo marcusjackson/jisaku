@@ -3,132 +3,102 @@
  * KanjiListRoot
  *
  * Root component for the kanji list feature.
- * Handles database initialization, data fetching, filtering, and loading/error states.
- * Orchestrates filters and passes filtered data to KanjiListSectionGrid.
+ * Handles database initialization, data fetching, and loading/error states.
+ * Orchestrates filters, list, and dialog sections.
  */
 
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
-import BaseSpinner from '@/base/components/BaseSpinner.vue'
+import { BaseSpinner } from '@/base/components'
 
-import SharedPageContainer from '@/shared/components/SharedPageContainer.vue'
-import { useClassificationRepository } from '@/shared/composables/use-classification-repository'
-import { useComponentRepository } from '@/shared/composables/use-component-repository'
 import { useDatabase } from '@/shared/composables/use-database'
-import { useFilterPersistence } from '@/shared/composables/use-filter-persistence'
-import { useKanjiRepository } from '@/shared/composables/use-kanji-repository'
-import { useRadicalRepository } from '@/shared/composables/use-radical-repository'
 
-import { useKanjiFilters } from '../composables/use-kanji-filters'
+import { useKanjiListData } from '../composables/use-kanji-list-data'
+import { useKanjiListState } from '../composables/use-kanji-list-state'
 
+import KanjiListSectionDialog from './KanjiListSectionDialog.vue'
 import KanjiListSectionFilters from './KanjiListSectionFilters.vue'
-import KanjiListSectionGrid from './KanjiListSectionGrid.vue'
+import KanjiListSectionList from './KanjiListSectionList.vue'
 
-import type {
-  Component,
-  Kanji,
-  KanjiClassificationWithType,
-  KanjiFilters
-} from '@/shared/types/database-types'
+import type { KanjiListFilters } from '../kanji-list-types'
 
 // Database initialization
 const { initError, initialize, isInitialized, isInitializing } = useDatabase()
 
-// Filter persistence
-useFilterPersistence('kanji-list')
-
-// Repositories for data access
-const { search } = useKanjiRepository()
-const { getAll: getAllComponents } = useComponentRepository()
-const { getAll: getAllRadicals } = useRadicalRepository()
-const { getPrimaryClassificationsForKanji } = useClassificationRepository()
-
 // Filter state
 const {
+  activeFilterCount,
   characterSearch,
   clearFilters,
   filters,
   hasActiveFilters,
+  keywordsSearch,
   kunYomiSearch,
+  meaningsSearch,
   onYomiSearch,
-  searchKeywords,
+  refreshTrigger,
+  triggerRefresh,
   updateFilter
-} = useKanjiFilters()
+} = useKanjiListState()
 
-// Local state
-const kanjiList = ref<Kanji[]>([])
-const components = ref<Component[]>([])
-const radicals = ref<Component[]>([])
-const classifications = ref<Map<number, KanjiClassificationWithType | null>>(
-  new Map()
+// Data fetching
+const {
+  classificationTypes,
+  components,
+  fetchError,
+  kanjiList,
+  loadKanji,
+  loadReferenceData,
+  primaryClassifications,
+  radicals
+} = useKanjiListData()
+
+const isDialogOpen = ref(false)
+const displayError = computed(() => initError.value ?? fetchError.value)
+
+// Watch for filter changes
+watch(
+  filters,
+  () => {
+    if (isInitialized.value) loadKanji(filters.value)
+  },
+  { deep: true }
 )
-const fetchError = ref<Error | null>(null)
 
-// Handler for filter updates from section component
-function handleFilterUpdate(key: keyof KanjiFilters, value: unknown) {
-  updateFilter(key, value)
-}
-
-// Fetch kanji with current filters
-function loadKanji() {
-  try {
-    kanjiList.value = search(filters.value)
-    // Load primary classifications for all kanji in the list
-    const kanjiIds = kanjiList.value.map((k) => k.id)
-    classifications.value = getPrimaryClassificationsForKanji(kanjiIds)
-  } catch (err) {
-    fetchError.value = err instanceof Error ? err : new Error(String(err))
-  }
-}
-
-// Fetch components for filter dropdown
-function loadComponents() {
-  try {
-    components.value = getAllComponents()
-  } catch (err) {
-    fetchError.value = err instanceof Error ? err : new Error(String(err))
-  }
-}
-
-// Fetch radicals for filter dropdown
-function loadRadicals() {
-  try {
-    radicals.value = getAllRadicals()
-  } catch (err) {
-    fetchError.value = err instanceof Error ? err : new Error(String(err))
-  }
-}
-
-// Re-fetch kanji when filters change
-watch(filters, () => {
+// Watch for refresh trigger
+watch(refreshTrigger, () => {
   if (isInitialized.value) {
-    loadKanji()
+    loadReferenceData()
+    loadKanji(filters.value)
   }
 })
 
-// Handler for seed data refresh
-function handleRefresh() {
-  loadComponents()
-  loadRadicals()
-  loadKanji()
+// Handle filter update from section component
+function handleFilterUpdate(key: keyof KanjiListFilters, value: unknown): void {
+  updateFilter(key, value as KanjiListFilters[typeof key])
+}
+
+// Handle kanji created
+function handleKanjiCreated(): void {
+  isDialogOpen.value = false
+  triggerRefresh()
 }
 
 // Initialize on mount
 onMounted(async () => {
   try {
     await initialize()
-    loadComponents()
-    loadRadicals()
-    loadKanji()
+    loadReferenceData()
+    loadKanji(filters.value)
   } catch {
-    // Error is already captured in initError
+    // Error captured in initError
   }
 })
 </script>
 
 <template>
   <!-- Loading state -->
-  <SharedPageContainer
+  <div
     v-if="isInitializing"
     class="kanji-list-root-loading"
   >
@@ -136,84 +106,92 @@ onMounted(async () => {
       label="Loading database..."
       size="lg"
     />
-    <p class="kanji-list-root-loading-text">Loading database...</p>
-  </SharedPageContainer>
+  </div>
 
   <!-- Error state -->
-  <SharedPageContainer
-    v-else-if="initError || fetchError"
+  <div
+    v-else-if="displayError"
     class="kanji-list-root-error"
   >
-    <p class="kanji-list-root-error-title">Failed to load</p>
-    <p class="kanji-list-root-error-message">
-      {{ initError?.message || fetchError?.message }}
+    <p class="kanji-list-root-error-title">
+      An error occurred while loading data
     </p>
-  </SharedPageContainer>
+    <p class="kanji-list-root-error-message">{{ displayError.message }}</p>
+  </div>
 
   <!-- Content -->
-  <SharedPageContainer v-else-if="isInitialized">
+  <div
+    v-else-if="isInitialized"
+    class="kanji-list-root"
+  >
     <KanjiListSectionFilters
+      :active-filter-count="activeFilterCount"
       :character-search="characterSearch"
+      :classification-types="classificationTypes"
       :components="components"
       :filters="filters"
       :has-active-filters="hasActiveFilters"
+      :keywords-search="keywordsSearch"
       :kun-yomi-search="kunYomiSearch"
+      :meanings-search="meaningsSearch"
       :on-yomi-search="onYomiSearch"
       :radicals="radicals"
-      :search-keywords="searchKeywords"
       @clear-filters="clearFilters"
       @update-filter="handleFilterUpdate"
       @update:character-search="characterSearch = $event"
+      @update:keywords-search="keywordsSearch = $event"
       @update:kun-yomi-search="kunYomiSearch = $event"
+      @update:meanings-search="meaningsSearch = $event"
       @update:on-yomi-search="onYomiSearch = $event"
-      @update:search-keywords="searchKeywords = $event"
     />
 
-    <KanjiListSectionGrid
-      :classifications="classifications"
+    <KanjiListSectionList
       :has-active-filters="hasActiveFilters"
       :kanji-list="kanjiList"
-      @refresh="handleRefresh"
+      :primary-classifications="primaryClassifications"
+      @add-kanji="isDialogOpen = true"
+      @refresh="triggerRefresh"
     />
-  </SharedPageContainer>
+
+    <KanjiListSectionDialog
+      v-model:open="isDialogOpen"
+      @created="handleKanjiCreated"
+    />
+  </div>
 </template>
 
 <style scoped>
-.kanji-list-root-loading {
+.kanji-list-root {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-md);
-  min-height: 50vh;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
 }
 
-.kanji-list-root-loading-text {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
+.kanji-list-root-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
 }
 
 .kanji-list-root-error {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   gap: var(--spacing-sm);
-  min-height: 50vh;
+  padding: var(--spacing-xl);
   text-align: center;
 }
 
 .kanji-list-root-error-title {
-  margin: 0;
-  color: var(--color-error);
-  font-size: var(--font-size-xl);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
 }
 
 .kanji-list-root-error-message {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
 }
 </style>

@@ -2,8 +2,8 @@
 /**
  * SettingsSectionDatabase
  *
- * Section component for database management in settings.
- * Provides export, import, and clear database functionality.
+ * Section component for database management.
+ * Handles export, import, and clear operations via events.
  */
 
 import { computed, ref } from 'vue'
@@ -11,52 +11,47 @@ import { computed, ref } from 'vue'
 import BaseButton from '@/base/components/BaseButton.vue'
 
 import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
+import SharedSection from '@/shared/components/SharedSection.vue'
 
-import { useDatabaseExport } from '../composables/use-database-export'
-
-// Database export composable
-const {
-  clearDatabase,
-  exportDatabase,
-  importDatabase,
-  isClearing,
-  isExporting,
-  isImporting,
-  validateDatabaseFile
-} = useDatabaseExport()
-
-// File input ref
-const fileInputRef = ref<HTMLInputElement | null>(null)
-
-// Import confirmation dialog
-const showImportDialog = ref(false)
-const pendingImportFile = ref<File | null>(null)
-
-// Clear confirmation dialog
-const showClearDialog = ref(false)
-
-// Computed for disabled states
-const exportDisabled = computed(
-  () => isExporting.value || isImporting.value || isClearing.value
-)
-const importDisabled = computed(
-  () => isExporting.value || isImporting.value || isClearing.value
-)
-const clearDisabled = computed(
-  () => isExporting.value || isImporting.value || isClearing.value
-)
-
-// Export handler
-function handleExportClick() {
-  exportDatabase()
+interface Props {
+  isExporting: boolean
+  isImporting: boolean
+  isClearing: boolean
 }
 
-// Import handlers
-function handleImportClick() {
+const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  'export-database': []
+  'import-database': [file: File]
+  'validate-database': [file: File]
+  'clear-database': []
+}>()
+
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const showImportDialog = ref(false)
+const pendingImportFile = ref<File | null>(null)
+const showClearDialog = ref(false)
+
+const exportDisabled = computed(
+  () => props.isExporting || props.isImporting || props.isClearing
+)
+const importDisabled = computed(
+  () => props.isExporting || props.isImporting || props.isClearing
+)
+const clearDisabled = computed(
+  () => props.isExporting || props.isImporting || props.isClearing
+)
+
+function handleExportClick(): void {
+  emit('export-database')
+}
+
+function handleImportClick(): void {
   fileInputRef.value?.click()
 }
 
-async function handleFileSelect(event: Event) {
+function handleFileSelect(event: Event): void {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
 
@@ -64,67 +59,61 @@ async function handleFileSelect(event: Event) {
     return
   }
 
-  // Validate file before showing confirmation
-  const isValid = await validateDatabaseFile(file)
-  if (!isValid) {
-    // Show error toast through the composable
-    await importDatabase(file)
-    // Reset file input
-    target.value = ''
-    return
-  }
-
-  // Show confirmation dialog
   pendingImportFile.value = file
   showImportDialog.value = true
 }
 
-async function handleImportConfirm() {
+function handleImportConfirm(): void {
   showImportDialog.value = false
 
   if (pendingImportFile.value) {
-    await importDatabase(pendingImportFile.value)
+    emit('import-database', pendingImportFile.value)
     pendingImportFile.value = null
   }
 
-  // Reset file input
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }
 }
 
-function handleImportCancel() {
+function handleImportCancel(): void {
   showImportDialog.value = false
   pendingImportFile.value = null
 
-  // Reset file input
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }
 }
 
-// Clear handlers
-function handleClearClick() {
+function handleClearClick(): void {
   showClearDialog.value = true
 }
 
-async function handleClearConfirm() {
+function handleClearConfirm(): void {
   showClearDialog.value = false
-  await clearDatabase()
+  emit('clear-database')
 }
 
-function handleClearCancel() {
+function handleClearCancel(): void {
   showClearDialog.value = false
 }
 </script>
 
 <template>
-  <div class="settings-section-database">
-    <div class="settings-section-database-actions">
-      <!-- Export -->
-      <div class="settings-section-database-action">
-        <h3 class="settings-section-database-action-title">Export Database</h3>
-        <p class="settings-section-database-action-description">
+  <SharedSection
+    collapsible
+    :default-open="false"
+    test-id="settings-database"
+    title="Data Management"
+  >
+    <p class="description">
+      Export, import, or clear your kanji dictionary data.
+    </p>
+
+    <div class="database-actions">
+      <div class="action">
+        <h3 class="action-title">Export Database</h3>
+        <p class="action-description">
           Download your database as a file for backup.
         </p>
         <BaseButton
@@ -137,10 +126,9 @@ function handleClearCancel() {
         </BaseButton>
       </div>
 
-      <!-- Import -->
-      <div class="settings-section-database-action">
-        <h3 class="settings-section-database-action-title">Import Database</h3>
-        <p class="settings-section-database-action-description">
+      <div class="action">
+        <h3 class="action-title">Import Database</h3>
+        <p class="action-description">
           Replace your data with an exported database file.
         </p>
         <BaseButton
@@ -154,16 +142,15 @@ function handleClearCancel() {
         <input
           ref="fileInputRef"
           accept=".db,.sqlite,.sqlite3"
-          class="settings-section-database-file-input"
+          class="file-input"
           type="file"
           @change="handleFileSelect"
         />
       </div>
 
-      <!-- Clear Data -->
-      <div class="settings-section-database-action">
-        <h3 class="settings-section-database-action-title">Clear All Data</h3>
-        <p class="settings-section-database-action-description">
+      <div class="action">
+        <h3 class="action-title">Clear All Data</h3>
+        <p class="action-description">
           Remove all kanji data. This cannot be undone.
         </p>
         <BaseButton
@@ -177,72 +164,65 @@ function handleClearCancel() {
       </div>
     </div>
 
-    <!-- Import Confirmation Dialog -->
     <SharedConfirmDialog
       confirm-label="Import"
       description="This will replace all existing data with the imported database. Make sure to export your current data first if you want to keep it."
-      :is-open="showImportDialog"
+      :open="showImportDialog"
       title="Import Database"
       variant="danger"
       @cancel="handleImportCancel"
       @confirm="handleImportConfirm"
+      @update:open="(val) => (showImportDialog = val)"
     />
 
-    <!-- Clear Confirmation Dialog -->
     <SharedConfirmDialog
       confirm-label="Clear All"
       description="This will permanently delete all kanji data. This action cannot be undone."
-      :is-open="showClearDialog"
+      :open="showClearDialog"
       title="Clear All Data"
       variant="danger"
       @cancel="handleClearCancel"
       @confirm="handleClearConfirm"
+      @update:open="(val) => (showClearDialog = val)"
     />
-  </div>
+  </SharedSection>
 </template>
 
 <style scoped>
-.settings-section-database {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.settings-section-database-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-sm);
-}
-
-.settings-section-database-action {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.settings-section-database-action-title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-}
-
-.settings-section-database-action-description {
-  margin: 0;
+.description {
+  margin-bottom: var(--spacing-md);
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
 }
 
-.settings-section-database-file-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  border: 0;
-  white-space: nowrap;
+.database-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background);
+}
+
+.action-title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.action-description {
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.file-input {
+  display: none;
 }
 </style>

@@ -3,117 +3,74 @@
  * KanjiListSectionFilters
  *
  * Section component that orchestrates all kanji filter UI components.
- * Arranges filters in a responsive layout with clear filters button.
- * Filters are collapsible with state persisted to localStorage.
+ * Collapsible panel with localStorage persistence for collapsed state.
+ * Default collapsed on mobile, expanded on desktop.
  */
 
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 
-import BaseButton from '@/base/components/BaseButton.vue'
+import { BaseButton } from '@/base/components'
 
-import KanjiFilterCharacter from './KanjiFilterCharacter.vue'
-import KanjiFilterComponent from './KanjiFilterComponent.vue'
-import KanjiFilterJlptLevel from './KanjiFilterJlptLevel.vue'
-import KanjiFilterJoyoLevel from './KanjiFilterJoyoLevel.vue'
-import KanjiFilterKenteiLevel from './KanjiFilterKenteiLevel.vue'
-import KanjiFilterKunYomi from './KanjiFilterKunYomi.vue'
-import KanjiFilterOnYomi from './KanjiFilterOnYomi.vue'
-import KanjiFilterRadical from './KanjiFilterRadical.vue'
-import KanjiFilterSearchKeywords from './KanjiFilterSearchKeywords.vue'
-import KanjiFilterStrokeRange from './KanjiFilterStrokeRange.vue'
+import KanjiListFiltersContent from './KanjiListFiltersContent.vue'
 
-import type { Component, KanjiFilters } from '@/shared/types/database-types'
+import type { KanjiListFilters } from '../kanji-list-types'
+import type { ClassificationType } from '@/api/classification'
+import type { Component } from '@/api/component'
 
-const props = defineProps<{
-  /** Current filter state */
-  filters: KanjiFilters
-  /** Character search value (debounced separately) */
+defineProps<{
+  filters: KanjiListFilters
   characterSearch: string
-  /** Search keywords value (debounced separately) */
-  searchKeywords: string
-  /** On-yomi search value (debounced separately) */
+  keywordsSearch: string
+  meaningsSearch: string
   onYomiSearch: string
-  /** Kun-yomi search value (debounced separately) */
   kunYomiSearch: string
-  /** Whether any filters are active */
   hasActiveFilters: boolean
-  /** Available components for filter dropdown */
+  activeFilterCount: number
   components: Component[]
-  /** Available radicals for filter dropdown (components with canBeRadical=true) */
   radicals: Component[]
+  classificationTypes: ClassificationType[]
 }>()
 
 const emit = defineEmits<{
-  /** Update character search input */
   'update:characterSearch': [value: string]
-  /** Update search keywords input */
-  'update:searchKeywords': [value: string]
-  /** Update on-yomi search input */
+  'update:keywordsSearch': [value: string]
+  'update:meaningsSearch': [value: string]
   'update:onYomiSearch': [value: string]
-  /** Update kun-yomi search input */
   'update:kunYomiSearch': [value: string]
-  /** Update a filter value */
-  updateFilter: [key: keyof KanjiFilters, value: unknown]
-  /** Clear all filters */
+  updateFilter: [key: keyof KanjiListFilters, value: unknown]
   clearFilters: []
 }>()
 
-// Collapsible state with localStorage persistence
+// Collapsible state
 const STORAGE_KEY = 'kanji-list-filters-collapsed'
 const isCollapsed = ref(false)
 
-// Initialize collapsed state on mount
 onMounted(() => {
-  // Check viewport width to set default
   const isMobile = window.innerWidth < 768
-
-  // Try to load from localStorage
   const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored !== null) {
-    isCollapsed.value = stored === 'true'
-  } else {
-    // Default based on viewport
-    isCollapsed.value = isMobile
-  }
+  isCollapsed.value = stored !== null ? stored === 'true' : isMobile
 })
 
-// Persist to localStorage when state changes
-watch(isCollapsed, (newValue) => {
-  localStorage.setItem(STORAGE_KEY, String(newValue))
+watch(isCollapsed, (val) => {
+  localStorage.setItem(STORAGE_KEY, String(val))
 })
 
-function toggleCollapsed() {
+function toggleCollapsed(): void {
   isCollapsed.value = !isCollapsed.value
 }
-
-// Count active filters for display in header
-const activeFilterCount = computed(() => {
-  let count = 0
-  if (props.filters.character) count++
-  if (props.filters.searchKeywords) count++
-  if (props.filters.strokeCountMin !== undefined) count++
-  if (props.filters.strokeCountMax !== undefined) count++
-  if (props.filters.jlptLevels && props.filters.jlptLevels.length > 0) count++
-  if (props.filters.joyoLevels && props.filters.joyoLevels.length > 0) count++
-  if (props.filters.kenteiLevels && props.filters.kenteiLevels.length > 0)
-    count++
-  if (props.filters.radicalId) count++
-  if (props.filters.componentId) count++
-  if (props.filters.onYomi) count++
-  if (props.filters.kunYomi) count++
-  return count
-})
 </script>
 
 <template>
   <section
     aria-label="Filter kanji"
     class="kanji-list-filters"
+    data-testid="kanji-list-filters"
   >
     <!-- Collapsible Header -->
     <button
       :aria-expanded="!isCollapsed"
       class="kanji-list-filters-header"
+      data-testid="kanji-list-filters-toggle"
       type="button"
       @click="toggleCollapsed"
     >
@@ -121,19 +78,20 @@ const activeFilterCount = computed(() => {
         Filters
         <span
           v-if="activeFilterCount > 0"
-          class="kanji-list-filters-header-badge"
+          class="kanji-list-filters-badge"
         >
           {{ activeFilterCount }}
         </span>
       </span>
       <svg
-        class="kanji-list-filters-header-chevron"
-        :class="{ 'kanji-list-filters-header-chevron-open': !isCollapsed }"
+        :class="[
+          'kanji-list-filters-chevron',
+          { 'kanji-list-filters-chevron-open': !isCollapsed }
+        ]"
         fill="none"
         height="20"
         viewBox="0 0 20 20"
         width="20"
-        xmlns="http://www.w3.org/2000/svg"
       >
         <path
           d="M5 7.5L10 12.5L15 7.5"
@@ -148,121 +106,49 @@ const activeFilterCount = computed(() => {
     <!-- Collapsible Content -->
     <div
       v-show="!isCollapsed"
-      class="kanji-list-filters-content"
+      class="kanji-list-filters-expanded-content"
     >
-      <div class="kanji-list-filters-row">
-        <KanjiFilterCharacter
-          :model-value="characterSearch"
-          @update:model-value="emit('update:characterSearch', $event)"
-        />
-
-        <KanjiFilterSearchKeywords
-          :model-value="searchKeywords"
-          @update:model-value="emit('update:searchKeywords', $event)"
-        />
-
-        <KanjiFilterOnYomi
-          :model-value="onYomiSearch"
-          @update:model-value="emit('update:onYomiSearch', $event)"
-        />
-
-        <KanjiFilterKunYomi
-          :model-value="kunYomiSearch"
-          @update:model-value="emit('update:kunYomiSearch', $event)"
-        />
-
-        <KanjiFilterStrokeRange
-          :max="filters.strokeCountMax"
-          :min="filters.strokeCountMin"
-          @update:max="emit('updateFilter', 'strokeCountMax', $event)"
-          @update:min="emit('updateFilter', 'strokeCountMin', $event)"
-        />
-
-        <KanjiFilterComponent
+      <div class="kanji-list-filters-scrollable-content">
+        <KanjiListFiltersContent
+          :character-search="characterSearch"
+          :classification-types="classificationTypes"
           :components="components"
-          :model-value="filters.componentId ?? null"
-          @update:model-value="emit('updateFilter', 'componentId', $event)"
-        />
-
-        <KanjiFilterRadical
-          :model-value="filters.radicalId ?? null"
+          :filters="filters"
+          :keywords-search="keywordsSearch"
+          :kun-yomi-search="kunYomiSearch"
+          :meanings-search="meaningsSearch"
+          :on-yomi-search="onYomiSearch"
           :radicals="radicals"
-          @update:model-value="emit('updateFilter', 'radicalId', $event)"
+          @update-filter="(key, value) => emit('updateFilter', key, value)"
+          @update:character-search="emit('update:characterSearch', $event)"
+          @update:keywords-search="emit('update:keywordsSearch', $event)"
+          @update:kun-yomi-search="emit('update:kunYomiSearch', $event)"
+          @update:meanings-search="emit('update:meaningsSearch', $event)"
+          @update:on-yomi-search="emit('update:onYomiSearch', $event)"
         />
       </div>
 
-      <div class="kanji-list-filters-row">
-        <KanjiFilterJlptLevel
-          :model-value="filters.jlptLevels ?? []"
-          @update:model-value="
-            emit(
-              'updateFilter',
-              'jlptLevels',
-              $event.length > 0 ? $event : undefined
-            )
-          "
-        />
-
-        <KanjiFilterJoyoLevel
-          :model-value="filters.joyoLevels ?? []"
-          @update:model-value="
-            emit(
-              'updateFilter',
-              'joyoLevels',
-              $event.length > 0 ? $event : undefined
-            )
-          "
-        />
-
-        <KanjiFilterKenteiLevel
-          :model-value="filters.kenteiLevels ?? []"
-          @update:model-value="
-            emit(
-              'updateFilter',
-              'kenteiLevels',
-              $event.length > 0 ? $event : undefined
-            )
-          "
-        />
-      </div>
-
-      <div class="kanji-list-filters-bottom">
-        <div
-          v-if="hasActiveFilters"
-          class="kanji-list-filters-actions"
+      <!-- Bottom actions: Clear + Collapse -->
+      <div class="kanji-list-filters-bottom-actions">
+        <BaseButton
+          data-testid="kanji-list-filters-clear"
+          :disabled="!hasActiveFilters"
+          size="sm"
+          variant="ghost"
+          @click="emit('clearFilters')"
         >
-          <BaseButton
-            variant="ghost"
-            @click="emit('clearFilters')"
-          >
-            Clear filters
-          </BaseButton>
-        </div>
+          Clear filters
+        </BaseButton>
 
-        <div class="kanji-list-filters-collapse">
-          <BaseButton
-            size="sm"
-            variant="secondary"
-            @click="toggleCollapsed"
-          >
-            Collapse
-          </BaseButton>
-        </div>
+        <BaseButton
+          data-testid="kanji-list-filters-collapse"
+          size="sm"
+          variant="secondary"
+          @click="toggleCollapsed"
+        >
+          Collapse
+        </BaseButton>
       </div>
-    </div>
-
-    <!-- Clear filters button visible when collapsed and filters active -->
-    <div
-      v-if="isCollapsed && hasActiveFilters"
-      class="kanji-list-filters-collapsed-actions"
-    >
-      <BaseButton
-        size="sm"
-        variant="ghost"
-        @click="emit('clearFilters')"
-      >
-        Clear filters
-      </BaseButton>
     </div>
   </section>
 </template>
@@ -302,7 +188,7 @@ const activeFilterCount = computed(() => {
   gap: var(--spacing-xs);
 }
 
-.kanji-list-filters-header-badge {
+.kanji-list-filters-badge {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -315,64 +201,40 @@ const activeFilterCount = computed(() => {
   font-weight: var(--font-weight-semibold);
 }
 
-.kanji-list-filters-header-chevron {
+.kanji-list-filters-chevron {
   flex-shrink: 0;
   color: var(--color-text-secondary);
   transition: transform 0.2s ease;
 }
 
-.kanji-list-filters-header-chevron-open {
+.kanji-list-filters-chevron-open {
   transform: rotate(180deg);
 }
 
-.kanji-list-filters-content {
+.kanji-list-filters-expanded-content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  padding: 0 var(--spacing-md) var(--spacing-md);
 }
 
-.kanji-list-filters-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--spacing-md);
-}
-
-.kanji-list-filters-actions {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.kanji-list-filters-bottom {
+.kanji-list-filters-scrollable-content {
   position: relative;
+  max-height: 190px;
+  overflow-y: auto;
+}
+
+@media (width > 640px) {
+  .kanji-list-filters-scrollable-content {
+    max-height: 180px;
+  }
+}
+
+.kanji-list-filters-bottom-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
-}
-
-.kanji-list-filters-collapse {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.kanji-list-filters-collapsed-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 var(--spacing-md) var(--spacing-md);
-}
-
-@media (width <= 480px) {
-  .kanji-list-filters-bottom {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-
-  .kanji-list-filters-actions,
-  .kanji-list-filters-collapse {
-    justify-content: center;
-  }
 }
 </style>

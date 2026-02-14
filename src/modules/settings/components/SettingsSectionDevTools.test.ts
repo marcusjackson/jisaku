@@ -1,169 +1,151 @@
 /**
- * SettingsSectionDevTools tests
- *
- * Tests for the developer tools settings section.
+ * SettingsSectionDevTools Tests
  */
 
-import { ref } from 'vue'
+import { defineComponent } from 'vue'
 
-import { mount } from '@vue/test-utils'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
-// Mock values
-const mockSeed = vi.fn()
-const mockClear = vi.fn()
-const mockIsSeeding = ref(false)
-const mockIsClearing = ref(false)
-
-vi.mock('@/shared/composables/use-seed-data', () => ({
-  useSeedData: () => ({
-    clear: mockClear,
-    isClearing: mockIsClearing,
-    isSeeding: mockIsSeeding,
-    seed: mockSeed
-  })
-}))
+import userEvent from '@testing-library/user-event'
+import { render, screen } from '@testing-library/vue'
+import { describe, expect, it, vi } from 'vitest'
 
 import SettingsSectionDevTools from './SettingsSectionDevTools.vue'
 
+// Mock BaseButton
+vi.mock('@/base/components', async (importOriginal) => {
+  const original = await importOriginal<Record<string, unknown>>()
+  const MockButton = defineComponent({
+    name: 'BaseButton',
+    props: {
+      disabled: Boolean,
+      loading: Boolean,
+      variant: { type: String, default: 'primary' }
+    },
+    template: `<button :disabled="disabled"><slot /></button>`
+  })
+  return { ...original, BaseButton: MockButton }
+})
+
+// Mock SharedSection
+vi.mock('@/shared/components/SharedSection.vue', () => ({
+  default: {
+    name: 'SharedSection',
+    props: ['title', 'testId', 'collapsible', 'defaultOpen'],
+    template: '<section><h2>{{ title }}</h2><slot /></section>'
+  }
+}))
+
+// Mock SharedConfirmDialog
+vi.mock('@/shared/components/SharedConfirmDialog.vue', () => ({
+  default: {
+    name: 'SharedConfirmDialog',
+    props: ['open', 'title', 'description', 'confirmLabel', 'variant'],
+    emits: ['update:open', 'confirm', 'cancel'],
+    template: `
+      <div v-if="open" role="dialog" :aria-label="title">
+        <p>{{ description }}</p>
+        <button @click="$emit('confirm')">{{ confirmLabel }}</button>
+        <button @click="$emit('cancel')">Cancel</button>
+      </div>
+    `
+  }
+}))
+
 describe('SettingsSectionDevTools', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockIsSeeding.value = false
-    mockIsClearing.value = false
-  })
-
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-
-  function mountComponent() {
-    return mount(SettingsSectionDevTools, {
-      global: {
-        stubs: {
-          BaseButton: {
-            props: ['disabled', 'loading', 'variant'],
-            template:
-              '<button :disabled="disabled || loading"><slot /></button>'
-          },
-          SharedConfirmDialog: {
-            props: ['isOpen', 'title', 'description'],
-            template: `
-              <div v-if="isOpen" data-testid="confirm-dialog">
-                <span>{{ title }}</span>
-                <span>{{ description }}</span>
-                <button @click="$emit('confirm')">Clear</button>
-                <button @click="$emit('cancel')">Cancel</button>
-              </div>
-            `,
-            emits: ['confirm', 'cancel']
-          }
-        }
+  it('renders the section title', () => {
+    render(SettingsSectionDevTools, {
+      props: {
+        isSeeding: false,
+        isClearing: false
       }
     })
-  }
-
-  it('renders seed database action', () => {
-    const wrapper = mountComponent()
-
-    expect(wrapper.text()).toContain('Seed Database')
-    expect(wrapper.text()).toContain('Add sample kanji data')
-    expect(wrapper.text()).toContain('Seed Data')
+    expect(screen.getByText('Developer Tools')).toBeInTheDocument()
   })
 
-  it('renders clear database action', () => {
-    const wrapper = mountComponent()
-
-    expect(wrapper.text()).toContain('Clear Database')
-    expect(wrapper.text()).toContain('Remove all kanji data')
-    expect(wrapper.text()).toContain('Clear All Data')
+  it('displays seed and clear buttons', () => {
+    render(SettingsSectionDevTools, {
+      props: {
+        isSeeding: false,
+        isClearing: false
+      }
+    })
+    expect(
+      screen.getByRole('button', { name: /seed data/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /clear all data/i })
+    ).toBeInTheDocument()
   })
 
-  it('calls seed when seed button is clicked', async () => {
-    const wrapper = mountComponent()
+  it('emits seedData when seed button is clicked', async () => {
+    const user = userEvent.setup()
+    const { emitted } = render(SettingsSectionDevTools, {
+      props: {
+        isSeeding: false,
+        isClearing: false
+      }
+    })
 
-    const seedButton = wrapper
-      .findAll('button')
-      .find((b) => b.text().includes('Seed Data'))
-    await seedButton?.trigger('click')
+    await user.click(screen.getByRole('button', { name: /seed data/i }))
 
-    expect(mockSeed).toHaveBeenCalled()
+    expect(emitted()['seed-data']).toBeTruthy()
   })
 
-  it('shows confirmation dialog when clear button is clicked', async () => {
-    const wrapper = mountComponent()
+  it('shows clear confirmation dialog when clear button is clicked', async () => {
+    const user = userEvent.setup()
+    render(SettingsSectionDevTools, {
+      props: {
+        isSeeding: false,
+        isClearing: false
+      }
+    })
 
-    const clearButton = wrapper
-      .findAll('button')
-      .find((b) => b.text().includes('Clear All Data'))
-    await clearButton?.trigger('click')
+    await user.click(screen.getByRole('button', { name: /clear all data/i }))
 
-    expect(wrapper.find('[data-testid="confirm-dialog"]').exists()).toBe(true)
-    // The dialog shows with title "Clear All Data" (see SettingsSectionDevTools.vue)
-    expect(wrapper.find('[data-testid="confirm-dialog"]').text()).toContain(
-      'permanently delete'
-    )
+    expect(
+      screen.getByRole('dialog', { name: /clear all data/i })
+    ).toBeInTheDocument()
   })
 
-  it('calls clear when confirmation is accepted', async () => {
-    const wrapper = mountComponent()
+  it('emits clearData after confirmation', async () => {
+    const user = userEvent.setup()
+    const { emitted } = render(SettingsSectionDevTools, {
+      props: {
+        isSeeding: false,
+        isClearing: false
+      }
+    })
 
-    // Open dialog
-    const clearButton = wrapper
-      .findAll('button')
-      .find((b) => b.text().includes('Clear All Data'))
-    await clearButton?.trigger('click')
+    await user.click(screen.getByRole('button', { name: /clear all data/i }))
 
-    // Find and click confirm button in the dialog
-    const confirmButton = wrapper
-      .find('[data-testid="confirm-dialog"]')
-      .findAll('button')
-      .find((b) => b.text() === 'Clear')
-    await confirmButton?.trigger('click')
+    const buttons = screen.getAllByRole('button', { name: /clear all/i })
+    const confirmButton = buttons[1]
+    expect(confirmButton).toBeDefined()
+    await user.click(confirmButton!)
 
-    expect(mockClear).toHaveBeenCalled()
+    expect(emitted()['clear-data']).toBeTruthy()
   })
 
-  it('closes dialog without clearing when cancelled', async () => {
-    const wrapper = mountComponent()
+  it('disables seed button when clearing', () => {
+    render(SettingsSectionDevTools, {
+      props: {
+        isSeeding: false,
+        isClearing: true
+      }
+    })
 
-    // Open dialog
-    const clearButton = wrapper
-      .findAll('button')
-      .find((b) => b.text().includes('Clear All Data'))
-    await clearButton?.trigger('click')
-
-    // Find and click cancel button in the dialog
-    const cancelButton = wrapper
-      .find('[data-testid="confirm-dialog"]')
-      .findAll('button')
-      .find((b) => b.text() === 'Cancel')
-    await cancelButton?.trigger('click')
-
-    expect(mockClear).not.toHaveBeenCalled()
+    const seedButton = screen.getByRole('button', { name: /seed data/i })
+    expect(seedButton).toBeDisabled()
   })
 
-  it('disables buttons while seeding', () => {
-    mockIsSeeding.value = true
-    const wrapper = mountComponent()
+  it('disables clear button when seeding', () => {
+    render(SettingsSectionDevTools, {
+      props: {
+        isSeeding: true,
+        isClearing: false
+      }
+    })
 
-    const buttons = wrapper.findAll('button')
-    const seedButton = buttons.find((b) => b.text().includes('Seeding'))
-    const clearButton = buttons.find((b) => b.text().includes('Clear'))
-
-    expect(seedButton?.element.disabled).toBe(true)
-    expect(clearButton?.element.disabled).toBe(true)
-  })
-
-  it('disables buttons while clearing', () => {
-    mockIsClearing.value = true
-    const wrapper = mountComponent()
-
-    const buttons = wrapper.findAll('button')
-    const seedButton = buttons.find((b) => b.text().includes('Seed'))
-    const clearButton = buttons.find((b) => b.text().includes('Clearing'))
-
-    expect(seedButton?.element.disabled).toBe(true)
-    expect(clearButton?.element.disabled).toBe(true)
+    const clearButton = screen.getByRole('button', { name: /clear all data/i })
+    expect(clearButton).toBeDisabled()
   })
 })

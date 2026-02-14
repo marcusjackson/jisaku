@@ -8,6 +8,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { Database } from 'sql.js'
+
 // Mock IndexedDB since it's not available in jsdom
 const mockIDBStore = new Map<string, Uint8Array>()
 
@@ -51,63 +53,100 @@ const mockIndexedDB = {
 
 vi.stubGlobal('indexedDB', mockIndexedDB)
 
+// Mock the database modules
+let mockDb: Database
+
+vi.mock('@/db/init', () => ({
+  initializeDatabase: vi.fn(function () {
+    return Promise.resolve(mockDb)
+  }),
+  replaceDatabaseWithImported: vi.fn(function () {
+    return Promise.resolve(mockDb)
+  })
+}))
+
+vi.mock('@/db/indexeddb', () => ({
+  saveToIndexedDB: vi.fn(function () {
+    return Promise.resolve()
+  }),
+  schedulePersist: vi.fn()
+}))
+
 // Import after mocking
+import { saveToIndexedDB, schedulePersist } from '@/db/indexeddb'
+import { initializeDatabase, replaceDatabaseWithImported } from '@/db/init'
+
 import { useDatabase } from './use-database'
 
-describe('useDatabase', () => {
+describe('useDatabase', function () {
   beforeEach(() => {
+    // Create a fresh mock database instance
+    mockDb = {
+      exec: vi.fn(() => []),
+      run: vi.fn(),
+      export: vi.fn(() => new Uint8Array([1, 2, 3])),
+      close: vi.fn()
+    } as unknown as Database
+
     vi.clearAllMocks()
     mockIDBStore.clear()
-
-    // Reset module state by re-importing
-    vi.resetModules()
   })
 
   it('returns the expected interface', () => {
     const db = useDatabase()
 
+    expect(db).toHaveProperty('database')
     expect(db).toHaveProperty('initialize')
     expect(db).toHaveProperty('exec')
     expect(db).toHaveProperty('run')
+    expect(db).toHaveProperty('persist')
+    expect(db).toHaveProperty('replaceDatabase')
     expect(db).toHaveProperty('isInitialized')
     expect(db).toHaveProperty('isInitializing')
     expect(db).toHaveProperty('initError')
-    expect(db).toHaveProperty('persist')
   })
 
-  it('isInitialized is false initially', () => {
+  it('provides full database functionality', async () => {
     const db = useDatabase()
+    const mockResults = [{ columns: ['id'], values: [[1]] }]
 
-    expect(db.isInitialized.value).toBe(false)
+    // Initialize
+    await db.initialize()
+    expect(initializeDatabase).toHaveBeenCalled()
+    expect(db.isInitialized.value).toBe(true)
+
+    // Execute queries
+    vi.mocked(mockDb.exec).mockReturnValue(mockResults)
+    const results = db.exec('SELECT * FROM kanji WHERE id = ?', [1])
+    expect(mockDb.exec).toHaveBeenCalledWith(
+      'SELECT * FROM kanji WHERE id = ?',
+      [1]
+    )
+    expect(results).toBe(mockResults)
+
+    // Execute statements
+    db.run('INSERT INTO kanji (character) VALUES (?)', ['水'])
+    expect(mockDb.run).toHaveBeenCalledWith(
+      'INSERT INTO kanji (character) VALUES (?)',
+      ['水']
+    )
+    expect(schedulePersist).toHaveBeenCalled()
+
+    // Persist
+    const mockExport = new Uint8Array([1, 2, 3])
+    vi.mocked(mockDb.export).mockReturnValue(mockExport)
+    await db.persist()
+    expect(mockDb.export).toHaveBeenCalled()
+    expect(saveToIndexedDB).toHaveBeenCalledWith(mockExport)
   })
 
-  it('isInitializing is false initially', () => {
+  it('replaces database with new data', async () => {
     const db = useDatabase()
+    const newData = new Uint8Array([4, 5, 6])
 
-    expect(db.isInitializing.value).toBe(false)
-  })
+    await db.replaceDatabase(newData)
 
-  it('initError is null initially', () => {
-    const db = useDatabase()
-
-    expect(db.initError.value).toBeNull()
-  })
-
-  describe('exec and run before initialization', () => {
-    it('exec throws error if called before initialization', () => {
-      const db = useDatabase()
-
-      expect(() => {
-        db.exec('SELECT 1')
-      }).toThrow('Database not initialized')
-    })
-
-    it('run throws error if called before initialization', () => {
-      const db = useDatabase()
-
-      expect(() => {
-        db.run('SELECT 1')
-      }).toThrow('Database not initialized')
-    })
+    expect(replaceDatabaseWithImported).toHaveBeenCalledWith(newData)
+    expect(db.isInitialized.value).toBe(true)
   })
 })

@@ -3,9 +3,10 @@
  * SharedQuickCreateKanji
  *
  * Quick-create dialog for creating kanji with minimal fields.
- * Fields: character, stroke_count, short_meaning
+ * Fields: character, short_meaning, search_keywords
  *
- * Note: search_keywords can be added later on the detail page.
+ * Note: stroke_count, readings, and other details can be added later
+ * on the kanji detail page.
  */
 
 import { computed, watch } from 'vue'
@@ -24,7 +25,7 @@ import {
 
 const props = defineProps<{
   /** Initial character value (optional, for pre-filling) */
-  initialCharacter?: string
+  initialCharacter?: string | undefined
 }>()
 
 const emit = defineEmits<{
@@ -48,7 +49,7 @@ const { handleSubmit, isSubmitting, resetForm } = useForm<QuickCreateKanjiData>(
   }
 )
 
-// Use field-level bindings to avoid readonly proxy issues with v-model
+// Use field-level bindings for v-model compatibility
 const { errorMessage: characterError, value: characterValue } =
   useField<string>('character')
 const { errorMessage: shortMeaningError, value: shortMeaningValue } =
@@ -61,9 +62,10 @@ watch(
   () => open.value,
   (isOpen) => {
     if (isOpen) {
-      characterValue.value = props.initialCharacter ?? ''
-      shortMeaningValue.value = ''
-      searchKeywordsValue.value = ''
+      resetForm()
+      if (props.initialCharacter) {
+        characterValue.value = props.initialCharacter
+      }
     }
   }
 )
@@ -83,7 +85,7 @@ const onSubmit = handleSubmit((formValues: QuickCreateKanjiData) => {
   open.value = false
 })
 
-function handleCancel() {
+function handleCancel(): void {
   resetForm()
   emit('cancel')
   open.value = false
@@ -96,7 +98,7 @@ const isSaveDisabled = computed(() => isSubmitting.value)
 <template>
   <BaseDialog
     v-model:open="open"
-    description="Create a kanji with minimal fields. Add readings, keywords, and details on the kanji detail page."
+    description="Create a kanji with minimal fields. Add readings, stroke count, and other details on the kanji detail page."
     title="Quick Create Kanji"
   >
     <form
@@ -158,7 +160,7 @@ const isSaveDisabled = computed(() => isSubmitting.value)
           type="submit"
           variant="primary"
         >
-          Create & View
+          Create
         </BaseButton>
       </div>
     </template>
@@ -173,24 +175,11 @@ const isSaveDisabled = computed(() => isSubmitting.value)
   margin-bottom: var(--spacing-md);
 }
 
-.shared-quick-create-kanji-row {
-  display: flex;
-  gap: var(--spacing-md);
-}
-
 .shared-quick-create-kanji-field {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-width: 0;
-}
-
-.shared-quick-create-kanji-field-character {
-  flex: 0 0 100px;
-}
-
-.shared-quick-create-kanji-field-strokes {
-  flex: 0 0 100px;
 }
 
 .shared-quick-create-kanji-help {

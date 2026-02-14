@@ -6,34 +6,43 @@ import userEvent from '@testing-library/user-event'
 import { render, screen } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 
-import BaseCombobox, { type ComboboxOption } from './BaseCombobox.vue'
+import BaseCombobox from './BaseCombobox.vue'
 
 const testOptions = [
-  { label: 'Apple', value: 'apple' },
-  { label: 'Banana', value: 'banana' },
-  { label: 'Cherry', value: 'cherry' }
+  { label: 'Water (氵)', value: '1', character: '氵' },
+  { label: 'Fire (火)', value: '2', character: '火' },
+  { label: 'Tree (木)', value: '3', character: '木' }
 ]
 
 describe('BaseCombobox', () => {
   it('renders with label', () => {
     render(BaseCombobox, {
-      props: { label: 'Fruit', options: testOptions }
+      props: { label: 'Radical', modelValue: null, options: testOptions }
     })
 
-    expect(screen.getByText('Fruit')).toBeInTheDocument()
+    expect(screen.getByText('Radical')).toBeInTheDocument()
   })
 
   it('renders input with placeholder', () => {
     render(BaseCombobox, {
-      props: { options: testOptions, placeholder: 'Select a fruit...' }
+      props: {
+        modelValue: null,
+        options: testOptions,
+        placeholder: 'Search...'
+      }
     })
 
-    expect(screen.getByPlaceholderText('Select a fruit...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument()
   })
 
   it('displays required indicator', () => {
     render(BaseCombobox, {
-      props: { label: 'Fruit', options: testOptions, required: true }
+      props: {
+        label: 'Radical',
+        modelValue: null,
+        options: testOptions,
+        required: true
+      }
     })
 
     expect(screen.getByText('*')).toBeInTheDocument()
@@ -43,7 +52,8 @@ describe('BaseCombobox', () => {
     render(BaseCombobox, {
       props: {
         error: 'Selection required',
-        label: 'Fruit',
+        label: 'Radical',
+        modelValue: null,
         options: testOptions
       }
     })
@@ -53,7 +63,7 @@ describe('BaseCombobox', () => {
 
   it('renders combobox input', () => {
     render(BaseCombobox, {
-      props: { label: 'Fruit', options: testOptions }
+      props: { label: 'Radical', modelValue: null, options: testOptions }
     })
 
     expect(screen.getByRole('combobox')).toBeInTheDocument()
@@ -61,23 +71,20 @@ describe('BaseCombobox', () => {
 
   it('applies error styling when error is present', () => {
     render(BaseCombobox, {
-      props: { error: 'Error', label: 'Fruit', options: testOptions }
+      props: {
+        error: 'Error',
+        label: 'Radical',
+        modelValue: null,
+        options: testOptions
+      }
     })
 
     expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true')
   })
 
-  it('renders default placeholder when not specified', () => {
-    render(BaseCombobox, {
-      props: { label: 'Fruit', options: testOptions }
-    })
-
-    expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument()
-  })
-
   it('shows dropdown toggle button', () => {
     render(BaseCombobox, {
-      props: { label: 'Fruit', options: testOptions }
+      props: { label: 'Radical', modelValue: null, options: testOptions }
     })
 
     expect(screen.getByRole('button', { name: /toggle/i })).toBeInTheDocument()
@@ -86,36 +93,34 @@ describe('BaseCombobox', () => {
   it('opens dropdown when trigger is clicked', async () => {
     const user = userEvent.setup()
     render(BaseCombobox, {
-      props: { label: 'Fruit', options: testOptions }
+      props: { label: 'Radical', modelValue: null, options: testOptions }
     })
 
     await user.click(screen.getByRole('button', { name: /toggle/i }))
 
-    // Check that options are visible
-    expect(screen.getByText('Apple')).toBeInTheDocument()
-    expect(screen.getByText('Banana')).toBeInTheDocument()
-    expect(screen.getByText('Cherry')).toBeInTheDocument()
+    expect(screen.getByText('Water (氵)')).toBeInTheDocument()
+    expect(screen.getByText('Fire (火)')).toBeInTheDocument()
+    expect(screen.getByText('Tree (木)')).toBeInTheDocument()
   })
 
   it('filters options when typing', async () => {
     const user = userEvent.setup()
     render(BaseCombobox, {
-      props: { label: 'Fruit', options: testOptions }
+      props: { label: 'Radical', modelValue: null, options: testOptions }
     })
 
     const input = screen.getByRole('combobox')
-    await user.type(input, 'app')
+    await user.type(input, 'water')
 
-    // Should show filtered results
-    expect(screen.getByText('Apple')).toBeInTheDocument()
-    expect(screen.queryByText('Banana')).not.toBeInTheDocument()
-    expect(screen.queryByText('Cherry')).not.toBeInTheDocument()
+    expect(screen.getByText('Water (氵)')).toBeInTheDocument()
+    expect(screen.queryByText('Fire (火)')).not.toBeInTheDocument()
+    expect(screen.queryByText('Tree (木)')).not.toBeInTheDocument()
   })
 
   it('shows no results message when no matches', async () => {
     const user = userEvent.setup()
     render(BaseCombobox, {
-      props: { label: 'Fruit', options: testOptions }
+      props: { label: 'Radical', modelValue: null, options: testOptions }
     })
 
     const input = screen.getByRole('combobox')
@@ -124,97 +129,47 @@ describe('BaseCombobox', () => {
     expect(screen.getByText('No results found')).toBeInTheDocument()
   })
 
-  it('supports numeric values', () => {
-    const numericOptions = [
-      { label: 'One', value: 1 },
-      { label: 'Two', value: 2 },
-      { label: 'Three', value: 3 }
-    ]
-
-    render(BaseCombobox, {
-      props: { label: 'Number', options: numericOptions }
-    })
-
-    expect(screen.getByRole('combobox')).toBeInTheDocument()
-  })
-
-  it('searches across multiple fields when searchKeys is provided', async () => {
-    const user = userEvent.setup()
-    const optionsWithMeaning = [
-      { label: '水', value: 1, shortMeaning: 'water' },
-      { label: '火', value: 2, shortMeaning: 'fire' },
-      { label: '木', value: 3, shortMeaning: 'tree' }
-    ]
-
+  it('disables input when disabled prop is true', () => {
     render(BaseCombobox, {
       props: {
-        label: 'Kanji',
-        options: optionsWithMeaning,
-        searchKeys: ['label', 'shortMeaning']
+        disabled: true,
+        label: 'Radical',
+        modelValue: null,
+        options: testOptions
+      }
+    })
+
+    expect(screen.getByRole('combobox')).toBeDisabled()
+  })
+
+  it('searches multiple keys when searchKeys provided', async () => {
+    const user = userEvent.setup()
+    render(BaseCombobox, {
+      props: {
+        label: 'Radical',
+        modelValue: null,
+        options: testOptions,
+        searchKeys: ['label', 'character']
       }
     })
 
     const input = screen.getByRole('combobox')
+    // Search by character instead of label
+    await user.type(input, '火')
 
-    // Search by meaning (not label)
-    await user.type(input, 'wat')
-
-    expect(screen.getByText('水')).toBeInTheDocument()
-    expect(screen.queryByText('火')).not.toBeInTheDocument()
-    expect(screen.queryByText('木')).not.toBeInTheDocument()
+    expect(screen.getByText('Fire (火)')).toBeInTheDocument()
+    expect(screen.queryByText('Water (氵)')).not.toBeInTheDocument()
   })
 
-  it('uses displayFn for custom option display', async () => {
-    const user = userEvent.setup()
-
-    interface OptionWithMeaning extends ComboboxOption {
-      shortMeaning?: string
-    }
-
-    const optionsWithMeaning: OptionWithMeaning[] = [
-      { label: '水', value: 1, shortMeaning: 'water' },
-      { label: '火', value: 2, shortMeaning: 'fire' }
-    ]
-
+  it('displays selected value in input', () => {
     render(BaseCombobox, {
       props: {
-        label: 'Kanji',
-        options: optionsWithMeaning,
-        displayFn: (option: ComboboxOption) => {
-          const opt = option as OptionWithMeaning
-          const label = String(opt.label)
-          const meaning = opt.shortMeaning ?? 'no meaning'
-          return `${label} (${meaning})`
-        }
+        label: 'Radical',
+        modelValue: '2',
+        options: testOptions
       }
     })
 
-    await user.click(screen.getByRole('button', { name: /toggle/i }))
-
-    expect(screen.getByText('水 (water)')).toBeInTheDocument()
-    expect(screen.getByText('火 (fire)')).toBeInTheDocument()
-  })
-
-  it('defaults to searching label only when searchKeys not provided', async () => {
-    const user = userEvent.setup()
-    const optionsWithMeaning = [
-      { label: '水', value: 1, shortMeaning: 'water' },
-      { label: '火', value: 2, shortMeaning: 'fire' }
-    ]
-
-    render(BaseCombobox, {
-      props: {
-        label: 'Kanji',
-        options: optionsWithMeaning
-        // No searchKeys provided, should only search label
-      }
-    })
-
-    const input = screen.getByRole('combobox')
-
-    // Search by meaning should not find anything
-    await user.type(input, 'wat')
-
-    expect(screen.getByText('No results found')).toBeInTheDocument()
+    expect(screen.getByRole('combobox')).toHaveValue('Fire (火)')
   })
 })

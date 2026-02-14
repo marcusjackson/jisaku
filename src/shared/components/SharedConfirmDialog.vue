@@ -15,7 +15,7 @@ type DialogVariant = 'default' | 'danger'
 
 interface Props {
   /** Whether the dialog is open */
-  isOpen: boolean
+  open: boolean
   /** Dialog title */
   title: string
   /** Dialog description/message */
@@ -38,11 +38,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  cancel: []
+  'update:open': [open: boolean]
   confirm: []
+  cancel: []
 }>()
 
-// Compute button props to handle exactOptionalPropertyTypes
 const buttonDisabled = computed(() => props.isLoading)
 const confirmVariant = computed<'primary' | 'danger'>(() =>
   props.variant === 'danger' ? 'danger' : 'primary'
@@ -54,17 +54,24 @@ function handleConfirm() {
 
 function handleCancel() {
   emit('cancel')
+  emit('update:open', false)
+}
+
+function handleOpenChange(open: boolean) {
+  emit('update:open', open)
+  if (!open) {
+    emit('cancel')
+  }
 }
 </script>
 
 <template>
   <BaseDialog
     :description="props.description"
-    :open="props.isOpen"
+    :open="props.open"
     :title="props.title"
-    @close="handleCancel"
+    @update:open="handleOpenChange"
   >
-    <!-- Default slot for custom content (e.g., form fields) -->
     <slot />
 
     <template #footer>

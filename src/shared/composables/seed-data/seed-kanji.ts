@@ -24,7 +24,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'ひ, にち, hi, nichi, sunshine',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
-    kenteiLevel: '10級',
+    kenteiLevel: '10',
     notesPersonal: 'Sun, day. One of the most fundamental kanji.'
   },
   {
@@ -34,7 +34,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'つき, げつ, tsuki, getsu, crescent',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
-    kenteiLevel: '10級',
+    kenteiLevel: '10',
     notesPersonal: 'Moon, month. Pictograph of a crescent moon.'
   },
   {
@@ -44,7 +44,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'みず, すい, mizu, sui, aqua',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
-    kenteiLevel: '10級',
+    kenteiLevel: '10',
     notesPersonal: 'Water. Pictograph of flowing water.'
   },
   {
@@ -54,7 +54,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'ひ, か, hi, ka, flame',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
-    kenteiLevel: '10級',
+    kenteiLevel: '10',
     notesPersonal: 'Fire. Pictograph of flames.'
   },
   {
@@ -64,7 +64,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'き, もく, ki, moku, timber',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
-    kenteiLevel: '10級',
+    kenteiLevel: '10',
     notesPersonal: 'Tree, wood. Pictograph of a tree.'
   },
   {
@@ -74,7 +74,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'かね, きん, kane, kin, golden',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
-    kenteiLevel: '9級',
+    kenteiLevel: '9',
     notesPersonal: 'Gold, metal, money.'
   },
   {
@@ -84,7 +84,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'つち, ど, tsuchi, do, ground',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
-    kenteiLevel: '10級',
+    kenteiLevel: '10',
     notesPersonal: 'Earth, soil, ground.'
   },
   {
@@ -94,7 +94,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'やま, さん, yama, san, peak',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
-    kenteiLevel: '10級',
+    kenteiLevel: '10',
     notesPersonal: 'Mountain. Pictograph of three peaks.'
   },
   {
@@ -104,7 +104,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'かわ, せん, kawa, sen, stream',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
-    kenteiLevel: '10級',
+    kenteiLevel: '10',
     notesPersonal: 'River. Pictograph of flowing water between banks.'
   },
   {
@@ -114,7 +114,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'ひと, じん, hito, jin, にん, nin',
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
-    kenteiLevel: '10級',
+    kenteiLevel: '10',
     notesPersonal: 'Person. Pictograph of a standing person.'
   },
   {
@@ -124,7 +124,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'そら, くう, sora, kuu, あ, a, void',
     jlptLevel: 'N4',
     joyoLevel: 'elementary1',
-    kenteiLevel: '9級',
+    kenteiLevel: '9',
     notesPersonal: 'Sky, empty. Represents openness above.'
   },
   {
@@ -134,7 +134,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'うみ, かい, umi, kai, marine',
     jlptLevel: 'N4',
     joyoLevel: 'elementary2',
-    kenteiLevel: '8級',
+    kenteiLevel: '8',
     notesPersonal: 'Sea, ocean. Contains the water radical.'
   },
   {
@@ -144,7 +144,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'はな, か, hana, ka, blossom',
     jlptLevel: 'N4',
     joyoLevel: 'elementary1',
-    kenteiLevel: '9級',
+    kenteiLevel: '9',
     notesPersonal: 'Flower. Contains the grass radical.'
   },
   {
@@ -154,7 +154,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'あい, ai, beloved',
     jlptLevel: 'N3',
     joyoLevel: 'elementary4',
-    kenteiLevel: '6級',
+    kenteiLevel: '6',
     notesPersonal: 'Love, affection. Contains the heart radical.'
   },
   {
@@ -164,7 +164,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'ゆめ, む, yume, mu, vision',
     jlptLevel: 'N2',
     joyoLevel: 'elementary5',
-    kenteiLevel: '5級',
+    kenteiLevel: '5',
     notesPersonal: 'Dream.'
   },
   {
@@ -174,7 +174,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'さくら, おう, sakura, ou, hanami',
     jlptLevel: 'N2',
     joyoLevel: 'elementary5',
-    kenteiLevel: '5級',
+    kenteiLevel: '5',
     notesPersonal: 'Cherry blossom. Iconic symbol of Japan.'
   },
   {
@@ -184,7 +184,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'うつ, utsu, melancholy',
     jlptLevel: 'N1',
     joyoLevel: 'secondary',
-    kenteiLevel: '準1級',
+    kenteiLevel: 'pre1',
     notesPersonal:
       'Depression, melancholy. One of the most complex common kanji.'
   },
@@ -195,7 +195,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     searchKeywords: 'しょう, shou, bara, 薔薇',
     jlptLevel: 'N1',
     joyoLevel: null,
-    kenteiLevel: '1級',
+    kenteiLevel: '1',
     notesPersonal: 'Rose (part of 薔薇 - bara).'
   }
 ]

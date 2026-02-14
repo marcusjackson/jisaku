@@ -4,11 +4,9 @@ applyTo: '**/*'
 
 # General Instructions
 
-Project-wide guidelines and conventions for the Kanji Dictionary Curation App.
+Project-wide guidelines for the Jisaku Kanji Dictionary App.
 
-## Project Overview
-
-This is a personal, offline-first PWA for researching and documenting kanji. Built with:
+## Tech Stack
 
 - Vue 3 (Composition API, `<script setup>`)
 - TypeScript (strict mode)
@@ -21,87 +19,113 @@ This is a personal, offline-first PWA for researching and documenting kanji. Bui
 
 ```
 src/
-├── modules/           # Feature modules
-│   ├── kanji/         # Kanji CRUD
-│   ├── kanji-list/    # List/search page
-│   ├── components/    # Component management
-│   └── settings/      # App settings
+├── api/               # API layer (repositories, data access)
+├── modules/           # Feature modules (kanji, component, vocabulary, settings)
 ├── base/              # Generic, project-agnostic (works in ANY project)
-│   ├── components/    # BaseButton, BaseInput, BaseModal
-│   ├── composables/   # useLocalStorage, useDebounce
-│   └── utils/         # formatDate, clamp, slugify
 ├── shared/            # App-specific shared code
-│   ├── components/    # SharedHeader, SharedPageContainer
-│   ├── composables/   # useDatabase, useNotification
-│   ├── types/         # Database types, common types
-│   ├── utils/         # Kanji formatters, DB helpers
-│   └── validation/    # Common schemas
-├── pages/             # Route entry points
-├── router/            # Vue Router config
-└── styles/            # Global styles, tokens
+├── pages/             # Route entry points (thin wrappers)
+├── db/                # Database layer
+├── styles/            # Global styles, design tokens
+└── legacy/            # Legacy code (frozen during refactoring)
+```
+
+**Note:** `src/legacy/` contains the old UI. ESLint ignores it by default.
+New code should NOT import from `@/legacy/` — work in the new structure.
+
+## File Size Limits (CRITICAL)
+
+| File Type  | Target Lines | Max Lines | Enforced  |
+| ---------- | ------------ | --------- | --------- |
+| Test       | N/A          | **600**   | ✅ ESLint |
+| Types      | 200-250      | **300**   | ✅ ESLint |
+| Section    | 200-250      | **250**   | ✅ ESLint |
+| Root       | 200-250      | **250**   | ✅ ESLint |
+| Composable | 150-200      | **200**   | ✅ ESLint |
+| Repository | 200-250      | **250**   | ✅ ESLint |
+| UI         | 100-200      | **200**   | ✅ ESLint |
+| Page       | 80-100       | **100**   | ✅ ESLint |
+
+**IMPORTANT: How limits are calculated**
+
+- Limits **exclude comments and blank lines** (`skipBlankLines: true, skipComments: true`)
+- This means the `wc -l` command will NOT give you accurate line counts
+- ESLint counts only actual code lines - write good comments freely!
+- **Do NOT manually count lines** - let ESLint enforce the limits automatically
+- If you get a file length error, focus on reducing actual code, not comments
+
+To check if a file is within limits, run `pnpm lint` - it will report violations.
+
+**When approaching limits:**
+
+- Root components → Extract handlers to composable
+- Section components → Split into ViewMode/EditMode
+- Large composables → Split into queries/mutations
+- Large repositories → Split into queries/mutations
+
+See `docs/refactor/` for detailed patterns.
+
+## Folder Structure
+
+**Do NOT create subfolders** (like `components/filters/`) unless:
+
+- The folder has 25+ files (not counting colocated test files)
+- And there's a clear conceptual grouping that aids navigation
+
+Module folders should be flat by default:
+
+```
+modules/kanji-list/
+├── components/        # All components here, no subfolders
+├── composables/       # All composables here
+├── kanji-list-types.ts
+└── index.ts
+```
+
+**Exception:** Modules with supporting files (schemas, constants, utils) should organize them:
+
+```
+modules/kanji-detail/
+├── components/        # Vue components
+├── composables/       # Composables (use-*.ts)
+├── schemas/           # Validation schemas (zod)
+├── utils/             # Constants, helpers, utilities
+├── kanji-detail-types.ts  # Main type definitions
+└── index.ts
 ```
 
 ## Base vs Shared
 
-**`base/`** — Generic code that works in ANY Vue project:
+**`base/`** — Generic code that works in ANY Vue project
+**`shared/`** — App-specific code shared across modules
 
-- UI primitives (BaseButton, BaseInput)
-- Generic composables (useLocalStorage, useDebounce)
-- Generic utilities (formatDate, clamp)
-
-**`shared/`** — App-specific code shared across modules:
-
-- App layout (SharedHeader)
-- Database access (useDatabase)
-- Kanji-related utilities
-- App-specific types and schemas
-
-**Decision rule**: Ask "Could this be copy-pasted into a different project?"
+**Decision:** Could this be copy-pasted into a different project?
 
 - Yes → `base/`
-- No (references kanji, database, app concepts) → `shared/`
+- No → `shared/`
 
 ## Import Order
 
 1. Vue/framework imports
 2. Third-party libraries
 3. Base imports (`@/base/...`)
-4. Shared imports (`@/shared/...`)
-5. Module imports (relative `./` or `../`)
-6. Type imports (`import type`)
+4. API imports (`@/api/...`)
+5. Shared imports (`@/shared/...`)
+6. Module imports (relative `./` or `../`)
+7. Type imports (`import type`)
 
-```typescript
-import { ref, computed } from 'vue'
-import { useForm } from 'vee-validate'
-import BaseButton from '@/base/components/BaseButton.vue'
-import { useDatabase } from '@/shared/composables/use-database'
-import KanjiCard from './KanjiCard.vue'
-import type { Kanji } from '../kanji-types'
-```
+## File Naming
 
-## Path Aliases
-
-- `@/` → `src/`
-- Use `@/base/` for generic utilities and components
-- Use `@/shared/` for app-specific shared code
-- Use relative paths within the same module
-
-## File Naming Summary
-
-| Type           | Pattern                     |
-| -------------- | --------------------------- |
-| Vue components | `PascalCase.vue`            |
-| TypeScript     | `kebab-case.ts`             |
-| Composables    | `use-[name].ts`             |
-| Types          | `[module]-types.ts`         |
-| Schemas        | `[module]-[form]-schema.ts` |
-| Tests          | `[filename].test.ts`        |
+| Type           | Pattern              |
+| -------------- | -------------------- |
+| Vue components | `PascalCase.vue`     |
+| TypeScript     | `kebab-case.ts`      |
+| Composables    | `use-[name].ts`      |
+| Types          | `[module]-types.ts`  |
+| Tests          | `[filename].test.ts` |
 
 ## CSS Variables
 
-All styling must use CSS variables. Never hardcode colors, spacing, or font sizes.
-
-See `docs/design-tokens.md` for available tokens.
+**Always** use CSS variables. **Never** hardcode values.
 
 ```css
 /* ✅ Correct */
@@ -119,9 +143,11 @@ See `docs/design-tokens.md` for available tokens.
 
 ## Component Hierarchy
 
-- **Root**: Data fetching, error handling, page orchestration
-- **Section**: Layout, grouping, coordination
-- **UI**: Presentational, props in, events out
+| Tier    | Purpose                   | Max Lines |
+| ------- | ------------------------- | --------- |
+| Root    | Data fetch, orchestration | 250       |
+| Section | Layout, modes             | 250       |
+| UI      | Presentation              | 200       |
 
 ## Error Handling
 
@@ -129,44 +155,23 @@ See `docs/design-tokens.md` for available tokens.
 | --------------- | -------------------------- |
 | Form validation | Inline errors below fields |
 | DB operations   | Toast notification         |
-| Not found       | Empty/error state on page  |
-
-## Loading States
-
-- Reserve space to prevent layout shift
-- Use centered spinner for page loads
-- Disable buttons during operations
-
-## Key Documentation
-
-- `docs/architecture.md` — Module structure, patterns
-- `docs/conventions.md` — Naming, coding standards
-- `docs/schema.md` — Database schema
-- `docs/testing.md` — Testing strategy
-- `docs/design-tokens.md` — CSS variables
-
-## Documentation Lifecycle
-
-After MVP ships:
-
-- Move `docs/plan/mvp-features.md` → `docs/features.md`
-- Delete `docs/plan/` folder
-- Delete `docs/reference/` folder
-
-## Git Conventions
-
-- Follow Conventional Commits
-- One logical change per commit
-- Reference GitHub Issues when applicable
-
-See `.github/instructions/commit.instructions.md` for details.
+| Not found       | Empty state on page        |
 
 ## Before Submitting Code
 
-- [ ] TypeScript strict — no `any`, all types explicit
-- [ ] CSS uses design token variables
-- [ ] Components follow Root/Section/UI hierarchy
-- [ ] Tests colocated with source files
-- [ ] Loading and error states handled
+- [ ] File under size limit for its type
+- [ ] TypeScript strict — no `any`
+- [ ] CSS uses design tokens
+- [ ] Components follow hierarchy
+- [ ] Tests colocated
+- [ ] Loading/error states handled
 - [ ] Keyboard accessible
-- [ ] No console.log statements
+- [ ] No console.log
+
+## Key Documentation
+
+- `docs/architecture.md` — System design, patterns
+- `docs/conventions.md` — Naming, standards
+- `docs/schema.md` — Database tables
+- `docs/testing.md` — Testing strategy
+- `docs/refactor/` — File size patterns, decomposition guides

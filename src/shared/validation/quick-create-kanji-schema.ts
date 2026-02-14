@@ -2,7 +2,7 @@
  * Quick-Create Kanji Schema
  *
  * Zod validation schema for quick-creating kanji with minimal fields.
- * Note: search_keywords can be added later on detail page.
+ * Note: stroke_count, readings, and other details can be added later on detail page.
  */
 
 import { z } from 'zod'

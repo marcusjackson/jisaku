@@ -1,105 +1,89 @@
 /**
- * SettingsRoot tests
- *
- * Tests for the settings root component.
+ * SettingsRoot Tests
  */
 
-import { ref } from 'vue'
+import { mount } from '@vue/test-utils'
+import { describe, expect, it, vi } from 'vitest'
 
-import { flushPromises, mount } from '@vue/test-utils'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import SettingsRoot from './SettingsRoot.vue'
 
-// Mock values
-const mockInitialize = vi.fn().mockResolvedValue(undefined)
-const mockIsInitializing = ref(false)
-const mockIsInitialized = ref(false)
-const mockInitError = ref<Error | null>(null)
-
-vi.mock('@/shared/composables/use-database', () => ({
-  useDatabase: () => ({
-    initError: mockInitError,
-    initialize: mockInitialize,
-    isInitialized: mockIsInitialized,
-    isInitializing: mockIsInitializing
-  })
+// Mock child section components
+vi.mock('./SettingsSectionAppearance.vue', () => ({
+  default: {
+    name: 'SettingsSectionAppearance',
+    template: '<div data-testid="section-appearance">Appearance</div>'
+  }
 }))
 
-// Mock child components
+vi.mock('./SettingsSectionPositionTypes.vue', () => ({
+  default: {
+    name: 'SettingsSectionPositionTypes',
+    template: '<div data-testid="section-position-types">Position Types</div>'
+  }
+}))
+
+vi.mock('./SettingsSectionClassificationTypes.vue', () => ({
+  default: {
+    name: 'SettingsSectionClassificationTypes',
+    template:
+      '<div data-testid="section-classification-types">Classification Types</div>'
+  }
+}))
+
 vi.mock('./SettingsSectionDatabase.vue', () => ({
   default: {
     name: 'SettingsSectionDatabase',
-    template: '<div data-testid="database-section">Database Section</div>'
+    template: '<div data-testid="section-database">Database</div>'
   }
 }))
 
 vi.mock('./SettingsSectionDevTools.vue', () => ({
   default: {
     name: 'SettingsSectionDevTools',
-    template: '<div data-testid="dev-tools">Dev Tools Section</div>'
+    template: '<div data-testid="section-dev-tools">DevTools</div>'
   }
 }))
 
-// Import after mocks
-import SettingsRoot from './SettingsRoot.vue'
-
 describe('SettingsRoot', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockInitialize.mockResolvedValue(undefined)
-    mockIsInitializing.value = false
-    mockIsInitialized.value = false
-    mockInitError.value = null
+  it('renders the title', () => {
+    const wrapper = mount(SettingsRoot)
+    expect(wrapper.find('.settings-root__title').text()).toBe('Settings')
   })
 
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('shows loading state while initializing', () => {
-    mockIsInitializing.value = true
-
+  it('renders all sections', () => {
     const wrapper = mount(SettingsRoot)
 
-    expect(wrapper.text()).toContain('Loading')
+    expect(wrapper.find('[data-testid="section-appearance"]').exists()).toBe(
+      true
+    )
+    expect(
+      wrapper.find('[data-testid="section-position-types"]').exists()
+    ).toBe(true)
+    expect(
+      wrapper.find('[data-testid="section-classification-types"]').exists()
+    ).toBe(true)
+    expect(wrapper.find('[data-testid="section-database"]').exists()).toBe(true)
   })
 
-  it('shows error state when initialization fails', () => {
-    mockInitError.value = new Error('Database connection failed')
-
+  it('shows dev tools section in development mode', () => {
+    vi.stubEnv('DEV', true)
     const wrapper = mount(SettingsRoot)
 
-    expect(wrapper.text()).toContain('Failed to load')
-    expect(wrapper.text()).toContain('Database connection failed')
+    expect(wrapper.find('[data-testid="section-dev-tools"]').exists()).toBe(
+      true
+    )
+
+    vi.unstubAllEnvs()
   })
 
-  it('shows settings content when initialized', async () => {
-    mockIsInitialized.value = true
-
+  it('hides dev tools section in production mode', () => {
+    vi.stubEnv('DEV', false)
     const wrapper = mount(SettingsRoot)
-    await flushPromises()
 
-    expect(wrapper.text()).toContain('Settings')
-    // Check for section titles
-    expect(wrapper.text()).toContain('Appearance')
-    expect(wrapper.text()).toContain('Position Types')
-    expect(wrapper.text()).toContain('Data Management')
-    expect(wrapper.text()).toContain('Developer Tools')
-  })
+    expect(wrapper.find('[data-testid="section-dev-tools"]').exists()).toBe(
+      false
+    )
 
-  it('calls initialize on mount', async () => {
-    mount(SettingsRoot)
-    await flushPromises()
-
-    expect(mockInitialize).toHaveBeenCalled()
-  })
-
-  it('handles initialize error gracefully', async () => {
-    mockInitialize.mockRejectedValue(new Error('Init failed'))
-
-    // Should not throw
-    mount(SettingsRoot)
-    await flushPromises()
-
-    expect(mockInitialize).toHaveBeenCalled()
+    vi.unstubAllEnvs()
   })
 })
