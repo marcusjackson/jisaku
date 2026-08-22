@@ -7,15 +7,17 @@
  * @module api/kanji
  */
 
-import { BaseRepository } from '@/api/base-repository'
-
 import { useDatabase } from '@/shared/composables/use-database'
 
+import { schedulePersist } from '@/db/indexeddb'
+import { CreateError } from '../api-types'
+import { BaseRepository } from '../base-repository'
+
+import type { Orderable } from '../api-types'
 import type {
   CreateGroupMemberInput,
   KanjiMeaningGroupMember
 } from './group-member-types'
-import type { Orderable } from '@/api/types'
 
 // ============================================================================
 // Row Type
@@ -127,11 +129,11 @@ class GroupMemberRepositoryImpl
 
   create(input: CreateGroupMemberInput): KanjiMeaningGroupMember {
     // Get current max display_order for this group
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM kanji_meaning_group_members WHERE reading_group_id = ?',
+    const maxOrder = this.getMaxDisplayOrder(
+      'kanji_meaning_group_members',
+      'WHERE reading_group_id = ?',
       [input.readingGroupId]
     )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     const sql = `
@@ -145,8 +147,10 @@ class GroupMemberRepositoryImpl
     const newId = idResult[0]?.values[0]?.[0] as number
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to create group member')
+      throw new CreateError('KanjiMeaningGroupMember')
     }
+
+    schedulePersist()
     return created
   }
 
@@ -155,6 +159,7 @@ class GroupMemberRepositoryImpl
    */
   remove(id: number): void {
     this.run('DELETE FROM kanji_meaning_group_members WHERE id = ?', [id])
+    schedulePersist()
   }
 
   /**
@@ -165,6 +170,7 @@ class GroupMemberRepositoryImpl
       'DELETE FROM kanji_meaning_group_members WHERE reading_group_id = ? AND meaning_id = ?',
       [groupId, meaningId]
     )
+    schedulePersist()
   }
 
   /**
@@ -175,6 +181,7 @@ class GroupMemberRepositoryImpl
       'DELETE FROM kanji_meaning_group_members WHERE reading_group_id = ?',
       [groupId]
     )
+    schedulePersist()
   }
 
   // ==========================================================================
@@ -182,12 +189,15 @@ class GroupMemberRepositoryImpl
   // ==========================================================================
 
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run(
-        'UPDATE kanji_meaning_group_members SET display_order = ? WHERE id = ?',
-        [index, id]
-      )
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run(
+          'UPDATE kanji_meaning_group_members SET display_order = ? WHERE id = ?',
+          [index, id]
+        )
+      })
     })
+    schedulePersist()
   }
 }
 
@@ -195,8 +205,11 @@ class GroupMemberRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a group member repository instance bound to the active database.
+ * @returns Repository for managing meaning-to-reading-group memberships.
+ * @example const repo = useGroupMemberRepository(); repo.getByGroupId(1)
+ */
 export function useGroupMemberRepository(): GroupMemberRepositoryImpl {
   return new GroupMemberRepositoryImpl()
 }
-
-export type { CreateGroupMemberInput, KanjiMeaningGroupMember }

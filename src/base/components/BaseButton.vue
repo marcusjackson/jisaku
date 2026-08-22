@@ -23,7 +23,7 @@ interface Props {
   /** HTML button type */
   type?: 'button' | 'submit' | 'reset'
   /** Form ID for submission (HTML form attribute) */
-  form?: string
+  form?: string | undefined
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -32,8 +32,12 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   loading: false,
   type: 'button',
-  form: ''
+  form: undefined
 })
+
+const emit = defineEmits<{
+  click: [event: Event]
+}>()
 
 const classes = computed(() => [
   'base-button',
@@ -48,10 +52,12 @@ const classes = computed(() => [
 
 <template>
   <button
+    :aria-busy="loading || undefined"
     :class="classes"
     :disabled="disabled || loading"
     v-bind="form ? { form } : {}"
     :type="type"
+    @click="emit('click', $event)"
   >
     <span
       v-if="loading"
@@ -180,7 +186,7 @@ const classes = computed(() => [
   border: 2px solid currentcolor;
   border-right-color: transparent;
   border-radius: var(--radius-full);
-  animation: spin 0.6s linear infinite;
+  animation: spin var(--transition-slow) linear infinite;
 }
 
 .base-button-content-hidden {
@@ -190,6 +196,13 @@ const classes = computed(() => [
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .base-button-spinner {
+    animation: none;
+    border-right-color: transparent;
   }
 }
 </style>

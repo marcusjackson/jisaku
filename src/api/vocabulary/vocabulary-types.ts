@@ -6,6 +6,8 @@
  * @module api/vocabulary
  */
 
+import type { JlptLevel, Kanji } from '@/api/kanji'
+
 // ============================================================================
 // Vocabulary-specific Types
 // ============================================================================
@@ -14,7 +16,17 @@
  * JLPT level for vocabulary
  * Vocabulary supports 'non-jlpt' in addition to standard N5-N1 levels
  */
-export type VocabJlptLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'non-jlpt'
+export type VocabJlptLevel = JlptLevel | 'non-jlpt'
+
+/** Valid vocabulary JLPT level values — used for runtime DB row validation */
+export const VOCAB_JLPT_LEVELS: readonly VocabJlptLevel[] = [
+  'N5',
+  'N4',
+  'N3',
+  'N2',
+  'N1',
+  'non-jlpt'
+]
 
 // ============================================================================
 // Entity Interfaces
@@ -129,4 +141,12 @@ export interface UpdateVocabKanjiInput {
 export interface VocabKanjiWithVocabulary {
   vocabKanji: VocabKanji
   vocabulary: Vocabulary
+}
+
+/**
+ * VocabKanji with joined Kanji data
+ * Used for displaying the kanji breakdown of a vocabulary word
+ */
+export interface VocabKanjiWithKanji extends VocabKanji {
+  kanji: Kanji
 }

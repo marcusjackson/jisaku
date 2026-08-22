@@ -31,7 +31,7 @@ describe('KanjiDetailSectionVocabulary', () => {
       }
     })
 
-    const editButton = screen.getByTestId('vocabulary-edit-button')
+    const editButton = screen.getByRole('button', { name: /edit/i })
     expect(editButton).toBeInTheDocument()
     expect(editButton).toHaveTextContent('Edit')
   })
@@ -108,7 +108,7 @@ describe('KanjiDetailSectionVocabulary', () => {
       }
     })
 
-    const editButton = screen.getByTestId('vocabulary-edit-button')
+    const editButton = screen.getByRole('button', { name: /edit/i })
     await user.click(editButton)
 
     // Dialog should be open (check by dialog title)
@@ -130,7 +130,7 @@ describe('KanjiDetailSectionVocabulary', () => {
       }
     })
 
-    const editButton = screen.getByTestId('vocabulary-edit-button')
+    const editButton = screen.getByRole('button', { name: /edit/i })
     await user.click(editButton)
 
     expect(screen.getByText('Link Vocabulary')).toBeInTheDocument()
@@ -138,7 +138,7 @@ describe('KanjiDetailSectionVocabulary', () => {
     // Click the dialog's Close button (not the X button)
     const closeButtons = screen.getAllByRole('button', { name: /Close/i })
     const dialogCloseButton = closeButtons.find(
-      (btn) => btn.textContent?.trim() === 'Close'
+      (btn) => btn.textContent.trim() === 'Close'
     )
     if (!dialogCloseButton) throw new Error('Close button not found')
 
@@ -182,7 +182,7 @@ describe('KanjiDetailSectionVocabulary', () => {
       }
     })
 
-    const editButton = screen.getByTestId('vocabulary-edit-button')
+    const editButton = screen.getByRole('button', { name: /edit/i })
     await user.click(editButton)
 
     expect(screen.getByText('Link Vocabulary')).toBeInTheDocument()

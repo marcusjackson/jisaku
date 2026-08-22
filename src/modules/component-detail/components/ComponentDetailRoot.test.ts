@@ -56,6 +56,18 @@ const mockOccurrenceUpdate = vi.fn()
 const mockOccurrenceRemove = vi.fn()
 const mockOccurrenceReorder = vi.fn()
 
+// Grouping repository mocks
+const mockGroupingGetByParentId = vi.fn()
+const mockGroupingCreate = vi.fn()
+const mockGroupingUpdate = vi.fn()
+const mockGroupingRemove = vi.fn()
+const mockGroupingReorder = vi.fn()
+const mockGroupingGetMembers = vi.fn()
+const mockGroupingAddMember = vi.fn()
+const mockGroupingRemoveMember = vi.fn()
+const mockGroupingReorderMembers = vi.fn()
+const mockGroupingGetMembersByComponentId = vi.fn()
+
 vi.mock('@/api/component', () => ({
   useComponentRepository: () => ({
     getById: mockGetById,
@@ -76,6 +88,18 @@ vi.mock('@/api/component', () => ({
     update: mockOccurrenceUpdate,
     remove: mockOccurrenceRemove,
     reorder: mockOccurrenceReorder
+  }),
+  useComponentGroupingRepository: () => ({
+    getByParentId: mockGroupingGetByParentId,
+    create: mockGroupingCreate,
+    update: mockGroupingUpdate,
+    remove: mockGroupingRemove,
+    reorder: mockGroupingReorder,
+    getMembers: mockGroupingGetMembers,
+    addMember: mockGroupingAddMember,
+    removeMember: mockGroupingRemoveMember,
+    reorderMembers: mockGroupingReorderMembers,
+    getMembersByComponentId: mockGroupingGetMembersByComponentId
   })
 }))
 
@@ -119,6 +143,8 @@ describe('ComponentDetailRoot', () => {
     mockFormGetByParentId.mockReturnValue([])
     mockOccurrenceGetByComponentIdWithKanji.mockReturnValue([])
     mockPositionTypeGetAll.mockReturnValue([])
+    mockGroupingGetByParentId.mockReturnValue([])
+    mockGroupingGetMembersByComponentId.mockReturnValue(new Map())
   })
 
   it('renders loading state initially then component data', async () => {
@@ -129,6 +155,7 @@ describe('ComponentDetailRoot', () => {
           ComponentDetailSectionBasicInfo: true,
           ComponentDetailSectionDescription: true,
           ComponentDetailSectionForms: true,
+          ComponentDetailSectionGroupings: true,
           ComponentDetailSectionOccurrences: true,
           ComponentDetailSectionActions: true,
           BaseSpinner: true
@@ -157,6 +184,7 @@ describe('ComponentDetailRoot', () => {
           ComponentDetailSectionBasicInfo: true,
           ComponentDetailSectionDescription: true,
           ComponentDetailSectionForms: true,
+          ComponentDetailSectionGroupings: true,
           ComponentDetailSectionOccurrences: true,
           ComponentDetailSectionActions: true,
           BaseSpinner: true
@@ -177,6 +205,7 @@ describe('ComponentDetailRoot', () => {
           ComponentDetailSectionBasicInfo: true,
           ComponentDetailSectionDescription: true,
           ComponentDetailSectionForms: true,
+          ComponentDetailSectionGroupings: true,
           ComponentDetailSectionOccurrences: true,
           ComponentDetailSectionActions: true,
           BaseSpinner: true
@@ -187,5 +216,31 @@ describe('ComponentDetailRoot', () => {
     await flushPromises()
 
     expect(mockGetById).toHaveBeenCalledWith(1)
+  })
+
+  it('renders groupings section in component tree', async () => {
+    const wrapper = mount(ComponentDetailRoot, {
+      global: {
+        stubs: {
+          ComponentDetailSectionHeadline: true,
+          ComponentDetailSectionBasicInfo: true,
+          ComponentDetailSectionDescription: true,
+          ComponentDetailSectionForms: true,
+          ComponentDetailSectionGroupings: true,
+          ComponentDetailSectionOccurrences: true,
+          ComponentDetailSectionActions: true,
+          BaseSpinner: true
+        }
+      }
+    })
+
+    await flushPromises()
+
+    expect(
+      wrapper
+        .findComponent({ name: 'ComponentDetailSectionGroupings' })
+        .exists()
+    ).toBe(true)
+    expect(mockGroupingGetByParentId).toHaveBeenCalledWith(1)
   })
 })

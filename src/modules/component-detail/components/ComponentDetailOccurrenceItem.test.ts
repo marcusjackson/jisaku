@@ -33,7 +33,9 @@ describe('ComponentDetailOccurrenceItem', () => {
       nameJapanese: '偏',
       nameEnglish: 'left',
       description: null,
-      displayOrder: 0
+      displayOrder: 0,
+      createdAt: '2024-01-01T00:00:00',
+      updatedAt: '2024-01-01T00:00:00'
     }
   }
 

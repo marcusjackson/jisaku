@@ -7,6 +7,8 @@
 import { createTestDatabase } from '@test/helpers/database'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { RepositoryError } from '../api-types'
+
 import type { Database } from 'sql.js'
 
 // Test database instance
@@ -84,6 +86,19 @@ describe('useOnReadingRepository', function () {
 
       expect(reading?.reading).toBe('メイ')
       expect(reading?.readingLevel).toBe('小')
+    })
+
+    it('throws RepositoryError for an invalid reading_level value in DB', () => {
+      testDb.run('PRAGMA ignore_check_constraints = ON')
+      testDb.run(
+        'INSERT INTO on_readings (kanji_id, reading, reading_level, display_order) VALUES (?, ?, ?, ?)',
+        [kanjiId, 'テスト', 'INVALID', 0]
+      )
+      testDb.run('PRAGMA ignore_check_constraints = OFF')
+
+      const repo = useOnReadingRepository()
+
+      expect(() => repo.getById(1)).toThrow(RepositoryError)
     })
   })
 

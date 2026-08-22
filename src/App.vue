@@ -2,15 +2,12 @@
 /**
  * Root App component
  *
- * During the refactoring transition:
- * - Routes default to /legacy/* (existing UI)
- * - New UI routes will be added as they're built
- * - Version toggle (Phase 0.5) will allow switching between versions
+ * Initializes the database and renders the active route.
  */
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 
-import { useDatabase } from '@/legacy/shared/composables/use-database'
+import { useDatabase } from '@/shared/composables/use-database'
 
 // Initialize database on app startup
 const { initError: error, initialize, isInitialized: isReady } = useDatabase()
@@ -41,9 +38,9 @@ onMounted(async () => {
 </template>
 
 <style>
-/* Import design tokens and base styles from legacy during transition */
-@import url('@/legacy/styles/tokens.css');
-@import url('@/legacy/styles/base.css');
+/* Design tokens and base styles */
+@import url('@/styles/tokens.css');
+@import url('@/styles/base.css');
 
 .app-error {
   display: flex;

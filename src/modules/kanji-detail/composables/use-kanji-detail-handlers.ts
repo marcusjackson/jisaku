@@ -22,6 +22,13 @@ export interface KanjiDetailHandlers {
   handleDelete: () => void
 }
 
+/**
+ * Provides headline save and delete handlers for the kanji detail root component.
+ *
+ * @param kanji - Reactive reference to the current kanji
+ * @param isDeleting - Flag indicating a deletion is in progress
+ * @returns Handlers for headline save and deletion
+ */
 export function useKanjiDetailHandlers(
   kanji: Ref<Kanji | null>,
   isDeleting: Ref<boolean>

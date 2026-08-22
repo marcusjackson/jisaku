@@ -2,14 +2,15 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
+import pkg from './package.json' with { type: 'json' }
+
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
-  // @ts-expect-error - Plugin type mismatch between vite versions
   plugins: [vue()],
 
   define: {
-    __APP_VERSION__: JSON.stringify('0.3.0')
+    __APP_VERSION__: JSON.stringify(pkg.version)
   },
 
   resolve: {
@@ -25,12 +26,12 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
 
-    // Test file patterns (exclude legacy - will be rewritten)
+    // Test file patterns
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
-    exclude: ['node_modules', 'dist', 'e2e', 'src/legacy/**'],
+    exclude: ['node_modules', 'dist', 'e2e'],
 
     // Setup files
-    setupFiles: ['test/setup.ts'],
+    setupFiles: [`${__dirname}test/setup.ts`],
 
     // Coverage configuration
     coverage: {
@@ -42,22 +43,26 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/**/*.d.ts',
         'src/main.ts',
-        'src/**/*.stories.ts',
-        'src/legacy/**' // Legacy code - separate coverage
+        'src/**/*.stories.ts'
       ],
       thresholds: {
-        statements: 70,
-        branches: 70,
-        functions: 70,
-        lines: 70
+        statements: 85,
+        branches: 85,
+        functions: 85,
+        lines: 85
       }
     },
 
     // Pool configuration for better performance
     pool: 'forks',
 
-    // Clear mocks between tests
+    // Clear mocks between tests. restoreMocks only restores vi.spyOn spies to
+    // their original implementation — plain vi.fn() mocks keep whatever
+    // mockImplementation() a prior test set (e.g. one that simulates a thrown
+    // error), which leaks into later tests. mockReset additionally clears
+    // those implementations for every mock, vi.fn() included.
     clearMocks: true,
-    restoreMocks: true
+    restoreMocks: true,
+    mockReset: true
   }
 })

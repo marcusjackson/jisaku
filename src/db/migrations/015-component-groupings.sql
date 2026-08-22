@@ -39,9 +39,9 @@ CREATE TABLE component_grouping_members (
 -- =============================================================================
 -- STEP 4: Create indexes
 -- =============================================================================
-CREATE INDEX idx_component_groupings_component_id ON component_groupings(component_id);
-CREATE INDEX idx_component_grouping_members_grouping_id ON component_grouping_members(grouping_id);
-CREATE INDEX idx_component_grouping_members_occurrence_id ON component_grouping_members(occurrence_id);
+CREATE INDEX IF NOT EXISTS idx_component_groupings_component_id ON component_groupings(component_id);
+CREATE INDEX IF NOT EXISTS idx_component_grouping_members_grouping_id ON component_grouping_members(grouping_id);
+CREATE INDEX IF NOT EXISTS idx_component_grouping_members_occurrence_id ON component_grouping_members(occurrence_id);
 
 -- Set schema version
 PRAGMA user_version = 15;

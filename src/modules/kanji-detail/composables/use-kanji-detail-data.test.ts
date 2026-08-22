@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useKanjiDetailData } from './use-kanji-detail-data'
+import { useKanjiRepos } from './use-kanji-repos'
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({ params: { id: '1' } })
@@ -79,17 +80,17 @@ describe('useKanjiDetailData', () => {
     expect(data.kanjiId).toBeDefined()
   })
 
-  it('returns repository instances', () => {
-    const data = useKanjiDetailData()
+  it('returns repository instances via useKanjiRepos', () => {
+    const repos = useKanjiRepos()
 
-    expect(data.kanjiRepo).toBeDefined()
-    expect(data.componentRepo).toBeDefined()
-    expect(data.kanjiClassificationRepo).toBeDefined()
-    expect(data.onReadingRepo).toBeDefined()
-    expect(data.kunReadingRepo).toBeDefined()
-    expect(data.meaningRepo).toBeDefined()
-    expect(data.readingGroupRepo).toBeDefined()
-    expect(data.groupMemberRepo).toBeDefined()
+    expect(repos.kanjiRepo).toBeDefined()
+    expect(repos.componentRepo).toBeDefined()
+    expect(repos.kanjiClassificationRepo).toBeDefined()
+    expect(repos.onReadingRepo).toBeDefined()
+    expect(repos.kunReadingRepo).toBeDefined()
+    expect(repos.meaningRepo).toBeDefined()
+    expect(repos.readingGroupRepo).toBeDefined()
+    expect(repos.groupMemberRepo).toBeDefined()
   })
 
   it('loads kanji data on initialization', () => {

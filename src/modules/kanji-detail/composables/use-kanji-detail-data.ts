@@ -2,27 +2,10 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
-import {
-  useClassificationTypeRepository,
-  useKanjiClassificationRepository
-} from '@/api/classification'
-import {
-  useComponentFormRepository,
-  useComponentOccurrenceRepository,
-  useComponentRepository
-} from '@/api/component'
-import {
-  useGroupMemberRepository,
-  useKanjiMeaningRepository,
-  useKanjiRepository,
-  useKunReadingRepository,
-  useOnReadingRepository,
-  useReadingGroupRepository
-} from '@/api/kanji'
-import { usePositionTypeRepository } from '@/api/position'
-import { useVocabKanjiRepository } from '@/api/vocabulary'
+import { useKanjiRepos } from './use-kanji-repos'
 
 import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types'
+import type { KanjiRepos } from './use-kanji-repos'
 import type {
   ClassificationType,
   KanjiClassification
@@ -58,26 +41,12 @@ function createState() {
   }
 }
 
-interface Repos {
-  kanjiRepo: ReturnType<typeof useKanjiRepository>
-  componentRepo: ReturnType<typeof useComponentRepository>
-  componentOccurrenceRepo: ReturnType<typeof useComponentOccurrenceRepository>
-  componentFormRepo: ReturnType<typeof useComponentFormRepository>
-  positionTypeRepo: ReturnType<typeof usePositionTypeRepository>
-  classificationTypeRepo: ReturnType<typeof useClassificationTypeRepository>
-  kanjiClassificationRepo: ReturnType<typeof useKanjiClassificationRepository>
-  onReadingRepo: ReturnType<typeof useOnReadingRepository>
-  kunReadingRepo: ReturnType<typeof useKunReadingRepository>
-  meaningRepo: ReturnType<typeof useKanjiMeaningRepository>
-  readingGroupRepo: ReturnType<typeof useReadingGroupRepository>
-  groupMemberRepo: ReturnType<typeof useGroupMemberRepository>
-  vocabKanjiRepo: ReturnType<typeof useVocabKanjiRepository>
-}
+type Repos = KanjiRepos
 
 // Helper to populate component occurrence details
 function populateOccurrenceDetails(
   occurrences: ReturnType<
-    ReturnType<typeof useComponentOccurrenceRepository>['getByParentId']
+    KanjiRepos['componentOccurrenceRepo']['getByParentId']
   >,
   repos: Pick<Repos, 'componentRepo' | 'positionTypeRepo' | 'componentFormRepo'>
 ): ComponentOccurrenceWithDetails[] {
@@ -167,35 +136,16 @@ interface KanjiDetailDataReturn {
   isLoading: Ref<boolean>
   loadError: Ref<string | null>
   kanjiId: ComputedRef<number>
-  kanjiRepo: ReturnType<typeof useKanjiRepository>
-  componentRepo: ReturnType<typeof useComponentRepository>
-  classificationTypeRepo: ReturnType<typeof useClassificationTypeRepository>
-  kanjiClassificationRepo: ReturnType<typeof useKanjiClassificationRepository>
-  onReadingRepo: ReturnType<typeof useOnReadingRepository>
-  kunReadingRepo: ReturnType<typeof useKunReadingRepository>
-  meaningRepo: ReturnType<typeof useKanjiMeaningRepository>
-  readingGroupRepo: ReturnType<typeof useReadingGroupRepository>
-  groupMemberRepo: ReturnType<typeof useGroupMemberRepository>
-  vocabKanjiRepo: ReturnType<typeof useVocabKanjiRepository>
 }
 
+/**
+ * Loads and manages all reactive state for the kanji detail page.
+ *
+ * @returns Reactive state for the kanji detail page (does not include repositories)
+ */
 export function useKanjiDetailData(): KanjiDetailDataReturn {
   const route = useRoute()
-  const repos: Repos = {
-    kanjiRepo: useKanjiRepository(),
-    componentRepo: useComponentRepository(),
-    componentOccurrenceRepo: useComponentOccurrenceRepository(),
-    componentFormRepo: useComponentFormRepository(),
-    positionTypeRepo: usePositionTypeRepository(),
-    classificationTypeRepo: useClassificationTypeRepository(),
-    kanjiClassificationRepo: useKanjiClassificationRepository(),
-    onReadingRepo: useOnReadingRepository(),
-    kunReadingRepo: useKunReadingRepository(),
-    meaningRepo: useKanjiMeaningRepository(),
-    readingGroupRepo: useReadingGroupRepository(),
-    groupMemberRepo: useGroupMemberRepository(),
-    vocabKanjiRepo: useVocabKanjiRepository()
-  }
+  const repos: Repos = useKanjiRepos()
   const state = createState()
   const kanjiId = computed(() => Number(route.params['id']))
   watch(
@@ -205,5 +155,5 @@ export function useKanjiDetailData(): KanjiDetailDataReturn {
     },
     { immediate: true }
   )
-  return { ...state, kanjiId, ...repos }
+  return { ...state, kanjiId }
 }

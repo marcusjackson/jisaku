@@ -24,7 +24,9 @@ export const singleCharacterSchema = z
   )
 
 /**
- * Optional string with max length
+ * Creates an optional string schema with a maximum length validation.
+ * @param maxLength - Maximum number of characters allowed
+ * @returns Zod schema accepting undefined, empty string, or a string up to maxLength characters
  */
 export function optionalString(maxLength: number) {
   return z.string().max(maxLength, `Max ${String(maxLength)} characters`)

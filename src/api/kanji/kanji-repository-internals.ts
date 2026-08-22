@@ -7,13 +7,23 @@
  * @internal
  */
 
-import type { CreateKanjiInput, Kanji, KanjiFilters } from './kanji-types'
+import { JLPT_LEVELS, JOYO_LEVELS, KANJI_KENTEI_LEVELS } from './kanji-types'
+
+import type {
+  AnalysisFieldName,
+  CreateKanjiInput,
+  JlptLevel,
+  JoyoLevel,
+  Kanji,
+  KanjiFilters,
+  KanjiKenteiLevel
+} from './kanji-types'
 
 // ============================================================================
 // Row Type (database representation)
 // ============================================================================
 
-export interface KanjiRow {
+interface KanjiRow {
   id: number
   character: string
   stroke_count: number | null
@@ -51,9 +61,21 @@ export function mapKanjiRow(row: Record<string, unknown>): Kanji {
     shortMeaning: r.short_meaning,
     searchKeywords: r.search_keywords,
     radicalId: r.radical_id,
-    jlptLevel: r.jlpt_level as Kanji['jlptLevel'],
-    joyoLevel: r.joyo_level as Kanji['joyoLevel'],
-    kanjiKenteiLevel: r.kanji_kentei_level as Kanji['kanjiKenteiLevel'],
+    jlptLevel:
+      r.jlpt_level !== null &&
+      (JLPT_LEVELS as readonly string[]).includes(r.jlpt_level)
+        ? (r.jlpt_level as JlptLevel)
+        : null,
+    joyoLevel:
+      r.joyo_level !== null &&
+      (JOYO_LEVELS as readonly string[]).includes(r.joyo_level)
+        ? (r.joyo_level as JoyoLevel)
+        : null,
+    kanjiKenteiLevel:
+      r.kanji_kentei_level !== null &&
+      (KANJI_KENTEI_LEVELS as readonly string[]).includes(r.kanji_kentei_level)
+        ? (r.kanji_kentei_level as KanjiKenteiLevel)
+        : null,
     strokeDiagramImage: r.stroke_diagram_image,
     strokeGifImage: r.stroke_gif_image,
     notesEtymology: r.notes_etymology,
@@ -116,7 +138,7 @@ const ANALYSIS_THRESHOLDS = {
 } as const
 
 /** Map analysis field names to database columns */
-const ANALYSIS_FIELD_COLUMNS: Record<string, string> = {
+const ANALYSIS_FIELD_COLUMNS: Record<AnalysisFieldName, string> = {
   notesEtymology: 'notes_etymology',
   notesSemantic: 'notes_semantic',
   notesEducationMnemonics: 'notes_education_mnemonics',
@@ -334,7 +356,6 @@ function addAnalysisFieldConditions(
   if (filters.analysisFilters?.length) {
     for (const af of filters.analysisFilters) {
       const column = ANALYSIS_FIELD_COLUMNS[af.field]
-      if (!column) continue
 
       if (af.threshold === 'empty') {
         conditions.push(`(${column} IS NULL OR ${column} = '')`)

@@ -183,7 +183,7 @@ function handleRemoveCancel(): void {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  min-height: 200px;
+  min-height: var(--content-min-height);
 }
 
 .vocabulary-dialog-section {
@@ -195,7 +195,7 @@ function handleRemoveCancel(): void {
 .vocabulary-dialog-section-title {
   margin: 0;
   color: var(--color-text-primary);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
 }
 

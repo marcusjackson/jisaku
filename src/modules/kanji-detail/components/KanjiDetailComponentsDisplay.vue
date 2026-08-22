@@ -52,21 +52,27 @@ const props = defineProps<{
 
 .kanji-detail-components-display-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-item-min-md), 1fr));
   gap: var(--spacing-md);
 }
 
 /* Allow 2 cards side-by-side on mobile */
 @media (width >= 320px) and (width < 768px) {
   .kanji-detail-components-display-grid {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(var(--grid-item-min-md), 1fr)
+    );
   }
 }
 
 /* More cards on larger screens */
 @media (width >= 768px) {
   .kanji-detail-components-display-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(var(--grid-item-min-lg), 1fr)
+    );
   }
 }
 </style>

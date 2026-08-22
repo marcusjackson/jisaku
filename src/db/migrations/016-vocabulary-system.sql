@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS vocabulary (
   is_common       INTEGER DEFAULT 0 CHECK(is_common IN (0, 1)),
   description     TEXT,
   created_at      TEXT DEFAULT CURRENT_TIMESTAMP,
+  -- NOTE: CURRENT_TIMESTAMP is functionally equivalent to datetime('now') in SQLite.
+  -- Other migrations use datetime('now') in DEFAULT expressions, but the behavior is
+  -- identical (both produce UTC timestamps in ISO 8601 format).
   updated_at      TEXT DEFAULT CURRENT_TIMESTAMP
 );
 

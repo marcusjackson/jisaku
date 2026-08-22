@@ -66,10 +66,22 @@ function syncClassifications(
   if (reorderIds.length > 0) repo.reorder(reorderIds)
 }
 
+interface UseKanjiDetailBasicInfoHandlersReturn {
+  handleSave: (data: BasicInfoSaveData) => void
+}
+
+/**
+ * Provides a save handler for the kanji basic-info section.
+ * Updates kanji fields, syncs classifications, and refreshes state.
+ *
+ * @param state - Reactive kanji detail state
+ * @param repos - Kanji, component, and classification repositories
+ * @returns Save handler for basic info data
+ */
 export function useKanjiDetailBasicInfoHandlers(
   state: State,
   repos: Repositories
-) {
+): UseKanjiDetailBasicInfoHandlersReturn {
   function handleSave(data: BasicInfoSaveData): void {
     const kanjiVal = state.kanji.value
     if (!kanjiVal) return

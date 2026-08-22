@@ -41,6 +41,15 @@ vi.mock('@/api/vocabulary', () => ({
     getById: mockGetById,
     update: mockUpdate,
     remove: mockRemove
+  }),
+  useVocabKanjiRepository: () => ({
+    getByVocabIdWithKanji: vi.fn().mockReturnValue([])
+  })
+}))
+
+vi.mock('@/api/kanji', () => ({
+  useKanjiRepository: () => ({
+    getAll: vi.fn().mockReturnValue([])
   })
 }))
 
@@ -66,6 +75,8 @@ describe('VocabDetailRoot', () => {
       global: {
         stubs: {
           VocabDetailSectionHeadline: true,
+          VocabDetailSectionBasicInfo: true,
+          VocabDetailSectionKanjiBreakdown: true,
           VocabDetailSectionActions: true
         }
       }
@@ -86,6 +97,8 @@ describe('VocabDetailRoot', () => {
       global: {
         stubs: {
           VocabDetailSectionHeadline: true,
+          VocabDetailSectionBasicInfo: true,
+          VocabDetailSectionKanjiBreakdown: true,
           VocabDetailSectionActions: true
         }
       }

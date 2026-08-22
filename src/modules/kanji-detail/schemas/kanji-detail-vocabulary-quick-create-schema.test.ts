@@ -22,10 +22,9 @@ describe('kanjiDetailVocabularyQuickCreateSchema', () => {
         word: '水'
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.kana).toBe('')
-        expect(result.data.shortMeaning).toBe('')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.kana).toBe('')
+      expect(result.data.shortMeaning).toBe('')
     })
 
     it('transforms empty kana to empty string', () => {
@@ -34,9 +33,8 @@ describe('kanjiDetailVocabularyQuickCreateSchema', () => {
         kana: ''
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.kana).toBe('')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.kana).toBe('')
     })
 
     it('transforms empty shortMeaning to empty string', () => {
@@ -45,9 +43,8 @@ describe('kanjiDetailVocabularyQuickCreateSchema', () => {
         shortMeaning: ''
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.shortMeaning).toBe('')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.shortMeaning).toBe('')
     })
 
     it('transforms whitespace-only shortMeaning to empty string', () => {
@@ -56,9 +53,8 @@ describe('kanjiDetailVocabularyQuickCreateSchema', () => {
         shortMeaning: '   '
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.shortMeaning).toBe('')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.shortMeaning).toBe('')
     })
   })
 
@@ -68,9 +64,8 @@ describe('kanjiDetailVocabularyQuickCreateSchema', () => {
         word: ''
       })
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toBe('Word is required')
-      }
+      if (result.success) throw new Error('Expected parse to fail')
+      expect(result.error.issues[0]?.message).toBe('Word is required')
     })
 
     it('rejects word over 100 characters', () => {
@@ -78,11 +73,10 @@ describe('kanjiDetailVocabularyQuickCreateSchema', () => {
         word: 'あ'.repeat(101)
       })
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toBe(
-          'Word must be 100 characters or less'
-        )
-      }
+      if (result.success) throw new Error('Expected parse to fail')
+      expect(result.error.issues[0]?.message).toBe(
+        'Word must be 100 characters or less'
+      )
     })
 
     it('rejects kana over 200 characters', () => {
@@ -91,11 +85,10 @@ describe('kanjiDetailVocabularyQuickCreateSchema', () => {
         kana: 'あ'.repeat(201)
       })
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toBe(
-          'Kana must be 200 characters or less'
-        )
-      }
+      if (result.success) throw new Error('Expected parse to fail')
+      expect(result.error.issues[0]?.message).toBe(
+        'Kana must be 200 characters or less'
+      )
     })
 
     it('rejects shortMeaning over 500 characters', () => {
@@ -104,11 +97,10 @@ describe('kanjiDetailVocabularyQuickCreateSchema', () => {
         shortMeaning: 'a'.repeat(501)
       })
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toBe(
-          'Short meaning must be 500 characters or less'
-        )
-      }
+      if (result.success) throw new Error('Expected parse to fail')
+      expect(result.error.issues[0]?.message).toBe(
+        'Short meaning must be 500 characters or less'
+      )
     })
   })
 })

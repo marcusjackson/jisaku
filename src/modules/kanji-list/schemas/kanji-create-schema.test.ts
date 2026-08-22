@@ -10,9 +10,8 @@ describe('kanjiCreateSchema', () => {
   it('accepts valid kanji character', () => {
     const result = kanjiCreateSchema.safeParse({ character: '水' })
     expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.character).toBe('水')
-    }
+    if (!result.success) throw new Error('Expected parse to succeed')
+    expect(result.data.character).toBe('水')
   })
 
   it('rejects empty character', () => {

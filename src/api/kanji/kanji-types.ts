@@ -11,6 +11,9 @@
 /** JLPT proficiency levels */
 export type JlptLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1'
 
+/** Valid JLPT level values — used for runtime DB row validation */
+export const JLPT_LEVELS: readonly JlptLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1']
+
 /** Joyo grade levels */
 export type JoyoLevel =
   | 'elementary1'
@@ -21,20 +24,36 @@ export type JoyoLevel =
   | 'elementary6'
   | 'secondary'
 
+/** Valid Joyo level values — used for runtime DB row validation */
+export const JOYO_LEVELS: readonly JoyoLevel[] = [
+  'elementary1',
+  'elementary2',
+  'elementary3',
+  'elementary4',
+  'elementary5',
+  'elementary6',
+  'secondary'
+]
+
 /** Kanji Kentei levels */
 export type KanjiKenteiLevel =
-  | '10'
-  | '9'
-  | '8'
-  | '7'
-  | '6'
-  | '5'
-  | '4'
-  | '3'
-  | 'pre2'
-  | '2'
-  | 'pre1'
-  | '1'
+  '10' | '9' | '8' | '7' | '6' | '5' | '4' | '3' | 'pre2' | '2' | 'pre1' | '1'
+
+/** Valid Kanji Kentei level values — used for runtime DB row validation */
+export const KANJI_KENTEI_LEVELS: readonly KanjiKenteiLevel[] = [
+  '10',
+  '9',
+  '8',
+  '7',
+  '6',
+  '5',
+  '4',
+  '3',
+  'pre2',
+  '2',
+  'pre1',
+  '1'
+]
 
 // ============================================================================
 // Entity Interface

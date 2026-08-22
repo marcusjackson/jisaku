@@ -60,6 +60,11 @@ function convertFiltersToApi(f: KanjiListFilters): Record<string, unknown> {
   }
 }
 
+/**
+ * Fetches and manages reference data for the kanji list page.
+ *
+ * @returns Reactive state for kanji list data, component data, and load functions
+ */
 export function useKanjiListData(): UseKanjiListData {
   const kanjiList = ref<Kanji[]>([])
   const components = ref<Component[]>([])

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-/* eslint-disable max-lines -- Dialog with local state requires inline handlers and template logic */
 /**
  * KanjiDetailDialogComponents
  *
@@ -7,7 +6,7 @@
  * Changes are not persisted until the user clicks Save.
  */
 
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 
 import BaseButton from '@/base/components/BaseButton.vue'
 import BaseDialog from '@/base/components/BaseDialog.vue'
@@ -16,13 +15,16 @@ import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
 import SharedQuickCreateComponent from '@/shared/components/SharedQuickCreateComponent.vue'
 
 import { useKanjiDetailComponentsDialogState } from '../composables/use-kanji-detail-components-dialog-state'
+import { useKanjiDetailDialogComponentsEditState } from '../composables/use-kanji-detail-dialog-components-edit-state'
 import { useKanjiDetailDialogComponentsHandlers } from '../composables/use-kanji-detail-dialog-components-handlers'
-import { useKanjiDetailDialogComponentsSave } from '../composables/use-kanji-detail-dialog-components-save'
 
 import KanjiDetailComponentOccurrenceEditor from './KanjiDetailComponentOccurrenceEditor.vue'
 import KanjiDetailComponentSearch from './KanjiDetailComponentSearch.vue'
 
-import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types'
+import type {
+  ComponentOccurrenceWithDetails,
+  DialogComponentChanges
+} from '../kanji-detail-types'
 import type { EditOccurrence } from '../utils/edit-occurrence-types'
 import type { Component } from '@/api/component/component-types'
 import type { QuickCreateComponentData } from '@/shared/validation/quick-create-component-schema'
@@ -42,56 +44,18 @@ const emit = defineEmits<{
   /** Update dialog open state */
   'update:open': [open: boolean]
   /** Save all changes */
-  save: [
-    changes: {
-      toLink: {
-        componentId: number
-        positionTypeId: number | null
-        componentFormId: number | null
-        isRadical: boolean
-      }[]
-      toUpdate: {
-        id: number
-        positionTypeId: number | null
-        componentFormId: number | null
-        isRadical: boolean
-      }[]
-      toDelete: number[]
-    }
-  ]
+  save: [changes: DialogComponentChanges]
   /** Create new component */
   create: [data: QuickCreateComponentData]
 }>()
 
-// Local edit state
-const editOccurrences = ref<EditOccurrence[]>([])
-const linkedOccurrencesRef = computed(() => props.linkedOccurrences)
-
-// Save logic
-const { calculateSaveData } = useKanjiDetailDialogComponentsSave(
-  editOccurrences,
-  linkedOccurrencesRef
-)
-
-// Initialize edit state from props when dialog opens
-watch(
-  () => props.open,
-  (isOpen) => {
-    if (isOpen) {
-      editOccurrences.value = props.linkedOccurrences.map((occ) => ({
-        id: occ.id,
-        componentId: occ.componentId,
-        positionTypeId: occ.positionTypeId,
-        componentFormId: occ.componentFormId,
-        isRadical: occ.isRadical,
-        component: occ.component,
-        position: occ.position ? occ.position.positionName : null,
-        form: occ.form
-      }))
-    }
-  },
-  { immediate: true }
-)
+// Edit state, watch initialization, and save/cancel logic
+const { editOccurrences, handleCancel, handleSave } =
+  useKanjiDetailDialogComponentsEditState(
+    computed(() => props.linkedOccurrences),
+    computed(() => props.open),
+    emit
+  )
 
 const {
   availableComponents,
@@ -117,16 +81,51 @@ const {
   showConfirmDialog
 )
 
-/** Handle save - emit all changes */
-function handleSave(): void {
-  const changes = calculateSaveData()
-  emit('save', changes)
-  emit('update:open', false)
+/** Build full occurrence detail for the editor (adapts EditOccurrence → ComponentOccurrenceWithDetails) */
+function toOccurrenceDetail(
+  occ: EditOccurrence
+): ComponentOccurrenceWithDetails {
+  return {
+    ...occ,
+    kanjiId: 0,
+    analysisNotes: null,
+    displayOrder: 0,
+    createdAt: '',
+    updatedAt: '',
+    position: occ.position
+      ? {
+          id: 0,
+          positionName: occ.position,
+          nameJapanese: null,
+          nameEnglish: null,
+          description: null,
+          displayOrder: 0
+        }
+      : null
+  } as ComponentOccurrenceWithDetails
 }
 
-/** Handle cancel - discard changes */
-function handleCancel(): void {
-  emit('update:open', false)
+function handleQuickCreateRequest(term: string): void {
+  quickCreateSearchTerm.value = term
+  quickCreateDialogOpen.value = true
+}
+
+const visibleOccurrences = computed(() => getVisibleOccurrences())
+
+function handleQuickCreateCancel(): void {
+  quickCreateDialogOpen.value = false
+  quickCreateSearchTerm.value = ''
+}
+
+function handleQuickCreateConfirm(data: QuickCreateComponentData): void {
+  emit('create', data)
+  quickCreateDialogOpen.value = false
+  quickCreateSearchTerm.value = ''
+}
+
+function handleUnlinkCancel(): void {
+  showConfirmDialog.value = false
+  pendingRemoveOccurrenceId.value = null
 }
 </script>
 
@@ -145,53 +144,29 @@ function handleCancel(): void {
         </h3>
         <KanjiDetailComponentSearch
           :available-components="availableComponents"
-          @create="
-            (term: string) => {
-              quickCreateSearchTerm = term
-              quickCreateDialogOpen = true
-            }
-          "
+          @create="handleQuickCreateRequest"
           @select="handleComponentSelect"
         />
       </div>
 
       <!-- Linked Occurrences Section -->
       <div
-        v-if="getVisibleOccurrences().length > 0"
+        v-if="visibleOccurrences.length > 0"
         class="kanji-detail-dialog-components-section"
       >
         <h3 class="kanji-detail-dialog-components-section-title">
-          Linked Components ({{ getVisibleOccurrences().length }})
+          Linked Components ({{ visibleOccurrences.length }})
         </h3>
 
         <div class="kanji-detail-dialog-components-list">
           <KanjiDetailComponentOccurrenceEditor
-            v-for="occurrence in getVisibleOccurrences()"
+            v-for="occurrence in visibleOccurrences"
             :key="`${occurrence.id ?? 'new'}-${occurrence.componentId}`"
             :component-forms="
               componentFormsMap.get(occurrence.componentId) ?? []
             "
             :destructive-mode="props.destructiveMode"
-            :occurrence="
-              {
-                ...occurrence,
-                kanjiId: 0,
-                analysisNotes: null,
-                displayOrder: 0,
-                createdAt: '',
-                updatedAt: '',
-                position: occurrence.position
-                  ? {
-                      id: 0,
-                      positionName: occurrence.position,
-                      nameJapanese: null,
-                      nameEnglish: null,
-                      description: null,
-                      displayOrder: 0
-                    }
-                  : null
-              } as ComponentOccurrenceWithDetails
-            "
+            :occurrence="toOccurrenceDetail(occurrence)"
             :position-types="positionTypes"
             @unlink="
               () => handleUnlinkRequest(occurrence.id, occurrence.componentId)
@@ -235,19 +210,8 @@ function handleCancel(): void {
     :initial-character="
       quickCreateSearchTerm.length === 1 ? quickCreateSearchTerm : undefined
     "
-    @cancel="
-      () => {
-        quickCreateDialogOpen = false
-        quickCreateSearchTerm = ''
-      }
-    "
-    @create="
-      (data) => {
-        emit('create', data)
-        quickCreateDialogOpen = false
-        quickCreateSearchTerm = ''
-      }
-    "
+    @cancel="handleQuickCreateCancel"
+    @create="handleQuickCreateConfirm"
   />
 
   <!-- Confirmation Dialog -->
@@ -257,12 +221,7 @@ function handleCancel(): void {
     description="Are you sure you want to unlink this component from the kanji? This action cannot be undone."
     title="Confirm Unlink"
     variant="danger"
-    @cancel="
-      () => {
-        showConfirmDialog = false
-        pendingRemoveOccurrenceId = null
-      }
-    "
+    @cancel="handleUnlinkCancel"
     @confirm="handleUnlinkConfirm"
   />
 </template>

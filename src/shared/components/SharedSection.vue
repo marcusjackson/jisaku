@@ -6,7 +6,7 @@
  * Used throughout the app for organizing content into sections.
  */
 
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 import {
   CollapsibleContent,
@@ -16,30 +16,33 @@ import {
 
 import { BaseButton } from '@/base/components'
 
-const props = defineProps<{
-  /** Section title */
-  title?: string
-  /** Enable collapsible functionality - defaults to false */
-  collapsible?: boolean
-  /** Default open state (only applies when collapsible=true) - defaults to true */
-  defaultOpen?: boolean
-  /** Test ID for E2E testing */
-  testId?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    /** Section title */
+    title?: string | undefined
+    /** Enable collapsible functionality - defaults to false */
+    collapsible?: boolean
+    /** Default open state (only applies when collapsible=true) - defaults to true */
+    defaultOpen?: boolean
+    /** Test ID for E2E testing */
+    testId?: string | undefined
+  }>(),
+  {
+    collapsible: false,
+    defaultOpen: true,
+    title: undefined,
+    testId: undefined
+  }
+)
 
-// Default values for optional boolean props
-const isCollapsible = computed(() => props.collapsible)
-
-// Compute the initial open value:
-// - Default to open (true) unless defaultOpen is explicitly set to false
-const initialOpen = props.defaultOpen
-const isOpen = ref(initialOpen)
+// Initialise from prop; withDefaults ensures true when prop is omitted
+const isOpen = ref(props.defaultOpen)
 
 // Sync with defaultOpen prop changes
 watch(
   () => props.defaultOpen,
   (val) => {
-    isOpen.value = !val ? false : true
+    isOpen.value = val
   }
 )
 </script>
@@ -47,7 +50,8 @@ watch(
 <template>
   <!-- Non-collapsible section -->
   <section
-    v-if="!isCollapsible"
+    v-if="!props.collapsible"
+    :aria-label="title || undefined"
     class="shared-section"
     :data-testid="testId"
   >
@@ -216,11 +220,11 @@ watch(
 }
 
 .shared-section-collapsible-content[data-state='open'] {
-  animation: slide-down 200ms ease-out;
+  animation: slide-down var(--transition-normal);
 }
 
 .shared-section-collapsible-content[data-state='closed'] {
-  animation: slide-up 200ms ease-out;
+  animation: slide-up var(--transition-normal);
 }
 
 @keyframes slide-down {
@@ -249,5 +253,12 @@ watch(
   margin-top: var(--spacing-md);
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shared-section-collapsible-content[data-state='open'],
+  .shared-section-collapsible-content[data-state='closed'] {
+    animation: none;
+  }
 }
 </style>

@@ -19,10 +19,9 @@ describe('quick-create-component-schema', () => {
     const result = quickCreateComponentSchema.safeParse(validData)
 
     expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.character).toBe('日')
-      expect(result.data.shortMeaning).toBe('sun')
-    }
+    if (!result.success) throw new Error('Expected parse to succeed')
+    expect(result.data.character).toBe('日')
+    expect(result.data.shortMeaning).toBe('sun')
   })
 
   it('validates component with only character', () => {
@@ -44,9 +43,8 @@ describe('quick-create-component-schema', () => {
     const result = quickCreateComponentSchema.safeParse(invalidData)
 
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toContain('Character is required')
-    }
+    if (result.success) throw new Error('Expected parse to fail')
+    expect(result.error.issues[0]?.message).toBe('Please enter a character')
   })
 
   it('rejects multi-character string', () => {
@@ -58,9 +56,17 @@ describe('quick-create-component-schema', () => {
     const result = quickCreateComponentSchema.safeParse(invalidData)
 
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toContain('single character')
-    }
+    if (result.success) throw new Error('Expected parse to fail')
+    expect(result.error.issues[0]?.message).toBe(
+      'Please enter only one character'
+    )
+  })
+
+  it('accepts surrogate-pair character (multi-code-unit single grapheme)', () => {
+    const result = quickCreateComponentSchema.safeParse({
+      character: '\uD840\uDC0B' // 𠀋 — single grapheme, two UTF-16 code units
+    })
+    expect(result.success).toBe(true)
   })
 
   it('rejects missing character field', () => {

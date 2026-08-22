@@ -187,7 +187,7 @@ function handleSave(data: BasicInfoSaveData): void {
 
 .kanji-basic-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-item-min-xs), 1fr));
   gap: var(--spacing-sm) var(--spacing-md);
 }
 

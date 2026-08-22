@@ -19,6 +19,8 @@ describe('SharedPositionBadge', () => {
     nameEnglish: 'Left side',
     nameJapanese: 'ε΄',
     positionName: 'hen',
+    createdAt: '2024-01-01T00:00:00',
+    updatedAt: '2024-01-01T00:00:00',
     ...overrides
   })
 
@@ -68,7 +70,7 @@ describe('SharedPositionBadge', () => {
     expect(screen.getByText('hen')).toBeInTheDocument()
   })
 
-  it('shows description in tooltip', () => {
+  it('shows description in aria-label (accessible on touch devices)', () => {
     const position = createMockPosition({
       description: 'Full description text'
     })
@@ -77,10 +79,10 @@ describe('SharedPositionBadge', () => {
     })
 
     const badge = screen.getByText('ε΄')
-    expect(badge).toHaveAttribute('title', 'Full description text')
+    expect(badge).toHaveAttribute('aria-label', 'Full description text')
   })
 
-  it('shows position name in tooltip when description is null', () => {
+  it('shows position name in aria-label when description is null', () => {
     const position = createMockPosition({
       description: null,
       positionName: 'hen'
@@ -90,6 +92,6 @@ describe('SharedPositionBadge', () => {
     })
 
     const badge = screen.getByText('ε΄')
-    expect(badge).toHaveAttribute('title', 'hen')
+    expect(badge).toHaveAttribute('aria-label', 'hen')
   })
 })

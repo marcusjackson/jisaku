@@ -139,33 +139,4 @@ describe('SharedHeaderNav', () => {
     const settingsLink = screen.getByRole('link', { name: /settings/i })
     expect(settingsLink).toHaveAttribute('href', ROUTES.SETTINGS)
   })
-
-  it('renders version toggle', async () => {
-    const router = createRouter({
-      history: createWebHistory(),
-      routes: [
-        { path: '/', component: { template: '<div>Root</div>' } },
-        { path: '/kanji', component: { template: '<div>Kanji</div>' } },
-        {
-          path: '/components',
-          component: { template: '<div>Components</div>' }
-        },
-        {
-          path: '/vocabulary',
-          component: { template: '<div>Vocabulary</div>' }
-        },
-        { path: '/coming-soon', component: { template: '<div>Coming</div>' } }
-      ]
-    })
-
-    await router.push('/')
-
-    render(SharedHeaderNav, {
-      global: {
-        plugins: [router]
-      }
-    })
-
-    expect(screen.getByRole('switch')).toBeInTheDocument()
-  })
 })

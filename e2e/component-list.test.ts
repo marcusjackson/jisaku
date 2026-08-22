@@ -254,6 +254,32 @@ test.describe('Component List URL Sync', () => {
       '亻'
     )
   })
+
+  test('multiple filters sync to URL simultaneously', async ({ page }) => {
+    await page.goto('/components')
+
+    // Expand filters if collapsed
+    const filtersButton = page.getByTestId('component-list-filters-toggle')
+    const isExpanded = await filtersButton.getAttribute('aria-expanded')
+    if (isExpanded === 'false') {
+      await filtersButton.click()
+    }
+
+    // Set character filter
+    await page.getByRole('textbox', { name: /character/i }).fill('亻')
+
+    // Set keywords filter
+    await page
+      .getByRole('textbox', { name: /display \+ keywords/i })
+      .fill('person')
+
+    // Wait for debounce and URL to contain both filters
+    await page.waitForURL(/character=.*keywords=|keywords=.*character=/)
+
+    const url = page.url()
+    expect(url).toContain('character')
+    expect(url).toContain('keywords')
+  })
 })
 
 test.describe('Component Create Dialog', () => {

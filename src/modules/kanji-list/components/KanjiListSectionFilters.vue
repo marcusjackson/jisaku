@@ -67,6 +67,7 @@ function toggleCollapsed(): void {
     data-testid="kanji-list-filters"
   >
     <!-- Collapsible Header -->
+    <!-- Raw <button>: collapsible header needs full custom styling incompatible with BaseButton -->
     <button
       :aria-expanded="!isCollapsed"
       class="kanji-list-filters-header"
@@ -175,11 +176,16 @@ function toggleCollapsed(): void {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition: background-color var(--transition-fast);
 }
 
 .kanji-list-filters-header:hover {
   background-color: var(--color-surface-hover);
+}
+
+.kanji-list-filters-header:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .kanji-list-filters-header-text {
@@ -204,7 +210,7 @@ function toggleCollapsed(): void {
 .kanji-list-filters-chevron {
   flex-shrink: 0;
   color: var(--color-text-secondary);
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-normal);
 }
 
 .kanji-list-filters-chevron-open {
@@ -234,7 +240,6 @@ function toggleCollapsed(): void {
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
 }
 </style>

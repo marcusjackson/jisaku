@@ -70,6 +70,7 @@ function handleCreate(): void {
       class="vocabulary-search-results"
       data-testid="vocabulary-search-results"
     >
+      <!-- Raw <button>: search result item needs full custom styling incompatible with BaseButton -->
       <button
         v-for="vocab in filteredVocabulary"
         :key="vocab.vocabularyId"
@@ -100,7 +101,6 @@ function handleCreate(): void {
     >
       <p class="vocabulary-search-no-results-text">No vocabulary found</p>
       <BaseButton
-        data-testid="vocabulary-search-create-button"
         size="sm"
         variant="secondary"
         @click="handleCreate"
@@ -121,10 +121,10 @@ function handleCreate(): void {
 .vocabulary-search-results {
   display: flex;
   flex-direction: column;
-  max-height: var(--size-list-max-height, 300px);
+  max-height: var(--list-max-height);
   overflow-y: auto;
   border: var(--border-width-sm) solid var(--color-border);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
 }
 
 .vocabulary-search-result-item {
@@ -149,14 +149,14 @@ function handleCreate(): void {
   background-color: var(--color-background-hover);
 }
 
-.vocabulary-search-result-item:focus {
-  outline: var(--border-width-md) solid var(--color-focus);
-  outline-offset: calc(var(--spacing-2xs) * -1);
+.vocabulary-search-result-item:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .vocabulary-search-result-word {
   color: var(--color-text-primary);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -177,7 +177,7 @@ function handleCreate(): void {
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
   border: var(--border-width-sm) solid var(--color-border);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
   background-color: var(--color-background-secondary);
 }
 

@@ -58,7 +58,7 @@ describe('KanjiDetailSectionReadings', () => {
     const user = userEvent.setup()
     render(KanjiDetailSectionReadings, { props: defaultProps })
 
-    await user.click(screen.getByTestId('readings-edit-button'))
+    await user.click(screen.getByRole('button', { name: /edit/i }))
 
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(screen.getByText('Edit Readings')).toBeInTheDocument()
@@ -70,7 +70,7 @@ describe('KanjiDetailSectionReadings', () => {
       props: defaultProps
     })
 
-    await user.click(screen.getByTestId('readings-edit-button'))
+    await user.click(screen.getByRole('button', { name: /edit/i }))
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(emitted()['save']).toBeTruthy()
@@ -80,7 +80,7 @@ describe('KanjiDetailSectionReadings', () => {
     const user = userEvent.setup()
     render(KanjiDetailSectionReadings, { props: defaultProps })
 
-    await user.click(screen.getByTestId('readings-edit-button'))
+    await user.click(screen.getByRole('button', { name: /edit/i }))
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

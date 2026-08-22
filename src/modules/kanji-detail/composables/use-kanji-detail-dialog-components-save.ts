@@ -10,6 +10,14 @@ import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types'
 import type { EditOccurrence } from '../utils/edit-occurrence-types'
 import type { Ref } from 'vue'
 
+/**
+ * Manages save logic for the components dialog — computes the diff between
+ * current edits and original occurrences and prepares the save payload.
+ *
+ * @param editOccurrences - Reactive list of occurrences being edited
+ * @param originalOccurrences - Reactive list of original occurrence records
+ * @returns Function to calculate and return the save data diff
+ */
 export function useKanjiDetailDialogComponentsSave(
   editOccurrences: Ref<EditOccurrence[]>,
   originalOccurrences: Ref<ComponentOccurrenceWithDetails[]>

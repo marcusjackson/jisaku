@@ -9,8 +9,9 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
-import { EntityNotFoundError } from '../types'
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
 
+import type { UpdatableField } from '../api-types'
 import type { ComponentQueries } from './component-queries'
 import type {
   Component,
@@ -24,14 +25,23 @@ import type {
 
 export class ComponentMutations {
   private readonly run: ReturnType<typeof useDatabase>['run']
+  private readonly exec: ReturnType<typeof useDatabase>['exec']
   private readonly queries: ComponentQueries
 
   constructor(queries: ComponentQueries) {
     const db = useDatabase()
     this.run = db.run
+    this.exec = db.exec
     this.queries = queries
   }
 
+  /**
+   * Create a new component.
+   *
+   * @param input - Fields for the new component
+   * @returns The created component entity
+   * @throws {CreateError} If the insert fails
+   */
   create(input: CreateComponentInput): Component {
     this.run(
       `INSERT INTO components (
@@ -53,13 +63,12 @@ export class ComponentMutations {
       ]
     )
 
-    const { exec } = useDatabase()
-    const idResult = exec('SELECT last_insert_rowid() as id')
+    const idResult = this.exec('SELECT last_insert_rowid() as id')
     const newId = idResult[0]?.values[0]?.[0] as number
 
     const created = this.queries.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created component')
+      throw new CreateError('Component')
     }
 
     schedulePersist()
@@ -74,7 +83,7 @@ export class ComponentMutations {
     const sets: string[] = []
     const values: unknown[] = []
 
-    const fieldMap: Record<string, string> = {
+    const fieldMap = {
       character: 'character',
       strokeCount: 'stroke_count',
       shortMeaning: 'short_meaning',
@@ -84,7 +93,7 @@ export class ComponentMutations {
       kangxiNumber: 'kangxi_number',
       kangxiMeaning: 'kangxi_meaning',
       radicalNameJapanese: 'radical_name_japanese'
-    }
+    } satisfies Partial<Record<UpdatableField<Component>, string>>
 
     for (const [key, column] of Object.entries(fieldMap)) {
       const value = input[key as keyof UpdateComponentInput]
@@ -102,6 +111,15 @@ export class ComponentMutations {
     return { sets, values }
   }
 
+  /**
+   * Update a component by id.
+   *
+   * @param id - Component id
+   * @param input - Fields to update (partial)
+   * @returns The updated component entity
+   * @throws {EntityNotFoundError} If the component does not exist
+   * @throws {UpdateError} If the update fails to return
+   */
   update(id: number, input: UpdateComponentInput): Component {
     const existing = this.queries.getById(id)
     if (!existing) {
@@ -113,28 +131,43 @@ export class ComponentMutations {
       return existing
     }
 
-    sets.push('updated_at = datetime("now")')
+    sets.push("updated_at = datetime('now')")
     values.push(id)
 
     this.run(`UPDATE components SET ${sets.join(', ')} WHERE id = ?`, values)
 
     const updated = this.queries.getById(id)
     if (!updated) {
-      throw new Error('Component disappeared after update')
+      throw new UpdateError('Component', id)
     }
 
     schedulePersist()
     return updated
   }
 
-  updateField<K extends keyof Component>(
+  /**
+   * Update a single field on a component.
+   *
+   * @param id - Component id
+   * @param field - Field name to update
+   * @param value - New value
+   * @returns The updated component entity
+   * @throws {EntityNotFoundError} If the component does not exist
+   * @throws {UpdateError} If the update fails to return
+   */
+  updateField<K extends UpdatableField<Component>>(
     id: number,
     field: K,
     value: Component[K]
   ): Component {
-    return this.update(id, { [field]: value } as UpdateComponentInput)
+    return this.update(id, { [field]: value })
   }
 
+  /**
+   * Delete a component by id.
+   *
+   * @param id - Component id
+   */
   remove(id: number): void {
     this.run('DELETE FROM components WHERE id = ?', [id])
     schedulePersist()

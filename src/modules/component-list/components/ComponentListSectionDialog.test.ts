@@ -14,12 +14,12 @@ vi.mock('./ComponentListDialogCreate.vue', () => ({
   default: { template: '<div data-testid="dialog-create"></div>' }
 }))
 
-// Mock base component
+// Mock base dialog to render content without portal dependencies
 vi.mock('@/base/components', () => ({
   BaseDialog: {
     props: ['title', 'open'],
     template: `
-      <div data-testid="base-dialog" :data-open="open">
+      <div v-if="open" role="dialog" :aria-label="title">
         <h2>{{ title }}</h2>
         <slot />
       </div>
@@ -53,7 +53,6 @@ describe('ComponentListSectionDialog', () => {
       props: { ...defaultProps, open: true }
     })
 
-    const dialog = screen.getByTestId('base-dialog')
-    expect(dialog).toHaveAttribute('data-open', 'true')
+    expect(screen.getByRole('dialog')).toBeVisible()
   })
 })

@@ -96,7 +96,7 @@ const showKana = computed(() => {
 
 .vocab-list-card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(var(--translate-lift));
 }
 
 .vocab-list-card:focus-visible {
@@ -108,7 +108,7 @@ const showKana = computed(() => {
   color: var(--color-text-primary);
   font-family: var(--font-family-kanji);
   font-size: var(--font-size-2xl);
-  line-height: 1;
+  line-height: var(--line-height-none);
 }
 
 .vocab-list-card-info {

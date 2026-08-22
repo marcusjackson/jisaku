@@ -85,7 +85,7 @@ const emit = defineEmits<{
   align-items: flex-start;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
   background: var(--color-background-secondary);
 }
 

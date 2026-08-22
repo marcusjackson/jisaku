@@ -13,8 +13,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useDebounce } from '@/base/composables'
 
 import { FILTER_QUERY_KEYS, type KanjiListFilters } from '../kanji-list-types'
+import { parseString } from '../utils/url-parsers'
 
-import { parseString } from './url-parsers'
 import {
   parseAnalysisFiltersFromQuery,
   parseLevelFiltersFromQuery,
@@ -153,6 +153,11 @@ function createSearchRefs() {
   }
 }
 
+/**
+ * Syncs kanji list filter state with URL query parameters.
+ *
+ * @returns Reactive filter state and URL-synchronised search helpers
+ */
 export function useKanjiListUrlSync(): UseKanjiListUrlSync {
   const route = useRoute()
   const router = useRouter()

@@ -100,6 +100,11 @@ function applyCharacterFilter(
   return components.filter((c) => c.character.includes(character))
 }
 
+/**
+ * Fetches and manages data for the component list page.
+ *
+ * @returns Reactive state for component list data and load functions
+ */
 export function useComponentListData(): UseComponentListData {
   const componentList = ref<Component[]>([])
   const fetchError = ref<Error | null>(null)

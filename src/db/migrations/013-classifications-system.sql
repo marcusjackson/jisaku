@@ -1,3 +1,6 @@
+-- NOTE: This file is not imported by the migration runner.
+-- The logic for this migration is inlined as TypeScript in migrations/index.ts.
+-- Kept for reference only. DO NOT edit expecting it to take effect.
 -- Classifications System Migration
 -- Version: 13
 --

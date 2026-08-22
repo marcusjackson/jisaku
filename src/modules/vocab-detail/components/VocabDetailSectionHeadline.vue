@@ -82,6 +82,7 @@ function handleSave(data: HeadlineSaveData): void {
       </div>
       <div class="vocab-detail-section-headline-actions">
         <BaseButton
+          aria-label="Edit headline"
           data-testid="headline-edit-button"
           size="sm"
           variant="secondary"
@@ -127,12 +128,12 @@ function handleSave(data: HeadlineSaveData): void {
 .vocab-detail-section-headline-text {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2xs);
+  gap: var(--spacing-0-5);
 }
 
 .vocab-detail-section-headline-word {
   color: var(--color-text-primary);
-  font-family: var(--font-family-japanese);
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
@@ -140,7 +141,7 @@ function handleSave(data: HeadlineSaveData): void {
 
 .vocab-detail-section-headline-kana {
   color: var(--color-text-secondary);
-  font-family: var(--font-family-japanese);
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-xl);
   line-height: var(--line-height-normal);
 }
@@ -160,22 +161,13 @@ function handleSave(data: HeadlineSaveData): void {
 
 .vocab-detail-section-headline-meaning {
   color: var(--color-text-secondary);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
   line-height: var(--line-height-normal);
 }
 
 .vocab-detail-section-headline-actions {
   display: flex;
+  flex-shrink: 0;
   gap: var(--spacing-sm);
-}
-
-@media (width <= 640px) {
-  .vocab-detail-section-headline-content {
-    flex-direction: column;
-  }
-
-  .vocab-detail-section-headline-actions {
-    align-self: flex-start;
-  }
 }
 </style>

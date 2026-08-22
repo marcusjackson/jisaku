@@ -30,12 +30,15 @@ withDefaults(
     okuriganaWarnings?: (string | undefined)[]
     emptyText?: string
     destructiveMode?: boolean
+    /** Optional test ID for the wrapper element */
+    testId?: string | undefined
   }>(),
   {
     destructiveMode: false,
     emptyText: 'No readings',
     okuriganaWarnings: () => [],
     showOkurigana: false,
+    testId: undefined,
     warnings: () => []
   }
 )
@@ -55,7 +58,10 @@ function getOkurigana(reading: EditOnReading | EditKunReading): string {
 </script>
 
 <template>
-  <div class="readings-section">
+  <div
+    class="readings-section"
+    :data-testid="testId"
+  >
     <div class="readings-section-header">
       <h3 class="readings-section-title">{{ title }}</h3>
       <BaseButton

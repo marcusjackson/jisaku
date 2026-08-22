@@ -10,8 +10,13 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import {
+  CreateError,
+  EntityNotFoundError,
+  RepositoryError,
+  UpdateError
+} from '../api-types'
 import { BaseRepository } from '../base-repository'
-import { EntityNotFoundError } from '../types'
 
 import {
   buildKanjiSearchConditions,
@@ -20,7 +25,7 @@ import {
   mapKanjiRow
 } from './kanji-repository-internals'
 
-import type { FieldUpdatable, Repository, UpdatableField } from '../types'
+import type { FieldUpdatable, Repository, UpdatableField } from '../api-types'
 import type {
   CreateKanjiInput,
   Kanji,
@@ -101,8 +106,21 @@ class KanjiRepositoryImpl
 
     let orderBy = 'ORDER BY created_at DESC'
     if (sort) {
-      const column = this.camelToSnake(sort.field)
-      orderBy = `ORDER BY ${column} ${sort.direction.toUpperCase()}`
+      const SORTABLE_COLUMNS: Readonly<Record<string, string>> = {
+        character: 'character',
+        strokeCount: 'stroke_count',
+        createdAt: 'created_at'
+      }
+      const column = SORTABLE_COLUMNS[sort.field]
+      if (!column) {
+        throw new RepositoryError(
+          `Invalid sort field: '${sort.field}'`,
+          'search',
+          'Kanji'
+        )
+      }
+      const dir = sort.direction === 'desc' ? 'DESC' : 'ASC'
+      orderBy = `ORDER BY ${column} ${dir}`
     }
 
     const sql = `SELECT * FROM kanjis ${whereClause} ${orderBy}`
@@ -131,7 +149,7 @@ class KanjiRepositoryImpl
 
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created kanji')
+      throw new CreateError('Kanji')
     }
 
     schedulePersist()
@@ -158,7 +176,7 @@ class KanjiRepositoryImpl
       return existing
     }
 
-    sets.push('updated_at = datetime("now")')
+    sets.push("updated_at = datetime('now')")
     values.push(id)
 
     const sql = `UPDATE kanjis SET ${sets.join(', ')} WHERE id = ?`
@@ -166,7 +184,7 @@ class KanjiRepositoryImpl
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('Kanji disappeared after update')
+      throw new UpdateError('Kanji', id)
     }
 
     schedulePersist()
@@ -174,17 +192,26 @@ class KanjiRepositoryImpl
   }
 
   remove(id: number): void {
-    // Delete related records first (cascade)
-    this.run('DELETE FROM component_occurrences WHERE kanji_id = ?', [id])
-    this.run('DELETE FROM kanji_classifications WHERE kanji_id = ?', [id])
-    this.run('DELETE FROM on_readings WHERE kanji_id = ?', [id])
-    this.run('DELETE FROM kun_readings WHERE kanji_id = ?', [id])
-    this.run('DELETE FROM kanji_meanings WHERE kanji_id = ?', [id])
-    this.run('DELETE FROM vocab_kanji WHERE kanji_id = ?', [id])
-
-    // Delete the kanji
-    this.run('DELETE FROM kanjis WHERE id = ?', [id])
-
+    this.withTransaction(() => {
+      // Delete related records first (cascade)
+      this.run('DELETE FROM component_occurrences WHERE kanji_id = ?', [id])
+      this.run('DELETE FROM kanji_classifications WHERE kanji_id = ?', [id])
+      this.run('DELETE FROM on_readings WHERE kanji_id = ?', [id])
+      this.run('DELETE FROM kun_readings WHERE kanji_id = ?', [id])
+      this.run(
+        `DELETE FROM kanji_meaning_group_members
+         WHERE reading_group_id IN (
+           SELECT id FROM kanji_meaning_reading_groups WHERE kanji_id = ?
+         )`,
+        [id]
+      )
+      this.run('DELETE FROM kanji_meaning_reading_groups WHERE kanji_id = ?', [
+        id
+      ])
+      this.run('DELETE FROM kanji_meanings WHERE kanji_id = ?', [id])
+      this.run('DELETE FROM vocab_kanji WHERE kanji_id = ?', [id])
+      this.run('DELETE FROM kanjis WHERE id = ?', [id])
+    })
     schedulePersist()
   }
 
@@ -202,13 +229,17 @@ class KanjiRepositoryImpl
       throw new EntityNotFoundError('Kanji', id)
     }
 
-    const column = this.camelToSnake(field as string)
-    const sql = `UPDATE kanjis SET ${column} = ?, updated_at = datetime("now") WHERE id = ?`
+    const entry = KANJI_FIELD_COLUMNS.find(([f]) => f === field)
+    if (!entry) {
+      throw new Error(`No column mapping for field: ${field}`)
+    }
+    const column = entry[1]
+    const sql = `UPDATE kanjis SET ${column} = ?, updated_at = datetime('now') WHERE id = ?`
     this.run(sql, [value, id])
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('Kanji disappeared after field update')
+      throw new UpdateError('Kanji', id)
     }
 
     schedulePersist()
@@ -231,6 +262,3 @@ class KanjiRepositoryImpl
 export function useKanjiRepository(): KanjiRepositoryImpl {
   return new KanjiRepositoryImpl()
 }
-
-// Re-export types
-export type { CreateKanjiInput, Kanji, KanjiFilters, UpdateKanjiInput }

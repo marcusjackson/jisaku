@@ -22,6 +22,8 @@ export interface PositionType {
   nameEnglish: string | null
   description: string | null
   displayOrder: number
+  createdAt: string
+  updatedAt: string
 }
 
 // ============================================================================

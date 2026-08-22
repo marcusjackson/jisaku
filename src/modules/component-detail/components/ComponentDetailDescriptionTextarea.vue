@@ -56,17 +56,20 @@ function handleKeydown(event: KeyboardEvent): void {
 
 <template>
   <!-- Display mode -->
-  <div
+  <!-- Raw <button>: display/edit trigger needs custom textarea styling incompatible with BaseButton -->
+  <button
     v-if="!isEditing"
     class="description-textarea-display"
     :class="{
       'description-textarea-placeholder': isPlaceholder
     }"
     data-testid="description-textarea"
+    type="button"
     @click="enterEditMode"
   >
-    {{ displayText }}
-  </div>
+    <span class="description-textarea-label">Description:</span>
+    <span class="description-textarea-content">{{ displayText }}</span>
+  </button>
 
   <!-- Edit mode -->
   <div
@@ -75,6 +78,7 @@ function handleKeydown(event: KeyboardEvent): void {
   >
     <textarea
       v-model="editValue"
+      aria-label="Description"
       class="description-textarea-input"
       rows="4"
       @blur="handleBlur"
@@ -85,11 +89,18 @@ function handleKeydown(event: KeyboardEvent): void {
 
 <style scoped>
 .description-textarea-display {
+  appearance: none;
+  display: block;
+  width: 100%;
   min-height: var(--spacing-lg);
   padding: var(--spacing-sm);
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   cursor: pointer;
@@ -97,7 +108,12 @@ function handleKeydown(event: KeyboardEvent): void {
 }
 
 .description-textarea-display:hover {
-  border-color: var(--color-border-hover);
+  border-color: var(--color-border-focus);
+}
+
+.description-textarea-display:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .description-textarea-placeholder {
@@ -120,7 +136,7 @@ function handleKeydown(event: KeyboardEvent): void {
   color: var(--color-text-primary);
   font-family: inherit;
   font-size: inherit;
-  line-height: 1.5;
+  line-height: var(--line-height-normal);
   resize: vertical;
 }
 

@@ -14,11 +14,25 @@ import type {
   ReadingsSaveData
 } from '../kanji-detail-types'
 
+interface UseKanjiDetailSaveHandlersReturn {
+  handleBasicInfoSave: (data: BasicInfoSaveData) => void
+  handleReadingsSave: (data: ReadingsSaveData) => void
+  handleMeaningsSave: (data: MeaningsSaveData) => void
+}
+
+/**
+ * Wraps raw save functions with try/catch and toast notifications.
+ *
+ * @param saveBasicInfo - Raw save function for basic info data
+ * @param handleSaveReadings - Raw save function for readings data
+ * @param handleSaveMeanings - Raw save function for meanings data
+ * @returns Wrapped save handlers with toast feedback
+ */
 export function useKanjiDetailSaveHandlers(
   saveBasicInfo: (data: BasicInfoSaveData) => void,
   handleSaveReadings: (data: ReadingsSaveData) => void,
   handleSaveMeanings: (data: MeaningsSaveData) => void
-) {
+): UseKanjiDetailSaveHandlersReturn {
   const toast = useToast()
 
   function handleBasicInfoSave(data: BasicInfoSaveData): void {

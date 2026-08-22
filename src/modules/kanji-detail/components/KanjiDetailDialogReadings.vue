@@ -128,6 +128,7 @@ function handleSave(): void {
         :destructive-mode="props.destructiveMode ?? false"
         empty-text="No on-yomi readings"
         :readings="editOnReadings"
+        test-id="on-reading-section"
         title="On-yomi (音読み)"
         :warnings="onReadingWarnings"
         @add="addOnReading"
@@ -143,6 +144,7 @@ function handleSave(): void {
         :okurigana-warnings="kunOkuriganaWarnings"
         :readings="editKunReadings"
         show-okurigana
+        test-id="kun-reading-section"
         title="Kun-yomi (訓読み)"
         :warnings="kunReadingWarnings"
         @add="addKunReading"

@@ -7,7 +7,7 @@
 import { nextTick } from 'vue'
 
 import userEvent from '@testing-library/user-event'
-import { fireEvent, render, screen, waitFor } from '@testing-library/vue'
+import { render, screen, waitFor } from '@testing-library/vue'
 import { describe, expect, it, vi } from 'vitest'
 
 import ComponentDetailDescriptionTextarea from './ComponentDetailDescriptionTextarea.vue'
@@ -122,11 +122,12 @@ describe('ComponentDetailDescriptionTextarea', () => {
       await user.click(screen.getByTestId('description-textarea'))
       await nextTick()
 
-      expect(screen.getByRole('textbox')).toBeInTheDocument()
-
-      // Blur the textarea using fireEvent
       const textarea = screen.getByRole('textbox')
-      await fireEvent.blur(textarea)
+      expect(textarea).toBeInTheDocument()
+
+      // Click to focus the textarea, then tab away to trigger blur
+      await user.click(textarea)
+      await user.tab()
 
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
     })

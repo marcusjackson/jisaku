@@ -6,7 +6,7 @@
  * Works with vee-validate through v-model.
  */
 
-import { computed, useId } from 'vue'
+import { computed, ref, useId } from 'vue'
 
 const props = defineProps<{
   /** Textarea label text */
@@ -28,14 +28,20 @@ const props = defineProps<{
 const model = defineModel<string | undefined>()
 
 const textareaId = useId()
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
 const textareaClasses = computed(() => [
   'base-textarea-field',
   {
-    'base-textarea-field-error': !!props.error,
+    'base-textarea-field-error': Boolean(props.error),
     'base-textarea-field-disabled': props.disabled
   }
 ])
+
+// Expose the textarea element for programmatic focus
+defineExpose({
+  focus: () => textareaRef.value?.focus()
+})
 </script>
 
 <template>
@@ -56,9 +62,10 @@ const textareaClasses = computed(() => [
 
     <textarea
       :id="textareaId"
+      ref="textareaRef"
       v-model="model"
       :aria-describedby="error ? `${textareaId}-error` : undefined"
-      :aria-invalid="!!error"
+      :aria-invalid="Boolean(error)"
       :class="textareaClasses"
       :disabled="disabled"
       :name="name"

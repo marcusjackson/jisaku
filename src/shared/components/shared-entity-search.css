@@ -1,0 +1,201 @@
+/* SharedEntitySearch styles */
+
+/* Component wrapper */
+.shared-entity-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.shared-entity-search-label {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Input anchor */
+.shared-entity-search-anchor {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--input-height);
+  border: var(--input-border);
+  border-radius: var(--input-radius);
+  background-color: var(--input-bg);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.shared-entity-search-anchor:focus-within {
+  border: var(--input-border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.shared-entity-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: var(--input-padding);
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+}
+
+.shared-entity-search-input:focus {
+  outline: none;
+}
+
+.shared-entity-search-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.shared-entity-search-trigger {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: var(--button-height-sm);
+  height: 100%;
+  padding-right: var(--spacing-2);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.shared-entity-search-trigger:hover {
+  color: var(--color-text-primary);
+}
+
+/* Portaled dropdown content.
+   Reka UI injects inline z-index on the portal wrapper that cannot be overridden
+   without !important. Ensures dropdown appears above dialogs (z-modal: 400). */
+[data-reka-popper-content-wrapper='']:has(.shared-entity-search-content) {
+  z-index: var(--z-dropdown) !important;
+}
+
+.shared-entity-search-content {
+  z-index: var(--z-dropdown);
+  min-width: 250px;
+  overflow: hidden;
+  border: var(--card-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.shared-entity-search-viewport {
+  max-height: 280px;
+  padding: var(--spacing-1);
+  overflow-y: auto;
+}
+
+.shared-entity-search-empty {
+  padding: var(--spacing-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+/* Dropdown items */
+.shared-entity-search-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  padding-left: var(--spacing-8);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  user-select: none;
+}
+
+.shared-entity-search-item:focus {
+  outline: none;
+}
+
+.shared-entity-search-item[data-highlighted] {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.shared-entity-search-item-indicator {
+  position: absolute;
+  left: var(--spacing-2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.shared-entity-search-item-character {
+  flex-shrink: 0;
+  font-family: var(--font-family-kanji);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.shared-entity-search-item-text {
+  flex: 1;
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Create new button */
+.shared-entity-search-create-separator {
+  height: 1px;
+  margin: var(--spacing-1) 0;
+  background-color: var(--color-border);
+}
+
+.shared-entity-search-create-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-primary);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.shared-entity-search-create-button:hover {
+  background-color: var(--color-primary-subtle);
+}
+
+.shared-entity-search-create-button:focus-visible {
+  background-color: var(--color-primary-subtle);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.shared-entity-search-create-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+}
+
+.shared-entity-search-create-term {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-normal);
+}

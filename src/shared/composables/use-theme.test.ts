@@ -28,12 +28,12 @@ describe('useTheme', () => {
     vi.resetModules()
   })
 
-  it('exports useTheme function', async () => {
+  it('should export useTheme function', async () => {
     const { useTheme } = await import('./use-theme')
     expect(typeof useTheme).toBe('function')
   })
 
-  it('returns theme, toggleTheme, and setTheme', async () => {
+  it('should return theme, toggleTheme, and setTheme', async () => {
     const { useTheme } = await import('./use-theme')
     const result = useTheme()
 
@@ -42,14 +42,14 @@ describe('useTheme', () => {
     expect(result).toHaveProperty('setTheme')
   })
 
-  it('defaults to light theme when no preference stored', async () => {
+  it('should default to light theme when no preference stored', async () => {
     const { useTheme } = await import('./use-theme')
     const { theme } = useTheme()
 
     expect(theme.value).toBe('light')
   })
 
-  it('can toggle theme', async () => {
+  it('should toggle theme when toggleTheme is called', async () => {
     const { useTheme } = await import('./use-theme')
     const { theme, toggleTheme } = useTheme()
 
@@ -60,7 +60,7 @@ describe('useTheme', () => {
     expect(theme.value).toBe(initial)
   })
 
-  it('can set theme explicitly', async () => {
+  it('should set theme when setTheme is called', async () => {
     const { useTheme } = await import('./use-theme')
     const { setTheme, theme } = useTheme()
 

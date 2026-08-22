@@ -7,17 +7,18 @@
  * @module api/kanji
  */
 
-import { BaseRepository } from '@/api/base-repository'
-import { EntityNotFoundError } from '@/api/types'
-
 import { useDatabase } from '@/shared/composables/use-database'
 
+import { schedulePersist } from '@/db/indexeddb'
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
+import { BaseRepository } from '../base-repository'
+
+import type { ChildRepository, Orderable } from '../api-types'
 import type {
   CreateReadingGroupInput,
   KanjiMeaningReadingGroup,
   UpdateReadingGroupInput
 } from './reading-group-types'
-import type { ChildRepository, Orderable } from '@/api/types'
 
 // ============================================================================
 // Row Type
@@ -103,11 +104,11 @@ class ReadingGroupRepositoryImpl
 
   create(input: CreateReadingGroupInput): KanjiMeaningReadingGroup {
     // Get current max display_order for this kanji
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM kanji_meaning_reading_groups WHERE kanji_id = ?',
+    const maxOrder = this.getMaxDisplayOrder(
+      'kanji_meaning_reading_groups',
+      'WHERE kanji_id = ?',
       [input.kanjiId]
     )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     const sql = `
@@ -121,8 +122,10 @@ class ReadingGroupRepositoryImpl
     const newId = idResult[0]?.values[0]?.[0] as number
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to create reading group')
+      throw new CreateError('KanjiMeaningReadingGroup')
     }
+
+    schedulePersist()
     return created
   }
 
@@ -134,32 +137,42 @@ class ReadingGroupRepositoryImpl
     }
 
     // Build update query
-    const fields: string[] = []
+    const sets: string[] = []
     const values: unknown[] = []
 
     if (input.readingText !== undefined) {
-      fields.push('reading_text = ?')
+      sets.push('reading_text = ?')
       values.push(input.readingText)
     }
 
     // If no fields to update, return unchanged
-    if (fields.length === 0) {
+    if (sets.length === 0) {
       return existing
     }
 
+    sets.push("updated_at = datetime('now')")
     values.push(id)
-    const sql = `UPDATE kanji_meaning_reading_groups SET ${fields.join(', ')} WHERE id = ?`
+    const sql = `UPDATE kanji_meaning_reading_groups SET ${sets.join(', ')} WHERE id = ?`
     this.run(sql, values)
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('Failed to update reading group')
+      throw new UpdateError('KanjiMeaningReadingGroup', id)
     }
+
+    schedulePersist()
     return updated
   }
 
   remove(id: number): void {
-    this.run('DELETE FROM kanji_meaning_reading_groups WHERE id = ?', [id])
+    this.withTransaction(() => {
+      this.run(
+        'DELETE FROM kanji_meaning_group_members WHERE reading_group_id = ?',
+        [id]
+      )
+      this.run('DELETE FROM kanji_meaning_reading_groups WHERE id = ?', [id])
+    })
+    schedulePersist()
   }
 
   // ==========================================================================
@@ -167,12 +180,15 @@ class ReadingGroupRepositoryImpl
   // ==========================================================================
 
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run(
-        'UPDATE kanji_meaning_reading_groups SET display_order = ? WHERE id = ?',
-        [index, id]
-      )
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run(
+          'UPDATE kanji_meaning_reading_groups SET display_order = ? WHERE id = ?',
+          [index, id]
+        )
+      })
     })
+    schedulePersist()
   }
 }
 
@@ -180,12 +196,11 @@ class ReadingGroupRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a reading group repository instance bound to the active database.
+ * @returns Repository for managing kanji meaning reading groups (CRUD, reorder).
+ * @example const repo = useReadingGroupRepository(); repo.getByParentId(1)
+ */
 export function useReadingGroupRepository(): ReadingGroupRepositoryImpl {
   return new ReadingGroupRepositoryImpl()
-}
-
-export type {
-  CreateReadingGroupInput,
-  KanjiMeaningReadingGroup,
-  UpdateReadingGroupInput
 }

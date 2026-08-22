@@ -45,6 +45,7 @@ function isSelected(level: JoyoLevel): boolean {
   <div class="kanji-list-filter-joyo">
     <span class="kanji-list-filter-joyo-label">Joyo Level</span>
     <div class="kanji-list-filter-joyo-chips">
+      <!-- Raw <button>: chip/toggle needs full style override incompatible with BaseButton -->
       <button
         v-for="level in levels"
         :key="level"
@@ -89,11 +90,16 @@ function isSelected(level: JoyoLevel): boolean {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
 }
 
 .kanji-list-filter-joyo-chip:hover {
   background-color: var(--color-surface-hover);
+}
+
+.kanji-list-filter-joyo-chip:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .kanji-list-filter-joyo-chip-selected {

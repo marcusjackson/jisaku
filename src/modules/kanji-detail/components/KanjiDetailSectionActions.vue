@@ -58,6 +58,7 @@ function handleDeleteCancel(): void {
         </label>
         <BaseSwitch
           id="destructive-mode-switch"
+          aria-label="Destructive mode"
           data-testid="destructive-mode-switch"
           :model-value="props.destructiveMode"
           @update:model-value="handleDestructiveModeChange"

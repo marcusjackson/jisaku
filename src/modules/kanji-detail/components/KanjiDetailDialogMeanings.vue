@@ -10,6 +10,7 @@ import { computed, ref, watch } from 'vue'
 
 import { BaseButton, BaseDialog, BaseSwitch } from '@/base/components'
 
+import { useKanjiDetailMeaningGroupsDialogHandlers } from '../composables/use-kanji-detail-meaning-groups-dialog-handlers'
 import { useKanjiDetailMeaningsDialogHandlers } from '../composables/use-kanji-detail-meanings-dialog-handlers'
 
 import KanjiDetailMeaningsList from './KanjiDetailMeaningsList.vue'
@@ -94,20 +95,23 @@ const groupingToggle = computed({
 // Handlers
 const {
   addMeaning,
+  getUnassignedMeanings,
+  moveMeaning,
+  removeMeaning,
+  updateMeaningInfo,
+  updateMeaningText
+} = useKanjiDetailMeaningsDialogHandlers(editMeanings, editMembers, nextTempId)
+
+const {
   addReadingGroup,
   assignMeaningToGroup,
   getMeaningsInGroup,
-  getUnassignedMeanings,
-  moveMeaning,
   moveMeaningInGroup,
   moveReadingGroup,
-  removeMeaning,
   removeMeaningFromGroup,
   removeReadingGroup,
-  updateMeaningInfo,
-  updateMeaningText,
   updateReadingGroupText
-} = useKanjiDetailMeaningsDialogHandlers(
+} = useKanjiDetailMeaningGroupsDialogHandlers(
   editMeanings,
   editGroups,
   editMembers,
@@ -135,7 +139,10 @@ function handleSave(): void {
   >
     <div class="meanings-dialog-content">
       <!-- Grouping toggle -->
-      <div class="grouping-toggle">
+      <div
+        class="grouping-toggle"
+        data-testid="grouping-toggle"
+      >
         <BaseSwitch
           v-model="groupingToggle"
           label="Group meanings by readings"
@@ -219,7 +226,7 @@ function handleSave(): void {
   flex-direction: column;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
   background: var(--color-background-secondary);
 }
 

@@ -138,4 +138,40 @@ describe('usePositionTypeRepository', function () {
       expect(type1?.displayOrder).toBe(1)
     })
   })
+
+  describe('getUsageCount', () => {
+    it('returns 0 when position type is not used by any component occurrence', () => {
+      const repo = usePositionTypeRepository()
+      const count = repo.getUsageCount(1)
+
+      // Prepopulated test DB has no component_occurrences seeded, so usage is 0
+      expect(count).toBe(0)
+    })
+
+    it('returns positive count when position type is referenced by occurrences', () => {
+      // Create a kanji, component, and occurrence referencing position type id=1
+      testDb.run(`INSERT INTO kanjis (character) VALUES ('水')`)
+      const kanjiResult = testDb.exec('SELECT last_insert_rowid() as id')
+      const kanjiId = kanjiResult[0]?.values[0]?.[0] as number
+
+      testDb.run(
+        `INSERT INTO components (character, short_meaning) VALUES ('氵', 'water')`
+      )
+      const compResult = testDb.exec('SELECT last_insert_rowid() as id')
+      const componentId = compResult[0]?.values[0]?.[0] as number
+
+      testDb.run(
+        `INSERT INTO component_occurrences (kanji_id, component_id, position_type_id) VALUES (?, ?, 1)`,
+        [kanjiId, componentId]
+      )
+
+      const repo = usePositionTypeRepository()
+      expect(repo.getUsageCount(1)).toBe(1)
+    })
+
+    it('returns 0 for a position type id that does not exist', () => {
+      const repo = usePositionTypeRepository()
+      expect(repo.getUsageCount(9999)).toBe(0)
+    })
+  })
 })

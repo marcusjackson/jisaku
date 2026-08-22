@@ -56,7 +56,7 @@ describe('ComponentListSectionFilters', () => {
     // Get first button that contains "Filters" text
     const buttons = screen.getAllByRole('button')
     const filterButton = buttons.find((btn) =>
-      btn.textContent?.includes('Filters')
+      btn.textContent.includes('Filters')
     )
     expect(filterButton).toBeTruthy()
 
@@ -129,7 +129,7 @@ describe('ComponentListSectionFilters', () => {
     // Get the filter header toggle button to check aria-expanded
     const buttons = screen.getAllByRole('button')
     const filterHeaderButton = buttons.find((btn) =>
-      btn.textContent?.includes('Filters')
+      btn.textContent.includes('Filters')
     )
 
     // Should be expanded initially

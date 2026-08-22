@@ -28,7 +28,7 @@ const newRadicalCharacter = defineModel<string | undefined>(
 const radicalOptions = computed<ComboboxOption[]>(() =>
   props.allComponents.map((c) => ({
     value: String(c.id),
-    label: `${c.character}${c.kangxiMeaning ? ` (${c.kangxiMeaning})` : ''}`,
+    label: c.character + (c.kangxiMeaning ? ` (${c.kangxiMeaning})` : ''),
     character: c.character
   }))
 )
@@ -58,6 +58,7 @@ const handleCreateRadical = (character: string) => {
           v-if="searchTerm && searchTerm.length === 1"
           class="create-new"
         >
+          <!-- Raw <button>: inline create action needs custom list-item styling incompatible with BaseButton -->
           <button
             class="create-btn"
             type="button"
@@ -77,6 +78,7 @@ const handleCreateRadical = (character: string) => {
     <p
       v-if="newRadicalCharacter"
       class="notice"
+      data-testid="radical-creation-notice"
     >
       New: <strong>{{ newRadicalCharacter }}</strong>
     </p>

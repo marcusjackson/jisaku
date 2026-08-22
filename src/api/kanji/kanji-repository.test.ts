@@ -181,6 +181,48 @@ describe('useKanjiRepository', function () {
 
       expect(repo.getById(1)).toBeNull()
     })
+
+    it('removes related reading groups and group members on delete', () => {
+      testDb.run('INSERT INTO kanjis (character) VALUES (?)', ['水'])
+      const kanjiId = testDb.exec('SELECT last_insert_rowid() as id')[0]
+        ?.values[0]?.[0] as number
+
+      // Create a meaning
+      testDb.run(
+        'INSERT INTO kanji_meanings (kanji_id, meaning_text, additional_info, display_order) VALUES (?, ?, ?, ?)',
+        [kanjiId, 'water', null, 0]
+      )
+      const meaningId = testDb.exec('SELECT last_insert_rowid() as id')[0]
+        ?.values[0]?.[0] as number
+
+      // Create a reading group
+      testDb.run(
+        'INSERT INTO kanji_meaning_reading_groups (kanji_id, reading_text, display_order) VALUES (?, ?, ?)',
+        [kanjiId, 'すい', 0]
+      )
+      const groupId = testDb.exec('SELECT last_insert_rowid() as id')[0]
+        ?.values[0]?.[0] as number
+
+      // Create a group member
+      testDb.run(
+        'INSERT INTO kanji_meaning_group_members (reading_group_id, meaning_id, display_order) VALUES (?, ?, ?)',
+        [groupId, meaningId, 0]
+      )
+
+      const repo = useKanjiRepository()
+      repo.remove(kanjiId)
+
+      const groups = testDb.exec(
+        'SELECT * FROM kanji_meaning_reading_groups WHERE kanji_id = ?',
+        [kanjiId]
+      )
+      const members = testDb.exec(
+        'SELECT * FROM kanji_meaning_group_members WHERE reading_group_id = ?',
+        [groupId]
+      )
+      expect(groups[0]?.values ?? []).toHaveLength(0)
+      expect(members[0]?.values ?? []).toHaveLength(0)
+    })
   })
 
   describe('search', () => {

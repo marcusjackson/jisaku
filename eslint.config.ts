@@ -1,14 +1,15 @@
 import eslint from '@eslint/js'
+import vitest from '@vitest/eslint-plugin'
+import { defineConfig } from 'eslint/config'
 import eslintConfigPrettier from 'eslint-config-prettier'
 import importPlugin from 'eslint-plugin-import'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import sortDestructureKeys from 'eslint-plugin-sort-destructure-keys'
-import vitest from 'eslint-plugin-vitest'
 import pluginVue from 'eslint-plugin-vue'
+import vueA11y from 'eslint-plugin-vuejs-accessibility'
 import tseslint from 'typescript-eslint'
 
-// eslint-disable-next-line @typescript-eslint/no-deprecated
-export default tseslint.config(
+export default defineConfig([
   // Global ignores
   {
     ignores: [
@@ -18,11 +19,10 @@ export default tseslint.config(
       'playwright-report/**',
       'test-results/**',
       '*.min.js',
-      'ignore/**',
+      '_local/**',
+      'ignore/**', // Old task prompts and archived files - not runtime code
       'specs/**', // Specification documentation - not runtime code
-      '*.config.mjs', // Ignore plain JS/MJS config files
-      'src/legacy/**', // Legacy code - separate linting rules
-      'e2e/legacy/**' // Legacy E2E tests - will be rewritten
+      '*.config.mjs' // Ignore plain JS/MJS config files
     ]
   },
 
@@ -36,13 +36,41 @@ export default tseslint.config(
   // Vue rules
   ...pluginVue.configs['flat/recommended'],
 
+  // Vue accessibility rules
+  ...vueA11y.configs['flat/recommended'],
+
+  // Vue accessibility rule overrides
+  {
+    rules: {
+      // The default required: { every: ['nesting', 'id'] } requires BOTH wrapping
+      // AND a `for` attribute. Our components use explicit :for="id" associations
+      // (which satisfies the `id` check) without wrapping the control in the label.
+      // Changing to `some` allows either pattern, matching standard accessible HTML.
+      'vuejs-accessibility/label-has-for': [
+        'error',
+        { required: { some: ['nesting', 'id'] } }
+      ]
+    }
+  },
+
+  // Dialog components — autofocus on the first interactive element inside a
+  // modal dialog is correct focus management per WCAG 2.1 SC 2.4.3.
+  {
+    files: ['src/**/*Dialog*.vue'],
+    rules: { 'vuejs-accessibility/no-autofocus': 'off' }
+  },
+
   // TypeScript parser options for all TS-like files
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.vue'],
     languageOptions: {
       parserOptions: {
         parser: tseslint.parser,
-        project: ['./tsconfig.json'],
+        project: [
+          './tsconfig.json',
+          './tsconfig.test.json',
+          './tsconfig.e2e.json'
+        ],
         tsconfigRootDir: import.meta.dirname,
         extraFileExtensions: ['.vue']
       }
@@ -62,7 +90,7 @@ export default tseslint.config(
             // Vue imports
             ['^vue$', '^vue-router$'],
             // Third-party packages
-            ['^@?\\w'],
+            [String.raw`^@?\w`],
             // Base imports (@/base/)
             ['^@/base/'],
             // API layer imports (@/api/)
@@ -70,11 +98,11 @@ export default tseslint.config(
             // Shared imports (@/shared/)
             ['^@/shared/'],
             // Module/relative imports
-            ['^@/', '^\\.\\./'],
+            ['^@/', String.raw`^\.\.\/`],
             // Relative imports from same directory
-            ['^\\./'],
+            [String.raw`^\.\/`],
             // Type imports
-            ['^.*\\u0000$']
+            [String.raw`^.*\u0000$`]
           ]
         }
       ],
@@ -83,6 +111,9 @@ export default tseslint.config(
   },
 
   // Sort destructure keys plugin
+  // Workaround: the eslint-disable below can be removed once eslint-plugin-sort-destructure-keys
+  // ships ESLint 9 flat-config types (no TypeScript declarations currently).
+  // Tracked at: https://github.com/mthadley/eslint-plugin-sort-destructure-keys/issues/48
   {
     plugins: {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -125,21 +156,21 @@ export default tseslint.config(
     }
   },
 
-  // File size and complexity rules (new code only - legacy is ignored)
+  // File size and complexity rules (new code only)
   // Order matters: more specific patterns must come before general patterns
   //
-  // Note: skipBlankLines and skipComments are set to false to count actual file lines.
-  // This makes limits simpler to understand and verify. Limits are set higher to account
-  // for blank lines and comments (roughly +50 from the previous code-only limits).
+  // Note: skipBlankLines and skipComments are both set to true so that blank
+  // lines and comment lines are excluded from the count. Limits apply to
+  // code lines only, which keeps them predictable and tool-independent.
 
-  // Test files - most permissive (650 lines)
+  // Test files - most permissive (600 lines)
   // max-lines-per-function is disabled for test files because:
   // - describe() blocks naturally grow with comprehensive test coverage
   // - A repository test might have 20+ test cases, making 200+ line describe blocks normal
   // - The important metric is keeping individual it() callbacks short and focused
   // - Splitting describe blocks just to meet line limits reduces test cohesion
   // - This is standard practice in the testing community (Jest, Vitest, etc.)
-  // - We still enforce max-lines (650) on the overall test file to prevent runaway growth
+  // - We still enforce max-lines (600) on the overall test file to prevent runaway growth
   {
     files: ['**/*.test.ts', '**/*.spec.ts', 'test/**/*.ts', 'e2e/**/*.ts'],
     rules: {
@@ -185,7 +216,7 @@ export default tseslint.config(
     }
   },
 
-  // Composables (200 lines)
+  // Composables (200 lines) — general limit for all use-*.ts files
   {
     files: ['**/use-*.ts', '**/composables/use-*.ts'],
     ignores: ['**/*.test.ts', 'src/base/**'],
@@ -193,6 +224,31 @@ export default tseslint.config(
       'max-lines': [
         'error',
         { max: 200, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // Handler composables (150 lines) — more specific, overrides the general limit above
+  // Must come AFTER the general composables rule so it takes precedence
+  {
+    files: ['**/use-*-handlers.ts'],
+    ignores: ['**/*.test.ts', 'src/base/**'],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 150, skipBlankLines: true, skipComments: true }
+      ]
+    }
+  },
+
+  // State composables (120 lines) — more specific, overrides the general limit above
+  {
+    files: ['**/use-*-state.ts'],
+    ignores: ['**/*.test.ts', 'src/base/**'],
+    rules: {
+      'max-lines': [
+        'error',
+        { max: 120, skipBlankLines: true, skipComments: true }
       ]
     }
   },
@@ -221,31 +277,29 @@ export default tseslint.config(
     }
   },
 
-  // UI components (200 lines) - excluding Root, Section, Page, and Base
+  // UI components (225 lines) - excluding Root, Section, Page
+  // Note: base components are handled by the dedicated rule below
   {
     files: ['**/*.vue'],
-    ignores: [
-      '**/*Root*.vue',
-      '**/*Section*.vue',
-      '**/*Page.vue',
-      'src/base/**' // Base components are generic primitives with higher limits
-    ],
+    ignores: ['**/*Root*.vue', '**/*Section*.vue', '**/*Page.vue'],
     rules: {
       'max-lines': [
         'error',
-        { max: 200, skipBlankLines: true, skipComments: true }
+        { max: 225, skipBlankLines: true, skipComments: true }
       ]
     }
   },
 
-  // Base components (450 lines) - generic primitives that work in any project
-  // Higher limit because they are complete, self-contained components
+  // Base components (350 lines) - generic primitives that work in any project
+  // Higher than UI components because they are self-contained with
+  // accessibility handling, keyboard navigation, complex interactions, and
+  // shared global CSS that cannot easily be split across files.
   {
     files: ['src/base/components/**/*.vue'],
     rules: {
       'max-lines': [
         'error',
-        { max: 450, skipBlankLines: true, skipComments: true }
+        { max: 350, skipBlankLines: true, skipComments: true }
       ]
     }
   },
@@ -322,7 +376,7 @@ export default tseslint.config(
       'vue/multi-word-component-names': 'off', // Allow single-word page components
 
       // General
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': 'error',
       'prefer-const': 'error',
       'no-var': 'error'
     }
@@ -340,12 +394,12 @@ export default tseslint.config(
   {
     languageOptions: {
       globals: {
-        NodeJS: true
+        NodeJS: true,
+        __APP_VERSION__: 'readonly'
       }
     }
   },
 
   // Prettier (must be last to override other formatting rules)
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   eslintConfigPrettier
-)
+])

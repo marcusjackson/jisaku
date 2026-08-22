@@ -5,7 +5,9 @@
  * All entity repositories should extend this class.
  */
 
-import type { QueryResult } from './types'
+import { useDatabase } from '@/shared/composables/use-database'
+
+import type { QueryResult } from './api-types'
 
 /**
  * Abstract base class for repositories
@@ -63,13 +65,61 @@ export abstract class BaseRepository<T> {
    * Convert camelCase to snake_case for database columns
    */
   protected camelToSnake(str: string): string {
-    return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
+    return str.replaceAll(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
   }
 
   /**
    * Convert snake_case to camelCase for entity properties
    */
   protected snakeToCamel(str: string): string {
-    return str.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())
+    return str.replaceAll(/_([a-z])/g, (_, letter: string) =>
+      letter.toUpperCase()
+    )
+  }
+
+  /**
+   * Wrap a function in a database transaction.
+   *
+   * Rolls back automatically on error and re-throws.
+   *
+   * @example
+   * return this.withTransaction(() => {
+   *   this.run('DELETE ...')
+   *   this.run('INSERT ...')
+   * })
+   */
+  protected withTransaction<T>(fn: () => T): T {
+    const { run } = useDatabase()
+    run('BEGIN TRANSACTION')
+    try {
+      const result = fn()
+      run('COMMIT')
+      return result
+    } catch (err) {
+      run('ROLLBACK')
+      throw err
+    }
+  }
+
+  /**
+   * Get the current maximum `display_order` value in a table.
+   *
+   * Returns `-1` if the table is empty, so that the next insert
+   * can use `getMaxDisplayOrder(...) + 1` to place an item last.
+   *
+   * @param tableName - SQL table name (hardcoded constant — not user input)
+   * @param whereClause - Optional WHERE clause, e.g. `'WHERE kanji_id = ?'`
+   * @param params - Positional parameters for the WHERE clause
+   */
+  protected getMaxDisplayOrder(
+    tableName: string,
+    whereClause = '',
+    params: unknown[] = []
+  ): number {
+    const { exec } = useDatabase()
+    const clause = whereClause ? ` ${whereClause}` : ''
+    const sql = `SELECT MAX(display_order) as max_order FROM ${tableName}${clause}`
+    const result = exec(sql, params.length > 0 ? params : undefined)
+    return (result[0]?.values[0]?.[0] as number | null) ?? -1
   }
 }

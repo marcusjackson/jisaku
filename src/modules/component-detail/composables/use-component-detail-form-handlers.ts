@@ -90,6 +90,12 @@ function createUpdateHandler(
   }
 }
 
+/**
+ * Provides handlers for component form management (add, update, remove, reorder).
+ *
+ * @param deps - Component ID ref and forms list ref
+ * @returns Handlers for form CRUD and reorder operations
+ */
 export function useComponentDetailFormHandlers(
   deps: UseComponentDetailFormHandlersDeps
 ): UseComponentDetailFormHandlersReturn {

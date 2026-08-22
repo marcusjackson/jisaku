@@ -18,7 +18,7 @@ ALTER TABLE kanjis RENAME COLUMN jlpt_level TO jlpt_level_old;
 ALTER TABLE kanjis RENAME COLUMN jlpt_level_new TO jlpt_level;
 
 -- Recreate index on new column
-CREATE INDEX idx_kanjis_jlpt_level ON kanjis(jlpt_level);
+CREATE INDEX IF NOT EXISTS idx_kanjis_jlpt_level ON kanjis(jlpt_level);
 
 -- Drop the old column
 ALTER TABLE kanjis DROP COLUMN jlpt_level_old;
@@ -39,7 +39,7 @@ ALTER TABLE kanjis RENAME COLUMN joyo_level TO joyo_level_old;
 ALTER TABLE kanjis RENAME COLUMN joyo_level_new TO joyo_level;
 
 -- Recreate index on new column
-CREATE INDEX idx_kanjis_joyo_level ON kanjis(joyo_level);
+CREATE INDEX IF NOT EXISTS idx_kanjis_joyo_level ON kanjis(joyo_level);
 
 -- Drop the old column
 ALTER TABLE kanjis DROP COLUMN joyo_level_old;

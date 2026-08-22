@@ -178,7 +178,7 @@ const kanjiDetailRoute = computed(
 
 .occurrence-item-kanji {
   color: var(--color-text-primary);
-  font-family: var(--font-family-jp);
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
   text-decoration: none;
@@ -198,7 +198,7 @@ const kanjiDetailRoute = computed(
   display: inline-flex;
   align-items: center;
   padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background-color: var(--color-bg-secondary);
   color: var(--color-text-secondary);
@@ -210,7 +210,7 @@ const kanjiDetailRoute = computed(
   align-items: center;
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
-  background-color: var(--color-warning-subtle);
+  background-color: var(--color-warning-bg);
   color: var(--color-warning);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);

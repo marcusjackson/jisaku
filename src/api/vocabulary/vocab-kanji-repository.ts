@@ -10,44 +10,27 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
 import { BaseRepository } from '../base-repository'
-import { EntityNotFoundError } from '../types'
 
-import type { ChildRepository, Orderable } from '../types'
+import {
+  mapJoinedRow,
+  mapWithKanjiRow
+} from './vocab-kanji-repository-internals'
+
+import type { ChildRepository, Orderable } from '../api-types'
+import type {
+  VocabKanjiRow,
+  VocabKanjiWithKanjiRow,
+  VocabKanjiWithVocabularyRow
+} from './vocab-kanji-repository-internals'
 import type {
   CreateVocabKanjiInput,
   UpdateVocabKanjiInput,
   VocabKanji,
-  VocabKanjiWithVocabulary,
-  Vocabulary
+  VocabKanjiWithKanji,
+  VocabKanjiWithVocabulary
 } from './vocabulary-types'
-
-// ============================================================================
-// Row Type
-// ============================================================================
-
-interface VocabKanjiRow {
-  id: number
-  vocab_id: number
-  kanji_id: number
-  analysis_notes: string | null
-  display_order: number
-  created_at: string
-  updated_at: string
-}
-
-interface VocabKanjiWithVocabularyRow extends VocabKanjiRow {
-  v_id: number
-  v_word: string
-  v_kana: string
-  v_short_meaning: string | null
-  v_search_keywords: string | null
-  v_jlpt_level: string | null
-  v_is_common: number
-  v_description: string | null
-  v_created_at: string
-  v_updated_at: string
-}
 
 // ============================================================================
 // Repository Implementation
@@ -116,32 +99,41 @@ class VocabKanjiRepositoryImpl
     return this.resultToList(result)
   }
 
-  private mapJoinedRow(
-    row: VocabKanjiWithVocabularyRow
-  ): VocabKanjiWithVocabulary {
-    return {
-      vocabKanji: {
-        id: row.id,
-        vocabId: row.vocab_id,
-        kanjiId: row.kanji_id,
-        analysisNotes: row.analysis_notes,
-        displayOrder: row.display_order,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      },
-      vocabulary: {
-        id: row.v_id,
-        word: row.v_word,
-        kana: row.v_kana,
-        shortMeaning: row.v_short_meaning,
-        searchKeywords: row.v_search_keywords,
-        jlptLevel: row.v_jlpt_level as Vocabulary['jlptLevel'],
-        isCommon: Boolean(row.v_is_common),
-        description: row.v_description,
-        createdAt: row.v_created_at,
-        updatedAt: row.v_updated_at
-      }
-    }
+  getByVocabIdWithKanji(vocabId: number): VocabKanjiWithKanji[] {
+    const result = this.exec(
+      `SELECT
+        vk.id, vk.vocab_id, vk.kanji_id, vk.analysis_notes, vk.display_order,
+        vk.created_at, vk.updated_at,
+        k.id as k_id, k.character as k_character,
+        k.stroke_count as k_stroke_count, k.short_meaning as k_short_meaning,
+        k.search_keywords as k_search_keywords, k.radical_id as k_radical_id,
+        k.jlpt_level as k_jlpt_level, k.joyo_level as k_joyo_level,
+        k.kanji_kentei_level as k_kanji_kentei_level,
+        k.stroke_diagram_image as k_stroke_diagram_image,
+        k.stroke_gif_image as k_stroke_gif_image,
+        k.notes_etymology as k_notes_etymology,
+        k.notes_semantic as k_notes_semantic,
+        k.notes_education_mnemonics as k_notes_education_mnemonics,
+        k.notes_personal as k_notes_personal,
+        k.identifier as k_identifier,
+        k.radical_stroke_count as k_radical_stroke_count,
+        k.created_at as k_created_at, k.updated_at as k_updated_at
+      FROM vocab_kanji vk
+      JOIN kanjis k ON k.id = vk.kanji_id
+      WHERE vk.vocab_id = ?
+      ORDER BY vk.display_order`,
+      [vocabId]
+    )
+    if (!result[0]) return []
+    const { columns, values } = result[0]
+    return values.map((row) =>
+      mapWithKanjiRow(
+        this.rowToObject({
+          columns,
+          values: [row]
+        }) as unknown as VocabKanjiWithKanjiRow
+      )
+    )
   }
 
   getByKanjiIdWithVocabulary(kanjiId: number): VocabKanjiWithVocabulary[] {
@@ -165,16 +157,15 @@ class VocabKanjiRepositoryImpl
       return []
     }
 
-    const columns = result[0].columns
-    const rows = result[0].values
-
-    return rows.map((row) => {
-      const obj: Record<string, unknown> = {}
-      columns.forEach((col, idx) => {
-        obj[col] = row[idx]
-      })
-      return this.mapJoinedRow(obj as unknown as VocabKanjiWithVocabularyRow)
-    })
+    const firstResult = result[0]
+    return firstResult.values.map((row) =>
+      mapJoinedRow(
+        this.rowToObject({
+          columns: firstResult.columns,
+          values: [row]
+        }) as unknown as VocabKanjiWithVocabularyRow
+      )
+    )
   }
 
   // ==========================================================================
@@ -182,11 +173,11 @@ class VocabKanjiRepositoryImpl
   // ==========================================================================
 
   create(input: CreateVocabKanjiInput): VocabKanji {
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM vocab_kanji WHERE vocab_id = ?',
+    const maxOrder = this.getMaxDisplayOrder(
+      'vocab_kanji',
+      'WHERE vocab_id = ?',
       [input.vocabId]
     )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     this.run(
@@ -199,7 +190,7 @@ class VocabKanjiRepositoryImpl
     const newId = idResult[0]?.values[0]?.[0] as number
 
     const created = this.getById(newId)
-    if (!created) throw new Error('Failed to retrieve created vocab-kanji link')
+    if (!created) throw new CreateError('VocabKanji')
 
     schedulePersist()
     return created
@@ -222,13 +213,13 @@ class VocabKanjiRepositoryImpl
     }
     if (sets.length === 0) return existing
 
-    sets.push('updated_at = datetime("now")')
+    sets.push("updated_at = datetime('now')")
     values.push(id)
 
     this.run(`UPDATE vocab_kanji SET ${sets.join(', ')} WHERE id = ?`, values)
 
     const updated = this.getById(id)
-    if (!updated) throw new Error('VocabKanji disappeared after update')
+    if (!updated) throw new UpdateError('VocabKanji', id)
 
     schedulePersist()
     return updated
@@ -249,11 +240,13 @@ class VocabKanjiRepositoryImpl
   // ==========================================================================
 
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run('UPDATE vocab_kanji SET display_order = ? WHERE id = ?', [
-        index,
-        id
-      ])
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run('UPDATE vocab_kanji SET display_order = ? WHERE id = ?', [
+          index,
+          id
+        ])
+      })
     })
     schedulePersist()
   }
@@ -263,13 +256,11 @@ class VocabKanjiRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a vocab-kanji repository instance bound to the active database.
+ * @returns Repository for managing kanji links within vocabulary entries (CRUD, reorder).
+ * @example const repo = useVocabKanjiRepository(); repo.getByParentId(1)
+ */
 export function useVocabKanjiRepository(): VocabKanjiRepositoryImpl {
   return new VocabKanjiRepositoryImpl()
-}
-
-export type {
-  CreateVocabKanjiInput,
-  UpdateVocabKanjiInput,
-  VocabKanji,
-  VocabKanjiWithVocabulary
 }

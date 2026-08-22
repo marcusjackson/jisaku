@@ -1,11 +1,10 @@
-<!--
-KanjiDetailReadingGroupsList
-
-List component for managing reading groups in the meanings dialog.
-Extracted from KanjiDetailDialogMeanings to keep file size under limit.
--->
-
 <script setup lang="ts">
+/**
+ * @component KanjiDetailReadingGroupsList
+ *
+ * List component for managing reading groups in the meanings dialog.
+ * Extracted from KanjiDetailDialogMeanings to keep file size under limit.
+ */
 import { BaseButton, BaseInput, BaseSelect } from '@/base/components'
 
 import type { EditMeaning, EditReadingGroup } from '../kanji-detail-types'
@@ -178,7 +177,7 @@ function getMeaningLabel(meaning: EditMeaning): string {
 .reading-group {
   padding: var(--spacing-md);
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
   background: var(--color-surface);
 }
 

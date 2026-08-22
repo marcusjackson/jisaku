@@ -11,7 +11,6 @@ import { RouterLink } from 'vue-router'
 import { ROUTES } from '@/router/routes'
 
 import SharedHeaderSettingsIcon from './SharedHeaderSettingsIcon.vue'
-import SharedSwitchNewUi from './SharedSwitchNewUi.vue'
 </script>
 
 <template>
@@ -19,7 +18,6 @@ import SharedSwitchNewUi from './SharedSwitchNewUi.vue'
     aria-label="Main navigation"
     class="shared-header-nav"
   >
-    <SharedSwitchNewUi />
     <RouterLink
       class="shared-header-link"
       :to="ROUTES.KANJI_LIST"
@@ -94,29 +92,6 @@ import SharedSwitchNewUi from './SharedSwitchNewUi.vue'
   padding: var(--spacing-1) var(--spacing-1);
 }
 
-/* Version toggle styling */
-:deep(.shared-switch-new-ui) {
-  margin-left: var(--spacing-xs);
-}
-
-:deep(.base-switch-wrapper) {
-  gap: var(--spacing-1);
-}
-
-:deep(.base-switch-root) {
-  width: 32px;
-  height: 18px;
-}
-
-:deep(.base-switch-thumb) {
-  width: 14px;
-  height: 14px;
-}
-
-:deep(.base-switch-root[data-state='checked'] .base-switch-thumb) {
-  transform: translateX(14px);
-}
-
 /* Tablet and larger */
 @media (width >= 768px) {
   .shared-header-nav {
@@ -132,21 +107,6 @@ import SharedSwitchNewUi from './SharedSwitchNewUi.vue'
     width: auto;
     height: auto;
     padding: var(--spacing-2) var(--spacing-2);
-  }
-
-  /* Switch larger on tablet+ */
-  :deep(.base-switch-root) {
-    width: 44px;
-    height: 24px;
-  }
-
-  :deep(.base-switch-thumb) {
-    width: 20px;
-    height: 20px;
-  }
-
-  :deep(.base-switch-root[data-state='checked'] .base-switch-thumb) {
-    transform: translateX(20px);
   }
 }
 </style>

@@ -137,7 +137,7 @@ const canMoveDown = computed(() => props.index < props.total - 1)
 
 .form-item-character {
   color: var(--color-text-primary);
-  font-family: var(--font-family-jp);
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
 }

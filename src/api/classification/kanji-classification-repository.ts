@@ -10,9 +10,10 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import { CreateError } from '../api-types'
 import { BaseRepository } from '../base-repository'
 
-import type { ChildRepository, Orderable } from '../types'
+import type { ChildRepository, Orderable } from '../api-types'
 import type {
   ClassificationType,
   CreateKanjiClassificationInput,
@@ -37,6 +38,8 @@ interface JoinedRow extends KanjiClassificationRow {
   description: string | null
   description_short: string | null
   type_display_order: number
+  type_created_at: string
+  type_updated_at: string
 }
 
 // ============================================================================
@@ -80,7 +83,9 @@ class KanjiClassificationRepositoryImpl
       nameEnglish: r.name_english,
       description: r.description,
       descriptionShort: r.description_short,
-      displayOrder: r.type_display_order
+      displayOrder: r.type_display_order,
+      createdAt: r.type_created_at,
+      updatedAt: r.type_updated_at
     }
     return {
       id: r.id,
@@ -127,7 +132,8 @@ class KanjiClassificationRepositoryImpl
         kc.id, kc.kanji_id, kc.classification_type_id, kc.display_order,
         ct.type_name, ct.name_japanese, ct.name_english, 
         ct.description, ct.description_short,
-        ct.display_order as type_display_order
+        ct.display_order as type_display_order,
+        ct.created_at as type_created_at, ct.updated_at as type_updated_at
        FROM kanji_classifications kc
        JOIN classification_types ct ON ct.id = kc.classification_type_id
        WHERE kc.kanji_id = ?
@@ -135,15 +141,12 @@ class KanjiClassificationRepositoryImpl
       [kanjiId]
     )
     if (!result[0]) return []
-    // Use resultToList pattern but with custom mapper
     const firstResult = result[0]
-    return firstResult.values.map((row) => {
-      const obj: Record<string, unknown> = {}
-      firstResult.columns.forEach((col, i) => {
-        obj[col] = row[i]
-      })
-      return this.mapJoinedRow(obj)
-    })
+    return firstResult.values.map((row) =>
+      this.mapJoinedRow(
+        this.rowToObject({ columns: firstResult.columns, values: [row] })
+      )
+    )
   }
 
   // ==========================================================================
@@ -151,11 +154,11 @@ class KanjiClassificationRepositoryImpl
   // ==========================================================================
 
   create(input: CreateKanjiClassificationInput): KanjiClassification {
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM kanji_classifications WHERE kanji_id = ?',
+    const maxOrder = this.getMaxDisplayOrder(
+      'kanji_classifications',
+      'WHERE kanji_id = ?',
       [input.kanjiId]
     )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     this.run(
@@ -169,7 +172,7 @@ class KanjiClassificationRepositoryImpl
 
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created kanji classification')
+      throw new CreateError('KanjiClassification')
     }
 
     schedulePersist()
@@ -203,11 +206,13 @@ class KanjiClassificationRepositoryImpl
   // ==========================================================================
 
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run(
-        'UPDATE kanji_classifications SET display_order = ? WHERE id = ?',
-        [index, id]
-      )
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run(
+          'UPDATE kanji_classifications SET display_order = ? WHERE id = ?',
+          [index, id]
+        )
+      })
     })
     schedulePersist()
   }
@@ -217,8 +222,11 @@ class KanjiClassificationRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a kanji classification repository instance bound to the active database.
+ * @returns Repository for managing kanji-to-classification-type assignments.
+ * @example const repo = useKanjiClassificationRepository(); repo.getByParentId(1)
+ */
 export function useKanjiClassificationRepository(): KanjiClassificationRepositoryImpl {
   return new KanjiClassificationRepositoryImpl()
 }
-
-export type { CreateKanjiClassificationInput, KanjiClassification }

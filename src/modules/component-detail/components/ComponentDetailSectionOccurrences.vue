@@ -8,6 +8,8 @@
 
 import { computed, ref } from 'vue'
 
+import { BaseButton } from '@/base/components'
+
 import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
 import SharedSection from '@/shared/components/SharedSection.vue'
 
@@ -176,14 +178,14 @@ defineExpose({ excludedKanjiIds })
     title="Kanji Occurrences"
   >
     <template #actions="{ isOpen }">
-      <button
+      <BaseButton
         v-if="isOpen"
-        class="add-button"
-        type="button"
+        size="sm"
+        variant="secondary"
         @click="handleAddClick"
       >
         Add Kanji
-      </button>
+      </BaseButton>
     </template>
 
     <div class="occurrences-content">
@@ -249,20 +251,6 @@ defineExpose({ excludedKanjiIds })
 </template>
 
 <style scoped>
-.add-button {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  background-color: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-}
-
-.add-button:hover {
-  background-color: var(--color-bg-tertiary);
-}
-
 .occurrences-content {
   padding: var(--spacing-md) 0;
 }

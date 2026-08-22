@@ -8,7 +8,6 @@
  */
 
 import { FILTER_QUERY_KEYS, type KanjiListFilters } from '../kanji-list-types'
-
 import {
   parseAnalysisFilters,
   parseJlptLevels,
@@ -17,7 +16,7 @@ import {
   parseNumber,
   parseNumberArray,
   parseStrokeOrderFilter
-} from './url-parsers'
+} from '../utils/url-parsers'
 
 import type { Ref } from 'vue'
 

@@ -126,7 +126,7 @@ function handleFieldChange(field: string, value: unknown): void {
   flex-direction: column;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background-color: var(--color-bg-secondary);
 }

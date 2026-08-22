@@ -305,4 +305,69 @@ describe('useVocabKanjiRepository', function () {
       expect(links[1]?.kanjiId).toBe(kanjiId)
     })
   })
+
+  describe('getByVocabIdWithKanji', () => {
+    it('returns empty array when no links exist', () => {
+      const repo = useVocabKanjiRepository()
+      expect(repo.getByVocabIdWithKanji(vocabId)).toEqual([])
+    })
+
+    it('returns one record with correct kanji shape', () => {
+      testDb.run(
+        'INSERT INTO vocab_kanji (vocab_id, kanji_id, display_order, analysis_notes) VALUES (?, ?, ?, ?)',
+        [vocabId, kanjiId, 0, 'sunrise kanji']
+      )
+
+      const repo = useVocabKanjiRepository()
+      const results = repo.getByVocabIdWithKanji(vocabId)
+
+      expect(results).toHaveLength(1)
+      expect(results[0]?.vocabId).toBe(vocabId)
+      expect(results[0]?.kanjiId).toBe(kanjiId)
+      expect(results[0]?.analysisNotes).toBe('sunrise kanji')
+      expect(results[0]?.kanji).toBeDefined()
+      expect(results[0]?.kanji.character).toBe('明')
+      expect(results[0]?.kanji.strokeCount).toBe(8)
+    })
+
+    it('returns multiple records ordered by display_order', () => {
+      testDb.run('INSERT INTO kanjis (character, stroke_count) VALUES (?, ?)', [
+        '日',
+        4
+      ])
+      const secondKanjiId = testDb.exec('SELECT last_insert_rowid() as id')[0]
+        ?.values[0]?.[0] as number
+
+      testDb.run(
+        'INSERT INTO vocab_kanji (vocab_id, kanji_id, display_order) VALUES (?, ?, ?)',
+        [vocabId, secondKanjiId, 0]
+      )
+      testDb.run(
+        'INSERT INTO vocab_kanji (vocab_id, kanji_id, display_order) VALUES (?, ?, ?)',
+        [vocabId, kanjiId, 1]
+      )
+
+      const repo = useVocabKanjiRepository()
+      const results = repo.getByVocabIdWithKanji(vocabId)
+
+      expect(results).toHaveLength(2)
+      expect(results[0]?.kanji.character).toBe('日')
+      expect(results[1]?.kanji.character).toBe('明')
+    })
+
+    it('omits orphaned vocab_kanji entries with missing kanji', () => {
+      // Temporarily disable FK constraints so we can insert an orphaned link
+      testDb.run('PRAGMA foreign_keys = OFF')
+      testDb.run(
+        'INSERT INTO vocab_kanji (vocab_id, kanji_id, display_order) VALUES (?, ?, ?)',
+        [vocabId, 99999, 0]
+      )
+      testDb.run('PRAGMA foreign_keys = ON')
+
+      const repo = useVocabKanjiRepository()
+      // JOIN silently drops orphaned references; valid entries are still returned
+      const results = repo.getByVocabIdWithKanji(vocabId)
+      expect(results.every((r) => r.kanji.id !== 99999)).toBe(true)
+    })
+  })
 })

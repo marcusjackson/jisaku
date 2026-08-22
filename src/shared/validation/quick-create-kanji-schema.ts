@@ -7,11 +7,10 @@
 
 import { z } from 'zod'
 
+import { singleCharacterSchema } from './common-schemas'
+
 export const quickCreateKanjiSchema = z.object({
-  character: z
-    .string()
-    .min(1, 'Character is required')
-    .max(1, 'Must be a single character'),
+  character: singleCharacterSchema,
 
   shortMeaning: z.string().optional(),
 

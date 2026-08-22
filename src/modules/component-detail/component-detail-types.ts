@@ -65,3 +65,11 @@ export interface OccurrenceUpdateData {
   isRadical: boolean
   analysisNotes: string | null
 }
+
+/**
+ * Data emitted when grouping dialog is submitted (add or edit)
+ */
+export interface GroupingFormData {
+  name: string
+  description: string | null
+}

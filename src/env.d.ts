@@ -15,6 +15,12 @@ declare module '*.vue' {
 // Modules without type declarations
 declare module 'eslint-config-prettier'
 declare module 'eslint-plugin-sort-destructure-keys'
+
+// sql.js manual type declaration
+// We declare a minimal subset of the sql.js API rather than using @types/sql.js.
+// The @types package uses BindParams / SqlValue types that don't align with the
+// project's usage patterns (arrays of mixed primitives), and the full declaration
+// triggers import-resolution conflicts with the manual module augmentation below.
 declare module 'sql.js' {
   export interface Database {
     run(sql: string, params?: unknown[]): Database

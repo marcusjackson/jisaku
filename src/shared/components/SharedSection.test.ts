@@ -81,6 +81,18 @@ describe('SharedSection', () => {
       expect(screen.getByText('Visible Content')).toBeInTheDocument()
     })
 
+    it('starts open when defaultOpen is not provided (BSS-H2 regression)', async () => {
+      // When defaultOpen is omitted, the section must default to open (not falsy-closed)
+      const { container } = render(SharedSection, {
+        props: { title: 'Default Open Section', collapsible: true },
+        slots: { default: '<p>Default Content</p>' }
+      })
+
+      await nextTick()
+      const root = container.querySelector('.shared-section-collapsible')
+      expect(root?.getAttribute('data-state')).toBe('open')
+    })
+
     it('starts closed when defaultOpen is false', async () => {
       const { container } = render(SharedSection, {
         props: {

@@ -86,7 +86,7 @@ describe('useDatabase', function () {
       run: vi.fn(),
       export: vi.fn(() => new Uint8Array([1, 2, 3])),
       close: vi.fn()
-    } as unknown as Database
+    }
 
     vi.clearAllMocks()
     mockIDBStore.clear()

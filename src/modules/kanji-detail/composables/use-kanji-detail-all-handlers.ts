@@ -16,7 +16,7 @@ import type {
 import type { Kanji } from '@/api/kanji'
 import type { Ref } from 'vue'
 
-interface AllHandlers {
+interface UseKanjiDetailAllHandlersReturn {
   // Save handlers
   handleBasicInfoSave: (data: BasicInfoSaveData) => void
   handleMeaningsSave: (data: MeaningsSaveData) => void
@@ -31,12 +31,21 @@ interface AllHandlers {
   handleStrokeAnimationSave: (value: Uint8Array | null) => void
 }
 
+/**
+ * Facade composable combining all kanji detail handlers into a single interface.
+ *
+ * @param kanji - Reactive reference to the current kanji
+ * @param saveBasicInfo - Handler for saving basic info changes
+ * @param handleSaveReadings - Handler for saving readings changes
+ * @param handleSaveMeanings - Handler for saving meanings changes
+ * @returns Combined handlers for notes, save, and stroke operations
+ */
 export function useKanjiDetailAllHandlers(
   kanji: Ref<Kanji | null>,
   saveBasicInfo: (data: BasicInfoSaveData) => void,
   handleSaveReadings: (data: ReadingsSaveData) => void,
   handleSaveMeanings: (data: MeaningsSaveData) => void
-): AllHandlers {
+): UseKanjiDetailAllHandlersReturn {
   const { handleBasicInfoSave, handleMeaningsSave, handleReadingsSave } =
     useKanjiDetailSaveHandlers(
       saveBasicInfo,

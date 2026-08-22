@@ -8,6 +8,8 @@
 
 import { computed, ref } from 'vue'
 
+import { BaseButton } from '@/base/components'
+
 import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
 import SharedSection from '@/shared/components/SharedSection.vue'
 
@@ -144,14 +146,14 @@ function handleMoveDown(index: number) {
     title="Forms"
   >
     <template #actions="{ isOpen }">
-      <button
+      <BaseButton
         v-if="isOpen"
-        class="add-button"
-        type="button"
+        size="sm"
+        variant="secondary"
         @click="handleAddClick"
       >
         Add
-      </button>
+      </BaseButton>
     </template>
 
     <div class="forms-content">
@@ -186,16 +188,16 @@ function handleMoveDown(index: number) {
 
   <!-- Add Dialog -->
   <ComponentDetailDialogForm
+    v-model:open="showAddDialog"
     :form="null"
-    :open="showAddDialog"
     @cancel="handleAddCancel"
     @submit="handleAddSubmit"
   />
 
   <!-- Edit Dialog -->
   <ComponentDetailDialogForm
+    v-model:open="showEditDialog"
     :form="editingForm"
-    :open="showEditDialog"
     @cancel="handleEditCancel"
     @submit="handleEditSubmit"
   />
@@ -213,20 +215,6 @@ function handleMoveDown(index: number) {
 </template>
 
 <style scoped>
-.add-button {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  background-color: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-}
-
-.add-button:hover {
-  background-color: var(--color-bg-tertiary);
-}
-
 .forms-content {
   padding: var(--spacing-md) 0;
 }

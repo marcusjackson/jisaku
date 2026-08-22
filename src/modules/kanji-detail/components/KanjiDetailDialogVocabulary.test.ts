@@ -205,7 +205,7 @@ describe('KanjiDetailDialogVocabulary', () => {
       const input = screen.getByRole('textbox')
       await user.type(input, 'unknown')
 
-      const createButton = screen.getByTestId('vocabulary-search-create-button')
+      const createButton = screen.getByRole('button', { name: /create/i })
       await user.click(createButton)
 
       // Quick-create form should appear
@@ -228,7 +228,7 @@ describe('KanjiDetailDialogVocabulary', () => {
       const input = screen.getByRole('textbox')
       await user.type(input, 'unknown')
 
-      const createButton = screen.getByTestId('vocabulary-search-create-button')
+      const createButton = screen.getByRole('button', { name: /create/i })
       await user.click(createButton)
 
       // Should NOT emit update:open when showing quick-create form
@@ -267,7 +267,7 @@ describe('KanjiDetailDialogVocabulary', () => {
       const input = screen.getByRole('textbox')
       await user.type(input, '新語')
 
-      const createButton = screen.getByTestId('vocabulary-search-create-button')
+      const createButton = screen.getByRole('button', { name: /create/i })
       await user.click(createButton)
 
       await waitFor(() => {
@@ -289,7 +289,7 @@ describe('KanjiDetailDialogVocabulary', () => {
       // Enter search mode and click create
       const searchInput = screen.getByRole('textbox')
       await user.type(searchInput, '新語')
-      const createButton = screen.getByTestId('vocabulary-search-create-button')
+      const createButton = screen.getByRole('button', { name: /create/i })
       await user.click(createButton)
 
       // Fill quick-create form
@@ -330,7 +330,7 @@ describe('KanjiDetailDialogVocabulary', () => {
       // Enter quick-create mode
       const searchInput = screen.getByRole('textbox')
       await user.type(searchInput, '新語')
-      const createButton = screen.getByTestId('vocabulary-search-create-button')
+      const createButton = screen.getByRole('button', { name: /create/i })
       await user.click(createButton)
 
       // Fill and submit form
@@ -362,7 +362,7 @@ describe('KanjiDetailDialogVocabulary', () => {
       // Enter quick-create mode
       const searchInput = screen.getByRole('textbox')
       await user.type(searchInput, '新語')
-      const createButton = screen.getByTestId('vocabulary-search-create-button')
+      const createButton = screen.getByRole('button', { name: /create/i })
       await user.click(createButton)
 
       // Cancel quick-create
@@ -423,7 +423,9 @@ describe('KanjiDetailDialogVocabulary', () => {
         }
       })
 
-      expect(screen.getByTestId('vocabulary-remove-button')).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /remove vocabulary link/i })
+      ).toBeInTheDocument()
     })
 
     it('shows confirmation dialog when remove button is clicked', async () => {
@@ -437,7 +439,9 @@ describe('KanjiDetailDialogVocabulary', () => {
         }
       })
 
-      const removeButton = screen.getByTestId('vocabulary-remove-button')
+      const removeButton = screen.getByRole('button', {
+        name: /remove vocabulary link/i
+      })
       await user.click(removeButton)
 
       // Confirmation dialog should appear
@@ -458,7 +462,9 @@ describe('KanjiDetailDialogVocabulary', () => {
       })
 
       // Click remove button
-      const removeButton = screen.getByTestId('vocabulary-remove-button')
+      const removeButton = screen.getByRole('button', {
+        name: /remove vocabulary link/i
+      })
       await user.click(removeButton)
 
       // Wait for confirmation dialog
@@ -491,7 +497,9 @@ describe('KanjiDetailDialogVocabulary', () => {
       })
 
       // Click remove button
-      const removeButton = screen.getByTestId('vocabulary-remove-button')
+      const removeButton = screen.getByRole('button', {
+        name: /remove vocabulary link/i
+      })
       await user.click(removeButton)
 
       // Wait for confirmation dialog

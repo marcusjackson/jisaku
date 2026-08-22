@@ -38,7 +38,9 @@ describe('ComponentDetailDialogEditOccurrence', () => {
       nameJapanese: '偏',
       nameEnglish: 'left',
       description: null,
-      displayOrder: 0
+      displayOrder: 0,
+      createdAt: '2024-01-01T00:00:00',
+      updatedAt: '2024-01-01T00:00:00'
     }
   }
 
@@ -49,7 +51,9 @@ describe('ComponentDetailDialogEditOccurrence', () => {
       nameJapanese: '偏',
       nameEnglish: 'Left side',
       description: null,
-      displayOrder: 0
+      displayOrder: 0,
+      createdAt: '2024-01-01T00:00:00',
+      updatedAt: '2024-01-01T00:00:00'
     },
     {
       id: 2,
@@ -57,7 +61,9 @@ describe('ComponentDetailDialogEditOccurrence', () => {
       nameJapanese: '旁',
       nameEnglish: 'Right side',
       description: null,
-      displayOrder: 1
+      displayOrder: 1,
+      createdAt: '2024-01-01T00:00:00',
+      updatedAt: '2024-01-01T00:00:00'
     }
   ]
 

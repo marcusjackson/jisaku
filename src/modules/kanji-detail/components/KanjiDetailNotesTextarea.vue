@@ -88,7 +88,8 @@ function handleKeydown(event: KeyboardEvent): void {
 
 <template>
   <!-- Display mode -->
-  <div
+  <!-- Raw <button>: display/edit trigger needs custom textarea styling incompatible with BaseButton -->
+  <button
     v-if="!isEditing"
     class="notes-textarea-display"
     :class="{
@@ -96,10 +97,13 @@ function handleKeydown(event: KeyboardEvent): void {
       'notes-textarea-disabled': disabled
     }"
     data-testid="notes-display"
+    :disabled="disabled"
+    type="button"
     @click="enterEditMode"
   >
-    {{ displayText }}
-  </div>
+    <span class="notes-textarea-label">Notes:</span>
+    <span class="notes-textarea-content">{{ displayText }}</span>
+  </button>
 
   <!-- Edit mode -->
   <div
@@ -109,6 +113,7 @@ function handleKeydown(event: KeyboardEvent): void {
   >
     <textarea
       v-model="editValue"
+      aria-label="Notes"
       class="notes-textarea-input"
       rows="4"
       @keydown="handleKeydown"
@@ -134,11 +139,18 @@ function handleKeydown(event: KeyboardEvent): void {
 
 <style scoped>
 .notes-textarea-display {
+  appearance: none;
+  display: block;
+  width: 100%;
   min-height: var(--spacing-lg);
   padding: var(--spacing-sm);
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   cursor: pointer;
@@ -146,7 +158,12 @@ function handleKeydown(event: KeyboardEvent): void {
 }
 
 .notes-textarea-display:hover:not(.notes-textarea-disabled) {
-  border-color: var(--color-border-hover);
+  border-color: var(--color-border-focus);
+}
+
+.notes-textarea-display:focus-visible:not(.notes-textarea-disabled) {
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .notes-textarea-placeholder {
@@ -167,7 +184,7 @@ function handleKeydown(event: KeyboardEvent): void {
 
 .notes-textarea-input {
   width: 100%;
-  min-height: 100px;
+  min-height: 6.25rem;
   padding: var(--spacing-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -175,7 +192,7 @@ function handleKeydown(event: KeyboardEvent): void {
   color: var(--color-text-primary);
   font-family: inherit;
   font-size: var(--font-size-base);
-  line-height: var(--line-height-base);
+  line-height: var(--line-height-normal);
   resize: vertical;
 }
 

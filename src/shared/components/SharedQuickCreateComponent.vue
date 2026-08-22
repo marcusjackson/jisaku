@@ -6,6 +6,10 @@
  * Fields: character, short_meaning
  *
  * Note: search_keywords, stroke_count, and radical details can be added later on the detail page.
+ *
+ * @internal Not exported from the shared barrel (src/shared/components/index.ts).
+ * Used directly by KanjiDetailDialogComponents.vue for the quick-create
+ * component workflow in the kanji-detail module.
  */
 
 import { computed, watch } from 'vue'

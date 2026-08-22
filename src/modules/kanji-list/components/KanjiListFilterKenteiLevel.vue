@@ -50,6 +50,7 @@ function isSelected(level: KanjiKenteiLevel): boolean {
   <div class="kanji-list-filter-kentei">
     <span class="kanji-list-filter-kentei-label">Kanji Kentei Level</span>
     <div class="kanji-list-filter-kentei-chips">
+      <!-- Raw <button>: chip/toggle needs full style override incompatible with BaseButton -->
       <button
         v-for="level in levels"
         :key="level"
@@ -94,11 +95,16 @@ function isSelected(level: KanjiKenteiLevel): boolean {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
 }
 
 .kanji-list-filter-kentei-chip:hover {
   background-color: var(--color-surface-hover);
+}
+
+.kanji-list-filter-kentei-chip:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .kanji-list-filter-kentei-chip-selected {

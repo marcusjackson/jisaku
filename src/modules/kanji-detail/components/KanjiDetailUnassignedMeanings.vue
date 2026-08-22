@@ -36,7 +36,7 @@ defineProps<{
   gap: var(--spacing-xs);
   padding: var(--spacing-md);
   border: 1px dashed var(--color-border);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
   background: var(--color-surface);
 }
 

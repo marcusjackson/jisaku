@@ -13,7 +13,7 @@ export type {
   QueryResult,
   Repository,
   UpdatableField
-} from './types'
+} from './api-types'
 
 // Error classes
 export {
@@ -22,11 +22,10 @@ export {
   EntityNotFoundError,
   RepositoryError,
   UpdateError
-} from './types'
+} from './api-types'
 
 // Base classes and utilities
 export { BaseRepository } from './base-repository'
-export { autoPersist, withAutoPersist } from './persistence'
 
 // ============================================================================
 // Module re-exports (add as repositories are implemented)

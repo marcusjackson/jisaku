@@ -7,6 +7,8 @@
 
 import { ref } from 'vue'
 
+import { generateUUID } from '@/shared/utils/uuid-utils'
+
 // =============================================================================
 // Constants
 // =============================================================================
@@ -39,7 +41,6 @@ export interface ToastInput {
 // =============================================================================
 
 const toasts = ref<Toast[]>([])
-let toastIdCounter = 0
 
 // =============================================================================
 // Composable
@@ -62,9 +63,20 @@ export interface UseToast {
   warning: (message: string, title?: string) => string
 }
 
+/**
+ * Composable for managing global toast notifications.
+ *
+ * Uses a singleton pattern so toast state is shared across all callers.
+ * Provides typed helpers for success, error, info, and warning toasts.
+ *
+ * @example
+ * const toast = useToast()
+ * toast.success('Kanji saved!')
+ * toast.error('Failed to save kanji')
+ */
 export function useToast(): UseToast {
   function addToast(input: ToastInput): string {
-    const id = `toast-${String(++toastIdCounter)}`
+    const id = generateUUID()
     const toast: Toast = {
       id,
       type: input.type ?? 'info',

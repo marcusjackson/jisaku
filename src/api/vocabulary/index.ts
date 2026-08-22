@@ -13,6 +13,7 @@ export type {
   UpdateVocabularyInput,
   VocabJlptLevel,
   VocabKanji,
+  VocabKanjiWithKanji,
   VocabKanjiWithVocabulary,
   Vocabulary,
   VocabularyFilters

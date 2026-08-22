@@ -101,6 +101,11 @@ function createFilterUpdater(urlSync: UseComponentListUrlSync) {
   }
 }
 
+/**
+ * Manages URL-synced filter state for the component list.
+ *
+ * @returns Reactive filter state, update/clear functions, and refresh trigger
+ */
 export function useComponentListState(): UseComponentListState {
   const urlSync = useComponentListUrlSync()
   const refreshTrigger = ref(0)

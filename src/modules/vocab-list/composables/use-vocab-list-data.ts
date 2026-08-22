@@ -33,6 +33,11 @@ export interface UseVocabListData {
 // Composable Implementation
 // ============================================================================
 
+/**
+ * Fetches and manages data for the vocabulary list page.
+ *
+ * @returns Reactive state for vocab list data and load functions
+ */
 export function useVocabListData(): UseVocabListData {
   const vocabList = ref<Vocabulary[]>([])
   const allKanji = ref<Kanji[]>([])

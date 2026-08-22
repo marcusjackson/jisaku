@@ -5,7 +5,7 @@
  */
 
 import userEvent from '@testing-library/user-event'
-import { render, screen } from '@testing-library/vue'
+import { render, screen, within } from '@testing-library/vue'
 import { describe, expect, it, vi } from 'vitest'
 
 import ComponentDetailSectionBasicInfo from './ComponentDetailSectionBasicInfo.vue'
@@ -80,9 +80,8 @@ describe('ComponentDetailSectionBasicInfo', () => {
         props: defaultProps,
         global: { stubs: { RouterLink: true } }
       })
-      expect(screen.getByTestId('basic-info-stroke-count')).toHaveTextContent(
-        '3'
-      )
+      const region = screen.getByRole('region', { name: /basic information/i })
+      expect(within(region).getByText('3')).toBeInTheDocument()
     })
 
     it('displays dash when stroke count is null', () => {
@@ -93,9 +92,8 @@ describe('ComponentDetailSectionBasicInfo', () => {
         },
         global: { stubs: { RouterLink: true } }
       })
-      expect(screen.getByTestId('basic-info-stroke-count')).toHaveTextContent(
-        '—'
-      )
+      const region = screen.getByRole('region', { name: /basic information/i })
+      expect(within(region).getAllByText('—')[0]).toBeInTheDocument()
     })
 
     it('displays source kanji with meaning', () => {
@@ -235,7 +233,7 @@ describe('ComponentDetailSectionBasicInfo', () => {
         props: defaultProps,
         global: { stubs: { RouterLink: true } }
       })
-      await user.click(screen.getByTestId('basic-info-edit-button'))
+      await user.click(screen.getByRole('button', { name: /edit basic info/i }))
       expect(screen.getByTestId('dialog-stub')).toBeInTheDocument()
     })
 
@@ -245,20 +243,20 @@ describe('ComponentDetailSectionBasicInfo', () => {
         props: defaultProps,
         global: { stubs: { RouterLink: true } }
       })
-      await user.click(screen.getByTestId('basic-info-edit-button'))
+      await user.click(screen.getByRole('button', { name: /edit basic info/i }))
       // The stub dialog is now visible - we've tested the integration structure
       expect(screen.getByTestId('dialog-stub')).toBeInTheDocument()
     })
   })
 
   describe('section structure', () => {
-    it('has correct test-id on section container', () => {
+    it('has region landmark with title name', () => {
       render(ComponentDetailSectionBasicInfo, {
         props: defaultProps,
         global: { stubs: { RouterLink: true } }
       })
       expect(
-        screen.getByTestId('component-detail-basic-info')
+        screen.getByRole('region', { name: /basic information/i })
       ).toBeInTheDocument()
     })
 

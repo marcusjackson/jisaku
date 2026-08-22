@@ -46,7 +46,6 @@ function handleSave(data: ReadingsSaveData): void {
   >
     <template #actions>
       <BaseButton
-        data-testid="readings-edit-button"
         size="sm"
         variant="secondary"
         @click="isDialogOpen = true"

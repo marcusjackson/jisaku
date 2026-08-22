@@ -10,8 +10,7 @@ import { ref } from 'vue'
 
 import { BaseButton } from '@/base/components'
 
-import { useSeedData } from '@/shared/composables'
-import { useToast } from '@/shared/composables'
+import { useSeedData, useToast } from '@/shared/composables'
 
 import VocabListCard from './VocabListCard.vue'
 
@@ -40,8 +39,7 @@ async function handleSeedData(): Promise<void> {
     await seed()
     showSuccess('Database seeded successfully!')
     emit('refresh')
-  } catch (error) {
-    console.error('Seed error:', error)
+  } catch {
     showError('Failed to seed database')
   } finally {
     isLocalSeeding.value = false
@@ -170,13 +168,19 @@ function getSeedingState(): boolean {
 
 .vocab-list-section-list-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(var(--grid-item-min-md), 1fr)
+  );
   gap: var(--spacing-md);
 }
 
 @media (width >= 768px) {
   .vocab-list-section-list-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(var(--grid-item-min-lg), 1fr)
+    );
   }
 }
 </style>

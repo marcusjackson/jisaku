@@ -6,16 +6,11 @@
  * @module modules/kanji-detail
  */
 
-import type { Component } from '@/api/component/component-types'
-import type { ComponentOccurrence } from '@/api/component/component-types'
 import type {
-  KanjiMeaning,
-  KanjiMeaningGroupMember,
-  KanjiMeaningReadingGroup,
-  KunReading,
-  OnReading,
-  ReadingLevel
-} from '@/api/kanji'
+  Component,
+  ComponentOccurrence
+} from '@/api/component/component-types'
+import type { ReadingLevel } from '@/api/kanji'
 import type {
   JlptLevel,
   JoyoLevel,
@@ -30,17 +25,22 @@ import type { PositionType } from '@/api/position/position-types'
 
 export type {
   Component,
-  JlptLevel,
-  JoyoLevel,
-  Kanji,
-  KanjiKenteiLevel,
+  ComponentOccurrence
+} from '@/api/component/component-types'
+export type {
   KanjiMeaning,
   KanjiMeaningGroupMember,
   KanjiMeaningReadingGroup,
   KunReading,
   OnReading,
   ReadingLevel
-}
+} from '@/api/kanji'
+export type {
+  JlptLevel,
+  JoyoLevel,
+  Kanji,
+  KanjiKenteiLevel
+} from '@/api/kanji/kanji-types'
 
 // ============================================================================
 // Component Props Types
@@ -240,4 +240,37 @@ export interface ComponentOccurrenceWithDetails extends ComponentOccurrence {
     formCharacter: string
     formName: string | null
   } | null
+}
+
+// ============================================================================
+// Dialog Types
+// ============================================================================
+
+/**
+ * Payload for a component to be linked via the components dialog
+ */
+export interface ComponentLinkPayload {
+  componentId: number
+  positionTypeId: number | null
+  componentFormId: number | null
+  isRadical: boolean
+}
+
+/**
+ * Payload for a component occurrence to be updated via the components dialog
+ */
+export interface ComponentUpdatePayload {
+  id: number
+  positionTypeId: number | null
+  componentFormId: number | null
+  isRadical: boolean
+}
+
+/**
+ * Change set emitted when the components dialog is saved
+ */
+export interface DialogComponentChanges {
+  toLink: ComponentLinkPayload[]
+  toUpdate: ComponentUpdatePayload[]
+  toDelete: number[]
 }

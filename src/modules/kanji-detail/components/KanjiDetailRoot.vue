@@ -15,43 +15,46 @@ import { useKanjiDetailHandlers } from '../composables/use-kanji-detail-handlers
 import { useKanjiDetailMeaningsHandlers } from '../composables/use-kanji-detail-meanings-handlers'
 import { useKanjiDetailReadingsHandlers } from '../composables/use-kanji-detail-readings-handlers'
 import { useKanjiDetailVocabularyHandlers } from '../composables/use-kanji-detail-vocabulary-handlers'
+import { useKanjiRepos } from '../composables/use-kanji-repos'
 
 import KanjiDetailSectionActions from './KanjiDetailSectionActions.vue'
 import KanjiDetailSectionBasicInfo from './KanjiDetailSectionBasicInfo.vue'
 import KanjiDetailSectionComponents from './KanjiDetailSectionComponents.vue'
 import KanjiDetailSectionHeadline from './KanjiDetailSectionHeadline.vue'
 import KanjiDetailSectionMeanings from './KanjiDetailSectionMeanings.vue'
+import KanjiDetailSectionNotesGroup from './KanjiDetailSectionNotesGroup.vue'
 import KanjiDetailSectionReadings from './KanjiDetailSectionReadings.vue'
+import KanjiDetailSectionSemanticNotes from './KanjiDetailSectionSemanticNotes.vue'
+import KanjiDetailSectionStrokeOrder from './KanjiDetailSectionStrokeOrder.vue'
 import KanjiDetailSectionVocabulary from './KanjiDetailSectionVocabulary.vue'
-import KanjiSectionNotesGroup from './KanjiSectionNotesGroup.vue'
-import KanjiSectionSemanticNotes from './KanjiSectionSemanticNotes.vue'
-import KanjiSectionStrokeOrder from './KanjiSectionStrokeOrder.vue'
 
 const {
   allComponents,
   classificationTypes,
   classifications,
   componentOccurrences,
-  componentRepo,
-  groupMemberRepo,
   groupMembers,
   isLoading,
   kanji,
-  kanjiClassificationRepo,
   kanjiId,
-  kanjiRepo,
-  kunReadingRepo,
   kunReadings,
   loadError,
-  meaningRepo,
   meanings,
-  onReadingRepo,
   onReadings,
   radical,
-  readingGroupRepo,
   readingGroups,
   vocabulary
 } = useKanjiDetailData()
+const {
+  componentRepo,
+  groupMemberRepo,
+  kanjiClassificationRepo,
+  kanjiRepo,
+  kunReadingRepo,
+  meaningRepo,
+  onReadingRepo,
+  readingGroupRepo
+} = useKanjiRepos()
 const isDestructiveMode = ref(false)
 const isDeleting = ref(false)
 
@@ -168,17 +171,17 @@ const {
           @link="handleLink"
           @unlink="handleUnlink"
         />
-        <KanjiSectionSemanticNotes
+        <KanjiDetailSectionSemanticNotes
           :notes="kanji.notesSemantic"
           @save="handleSemanticNotesSave"
         />
-        <KanjiSectionStrokeOrder
+        <KanjiDetailSectionStrokeOrder
           :stroke-diagram="kanji.strokeDiagramImage"
           :stroke-gif="kanji.strokeGifImage"
           @save:animation="handleStrokeAnimationSave"
           @save:diagram="handleStrokeDiagramSave"
         />
-        <KanjiSectionNotesGroup
+        <KanjiDetailSectionNotesGroup
           :notes-education="kanji.notesEducationMnemonics"
           :notes-etymology="kanji.notesEtymology"
           :notes-personal="kanji.notesPersonal"
@@ -208,7 +211,7 @@ const {
   flex-direction: column;
   gap: var(--spacing-xl);
   width: 100%;
-  max-width: 768px;
+  max-width: var(--content-max-width);
 }
 
 .kanji-detail-root-loading,
@@ -216,10 +219,10 @@ const {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px;
+  min-height: var(--content-min-height);
 }
 
 .kanji-detail-root-error {
-  color: var(--color-text-danger);
+  color: var(--color-danger);
 }
 </style>

@@ -10,7 +10,7 @@
 import { ComponentMutations } from './component-mutations'
 import { ComponentQueries } from './component-queries'
 
-import type { FieldUpdatable, Repository, UpdatableField } from '../types'
+import type { FieldUpdatable, Repository, UpdatableField } from '../api-types'
 import type {
   Component,
   ComponentFilters,
@@ -104,13 +104,11 @@ class ComponentRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a component repository instance bound to the active database.
+ * @returns Repository for managing component entities (CRUD, search).
+ * @example const repo = useComponentRepository(); repo.getAll()
+ */
 export function useComponentRepository(): ComponentRepositoryImpl {
   return new ComponentRepositoryImpl()
-}
-
-export type {
-  Component,
-  ComponentFilters,
-  CreateComponentInput,
-  UpdateComponentInput
 }

@@ -11,6 +11,9 @@
 /** Reading proficiency levels (school grade when learned) */
 export type ReadingLevel = '小' | '中' | '高' | '外'
 
+/** Valid reading level values — used for runtime DB row validation */
+export const READING_LEVELS: readonly ReadingLevel[] = ['小', '中', '高', '外']
+
 // ============================================================================
 // Entity Interfaces
 // ============================================================================

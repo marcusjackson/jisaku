@@ -69,7 +69,7 @@ describe('KanjiDetailSectionComponents', () => {
       }
     })
 
-    expect(screen.getByTestId('basic-info-edit-button')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument()
   })
 
   it('renders empty state when no occurrences', () => {

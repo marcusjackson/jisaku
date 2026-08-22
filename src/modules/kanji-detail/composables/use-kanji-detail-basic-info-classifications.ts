@@ -44,6 +44,12 @@ function createNewItem(
   }
 }
 
+/**
+ * Manages classification items for the kanji basic info form.
+ *
+ * @param initial - Initial kanji classification records from the database
+ * @returns Reactive classification items list and normalized change data for save
+ */
 export function useKanjiDetailBasicInfoClassifications(
   initial: KanjiClassification[]
 ) {

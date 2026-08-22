@@ -41,7 +41,7 @@ const isCollapsed = ref(false)
 onMounted(() => {
   const isMobile = window.innerWidth < 768
   const stored = localStorage.getItem(STORAGE_KEY)
-  isCollapsed.value = stored !== null ? stored === 'true' : isMobile
+  isCollapsed.value = stored === null ? isMobile : stored === 'true'
 })
 
 watch(isCollapsed, (val) => {
@@ -60,6 +60,7 @@ function toggleCollapsed(): void {
     data-testid="vocab-list-filters"
   >
     <!-- Collapsible Header -->
+    <!-- Raw <button>: collapsible header needs full custom styling incompatible with BaseButton -->
     <button
       :aria-expanded="!isCollapsed"
       class="vocab-list-filters-header"
@@ -162,11 +163,16 @@ function toggleCollapsed(): void {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition: background-color var(--transition-fast);
 }
 
 .vocab-list-filters-header:hover {
   background-color: var(--color-surface-hover);
+}
+
+.vocab-list-filters-header:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .vocab-list-filters-header-text {
@@ -190,7 +196,7 @@ function toggleCollapsed(): void {
 
 .vocab-list-filters-chevron {
   color: var(--color-text-secondary);
-  transition: transform 0.2s;
+  transition: transform var(--transition-normal);
 }
 
 .vocab-list-filters-chevron-open {

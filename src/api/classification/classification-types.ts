@@ -22,6 +22,8 @@ export interface ClassificationType {
   description: string | null
   descriptionShort: string | null
   displayOrder: number
+  createdAt: string
+  updatedAt: string
 }
 
 /**

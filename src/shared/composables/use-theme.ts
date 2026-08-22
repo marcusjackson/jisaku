@@ -7,6 +7,8 @@
 
 import { ref, watch } from 'vue'
 
+import type { Ref } from 'vue'
+
 export type Theme = 'light' | 'dark'
 
 const STORAGE_KEY = 'jisaku-theme'
@@ -15,20 +17,15 @@ const STORAGE_KEY = 'jisaku-theme'
  * Gets the system's preferred color scheme
  */
 function getSystemTheme(): Theme {
-  if (
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  ) {
-    return 'dark'
-  }
-  return 'light'
+  return globalThis.window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light'
 }
 
 /**
  * Gets the initial theme: user's saved preference or system preference
  */
 function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'light'
   const storedTheme = localStorage.getItem(STORAGE_KEY) as Theme | null
   if (storedTheme) {
     return storedTheme
@@ -40,7 +37,6 @@ function getInitialTheme(): Theme {
  * Applies the theme to the document
  */
 function applyTheme(theme: Theme): void {
-  if (typeof document === 'undefined') return
   if (theme === 'dark') {
     document.documentElement.dataset['theme'] = 'dark'
   } else {
@@ -57,12 +53,29 @@ applyTheme(theme.value)
 // Watch for changes and persist
 watch(theme, (newTheme) => {
   applyTheme(newTheme)
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY, newTheme)
-  }
+  localStorage.setItem(STORAGE_KEY, newTheme)
 })
 
-export function useTheme() {
+/** Return type for useTheme composable */
+export interface UseTheme {
+  /** Current active theme */
+  theme: Ref<Theme>
+  /** Toggle between light and dark themes */
+  toggleTheme: () => void
+  /** Set the theme explicitly */
+  setTheme: (newTheme: Theme) => void
+}
+
+/**
+ * Composable for managing the app theme (light/dark mode).
+ *
+ * Reads the user’s saved preference from localStorage, falling back to
+ * the system preference. Persists changes automatically.
+ *
+ * @example
+ * const { theme, toggleTheme } = useTheme()
+ */
+export function useTheme(): UseTheme {
   /**
    * Toggles between light and dark themes
    */

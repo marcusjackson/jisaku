@@ -142,6 +142,7 @@ function handleClearCancel(): void {
         <input
           ref="fileInputRef"
           accept=".db,.sqlite,.sqlite3"
+          aria-label="Import database file"
           class="file-input"
           type="file"
           @change="handleFileSelect"

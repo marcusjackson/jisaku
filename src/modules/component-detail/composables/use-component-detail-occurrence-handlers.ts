@@ -2,12 +2,15 @@
  * Use Component Detail Occurrence Handlers
  *
  * Handles occurrence CRUD operations for the component detail page.
+ * Link operations (add/create) are handled by
+ * use-component-detail-occurrence-link-handlers.ts.
  */
 
 import { useComponentOccurrenceRepository } from '@/api/component'
-import { useKanjiRepository } from '@/api/kanji'
 
 import { useToast } from '@/shared/composables'
+
+import { useComponentDetailOccurrenceLinkHandlers } from './use-component-detail-occurrence-link-handlers'
 
 import type { OccurrenceUpdateData } from '../component-detail-types'
 import type { OccurrenceWithKanji } from '@/api/component'
@@ -15,17 +18,12 @@ import type { Kanji } from '@/api/kanji'
 import type { QuickCreateKanjiData } from '@/shared/validation'
 import type { Ref } from 'vue'
 
-/** Dependencies for the composable */
 interface UseComponentDetailOccurrenceHandlersDeps {
-  /** Component ID ref */
   componentId: Ref<number | null>
-  /** Occurrences list ref to update */
   occurrences: Ref<OccurrenceWithKanji[]>
-  /** Kanji options ref to update after creating new kanji */
   kanjiOptions: Ref<Kanji[]>
 }
 
-/** Return type of the composable */
 interface UseComponentDetailOccurrenceHandlersReturn {
   handleOccurrenceAdd: (kanjiId: number) => void
   handleOccurrenceCreate: (data: QuickCreateKanjiData) => void
@@ -34,77 +32,25 @@ interface UseComponentDetailOccurrenceHandlersReturn {
   handleOccurrenceReorder: (ids: number[]) => void
 }
 
-// Helper to reload occurrences from repository
+type OccurrenceRepo = ReturnType<typeof useComponentOccurrenceRepository>
+type Toast = ReturnType<typeof useToast>
+
 function createOccurrencesReloader(
   componentId: Ref<number | null>,
   occurrences: Ref<OccurrenceWithKanji[]>,
-  repo: ReturnType<typeof useComponentOccurrenceRepository>
-) {
+  repo: OccurrenceRepo
+): () => void {
   return (): void => {
     if (componentId.value === null) return
     occurrences.value = repo.getByComponentIdWithKanji(componentId.value)
   }
 }
 
-// Helper to create add handler
-function createAddOccurrenceHandler(
-  componentId: Ref<number | null>,
+function createUpdateHandler(
   reloadOccurrences: () => void,
-  repo: ReturnType<typeof useComponentOccurrenceRepository>,
-  toast: ReturnType<typeof useToast>
-) {
-  return (kanjiId: number): void => {
-    if (componentId.value === null) return
-    try {
-      repo.create({
-        kanjiId,
-        componentId: componentId.value
-      })
-      reloadOccurrences()
-      toast.success('Kanji linked')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to link kanji')
-    }
-  }
-}
-
-// Helper to create create-and-link handler
-function createCreateOccurrenceHandler(deps: {
-  componentId: Ref<number | null>
-  reloadOccurrences: () => void
-  kanjiOptions: Ref<Kanji[]>
-  occurrenceRepo: ReturnType<typeof useComponentOccurrenceRepository>
-  kanjiRepo: ReturnType<typeof useKanjiRepository>
-  toast: ReturnType<typeof useToast>
-}) {
-  return (data: QuickCreateKanjiData): void => {
-    if (deps.componentId.value === null) return
-    try {
-      const newKanji = deps.kanjiRepo.create({
-        character: data.character,
-        shortMeaning: data.shortMeaning ?? null
-      })
-      deps.occurrenceRepo.create({
-        kanjiId: newKanji.id,
-        componentId: deps.componentId.value
-      })
-      deps.reloadOccurrences()
-      deps.kanjiOptions.value = deps.kanjiRepo.getAll()
-      deps.toast.success('Kanji created and linked')
-    } catch (err) {
-      deps.toast.error(
-        err instanceof Error ? err.message : 'Failed to create and link kanji'
-      )
-    }
-  }
-}
-
-// Helper to create update handler
-function createUpdateOccurrenceHandler(
-  reloadOccurrences: () => void,
-  repo: ReturnType<typeof useComponentOccurrenceRepository>,
-  toast: ReturnType<typeof useToast>
-) {
+  repo: OccurrenceRepo,
+  toast: Toast
+): (id: number, data: OccurrenceUpdateData) => void {
   return (id: number, data: OccurrenceUpdateData): void => {
     try {
       repo.update(id, data)
@@ -118,13 +64,12 @@ function createUpdateOccurrenceHandler(
   }
 }
 
-// Helper to create remove handler
-function createRemoveOccurrenceHandler(
+function createRemoveHandler(
   componentId: Ref<number | null>,
   reloadOccurrences: () => void,
-  repo: ReturnType<typeof useComponentOccurrenceRepository>,
-  toast: ReturnType<typeof useToast>
-) {
+  repo: OccurrenceRepo,
+  toast: Toast
+): (id: number) => void {
   return (id: number): void => {
     if (componentId.value === null) return
     try {
@@ -137,13 +82,12 @@ function createRemoveOccurrenceHandler(
   }
 }
 
-// Helper to create reorder handler
-function createReorderOccurrenceHandler(
+function createReorderHandler(
   componentId: Ref<number | null>,
   reloadOccurrences: () => void,
-  repo: ReturnType<typeof useComponentOccurrenceRepository>,
-  toast: ReturnType<typeof useToast>
-) {
+  repo: OccurrenceRepo,
+  toast: Toast
+): (ids: number[]) => void {
   return (ids: number[]): void => {
     if (componentId.value === null) return
     try {
@@ -157,64 +101,52 @@ function createReorderOccurrenceHandler(
   }
 }
 
-// Helper to initialize all handlers
-function createAllOccurrenceHandlers(deps: {
-  componentId: Ref<number | null>
-  occurrences: Ref<OccurrenceWithKanji[]>
-  kanjiOptions: Ref<Kanji[]>
-  componentOccurrenceRepo: ReturnType<typeof useComponentOccurrenceRepository>
-  kanjiRepo: ReturnType<typeof useKanjiRepository>
-  toast: ReturnType<typeof useToast>
-}): UseComponentDetailOccurrenceHandlersReturn {
-  const reloadOccurrences = createOccurrencesReloader(
-    deps.componentId,
-    deps.occurrences,
-    deps.componentOccurrenceRepo
-  )
-  return {
-    handleOccurrenceAdd: createAddOccurrenceHandler(
-      deps.componentId,
-      reloadOccurrences,
-      deps.componentOccurrenceRepo,
-      deps.toast
-    ),
-    handleOccurrenceCreate: createCreateOccurrenceHandler({
-      componentId: deps.componentId,
-      reloadOccurrences,
-      kanjiOptions: deps.kanjiOptions,
-      occurrenceRepo: deps.componentOccurrenceRepo,
-      kanjiRepo: deps.kanjiRepo,
-      toast: deps.toast
-    }),
-    handleOccurrenceUpdate: createUpdateOccurrenceHandler(
-      reloadOccurrences,
-      deps.componentOccurrenceRepo,
-      deps.toast
-    ),
-    handleOccurrenceRemove: createRemoveOccurrenceHandler(
-      deps.componentId,
-      reloadOccurrences,
-      deps.componentOccurrenceRepo,
-      deps.toast
-    ),
-    handleOccurrenceReorder: createReorderOccurrenceHandler(
-      deps.componentId,
-      reloadOccurrences,
-      deps.componentOccurrenceRepo,
-      deps.toast
-    )
-  }
-}
-
+/**
+ * Provides handlers for component occurrence management (update, remove, reorder).
+ * Link operations are handled by use-component-detail-occurrence-link-handlers.
+ *
+ * @param deps - Component ID, occurrences ref, and kanji options
+ * @returns Handlers for occurrence CRUD and reorder operations
+ */
 export function useComponentDetailOccurrenceHandlers(
   deps: UseComponentDetailOccurrenceHandlersDeps
 ): UseComponentDetailOccurrenceHandlersReturn {
-  return createAllOccurrenceHandlers({
-    componentId: deps.componentId,
-    occurrences: deps.occurrences,
-    kanjiOptions: deps.kanjiOptions,
-    componentOccurrenceRepo: useComponentOccurrenceRepository(),
-    kanjiRepo: useKanjiRepository(),
-    toast: useToast()
-  })
+  const occurrenceRepo = useComponentOccurrenceRepository()
+  const toast = useToast()
+
+  const reloadOccurrences = createOccurrencesReloader(
+    deps.componentId,
+    deps.occurrences,
+    occurrenceRepo
+  )
+
+  const { handleOccurrenceAdd, handleOccurrenceCreate } =
+    useComponentDetailOccurrenceLinkHandlers({
+      componentId: deps.componentId,
+      kanjiOptions: deps.kanjiOptions,
+      reloadOccurrences,
+      occurrenceRepo
+    })
+
+  return {
+    handleOccurrenceAdd,
+    handleOccurrenceCreate,
+    handleOccurrenceUpdate: createUpdateHandler(
+      reloadOccurrences,
+      occurrenceRepo,
+      toast
+    ),
+    handleOccurrenceRemove: createRemoveHandler(
+      deps.componentId,
+      reloadOccurrences,
+      occurrenceRepo,
+      toast
+    ),
+    handleOccurrenceReorder: createReorderHandler(
+      deps.componentId,
+      reloadOccurrences,
+      occurrenceRepo,
+      toast
+    )
+  }
 }

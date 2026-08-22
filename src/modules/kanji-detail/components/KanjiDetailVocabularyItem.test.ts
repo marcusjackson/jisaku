@@ -116,7 +116,7 @@ describe('KanjiDetailVocabularyItem', () => {
       })
 
       expect(
-        screen.queryByTestId('vocabulary-remove-button')
+        screen.queryByRole('button', { name: /remove vocabulary link/i })
       ).not.toBeInTheDocument()
     })
 
@@ -129,7 +129,9 @@ describe('KanjiDetailVocabularyItem', () => {
         }
       })
 
-      expect(screen.getByTestId('vocabulary-remove-button')).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /remove vocabulary link/i })
+      ).toBeInTheDocument()
     })
 
     it('emits remove event when remove button clicked', async () => {
@@ -142,7 +144,9 @@ describe('KanjiDetailVocabularyItem', () => {
         }
       })
 
-      const removeButton = screen.getByTestId('vocabulary-remove-button')
+      const removeButton = screen.getByRole('button', {
+        name: /remove vocabulary link/i
+      })
       await user.click(removeButton)
 
       expect(emitted()['remove']).toBeTruthy()

@@ -54,6 +54,20 @@ describe('useVocabularyRepository', function () {
       expect(vocab?.shortMeaning).toBe('water')
       expect(vocab?.isCommon).toBe(true)
     })
+
+    it('falls back to null jlptLevel for an unknown value in DB', () => {
+      testDb.run('PRAGMA ignore_check_constraints = ON')
+      testDb.run(
+        'INSERT INTO vocabulary (word, kana, jlpt_level) VALUES (?, ?, ?)',
+        ['テスト', 'テスト', 'INVALID']
+      )
+      testDb.run('PRAGMA ignore_check_constraints = OFF')
+
+      const repo = useVocabularyRepository()
+      const vocab = repo.getById(1)
+
+      expect(vocab?.jlptLevel).toBeNull()
+    })
   })
 
   describe('getByWord', () => {
@@ -226,6 +240,29 @@ describe('useVocabularyRepository', function () {
       repo.remove(1)
 
       expect(repo.getById(1)).toBeNull()
+    })
+
+    it('removes associated vocab_kanji rows on delete', () => {
+      testDb.run('INSERT INTO vocabulary (word, kana) VALUES (?, ?)', [
+        '水',
+        'みず'
+      ])
+      testDb.run('INSERT INTO kanjis (character, stroke_count) VALUES (?, ?)', [
+        '水',
+        4
+      ])
+      testDb.run(
+        'INSERT INTO vocab_kanji (vocab_id, kanji_id, display_order) VALUES (?, ?, ?)',
+        [1, 1, 0]
+      )
+
+      const repo = useVocabularyRepository()
+      repo.remove(1)
+
+      const orphaned = testDb.exec(
+        'SELECT * FROM vocab_kanji WHERE vocab_id = 1'
+      )
+      expect(orphaned[0]?.values ?? []).toHaveLength(0)
     })
   })
 

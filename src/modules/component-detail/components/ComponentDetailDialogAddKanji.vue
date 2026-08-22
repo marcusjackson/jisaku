@@ -48,7 +48,6 @@ const kanjiOptions = computed<EntityOption[]>(() =>
 )
 
 function handleSelect(entity: EntityOption): void {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
   emit('select', entity.id)
   open.value = false
 }
@@ -99,7 +98,7 @@ function handleQuickCreateCancel(): void {
 
 <style scoped>
 .dialog-add-kanji-content {
-  min-height: 200px;
+  min-height: var(--content-min-height);
   padding: var(--spacing-md) 0;
 }
 </style>

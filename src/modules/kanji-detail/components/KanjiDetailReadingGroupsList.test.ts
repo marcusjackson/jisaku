@@ -168,8 +168,7 @@ describe('KanjiDetailReadingGroupsList', () => {
       expect(emitted()['update:readingText']).toBeTruthy()
       // Should emit index and new value
       const lastEmit = emitted()['update:readingText']?.at(-1) as
-        | [number, string]
-        | undefined
+        [number, string] | undefined
       expect(lastEmit?.[0]).toBe(0) // Index
       expect(lastEmit?.[1]).toBe('ミョウ') // New value
     })
@@ -438,8 +437,7 @@ describe('KanjiDetailReadingGroupsList', () => {
 
       expect(emitted()['assign-meaning']).toBeTruthy()
       const lastEmit = emitted()['assign-meaning']?.at(-1) as
-        | [number, number]
-        | undefined
+        [number, number] | undefined
       expect(lastEmit?.[0]).toBe(1) // Group ID
       expect(lastEmit?.[1]).toBe(2) // Meaning ID
     })
@@ -476,7 +474,7 @@ describe('KanjiDetailReadingGroupsList', () => {
       })
 
       // Check that the slot content appears for each group
-      const allText = container.textContent ?? ''
+      const allText = container.textContent
       const matches = (allText.match(/Slot content/g) ?? []).length
       expect(matches).toBeGreaterThanOrEqual(2)
     })

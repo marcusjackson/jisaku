@@ -9,8 +9,9 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
-import { EntityNotFoundError } from '../types'
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
 
+import type { UpdatableField } from '../api-types'
 import type { VocabularyQueries } from './vocabulary-queries'
 import type {
   CreateVocabularyInput,
@@ -24,14 +25,23 @@ import type {
 
 export class VocabularyMutations {
   private readonly run: ReturnType<typeof useDatabase>['run']
+  private readonly exec: ReturnType<typeof useDatabase>['exec']
   private readonly queries: VocabularyQueries
 
   constructor(queries: VocabularyQueries) {
     const db = useDatabase()
     this.run = db.run
+    this.exec = db.exec
     this.queries = queries
   }
 
+  /**
+   * Create a new vocabulary entry.
+   *
+   * @param input - Fields for the new vocabulary entry
+   * @returns The created vocabulary entity
+   * @throws {CreateError} If the insert fails
+   */
   create(input: CreateVocabularyInput): Vocabulary {
     this.run(
       `INSERT INTO vocabulary (
@@ -49,13 +59,12 @@ export class VocabularyMutations {
       ]
     )
 
-    const { exec } = useDatabase()
-    const idResult = exec('SELECT last_insert_rowid() as id')
+    const idResult = this.exec('SELECT last_insert_rowid() as id')
     const newId = idResult[0]?.values[0]?.[0] as number
 
     const created = this.queries.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created vocabulary')
+      throw new CreateError('Vocabulary')
     }
 
     schedulePersist()
@@ -70,14 +79,14 @@ export class VocabularyMutations {
     const sets: string[] = []
     const values: unknown[] = []
 
-    const fieldMap: Record<string, string> = {
+    const fieldMap = {
       word: 'word',
       kana: 'kana',
       shortMeaning: 'short_meaning',
       searchKeywords: 'search_keywords',
       jlptLevel: 'jlpt_level',
       description: 'description'
-    }
+    } satisfies Partial<Record<UpdatableField<Vocabulary>, string>>
 
     for (const [key, column] of Object.entries(fieldMap)) {
       const value = input[key as keyof UpdateVocabularyInput]
@@ -95,6 +104,15 @@ export class VocabularyMutations {
     return { sets, values }
   }
 
+  /**
+   * Update a vocabulary entry by id.
+   *
+   * @param id - Vocabulary id
+   * @param input - Fields to update (partial)
+   * @returns The updated vocabulary entity
+   * @throws {EntityNotFoundError} If the entry does not exist
+   * @throws {UpdateError} If the update fails to return
+   */
   update(id: number, input: UpdateVocabularyInput): Vocabulary {
     const existing = this.queries.getById(id)
     if (!existing) {
@@ -106,30 +124,53 @@ export class VocabularyMutations {
       return existing
     }
 
-    sets.push('updated_at = datetime("now")')
+    sets.push("updated_at = datetime('now')")
     values.push(id)
 
     this.run(`UPDATE vocabulary SET ${sets.join(', ')} WHERE id = ?`, values)
 
     const updated = this.queries.getById(id)
     if (!updated) {
-      throw new Error('Vocabulary disappeared after update')
+      throw new UpdateError('Vocabulary', id)
     }
 
     schedulePersist()
     return updated
   }
 
-  updateField<K extends keyof Vocabulary>(
+  /**
+   * Update a single field on a vocabulary entry.
+   *
+   * @param id - Vocabulary id
+   * @param field - Field name to update
+   * @param value - New value
+   * @returns The updated vocabulary entity
+   * @throws {EntityNotFoundError} If the entry does not exist
+   * @throws {UpdateError} If the update fails to return
+   */
+  updateField<K extends UpdatableField<Vocabulary>>(
     id: number,
     field: K,
     value: Vocabulary[K]
   ): Vocabulary {
-    return this.update(id, { [field]: value } as UpdateVocabularyInput)
+    return this.update(id, { [field]: value })
   }
 
+  /**
+   * Delete a vocabulary entry and its kanji links by id.
+   *
+   * @param id - Vocabulary id
+   */
   remove(id: number): void {
-    this.run('DELETE FROM vocabulary WHERE id = ?', [id])
+    try {
+      this.run('BEGIN TRANSACTION')
+      this.run('DELETE FROM vocab_kanji WHERE vocab_id = ?', [id])
+      this.run('DELETE FROM vocabulary WHERE id = ?', [id])
+      this.run('COMMIT')
+    } catch (e) {
+      this.run('ROLLBACK')
+      throw e
+    }
     schedulePersist()
   }
 }

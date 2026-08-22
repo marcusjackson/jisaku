@@ -35,10 +35,22 @@ interface State {
   readingGroups: Ref<KanjiMeaningReadingGroup[]>
 }
 
+interface UseKanjiDetailMeaningsHandlersReturn {
+  handleSaveMeanings: (data: MeaningsSaveData) => void
+  reloadMeanings: () => void
+}
+
+/**
+ * Provides handlers for meaning/reading-group/member save and reload operations.
+ *
+ * @param state - Reactive kanji detail state with meaning refs
+ * @param repos - Meaning, reading-group, and group-member repositories
+ * @returns Save and reload handlers for meanings
+ */
 export function useKanjiDetailMeaningsHandlers(
   state: State,
   repos: Repositories
-) {
+): UseKanjiDetailMeaningsHandlersReturn {
   const { groupMembers, kanjiId, meanings, readingGroups } = state
   const { groupMemberRepo, meaningRepo, readingGroupRepo } = repos
 

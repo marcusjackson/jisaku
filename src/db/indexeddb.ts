@@ -17,14 +17,17 @@ const PERSIST_DEBOUNCE_MS = 100
 /** Pending debounce timer for auto-persist */
 let persistDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
-/** Whether a persist operation is currently in progress */
-let isPersisting = false
+/** In-progress persist promise — used to await completion without busy-waiting */
+let currentPersistPromise: Promise<void> | null = null
 
 /** Queue the next persist after current one completes */
 let persistQueuedWhileBusy = false
 
 /** Reference to the database instance for persistence */
 let databaseRef: Database | null = null
+
+/** Optional error callback — called when a persist operation fails */
+let onPersistError: ((err: Error) => void) | null = null
 
 // =============================================================================
 // IndexedDB Operations
@@ -124,6 +127,14 @@ export function setDatabaseRef(db: Database | null): void {
 }
 
 /**
+ * Register a callback to be called when a persist operation fails.
+ * Use this to surface errors to the user (e.g. via a toast notification).
+ */
+export function setOnPersistError(callback: (err: Error) => void): void {
+  onPersistError = callback
+}
+
+/**
  * Schedule a debounced persist operation.
  * Groups rapid writes into a single IndexedDB save.
  */
@@ -145,31 +156,32 @@ export function schedulePersist(): void {
 /**
  * Execute a persist operation, handling concurrency.
  */
-async function executePersist(): Promise<void> {
-  if (!databaseRef) return
+function executePersist(): Promise<void> {
+  if (!databaseRef) return Promise.resolve()
 
-  // If already persisting, queue for later
-  if (isPersisting) {
+  // If already persisting, queue for later and return the in-progress promise
+  if (currentPersistPromise) {
     persistQueuedWhileBusy = true
-    return
+    return currentPersistPromise
   }
 
-  isPersisting = true
+  currentPersistPromise = saveToIndexedDB(databaseRef.export())
+    .catch((err: unknown) => {
+      // Don't throw — persistence failure shouldn't crash the app
+      // Surface the error to the caller via the registered error callback
+      onPersistError?.(err instanceof Error ? err : new Error(String(err)))
+    })
+    .finally(() => {
+      currentPersistPromise = null
 
-  try {
-    await saveToIndexedDB(databaseRef.export())
-  } catch (err) {
-    // Log error but don't throw - persistence failure shouldn't crash the app
-    console.error('Failed to persist database:', err)
-  } finally {
-    isPersisting = false
+      // If writes occurred during persist, do another persist
+      if (persistQueuedWhileBusy) {
+        persistQueuedWhileBusy = false
+        void executePersist()
+      }
+    })
 
-    // If writes occurred during persist, do another persist
-    if (persistQueuedWhileBusy) {
-      persistQueuedWhileBusy = false
-      void executePersist()
-    }
-  }
+  return currentPersistPromise
 }
 
 /**
@@ -185,11 +197,10 @@ export async function persistImmediately(): Promise<void> {
 
   if (!databaseRef) return
 
-  // Wait for any in-progress persist to complete, then do final persist
-  // This ensures we have the latest data saved
-  if (isPersisting) {
-    // Wait a bit for current persist to finish
-    await new Promise((resolve) => setTimeout(resolve, 50))
+  // Wait for any in-progress persist to complete before doing the final save.
+  // This avoids the race condition of a concurrent persist overwriting newer data.
+  if (currentPersistPromise) {
+    await currentPersistPromise
   }
 
   await saveToIndexedDB(databaseRef.export())

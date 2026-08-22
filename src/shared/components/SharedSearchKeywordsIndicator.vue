@@ -124,13 +124,13 @@ onUnmounted(() => {
 }
 
 .indicator-icon {
-  width: 1rem;
-  height: 1rem;
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
 }
 
 :deep(.tooltip) {
-  z-index: 50;
-  max-width: 20rem;
+  z-index: var(--z-tooltip);
+  max-width: var(--tooltip-max-width);
   padding: var(--spacing-3);
   border-radius: var(--radius-md);
   background-color: var(--color-surface);

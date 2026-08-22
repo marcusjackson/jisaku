@@ -38,7 +38,9 @@ const mockPositionTypes: PositionType[] = [
     nameJapanese: '左',
     nameEnglish: 'Left',
     description: 'Left side',
-    displayOrder: 1
+    displayOrder: 1,
+    createdAt: '2024-01-01T00:00:00',
+    updatedAt: '2024-01-01T00:00:00'
   }
 ]
 

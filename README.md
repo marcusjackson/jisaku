@@ -6,26 +6,6 @@ A personal tool for building your own Japanese language reference through resear
 
 ---
 
-## ⚠️ Refactoring In Progress
-
-This project is undergoing a major UI refactoring. Two versions are available during the transition:
-
-| Version    | URL Prefix  | Status                              |
-| ---------- | ----------- | ----------------------------------- |
-| **New UI** | `/`         | Under construction (coming soon)    |
-| **Legacy** | `/legacy/*` | Fully functional, existing features |
-
-**What this means:**
-
-- The app defaults to the legacy UI at `/legacy/kanji`
-- New routes will show a "Coming Soon" placeholder
-- All existing functionality remains available via legacy routes
-- Once new UI is complete, legacy will be removed
-
-See `docs/refactor/` for detailed migration plans.
-
----
-
 ## What This Is
 
 This is a tool I built for myself to research and document kanji. Instead of consuming pre-made dictionary content, I wanted to build my own reference by hand — researching etymologies, analyzing components, documenting patterns as I find them.
@@ -45,7 +25,7 @@ For me, the process of researching and writing entries is where the learning hap
 
 ## What It Can Do
 
-### Current
+### Today
 
 **Kanji Management:**
 
@@ -75,8 +55,9 @@ For me, the process of researching and writing entries is where the learning hap
 **Offline & Data:**
 
 - Fully offline, installable as PWA
-- Export/import database as SQLite file
-- All data stored locally in your browser
+- SQLite database persists in browser IndexedDB
+- Works indefinitely without internet or servers
+- Export/import database for backup or portability
 
 ---
 
@@ -92,20 +73,33 @@ For me, the process of researching and writing entries is where the learning hap
 
 Each area supports the others. Components help you understand kanji. Kanji help you understand vocabulary. Vocabulary deepens your understanding of kanji.
 
+### This Is a Personal Tool
+
+This project is **not a service or a multi-user platform**. It's built for you to use alone:
+
+- No "users" — just you
+- No authentication or accounts
+- No servers or syncing
+- No performance optimization for scale
+- No metrics or analytics
+
+Design decisions always prioritize: "Does this serve the individual better?" not "Does this scale?"
+
 ---
 
 ## Technical Details
 
-Built with Vue 3, TypeScript, and sql.js (SQLite in WebAssembly). Everything runs in the browser. No server needed.
+Built with Vue 3, TypeScript, and SQL.js (SQLite in WebAssembly). Everything runs in the browser. No server needed.
 
 **Stack:**
 
 - Vue 3 Composition API
-- SQLite via sql.js (persistent in IndexedDB)
-- Reka UI for accessible components
-- vee-validate + zod for forms
-- Vitest + Playwright for testing
-- Vite Plugin PWA
+- TypeScript (strict mode)
+- SQLite via sql.js (WebAssembly, persistent in IndexedDB)
+- Reka UI (accessible, headless components)
+- vee-validate + zod (form validation)
+- Vite + PWA Plugin
+- Vitest + Playwright (testing)
 
 **Data:**
 
@@ -113,44 +107,34 @@ Built with Vue 3, TypeScript, and sql.js (SQLite in WebAssembly). Everything run
 - Export/import anytime
 - Runs completely offline
 
+---
+
 ## 📁 Project Structure
 
 ```
 src/
-├── api/                        # API layer (repositories, types) - NEW
-│   ├── kanji/                  # Kanji repository
-│   ├── component/              # Component repository
-│   ├── vocabulary/             # Vocabulary repository
-│   └── ...                     # Other entity repositories
-├── modules/                    # Feature modules (NEW UI)
-├── pages/                      # Route entry points (NEW UI)
-├── base/                       # Generic, reusable components
+├── api/                        # API layer (repositories, queries, mutations)
+├── modules/                    # Feature modules (kanji-list, kanji-detail, etc.)
+├── pages/                      # Route entry points (thin wrappers)
+├── base/                       # Generic, reusable components and composables
 ├── shared/                     # App-specific shared code
-├── db/                         # Database layer
-├── router/                     # Vue Router (dual routing)
-├── styles/                     # Global styles, design tokens
-└── legacy/                     # Legacy UI (during refactoring)
-    ├── modules/                # Legacy feature modules
-    ├── pages/                  # Legacy route entry points
-    ├── base/                   # Legacy base components
-    ├── shared/                 # Legacy shared code
-    └── styles/                 # Legacy styles
+├── db/                         # Database initialization, migrations, lifecycle
+├── router/                     # Vue Router configuration
+└── styles/                     # Global styles and design tokens
 
-e2e/
-├── legacy/                     # Legacy E2E tests
-└── (new tests will go here)
-
-docs/
-├── refactor/                   # Refactoring plans and guidelines
-└── ...                         # Other documentation
+e2e/                            # End-to-end tests (Playwright)
+test/                           # Unit test setup and helpers
+docs/                           # Project documentation
 ```
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - Node.js 20+
-- pnpm
+- pnpm 9+
 
 ### Installation
 
@@ -166,68 +150,63 @@ pnpm install
 pnpm dev
 ```
 
-### Available Scripts
+The app will open in your browser. All data is saved locally in IndexedDB.
+
+### Building for Production
 
 ```bash
-pnpm dev            # Start dev server
-pnpm build          # Build for production
-pnpm preview        # Preview production build
-pnpm test           # Run unit tests
-pnpm test:e2e       # Run E2E tests (new UI)
-pnpm test:e2e:legacy  # Run E2E tests (legacy UI)
-pnpm lint           # Lint code (excludes legacy)
-pnpm lint:legacy    # Lint legacy code
-pnpm lint:css       # Lint CSS
-pnpm format         # Format code
+pnpm build     # Create optimized production build
+pnpm preview   # Preview the production build locally
+```
+
+The built app is a fully-functional PWA. Install it on your device via the browser menu.
+
+---
+
+## 📚 Development
+
+### Available Commands
+
+```bash
+pnpm dev              # Start dev server (hot reload)
+pnpm build            # Build for production
+pnpm preview          # Preview production build
+pnpm test             # Run unit tests
+pnpm test:e2e         # Run E2E tests
+pnpm lint             # Lint code (ESLint + Prettier + Stylelint)
+pnpm format           # Format code with Prettier
+pnpm type-check       # TypeScript type checking
+```
+
+### Working with Makefile
+
+For efficiency during development, use the Makefile for incremental checks:
+
+```bash
+make lint-changed       # Lint only changed files
+make test-changed       # Test only affected areas
+make lint FILES="src/foo.ts"  # Lint specific files
+make ci-full            # Full validation (lint + unit + E2E)
 ```
 
 ### Development Workflow
 
-For efficient development, use the provided Makefile for running checks on specific files or changed files:
-
-```bash
-# Run all checks on changed files only
-make check-changed
-
-# Run all fixes on changed files only
-make fix-changed
-
-# Run tests on changed files + tests for changed source files
-make test-changed
-
-# Run checks on specific files
-make check FILES="src/components/MyComponent.vue src/utils/helpers.ts"
-
-# Run individual tools on specific files
-make lint FILES="src/foo.ts"
-make lint-css FILES="src/bar.vue"
-make format FILES="src/baz.ts"
-```
-
-This is much faster than running full checks when working on specific features. Use the pnpm scripts above for comprehensive runs or CI.
+1. Create a feature branch
+2. Make changes and test locally (`pnpm dev`)
+3. Run lint and tests (`make lint-changed`, `make test-changed`)
+4. Commit with conventional commit format
+5. Push and create a pull request
 
 ---
 
-## 📖 Documentation
+## 🔐 Privacy & Data
 
-- **[Features](docs/features.md)** — Current features overview
-- **[Architecture](docs/architecture.md)** — Module structure, patterns
-- **[Conventions](docs/conventions.md)** — Naming, coding standards
-- **[Schema](docs/schema.md)** — Database schema reference
-- **[Testing](docs/testing.md)** — Testing strategy and patterns
-- **[Design Tokens](docs/design-tokens.md)** — Theming and styling
-- **[Future Ideas](docs/future-ideas.md)** — Potential features and enhancements
+- **All data stays local** — Nothing is sent to external servers
+- **Full ownership** — Export your database anytime as a standard SQLite file
+- **Offline-first** — Works without internet connection
+- **Standard format** — SQLite is a widely-supported, future-proof format
 
----
-
-## Development
-
-```bash
-pnpm install
-pnpm dev
-```
-
-See [docs/](docs/) for architecture, conventions, and implementation plans.
+Your dictionary is yours.
 
 ---
 

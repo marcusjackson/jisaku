@@ -48,6 +48,7 @@ function handleSave(data: MeaningsSaveData): void {
   >
     <template #actions>
       <BaseButton
+        aria-label="Edit meanings"
         data-testid="meanings-edit-button"
         size="sm"
         variant="secondary"

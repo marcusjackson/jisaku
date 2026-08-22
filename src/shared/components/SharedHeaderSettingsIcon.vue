@@ -14,16 +14,12 @@
     version="1.1"
     viewBox="0 0 472.615 472.615"
   >
+    <g stroke-width="0"></g>
     <g
-      id="SVGRepo_bgCarrier"
-      stroke-width="0"
-    ></g>
-    <g
-      id="SVGRepo_tracerCarrier"
       stroke-linecap="round"
       stroke-linejoin="round"
     ></g>
-    <g id="SVGRepo_iconCarrier">
+    <g>
       <g>
         <g>
           <path

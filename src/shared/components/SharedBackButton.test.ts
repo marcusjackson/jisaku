@@ -26,13 +26,7 @@ describe('SharedBackButton', () => {
     return mount(SharedBackButton, {
       props,
       global: {
-        plugins: [router],
-        stubs: {
-          BaseButton: {
-            template: '<button><slot /></button>',
-            props: ['variant']
-          }
-        }
+        plugins: [router]
       }
     })
   }
@@ -45,6 +39,12 @@ describe('SharedBackButton', () => {
   it('contains a link element', () => {
     const wrapper = mountButton({ to: '/kanji', label: 'Back to Kanji List' })
     expect(wrapper.find('a').exists()).toBe(true)
+  })
+
+  it('does not nest a button inside the link (BSS-H1 regression)', () => {
+    const wrapper = mountButton({ to: '/kanji', label: 'Back to Kanji List' })
+    // RouterLink renders as <a>; no <button> should be nested inside it
+    expect(wrapper.find('a button').exists()).toBe(false)
   })
 
   it('displays the back arrow icon', () => {

@@ -72,10 +72,7 @@ describe('BaseSwitch', () => {
     const events = wrapper.emitted('update:modelValue')
     expect(events).toBeDefined()
     expect(events).toHaveLength(1)
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (events) {
-      expect(events[0]).toEqual([true])
-    }
+    expect(events[0]).toEqual([true])
   })
 
   it('toggles state when clicked multiple times', async () => {

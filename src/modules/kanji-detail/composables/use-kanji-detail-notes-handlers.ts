@@ -28,6 +28,12 @@ type NoteField =
   | 'notesPersonal'
 type StrokeField = 'strokeDiagramImage' | 'strokeGifImage'
 
+/**
+ * Provides note and stroke image save handlers for the kanji detail page.
+ *
+ * @param kanji - Reactive reference to the current kanji
+ * @returns Handlers for saving education notes, personal notes, and stroke images
+ */
 export function useKanjiDetailNotesHandlers(
   kanji: Ref<Kanji | null>
 ): KanjiDetailNotesHandlers {

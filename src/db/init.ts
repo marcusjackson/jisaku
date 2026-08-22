@@ -8,7 +8,12 @@
  * - Attaching lifecycle listeners for persistence
  */
 
-import { loadFromIndexedDB, saveToIndexedDB, setDatabaseRef } from './indexeddb'
+import {
+  loadFromIndexedDB,
+  saveToIndexedDB,
+  setDatabaseRef,
+  setOnPersistError
+} from './indexeddb'
 import { attachLifecycleListeners } from './lifecycle'
 import { runMigrations } from './migrations'
 
@@ -17,9 +22,14 @@ import type { Database } from 'sql.js'
 /**
  * Initialize the database
  *
+ * @param onPersistError - Optional callback invoked if the background persist
+ *   triggered by visibility-change events fails. Allows callers to show a
+ *   user-visible notification without the db layer depending on Vue.
  * @returns Initialized sql.js Database instance
  */
-export async function initializeDatabase(): Promise<Database> {
+export async function initializeDatabase(
+  onPersistError?: (err: Error) => void
+): Promise<Database> {
   // Dynamic import for sql.js to ensure proper ESM loading
   const { default: initSqlJs } = await import('sql.js')
 
@@ -42,17 +52,25 @@ export async function initializeDatabase(): Promise<Database> {
     db = new SQL.Database()
   }
 
+  // Enable foreign key enforcement (disabled by default in SQLite per-connection)
+  db.run('PRAGMA foreign_keys = ON')
+
   // Run any pending migrations
   runMigrations(db)
 
   // Set database reference for persistence operations
   setDatabaseRef(db)
 
+  // Register error callback for debounced persist operations
+  if (onPersistError) {
+    setOnPersistError(onPersistError)
+  }
+
   // Persist after migrations
   await saveToIndexedDB(db.export())
 
   // Attach lifecycle listeners for automatic persistence
-  attachLifecycleListeners()
+  attachLifecycleListeners(onPersistError)
 
   return db
 }
@@ -79,6 +97,9 @@ export async function replaceDatabaseWithImported(
 
   // Create new database from imported data
   const newDb = new SQL.Database(data)
+
+  // Enable foreign key enforcement (disabled by default in SQLite per-connection)
+  newDb.run('PRAGMA foreign_keys = ON')
 
   // Run migrations to ensure schema is up to date
   runMigrations(newDb)

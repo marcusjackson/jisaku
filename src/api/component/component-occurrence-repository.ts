@@ -5,10 +5,16 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
 import { BaseRepository } from '../base-repository'
-import { EntityNotFoundError } from '../types'
 
-import type { ChildRepository, Orderable } from '../types'
+import {
+  type ComponentOccurrenceRow,
+  mapOccurrenceWithKanjiRow,
+  type OccurrenceWithKanjiRow
+} from './component-occurrence-repository-internals'
+
+import type { ChildRepository, Orderable, QueryResult } from '../api-types'
 import type {
   ComponentOccurrence,
   CreateComponentOccurrenceInput,
@@ -16,22 +22,12 @@ import type {
   UpdateComponentOccurrenceInput
 } from './component-types'
 
-/** Row type for component_occurrences table */
-
-interface ComponentOccurrenceRow {
-  id: number
-  kanji_id: number
-  component_id: number
-  component_form_id: number | null
-  position_type_id: number | null
-  is_radical: number
-  analysis_notes: string | null
-  display_order: number
-  created_at: string
-  updated_at: string
-}
-
-/** Repository implementation */
+/**
+ * Data access layer for component occurrences.
+ *
+ * Tracks which components appear in which kanji, including position,
+ * radical status, and ordering.
+ */
 
 class ComponentOccurrenceRepositoryImpl
   extends BaseRepository<ComponentOccurrence>
@@ -63,7 +59,7 @@ class ComponentOccurrenceRepositoryImpl
       componentId: r.component_id,
       componentFormId: r.component_form_id,
       positionTypeId: r.position_type_id,
-      isRadical: r.is_radical === 1,
+      isRadical: Boolean(r.is_radical),
       analysisNotes: r.analysis_notes,
       displayOrder: r.display_order,
       createdAt: r.created_at,
@@ -116,7 +112,8 @@ class ComponentOccurrenceRepositoryImpl
         k.id as k_id, k.character as k_character,
         k.short_meaning as k_short_meaning, k.stroke_count as k_stroke_count,
         pt.id as pt_id, pt.position_name, pt.name_japanese, pt.name_english,
-        pt.description as pt_description, pt.display_order as pt_display_order
+        pt.description as pt_description, pt.display_order as pt_display_order,
+        pt.created_at as pt_created_at, pt.updated_at as pt_updated_at
       FROM component_occurrences co
       LEFT JOIN kanjis k ON co.kanji_id = k.id
       LEFT JOIN position_types pt ON co.position_type_id = pt.id
@@ -128,46 +125,17 @@ class ComponentOccurrenceRepositoryImpl
   }
 
   /** Map joined query result to OccurrenceWithKanji array */
-  private mapJoinedResult(
-    result: ReturnType<typeof this.exec>
-  ): OccurrenceWithKanji[] {
+  private mapJoinedResult(result: QueryResult[]): OccurrenceWithKanji[] {
     if (result.length === 0 || !result[0]) return []
-    const columns = result[0].columns
-    const values = result[0].values
-    return values.map((row) => {
-      const getValue = (col: string) => {
-        const idx = columns.indexOf(col)
-        return row[idx]
-      }
-      return {
-        id: getValue('id') as number,
-        kanjiId: getValue('kanji_id') as number,
-        componentId: getValue('component_id') as number,
-        componentFormId: getValue('component_form_id') as number | null,
-        positionTypeId: getValue('position_type_id') as number | null,
-        isRadical: (getValue('is_radical') as number) === 1,
-        analysisNotes: getValue('analysis_notes') as string | null,
-        displayOrder: getValue('display_order') as number,
-        createdAt: getValue('created_at') as string,
-        updatedAt: getValue('updated_at') as string,
-        kanji: {
-          id: getValue('k_id') as number,
-          character: getValue('k_character') as string,
-          shortMeaning: getValue('k_short_meaning') as string | null,
-          strokeCount: getValue('k_stroke_count') as number | null
-        },
-        position: (getValue('pt_id') as number | null)
-          ? {
-              id: getValue('pt_id') as number,
-              positionName: getValue('position_name') as string,
-              nameJapanese: getValue('name_japanese') as string | null,
-              nameEnglish: getValue('name_english') as string | null,
-              description: getValue('pt_description') as string | null,
-              displayOrder: getValue('pt_display_order') as number
-            }
-          : null
-      }
-    })
+    const { columns, values } = result[0]
+    return values.map((row) =>
+      mapOccurrenceWithKanjiRow(
+        this.rowToObject({
+          columns,
+          values: [row]
+        }) as unknown as OccurrenceWithKanjiRow
+      )
+    )
   }
 
   /** Get the radical occurrence for a kanji (if exists) */
@@ -182,11 +150,11 @@ class ComponentOccurrenceRepositoryImpl
   // Write Operations
 
   create(input: CreateComponentOccurrenceInput): ComponentOccurrence {
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM component_occurrences WHERE kanji_id = ?',
+    const maxOrder = this.getMaxDisplayOrder(
+      'component_occurrences',
+      'WHERE kanji_id = ?',
       [input.kanjiId]
     )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     this.run(
@@ -210,7 +178,7 @@ class ComponentOccurrenceRepositoryImpl
 
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created component occurrence')
+      throw new CreateError('ComponentOccurrence')
     }
 
     schedulePersist()
@@ -250,7 +218,7 @@ class ComponentOccurrenceRepositoryImpl
       return existing
     }
 
-    sets.push('updated_at = datetime("now")')
+    sets.push("updated_at = datetime('now')")
     values.push(id)
 
     this.run(
@@ -260,7 +228,7 @@ class ComponentOccurrenceRepositoryImpl
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('ComponentOccurrence disappeared after update')
+      throw new UpdateError('ComponentOccurrence', id)
     }
 
     schedulePersist()
@@ -280,12 +248,15 @@ class ComponentOccurrenceRepositoryImpl
 
   // Ordering
 
+  /** Reorder occurrences within a kanji by assigning `display_order` values matching the provided id array. */
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run(
-        'UPDATE component_occurrences SET display_order = ? WHERE id = ?',
-        [index, id]
-      )
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run(
+          'UPDATE component_occurrences SET display_order = ? WHERE id = ?',
+          [index, id]
+        )
+      })
     })
     schedulePersist()
   }
@@ -293,12 +264,11 @@ class ComponentOccurrenceRepositoryImpl
 
 /** Factory function */
 
+/**
+ * Creates a component occurrence repository instance bound to the active database.
+ * @returns Repository for managing component occurrences within kanji (CRUD, reorder).
+ * @example const repo = useComponentOccurrenceRepository(); repo.getByParentId(1)
+ */
 export function useComponentOccurrenceRepository(): ComponentOccurrenceRepositoryImpl {
   return new ComponentOccurrenceRepositoryImpl()
-}
-
-export type {
-  ComponentOccurrence,
-  CreateComponentOccurrenceInput,
-  UpdateComponentOccurrenceInput
 }

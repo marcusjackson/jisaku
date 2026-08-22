@@ -167,7 +167,7 @@ const canMoveDown = computed(() => props.index < props.total - 1)
 .reading-item-field {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-1);
 }
 
 .reading-item-field-main {

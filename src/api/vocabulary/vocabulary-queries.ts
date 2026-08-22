@@ -10,7 +10,13 @@ import { useDatabase } from '@/shared/composables/use-database'
 
 import { BaseRepository } from '../base-repository'
 
-import type { Vocabulary, VocabularyFilters } from './vocabulary-types'
+import { VOCAB_JLPT_LEVELS } from './vocabulary-types'
+
+import type {
+  VocabJlptLevel,
+  Vocabulary,
+  VocabularyFilters
+} from './vocabulary-types'
 
 // ============================================================================
 // Search Condition Builders
@@ -133,7 +139,7 @@ function addDescriptionCondition(
 interface VocabularyRow {
   id: number
   word: string
-  kana: string
+  kana: string | null
   short_meaning: string | null
   search_keywords: string | null
   jlpt_level: string | null
@@ -163,11 +169,16 @@ export class VocabularyQueries extends BaseRepository<Vocabulary> {
     return {
       id: r.id,
       word: r.word,
-      kana: r.kana,
+      // kana is defined as TEXT (nullable) in the schema; guard against NULL rows
+      kana: r.kana ?? '',
       shortMeaning: r.short_meaning,
       searchKeywords: r.search_keywords,
-      jlptLevel: r.jlpt_level as Vocabulary['jlptLevel'],
-      isCommon: r.is_common === 1,
+      jlptLevel:
+        r.jlpt_level !== null &&
+        (VOCAB_JLPT_LEVELS as readonly string[]).includes(r.jlpt_level)
+          ? (r.jlpt_level as VocabJlptLevel)
+          : null,
+      isCommon: Boolean(r.is_common),
       description: r.description,
       createdAt: r.created_at,
       updatedAt: r.updated_at

@@ -17,7 +17,7 @@ test-results/
 *.min.css
 
 # Reference/ignore folder
-ignore/
+_local/
 
 # IDE
 .idea/

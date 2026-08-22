@@ -21,35 +21,149 @@ import type {
 } from '../kanji-detail-types'
 import type { Kanji } from '@/api/kanji/kanji-types'
 import type { VocabKanjiWithVocabulary } from '@/api/vocabulary'
-import type { Ref } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface State {
   kanji: Ref<Kanji | null>
   vocabulary: Ref<VocabKanjiWithVocabulary[]>
 }
 
-// eslint-disable-next-line max-lines-per-function -- Handler collection composable
-export function useKanjiDetailVocabularyHandlers(state: State) {
-  const toast = useToast()
-  const vocabularyRepository = useVocabularyRepository()
-  const vocabKanjiRepository = useVocabKanjiRepository()
+type VocabRepo = ReturnType<typeof useVocabularyRepository>
 
-  /**
-   * All available vocabulary (for search/link)
-   */
-  const allVocabulary = computed<VocabularyListItem[]>(() => {
-    return vocabularyRepository.getAll().map((v) => ({
-      linkId: 0, // Not used for all vocabulary list
+interface VocabCtx {
+  state: State
+  vocabRepo: VocabRepo
+  vocabKanjiRepo: ReturnType<typeof useVocabKanjiRepository>
+  toast: ReturnType<typeof useToast>
+  refresh: () => void
+}
+
+interface UseKanjiDetailVocabularyHandlersReturn {
+  allVocabulary: ComputedRef<VocabularyListItem[]>
+  vocabularyList: ComputedRef<VocabularyListItem[]>
+  handleLink: (vocabularyId: number) => void
+  handleUnlink: (vocabularyId: number) => void
+  handleCreate: (data: QuickCreateVocabularyData) => void
+  refreshVocabulary: () => void
+}
+
+// ============================================================================
+// Module-scope implementation functions
+// ============================================================================
+
+function doHandleLinkAction(
+  vocabularyId: number,
+  isLink: boolean,
+  ctx: VocabCtx
+): void {
+  const kanjiVal = ctx.state.kanji.value
+  if (!kanjiVal) {
+    ctx.toast.error('No kanji selected')
+    return
+  }
+  if (isLink) {
+    const alreadyLinked = ctx.state.vocabulary.value.some(
+      (v) => v.vocabulary.id === vocabularyId
+    )
+    if (alreadyLinked) {
+      ctx.toast.error('This vocabulary is already linked to this kanji')
+      return
+    }
+    try {
+      ctx.vocabKanjiRepo.create({ vocabId: vocabularyId, kanjiId: kanjiVal.id })
+      ctx.refresh()
+      ctx.toast.success('Vocabulary linked successfully')
+    } catch {
+      ctx.toast.error('Failed to link vocabulary')
+    }
+  } else {
+    const link = ctx.state.vocabulary.value.find(
+      (v) => v.vocabulary.id === vocabularyId
+    )
+    if (!link) {
+      ctx.toast.error('Vocabulary is not linked to this kanji')
+      return
+    }
+    try {
+      ctx.vocabKanjiRepo.remove(link.vocabKanji.id)
+      ctx.refresh()
+      ctx.toast.success('Vocabulary unlinked successfully')
+    } catch {
+      ctx.toast.error('Failed to unlink vocabulary')
+    }
+  }
+}
+
+function doHandleCreate(data: QuickCreateVocabularyData, ctx: VocabCtx): void {
+  const kanjiVal = ctx.state.kanji.value
+  if (!kanjiVal) {
+    ctx.toast.error('No kanji selected')
+    return
+  }
+  try {
+    const newVocabulary = ctx.vocabRepo.create({
+      word: data.word,
+      kana: data.kana,
+      shortMeaning:
+        data.shortMeaning && data.shortMeaning.trim() !== ''
+          ? data.shortMeaning
+          : null
+    })
+    ctx.vocabKanjiRepo.create({
+      vocabId: newVocabulary.id,
+      kanjiId: kanjiVal.id
+    })
+    ctx.refresh()
+    ctx.toast.success(`Created and linked "${data.word}"`)
+  } catch {
+    ctx.toast.error('Failed to create vocabulary')
+  }
+}
+
+// ============================================================================
+// Composable
+// ============================================================================
+
+/**
+ * Provides handlers for linking, unlinking, and creating vocabulary in the
+ * kanji detail section.
+ *
+ * @param state - Reactive kanji detail state (kanji + vocabulary refs)
+ * @returns Handlers and computed lists for vocabulary management
+ */
+export function useKanjiDetailVocabularyHandlers(
+  state: State
+): UseKanjiDetailVocabularyHandlersReturn {
+  const toast = useToast()
+  const vocabRepo = useVocabularyRepository()
+  const vocabKanjiRepo = useVocabKanjiRepository()
+
+  const ctx: VocabCtx = {
+    state,
+    vocabRepo,
+    vocabKanjiRepo,
+    toast,
+    refresh: () => {
+      const k = state.kanji.value
+      if (k)
+        state.vocabulary.value = vocabKanjiRepo.getByKanjiIdWithVocabulary(k.id)
+    }
+  }
+
+  const allVocabulary = computed<VocabularyListItem[]>(() =>
+    vocabRepo.getAll().map((v) => ({
+      linkId: 0,
       vocabularyId: v.id,
       word: v.word,
       kana: v.kana,
       shortMeaning: v.shortMeaning
     }))
-  })
+  )
 
-  /**
-   * Linked vocabulary list (for display)
-   */
   const vocabularyList = computed<VocabularyListItem[]>(() =>
     state.vocabulary.value.map((v) => ({
       linkId: v.vocabKanji.id,
@@ -60,119 +174,18 @@ export function useKanjiDetailVocabularyHandlers(state: State) {
     }))
   )
 
-  /**
-   * Refresh vocabulary list from database
-   */
-  function refreshVocabulary(): void {
-    const kanjiVal = state.kanji.value
-    if (!kanjiVal) return
-
-    state.vocabulary.value = vocabKanjiRepository.getByKanjiIdWithVocabulary(
-      kanjiVal.id
-    )
-  }
-
-  /**
-   * Link existing vocabulary to current kanji
-   */
-  function handleLink(vocabularyId: number): void {
-    const kanjiVal = state.kanji.value
-    if (!kanjiVal) {
-      toast.error('No kanji selected')
-      return
-    }
-
-    // Check if already linked
-    const alreadyLinked = state.vocabulary.value.some(
-      (v) => v.vocabulary.id === vocabularyId
-    )
-    if (alreadyLinked) {
-      toast.error('This vocabulary is already linked to this kanji')
-      return
-    }
-
-    try {
-      vocabKanjiRepository.create({
-        vocabId: vocabularyId,
-        kanjiId: kanjiVal.id
-      })
-      refreshVocabulary()
-      toast.success('Vocabulary linked successfully')
-    } catch (error) {
-      toast.error('Failed to link vocabulary')
-      console.error('Link vocabulary error:', error)
-    }
-  }
-
-  /**
-   * Unlink vocabulary from current kanji
-   */
-  function handleUnlink(vocabularyId: number): void {
-    const kanjiVal = state.kanji.value
-    if (!kanjiVal) {
-      toast.error('No kanji selected')
-      return
-    }
-
-    const link = state.vocabulary.value.find(
-      (v) => v.vocabulary.id === vocabularyId
-    )
-    if (!link) {
-      toast.error('Vocabulary is not linked to this kanji')
-      return
-    }
-
-    try {
-      vocabKanjiRepository.remove(link.vocabKanji.id)
-      refreshVocabulary()
-      toast.success('Vocabulary unlinked successfully')
-    } catch (error) {
-      toast.error('Failed to unlink vocabulary')
-      console.error('Unlink vocabulary error:', error)
-    }
-  }
-
-  /**
-   * Create new vocabulary and link to current kanji
-   */
-  function handleCreate(data: QuickCreateVocabularyData): void {
-    const kanjiVal = state.kanji.value
-    if (!kanjiVal) {
-      toast.error('No kanji selected')
-      return
-    }
-
-    try {
-      // Create vocabulary
-      const newVocabulary = vocabularyRepository.create({
-        word: data.word,
-        kana: data.kana,
-        shortMeaning:
-          data.shortMeaning && data.shortMeaning.trim() !== ''
-            ? data.shortMeaning
-            : null
-      })
-
-      // Link to kanji
-      vocabKanjiRepository.create({
-        vocabId: newVocabulary.id,
-        kanjiId: kanjiVal.id
-      })
-
-      refreshVocabulary()
-      toast.success(`Created and linked "${data.word}"`)
-    } catch (error) {
-      toast.error('Failed to create vocabulary')
-      console.error('Create vocabulary error:', error)
-    }
-  }
-
   return {
     allVocabulary,
     vocabularyList,
-    handleLink,
-    handleUnlink,
-    handleCreate,
-    refreshVocabulary
+    handleLink: (id) => {
+      doHandleLinkAction(id, true, ctx)
+    },
+    handleUnlink: (id) => {
+      doHandleLinkAction(id, false, ctx)
+    },
+    handleCreate: (data) => {
+      doHandleCreate(data, ctx)
+    },
+    refreshVocabulary: ctx.refresh
   }
 }

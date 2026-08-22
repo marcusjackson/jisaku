@@ -83,7 +83,7 @@ defineProps<{
 
 .kanji-detail-component-item:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(var(--translate-lift));
 }
 
 .kanji-detail-component-item:focus-within {
@@ -103,7 +103,7 @@ defineProps<{
   color: var(--color-text-primary);
   font-family: var(--font-family-kanji);
   font-size: var(--kanji-card-size);
-  line-height: 1;
+  line-height: var(--line-height-none);
 }
 
 .kanji-detail-component-item-meaning {
@@ -126,14 +126,14 @@ defineProps<{
 .kanji-detail-component-item-radical-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-2xs);
-  padding: var(--spacing-2xs) var(--spacing-xs);
+  gap: var(--spacing-0-5);
+  padding: var(--spacing-0-5) var(--spacing-xs);
   border-radius: var(--radius-sm);
   background-color: var(--color-primary-bg);
   color: var(--color-primary);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  line-height: 1;
+  line-height: var(--line-height-none);
   cursor: help;
 }
 

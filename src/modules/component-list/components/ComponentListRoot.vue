@@ -154,7 +154,7 @@ onMounted(async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px;
+  min-height: var(--content-min-height);
 }
 
 .component-list-root-error {

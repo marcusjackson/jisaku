@@ -8,25 +8,24 @@
  */
 
 // Main entity
-export type {
-  CreateKanjiInput,
-  Kanji,
-  KanjiFilters,
-  UpdateKanjiInput
-} from './kanji-repository'
 export { useKanjiRepository } from './kanji-repository'
 export type {
   AnalysisFieldFilter,
   AnalysisFieldName,
   AnalysisLengthThreshold,
+  CreateKanjiInput,
   JlptLevel,
   JoyoLevel,
+  Kanji,
+  KanjiFilters,
   KanjiKenteiLevel,
   KanjiSortField,
   KanjiSortOptions,
   SortDirection,
-  StrokeOrderFilterValue
+  StrokeOrderFilterValue,
+  UpdateKanjiInput
 } from './kanji-types'
+export { JLPT_LEVELS, JOYO_LEVELS, KANJI_KENTEI_LEVELS } from './kanji-types'
 
 // Readings
 export { useKunReadingRepository } from './kun-reading-repository'

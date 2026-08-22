@@ -10,10 +10,10 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
 import { BaseRepository } from '../base-repository'
-import { EntityNotFoundError } from '../types'
 
-import type { Orderable, Repository } from '../types'
+import type { Orderable, Repository } from '../api-types'
 import type {
   CreatePositionTypeInput,
   PositionType,
@@ -31,6 +31,8 @@ interface PositionTypeRow {
   name_english: string | null
   description: string | null
   display_order: number
+  created_at: string
+  updated_at: string
 }
 
 // ============================================================================
@@ -63,7 +65,9 @@ class PositionTypeRepositoryImpl
       nameJapanese: r.name_japanese,
       nameEnglish: r.name_english,
       description: r.description,
-      displayOrder: r.display_order
+      displayOrder: r.display_order,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at
     }
   }
 
@@ -83,6 +87,7 @@ class PositionTypeRepositoryImpl
     return this.resultToList(result)
   }
 
+  /** Look up a position type by its unique short code (e.g. `'pre'`). */
   getByPositionName(positionName: string): PositionType | null {
     const result = this.exec(
       'SELECT * FROM position_types WHERE position_name = ?',
@@ -96,10 +101,7 @@ class PositionTypeRepositoryImpl
   // ==========================================================================
 
   create(input: CreatePositionTypeInput): PositionType {
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM position_types'
-    )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
+    const maxOrder = this.getMaxDisplayOrder('position_types')
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     this.run(
@@ -120,7 +122,7 @@ class PositionTypeRepositoryImpl
 
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created position type')
+      throw new CreateError('PositionType')
     }
 
     schedulePersist()
@@ -157,6 +159,7 @@ class PositionTypeRepositoryImpl
       return existing
     }
 
+    sets.push("updated_at = datetime('now')")
     values.push(id)
     this.run(
       `UPDATE position_types SET ${sets.join(', ')} WHERE id = ?`,
@@ -165,7 +168,7 @@ class PositionTypeRepositoryImpl
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('PositionType disappeared after update')
+      throw new UpdateError('PositionType', id)
     }
 
     schedulePersist()
@@ -178,15 +181,31 @@ class PositionTypeRepositoryImpl
   }
 
   // ==========================================================================
+  // Usage
+  // ==========================================================================
+
+  /** Return the number of component occurrences that reference this position type. */
+  getUsageCount(id: number): number {
+    const result = this.exec(
+      'SELECT COUNT(*) as count FROM component_occurrences WHERE position_type_id = ?',
+      [id]
+    )
+    return (result[0]?.values[0]?.[0] as number | null) ?? 0
+  }
+
+  // ==========================================================================
   // Ordering
   // ==========================================================================
 
+  /** Reorder position types by assigning `display_order` values matching the provided id array. */
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run('UPDATE position_types SET display_order = ? WHERE id = ?', [
-        index,
-        id
-      ])
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run('UPDATE position_types SET display_order = ? WHERE id = ?', [
+          index,
+          id
+        ])
+      })
     })
     schedulePersist()
   }
@@ -196,8 +215,11 @@ class PositionTypeRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a position type repository instance bound to the active database.
+ * @returns Repository for managing position types (CRUD, reorder).
+ * @example const repo = usePositionTypeRepository(); repo.getAll()
+ */
 export function usePositionTypeRepository(): PositionTypeRepositoryImpl {
   return new PositionTypeRepositoryImpl()
 }
-
-export type { CreatePositionTypeInput, PositionType, UpdatePositionTypeInput }

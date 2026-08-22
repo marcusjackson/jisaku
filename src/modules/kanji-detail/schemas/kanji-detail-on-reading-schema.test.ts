@@ -32,9 +32,8 @@ describe('kanjiDetailOnReadingSchema', () => {
       readingLevel: '小'
     })
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe('Reading is required')
-    }
+    if (result.success) throw new Error('Expected parse to fail')
+    expect(result.error.issues[0]?.message).toBe('Reading is required')
   })
 
   it('rejects invalid reading level', () => {

@@ -37,6 +37,7 @@ function isSelected(level: VocabJlptLevel): boolean {
   <div class="vocab-list-filter-jlpt">
     <span class="vocab-list-filter-jlpt-label">JLPT Level</span>
     <div class="vocab-list-filter-jlpt-chips">
+      <!-- Raw <button>: chip/toggle needs full style override incompatible with BaseButton -->
       <button
         v-for="level in levels"
         :key="level"
@@ -81,11 +82,16 @@ function isSelected(level: VocabJlptLevel): boolean {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
 }
 
 .vocab-list-filter-jlpt-chip:hover {
   background-color: var(--color-surface-hover);
+}
+
+.vocab-list-filter-jlpt-chip:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .vocab-list-filter-jlpt-chip-selected {

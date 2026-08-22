@@ -171,6 +171,11 @@ function createFiltersParser(
 // Composable Implementation
 // ============================================================================
 
+/**
+ * Syncs vocabulary list filter state with URL query parameters.
+ *
+ * @returns Reactive filter state and URL-synchronised search helpers
+ */
 export function useVocabListUrlSync(): UseVocabListUrlSync {
   const route = useRoute()
   const router = useRouter()

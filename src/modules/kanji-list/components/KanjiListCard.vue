@@ -91,7 +91,7 @@ const classificationLabel = computed(() => {
 
 .kanji-list-card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(var(--translate-lift));
 }
 
 .kanji-list-card:focus-visible {
@@ -103,7 +103,7 @@ const classificationLabel = computed(() => {
   color: var(--color-text-primary);
   font-family: var(--font-family-kanji);
   font-size: var(--kanji-card-size);
-  line-height: 1;
+  line-height: var(--line-height-none);
 }
 
 .kanji-list-card-info {

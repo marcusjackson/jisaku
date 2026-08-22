@@ -28,7 +28,7 @@ CREATE TABLE component_forms (
 -- =============================================================================
 -- STEP 3: Create index for component_forms
 -- =============================================================================
-CREATE INDEX idx_component_forms_component_id ON component_forms(component_id);
+CREATE INDEX IF NOT EXISTS idx_component_forms_component_id ON component_forms(component_id);
 
 -- Set schema version
 PRAGMA user_version = 14;

@@ -49,7 +49,6 @@ const emit = defineEmits<{
     <BaseButton
       v-if="props.destructiveMode"
       aria-label="Remove vocabulary link"
-      data-testid="vocabulary-remove-button"
       size="sm"
       variant="ghost"
       @click="emit('remove')"
@@ -95,7 +94,7 @@ const emit = defineEmits<{
   align-items: center;
   padding: var(--spacing-sm);
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
   background: var(--color-surface);
 }
 
@@ -109,10 +108,10 @@ const emit = defineEmits<{
 .vocabulary-link {
   display: block;
   padding: var(--spacing-sm);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
   color: var(--color-text-primary);
   text-decoration: none;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-normal);
 }
 
 .vocabulary-link:hover {
@@ -121,8 +120,8 @@ const emit = defineEmits<{
 }
 
 .vocabulary-link:focus-visible {
-  outline: var(--border-width-md) solid var(--color-border-focus);
-  outline-offset: var(--spacing-2xs);
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .vocabulary-word {

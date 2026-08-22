@@ -15,7 +15,11 @@ import type {
 // Re-exports for convenience
 // ============================================================================
 
-export type { VocabJlptLevel, Vocabulary }
+export type {
+  VocabJlptLevel,
+  VocabKanjiWithKanji,
+  Vocabulary
+} from '@/api/vocabulary/vocabulary-types'
 
 // ============================================================================
 // Component Props Types
@@ -53,6 +57,15 @@ export interface ActionsProps {
 // ============================================================================
 
 /**
+ * Data emitted when basic information fields are saved
+ */
+export interface BasicInfoSaveData {
+  jlptLevel: VocabJlptLevel | null
+  isCommon: boolean
+  description: string | null
+}
+
+/**
  * Events emitted by the headline section
  */
 export type HeadlineEmits = (e: 'save', data: HeadlineSaveData) => void
@@ -63,4 +76,15 @@ export type HeadlineEmits = (e: 'save', data: HeadlineSaveData) => void
 export interface ActionsEmits {
   (e: 'update:destructive-mode', value: boolean): void
   (e: 'delete'): void
+}
+
+// ============================================================================
+// Kanji Breakdown Types
+// ============================================================================
+
+/**
+ * Data for updating kanji breakdown analysis notes
+ */
+export interface KanjiBreakdownUpdateData {
+  notes: string | null
 }

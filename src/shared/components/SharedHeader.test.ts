@@ -126,13 +126,4 @@ describe('SharedHeader', () => {
       .querySelector('svg')
     expect(svg).toBeInTheDocument()
   })
-
-  it('renders version toggle', () => {
-    const router = createTestRouter()
-    render(SharedHeader, {
-      global: { plugins: [router] }
-    })
-
-    expect(screen.getByRole('switch')).toBeInTheDocument()
-  })
 })

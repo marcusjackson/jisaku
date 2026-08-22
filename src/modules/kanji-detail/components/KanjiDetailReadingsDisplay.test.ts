@@ -50,7 +50,7 @@ describe('KanjiDetailReadingsDisplay', () => {
         }
       })
 
-      const display = screen.getByTestId('on-readings-display')
+      const display = screen.getByRole('group', { name: /on readings/i })
       expect(display).toHaveTextContent('メイ・ミョウ')
       expect(display).toHaveTextContent('[中]')
       expect(display).toHaveTextContent('アイ')
@@ -64,7 +64,9 @@ describe('KanjiDetailReadingsDisplay', () => {
         }
       })
 
-      expect(screen.getByTestId('on-readings-empty')).toHaveTextContent('—')
+      expect(
+        screen.getByRole('group', { name: /on readings/i })
+      ).toHaveTextContent('—')
     })
 
     it('does not show level marker for 小 level', () => {
@@ -75,7 +77,7 @@ describe('KanjiDetailReadingsDisplay', () => {
         }
       })
 
-      const display = screen.getByTestId('on-readings-display')
+      const display = screen.getByRole('group', { name: /on readings/i })
       expect(display).not.toHaveTextContent('[小]')
       expect(display).toHaveTextContent('メイ')
     })
@@ -93,7 +95,7 @@ describe('KanjiDetailReadingsDisplay', () => {
         }
       })
 
-      const display = screen.getByTestId('kun-readings-display')
+      const display = screen.getByRole('group', { name: /kun readings/i })
       expect(display).toHaveTextContent('あか.り')
       expect(display).toHaveTextContent('かげ')
     })
@@ -106,7 +108,9 @@ describe('KanjiDetailReadingsDisplay', () => {
         }
       })
 
-      expect(screen.getByTestId('kun-readings-empty')).toHaveTextContent('—')
+      expect(
+        screen.getByRole('group', { name: /kun readings/i })
+      ).toHaveTextContent('—')
     })
 
     it('groups kun-readings by level', () => {
@@ -120,7 +124,7 @@ describe('KanjiDetailReadingsDisplay', () => {
         }
       })
 
-      const display = screen.getByTestId('kun-readings-display')
+      const display = screen.getByRole('group', { name: /kun readings/i })
       expect(display).toHaveTextContent('あか')
       expect(display).toHaveTextContent('[高]')
       expect(display).toHaveTextContent('かげ')

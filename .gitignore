@@ -43,7 +43,7 @@ pnpm-debug.log*
 *.tsbuildinfo
 
 # Files to manually ignore
-ignore/
+_local
 
 # To ensure use of pnpm
 package-lock.json

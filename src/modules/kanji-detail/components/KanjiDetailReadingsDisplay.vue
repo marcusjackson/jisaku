@@ -63,11 +63,12 @@ const hasKunReadings = computed(() => props.kunReadings.length > 0)
 <template>
   <div class="readings-display">
     <!-- On-yomi line -->
-    <div
+    <fieldset
       v-if="hasOnReadings"
       class="readings-line"
       data-testid="on-readings-display"
     >
+      <legend class="readings-legend">On readings</legend>
       <span class="readings-type-badge">音</span>
       <span
         v-for="(group, idx) in groupedOnReadings"
@@ -85,22 +86,24 @@ const hasKunReadings = computed(() => props.kunReadings.length > 0)
           class="readings-separator"
         />
       </span>
-    </div>
-    <div
+    </fieldset>
+    <fieldset
       v-else
       class="readings-line readings-empty"
       data-testid="on-readings-empty"
     >
+      <legend class="readings-legend">On readings</legend>
       <span class="readings-type-badge">音</span>
       <span class="readings-none">—</span>
-    </div>
+    </fieldset>
 
     <!-- Kun-yomi line -->
-    <div
+    <fieldset
       v-if="hasKunReadings"
       class="readings-line"
       data-testid="kun-readings-display"
     >
+      <legend class="readings-legend">Kun readings</legend>
       <span class="readings-type-badge">訓</span>
       <span
         v-for="(group, idx) in groupedKunReadings"
@@ -118,15 +121,16 @@ const hasKunReadings = computed(() => props.kunReadings.length > 0)
           class="readings-separator"
         />
       </span>
-    </div>
-    <div
+    </fieldset>
+    <fieldset
       v-else
       class="readings-line readings-empty"
       data-testid="kun-readings-empty"
     >
+      <legend class="readings-legend">Kun readings</legend>
       <span class="readings-type-badge">訓</span>
       <span class="readings-none">—</span>
-    </div>
+    </fieldset>
   </div>
 </template>
 
@@ -142,7 +146,14 @@ const hasKunReadings = computed(() => props.kunReadings.length > 0)
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--spacing-xs);
-  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  border: none;
+  line-height: var(--line-height-reading);
+}
+
+.readings-legend {
+  display: none;
 }
 
 .readings-type-badge {
@@ -152,7 +163,7 @@ const hasKunReadings = computed(() => props.kunReadings.length > 0)
   align-items: center;
   width: 1.5em;
   height: 1.5em;
-  padding: 2px;
+  padding: var(--spacing-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text-secondary);

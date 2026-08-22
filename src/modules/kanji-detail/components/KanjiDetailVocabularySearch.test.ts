@@ -156,7 +156,7 @@ describe('KanjiDetailVocabularySearch', () => {
       const input = screen.getByRole('textbox')
       await user.type(input, 'unknown')
 
-      const createButton = screen.getByTestId('vocabulary-search-create-button')
+      const createButton = screen.getByRole('button', { name: /create/i })
       await user.click(createButton)
 
       expect(emitted()).toHaveProperty('create')
@@ -197,7 +197,7 @@ describe('KanjiDetailVocabularySearch', () => {
 
       expect(screen.getByText('No vocabulary found')).toBeInTheDocument()
       expect(
-        screen.getByTestId('vocabulary-search-create-button')
+        screen.getByRole('button', { name: /create/i })
       ).toBeInTheDocument()
     })
 

@@ -6,89 +6,41 @@
  * and coordinates section components.
  */
 
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { BaseSpinner } from '@/base/components'
 
-import { useVocabularyRepository } from '@/api/vocabulary'
-
-import { useToast } from '@/shared/composables'
-
-import { ROUTES } from '@/router/routes'
+import { useVocabDetailData } from '../composables/use-vocab-detail-data'
+import { useVocabDetailKanjiBreakdownHandlers } from '../composables/use-vocab-detail-kanji-breakdown-handlers'
+import { useVocabDetailRootHandlers } from '../composables/use-vocab-detail-root-handlers'
 
 import VocabDetailSectionActions from './VocabDetailSectionActions.vue'
+import VocabDetailSectionBasicInfo from './VocabDetailSectionBasicInfo.vue'
 import VocabDetailSectionHeadline from './VocabDetailSectionHeadline.vue'
+import VocabDetailSectionKanjiBreakdown from './VocabDetailSectionKanjiBreakdown.vue'
 
-import type { HeadlineSaveData } from '../vocab-detail-types'
-import type { Vocabulary } from '@/api/vocabulary'
+const { allKanji, isLoading, kanjiBreakdown, loadError, vocab, vocabId } =
+  useVocabDetailData()
 
-const route = useRoute()
-const router = useRouter()
-const toast = useToast()
-const vocabRepo = useVocabularyRepository()
-
-const vocab = ref<Vocabulary | null>(null)
-const isLoading = ref(true)
-const loadError = ref<string | null>(null)
 const isDestructiveMode = ref(false)
 const isDeleting = ref(false)
+const router = useRouter()
 
-const vocabId = computed(() => Number(route.params['id']))
-
-function loadVocab(): void {
-  isLoading.value = true
-  loadError.value = null
-  try {
-    vocab.value = vocabRepo.getById(vocabId.value)
-    if (!vocab.value) {
-      loadError.value = `Vocabulary with ID ${String(vocabId.value)} not found`
-      return
-    }
-  } catch (err) {
-    loadError.value =
-      err instanceof Error ? err.message : 'Failed to load vocabulary'
-  } finally {
-    isLoading.value = false
-  }
-}
-
-watch(
+const {
+  handleAdd,
+  handleCreate,
+  handleRemove,
+  handleReorder,
+  handleUpdateNotes
+} = useVocabDetailKanjiBreakdownHandlers({
   vocabId,
-  () => {
-    loadVocab()
-  },
-  { immediate: true }
-)
+  kanjiBreakdown,
+  allKanji
+})
 
-function handleHeadlineSave(data: HeadlineSaveData): void {
-  if (!vocab.value) return
-  try {
-    vocabRepo.update(vocab.value.id, data)
-    vocab.value = { ...vocab.value, ...data }
-    toast.success('Vocabulary updated successfully')
-  } catch (err) {
-    toast.error(
-      err instanceof Error ? err.message : 'Failed to update vocabulary'
-    )
-  }
-}
-
-function handleDelete(): void {
-  if (!vocab.value) return
-  isDeleting.value = true
-  try {
-    vocabRepo.remove(vocab.value.id)
-    toast.success('Vocabulary deleted successfully')
-    void router.push(ROUTES.VOCABULARY_LIST)
-  } catch (err) {
-    toast.error(
-      err instanceof Error ? err.message : 'Failed to delete vocabulary'
-    )
-  } finally {
-    isDeleting.value = false
-  }
-}
+const { handleBasicInfoSave, handleDelete, handleHeadlineSave } =
+  useVocabDetailRootHandlers({ vocab, isDeleting, router })
 </script>
 
 <template>
@@ -114,6 +66,22 @@ function handleDelete(): void {
           @save="handleHeadlineSave"
         />
 
+        <VocabDetailSectionBasicInfo
+          :vocab="vocab"
+          @save="handleBasicInfoSave"
+        />
+
+        <VocabDetailSectionKanjiBreakdown
+          :all-kanji="allKanji"
+          :is-destructive-mode="isDestructiveMode"
+          :kanji-breakdown="kanjiBreakdown"
+          @add="handleAdd"
+          @create="handleCreate"
+          @remove="handleRemove"
+          @reorder="handleReorder"
+          @update-notes="handleUpdateNotes"
+        />
+
         <VocabDetailSectionActions
           v-model:destructive-mode="isDestructiveMode"
           :is-deleting="isDeleting"
@@ -136,7 +104,7 @@ function handleDelete(): void {
   flex-direction: column;
   gap: var(--spacing-xl);
   width: 100%;
-  max-width: 768px;
+  max-width: var(--content-max-width);
 }
 
 .vocab-detail-root-loading,
@@ -144,10 +112,10 @@ function handleDelete(): void {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px;
+  min-height: var(--content-min-height);
 }
 
 .vocab-detail-root-error {
-  color: var(--color-text-danger);
+  color: var(--color-danger);
 }
 </style>

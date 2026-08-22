@@ -32,6 +32,11 @@ interface ComponentRow {
   updated_at: string
 }
 
+interface CountRow {
+  component_id: number
+  count: number
+}
+
 // ============================================================================
 // Query Operations
 // ============================================================================
@@ -57,7 +62,7 @@ export class ComponentQueries extends BaseRepository<Component> {
       searchKeywords: r.search_keywords,
       sourceKanjiId: r.source_kanji_id,
       description: r.description,
-      canBeRadical: r.can_be_radical === 1,
+      canBeRadical: Boolean(r.can_be_radical),
       kangxiNumber: r.kangxi_number,
       kangxiMeaning: r.kangxi_meaning,
       radicalNameJapanese: r.radical_name_japanese,
@@ -129,15 +134,15 @@ export class ComponentQueries extends BaseRepository<Component> {
 
     if (filters.kangxiSearch) {
       const searchLower = filters.kangxiSearch.toLowerCase().trim()
-      const num = parseInt(searchLower, 10)
-      if (!isNaN(num)) {
+      const num = Number.parseInt(searchLower, 10)
+      if (Number.isNaN(num)) {
+        // If it's not a number, just search kangxi_meaning
+        conditions.push('kangxi_meaning LIKE ?')
+        params.push(`%${searchLower}%`)
+      } else {
         // If it's a number, search both kangxi_number and kangxi_meaning
         conditions.push('(kangxi_number = ? OR kangxi_meaning LIKE ?)')
         params.push(num, `%${searchLower}%`)
-      } else {
-        // Otherwise just search kangxi_meaning
-        conditions.push('kangxi_meaning LIKE ?')
-        params.push(`%${searchLower}%`)
       }
     }
 
@@ -178,11 +183,14 @@ export class ComponentQueries extends BaseRepository<Component> {
     `
     const result = this.exec(sql, [])
     const map = new Map<number, number>()
-    if (result[0]?.values) {
-      for (const row of result[0].values) {
-        const componentId = row[0] as number
-        const count = row[1] as number
-        map.set(componentId, count)
+    const firstResult = result[0]
+    if (firstResult?.values) {
+      for (const row of firstResult.values) {
+        const obj = this.rowToObject({
+          columns: firstResult.columns,
+          values: [row]
+        }) as unknown as CountRow
+        map.set(obj.component_id, obj.count)
       }
     }
     return map
@@ -197,11 +205,14 @@ export class ComponentQueries extends BaseRepository<Component> {
     `
     const result = this.exec(sql, [])
     const map = new Map<number, number>()
-    if (result[0]?.values) {
-      for (const row of result[0].values) {
-        const componentId = row[0] as number
-        const count = row[1] as number
-        map.set(componentId, count)
+    const firstResult = result[0]
+    if (firstResult?.values) {
+      for (const row of firstResult.values) {
+        const obj = this.rowToObject({
+          columns: firstResult.columns,
+          values: [row]
+        }) as unknown as CountRow
+        map.set(obj.component_id, obj.count)
       }
     }
     return map

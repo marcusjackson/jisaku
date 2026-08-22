@@ -94,6 +94,11 @@ function createFilterUpdater(urlSync: UseVocabListUrlSync) {
 // Composable Implementation
 // ============================================================================
 
+/**
+ * Manages URL-synced filter state for the vocabulary list.
+ *
+ * @returns Reactive filter state, update/clear functions, and refresh trigger
+ */
 export function useVocabListState(): UseVocabListState {
   const urlSync = useVocabListUrlSync()
   const refreshTrigger = ref(0)

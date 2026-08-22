@@ -192,6 +192,11 @@ function createParseFiltersFromUrl(
   }
 }
 
+/**
+ * Syncs component list filter state with URL query parameters.
+ *
+ * @returns Reactive filter state and URL-synchronised search helpers
+ */
 export function useComponentListUrlSync(): UseComponentListUrlSync {
   const route = useRoute()
   const router = useRouter()

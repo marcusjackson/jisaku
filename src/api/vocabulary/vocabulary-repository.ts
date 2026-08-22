@@ -10,7 +10,7 @@
 import { VocabularyMutations } from './vocabulary-mutations'
 import { VocabularyQueries } from './vocabulary-queries'
 
-import type { FieldUpdatable, Repository, UpdatableField } from '../types'
+import type { FieldUpdatable, Repository, UpdatableField } from '../api-types'
 import type {
   CreateVocabularyInput,
   UpdateVocabularyInput,
@@ -92,13 +92,11 @@ class VocabularyRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a vocabulary repository instance bound to the active database.
+ * @returns Repository for managing vocabulary entries (CRUD, search).
+ * @example const repo = useVocabularyRepository(); repo.search({ jlptLevels: ['N5'] })
+ */
 export function useVocabularyRepository(): VocabularyRepositoryImpl {
   return new VocabularyRepositoryImpl()
-}
-
-export type {
-  CreateVocabularyInput,
-  UpdateVocabularyInput,
-  Vocabulary,
-  VocabularyFilters
 }

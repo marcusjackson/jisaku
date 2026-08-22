@@ -10,13 +10,21 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import {
+  CreateError,
+  EntityNotFoundError,
+  RepositoryError,
+  UpdateError
+} from '../api-types'
 import { BaseRepository } from '../base-repository'
-import { EntityNotFoundError } from '../types'
 
-import type { ChildRepository, Orderable } from '../types'
+import { READING_LEVELS } from './reading-types'
+
+import type { ChildRepository, Orderable } from '../api-types'
 import type {
   CreateOnReadingInput,
   OnReading,
+  ReadingLevel,
   UpdateOnReadingInput
 } from './reading-types'
 
@@ -58,11 +66,18 @@ class OnReadingRepositoryImpl
 
   protected mapRow(row: Record<string, unknown>): OnReading {
     const r = row as unknown as OnReadingRow
+    if (!(READING_LEVELS as readonly string[]).includes(r.reading_level)) {
+      throw new RepositoryError(
+        `Invalid reading_level: '${r.reading_level}'`,
+        'mapRow',
+        'OnReading'
+      )
+    }
     return {
       id: r.id,
       kanjiId: r.kanji_id,
       reading: r.reading,
-      readingLevel: r.reading_level as OnReading['readingLevel'],
+      readingLevel: r.reading_level as ReadingLevel,
       displayOrder: r.display_order,
       createdAt: r.created_at,
       updatedAt: r.updated_at
@@ -97,13 +112,15 @@ class OnReadingRepositoryImpl
   // Write Operations
   // ==========================================================================
 
+  /**
+   * @throws {CreateError} If the insert fails
+   */
   create(input: CreateOnReadingInput): OnReading {
-    // Get max display_order for this kanji
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM on_readings WHERE kanji_id = ?',
+    const maxOrder = this.getMaxDisplayOrder(
+      'on_readings',
+      'WHERE kanji_id = ?',
       [input.kanjiId]
     )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     this.run(
@@ -117,13 +134,17 @@ class OnReadingRepositoryImpl
 
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created on-reading')
+      throw new CreateError('OnReading')
     }
 
     schedulePersist()
     return created
   }
 
+  /**
+   * @throws {EntityNotFoundError} If the reading does not exist
+   * @throws {UpdateError} If the update fails to return
+   */
   update(id: number, input: UpdateOnReadingInput): OnReading {
     const existing = this.getById(id)
     if (!existing) {
@@ -146,20 +167,23 @@ class OnReadingRepositoryImpl
       return existing
     }
 
-    sets.push('updated_at = datetime("now")')
+    sets.push("updated_at = datetime('now')")
     values.push(id)
 
     this.run(`UPDATE on_readings SET ${sets.join(', ')} WHERE id = ?`, values)
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('OnReading disappeared after update')
+      throw new UpdateError('OnReading', id)
     }
 
     schedulePersist()
     return updated
   }
 
+  /**
+   * Delete an on-reading by id.
+   */
   remove(id: number): void {
     this.run('DELETE FROM on_readings WHERE id = ?', [id])
     schedulePersist()
@@ -170,11 +194,13 @@ class OnReadingRepositoryImpl
   // ==========================================================================
 
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run('UPDATE on_readings SET display_order = ? WHERE id = ?', [
-        index,
-        id
-      ])
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run('UPDATE on_readings SET display_order = ? WHERE id = ?', [
+          index,
+          id
+        ])
+      })
     })
     schedulePersist()
   }
@@ -184,8 +210,11 @@ class OnReadingRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates an on-reading repository instance bound to the active database.
+ * @returns Repository for managing kanji on-yomi readings (CRUD, reorder).
+ * @example const repo = useOnReadingRepository(); repo.getByParentId(1)
+ */
 export function useOnReadingRepository(): OnReadingRepositoryImpl {
   return new OnReadingRepositoryImpl()
 }
-
-export type { CreateOnReadingInput, OnReading, UpdateOnReadingInput }

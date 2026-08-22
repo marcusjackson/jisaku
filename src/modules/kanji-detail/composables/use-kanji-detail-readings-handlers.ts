@@ -11,7 +11,7 @@ import {
 } from '../utils/reading-processing'
 
 import type { ReadingsSaveData } from '../kanji-detail-types'
-import type { KunReading, OnReading, ReadingLevel } from '@/api/kanji'
+import type { KunReading, OnReading } from '@/api/kanji'
 import type { useKunReadingRepository } from '@/api/kanji/kun-reading-repository'
 import type { useOnReadingRepository } from '@/api/kanji/on-reading-repository'
 import type { Ref } from 'vue'
@@ -27,10 +27,22 @@ interface State {
   onReadings: Ref<OnReading[]>
 }
 
+interface UseKanjiDetailReadingsHandlersReturn {
+  handleSaveReadings: (data: ReadingsSaveData) => void
+  reloadReadings: () => void
+}
+
+/**
+ * Provides handlers for on-yomi and kun-yomi reading save/reload operations.
+ *
+ * @param state - Reactive kanji detail state with reading refs
+ * @param repos - On-reading and kun-reading repositories
+ * @returns Save and reload handlers for readings
+ */
 export function useKanjiDetailReadingsHandlers(
   state: State,
   repos: Repositories
-) {
+): UseKanjiDetailReadingsHandlersReturn {
   const { kanjiId, kunReadings, onReadings } = state
   const { kunReadingRepo, onReadingRepo } = repos
 
@@ -58,4 +70,4 @@ export function useKanjiDetailReadingsHandlers(
   return { handleSaveReadings, reloadReadings }
 }
 
-export type { ReadingLevel }
+export type { ReadingLevel } from '@/api/kanji'

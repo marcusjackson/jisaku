@@ -65,6 +65,11 @@ import SharedHeaderNav from './SharedHeaderNav.vue'
   color: var(--color-primary);
 }
 
+.shared-header-logo:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
 /* Tablet and larger */
 @media (width >= 768px) {
   .shared-header-content {

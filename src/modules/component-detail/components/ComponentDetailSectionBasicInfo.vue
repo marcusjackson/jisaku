@@ -64,6 +64,7 @@ function handleSave(data: BasicInfoSaveData): void {
   >
     <template #actions>
       <BaseButton
+        aria-label="Edit basic info"
         data-testid="basic-info-edit-button"
         size="sm"
         variant="secondary"
@@ -164,7 +165,7 @@ function handleSave(data: BasicInfoSaveData): void {
 
 .component-basic-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-item-min-sm), 1fr));
   gap: var(--spacing-sm) var(--spacing-md);
 }
 

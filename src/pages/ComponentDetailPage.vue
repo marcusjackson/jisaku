@@ -6,9 +6,7 @@
  * Applies theme, header, and layout wrapper.
  */
 
-import { BaseToast } from '@/base/components'
-
-import { SharedHeader } from '@/shared/components'
+import { SharedHeader, SharedToast } from '@/shared/components'
 import { useTheme } from '@/shared/composables'
 
 import ComponentDetailRoot from '@/modules/component-detail/components/ComponentDetailRoot.vue'
@@ -22,7 +20,7 @@ useTheme()
     <main class="component-detail-page-main">
       <ComponentDetailRoot />
     </main>
-    <BaseToast />
+    <SharedToast />
   </div>
 </template>
 

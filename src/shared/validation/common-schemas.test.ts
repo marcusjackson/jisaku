@@ -30,19 +30,17 @@ describe('singleCharacterSchema', () => {
   it('rejects empty string', () => {
     const result = singleCharacterSchema.safeParse('')
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe('Please enter a character')
-    }
+    if (result.success) throw new Error('Expected parse to fail')
+    expect(result.error.issues[0]?.message).toBe('Please enter a character')
   })
 
   it('rejects multiple characters', () => {
     const result = singleCharacterSchema.safeParse('水火')
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(
-        'Please enter only one character'
-      )
-    }
+    if (result.success) throw new Error('Expected parse to fail')
+    expect(result.error.issues[0]?.message).toBe(
+      'Please enter only one character'
+    )
   })
 
   it('trims whitespace before validation', () => {
@@ -73,8 +71,7 @@ describe('optionalString', () => {
     const schema = optionalString(5)
     const result = schema.safeParse('hello world')
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toContain('Max 5 characters')
-    }
+    if (result.success) throw new Error('Expected parse to fail')
+    expect(result.error.issues[0]?.message).toContain('Max 5 characters')
   })
 })

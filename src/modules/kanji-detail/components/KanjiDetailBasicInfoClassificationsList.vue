@@ -151,7 +151,7 @@ function handleTypeChange(
 
 .list-order {
   flex-shrink: 0;
-  width: 24px;
+  width: var(--icon-size-lg);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   text-align: center;

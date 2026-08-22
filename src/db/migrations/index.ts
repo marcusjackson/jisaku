@@ -21,8 +21,32 @@ import migration014 from './014-component-forms.sql?raw'
 import migration015 from './015-component-groupings.sql?raw'
 import migration016 from './016-vocabulary-system.sql?raw'
 import migration017 from './017-fix-kentei-level-format.sql?raw'
+import migration018 from './018-fix-updated-at-triggers.sql?raw'
+import migration019 from './019-drop-notes-cultural.sql?raw'
 
 import type { Database } from 'sql.js'
+
+// ============================================================================
+// Transaction Helper
+// ============================================================================
+
+/**
+ * Run a migration function inside a BEGIN / COMMIT transaction.
+ *
+ * If the migration throws, the transaction is rolled back and the error
+ * is re-thrown. This ensures a failed migration never leaves the database
+ * in a partially-applied state.
+ */
+function runWithTransaction(db: Database, fn: () => void): void {
+  db.run('BEGIN')
+  try {
+    fn()
+    db.run('COMMIT')
+  } catch (err) {
+    db.run('ROLLBACK')
+    throw err
+  }
+}
 
 /**
  * Helper to get column names from a table
@@ -37,6 +61,14 @@ function getTableColumns(db: Database, tableName: string): string[] {
  * Handles databases that may already have the new schema
  */
 function runMigration002(db: Database): void {
+  // SQL constants for readability
+  const SQL_ADD_ETYMOLOGY = 'ALTER TABLE kanjis ADD COLUMN notes_etymology TEXT'
+  const SQL_ADD_CULTURAL = 'ALTER TABLE kanjis ADD COLUMN notes_cultural TEXT'
+  const SQL_ADD_PERSONAL = 'ALTER TABLE kanjis ADD COLUMN notes_personal TEXT'
+  const SQL_MIGRATE_NOTES =
+    'UPDATE kanjis SET notes_personal = notes WHERE notes IS NOT NULL'
+  const SQL_DROP_OLD_NOTES = 'ALTER TABLE kanjis DROP COLUMN notes'
+
   // Check if old notes column exists (for existing databases)
   const tableInfo = db.exec('PRAGMA table_info(kanjis)')
   const columns = tableInfo[0]?.values.map((row) => row[1]) ?? []
@@ -45,14 +77,14 @@ function runMigration002(db: Database): void {
 
   if (hasOldNotesColumn && !hasNewNotesColumns) {
     // Add new columns
-    db.run('ALTER TABLE kanjis ADD COLUMN notes_etymology TEXT')
-    db.run('ALTER TABLE kanjis ADD COLUMN notes_cultural TEXT')
-    db.run('ALTER TABLE kanjis ADD COLUMN notes_personal TEXT')
+    db.run(SQL_ADD_ETYMOLOGY)
+    db.run(SQL_ADD_CULTURAL)
+    db.run(SQL_ADD_PERSONAL)
     // Migrate existing notes to personal notes
-    db.run('UPDATE kanjis SET notes_personal = notes WHERE notes IS NOT NULL')
+    db.run(SQL_MIGRATE_NOTES)
     // Drop old column - SQLite 3.35.0+ only
     try {
-      db.run('ALTER TABLE kanjis DROP COLUMN notes')
+      db.run(SQL_DROP_OLD_NOTES)
     } catch {
       // If DROP COLUMN fails (older SQLite), keep the old column
       // It won't cause issues, just redundant data
@@ -87,14 +119,18 @@ function runMigration003(db: Database): void {
  * Checks if column already exists before adding
  */
 function runMigration004(db: Database): void {
+  // SQL constants for readability
+  const SQL_ADD_KENTEI_LEVEL =
+    'ALTER TABLE kanjis ADD COLUMN kanji_kentei_level TEXT'
+  const SQL_CREATE_KENTEI_INDEX =
+    'CREATE INDEX IF NOT EXISTS idx_kanjis_kentei_level ON kanjis(kanji_kentei_level)'
+
   // Check if column already exists
   const columns = getTableColumns(db, 'kanjis')
 
   if (!columns.includes('kanji_kentei_level')) {
-    db.run('ALTER TABLE kanjis ADD COLUMN kanji_kentei_level TEXT')
-    db.run(
-      'CREATE INDEX IF NOT EXISTS idx_kanjis_kentei_level ON kanjis(kanji_kentei_level)'
-    )
+    db.run(SQL_ADD_KENTEI_LEVEL)
+    db.run(SQL_CREATE_KENTEI_INDEX)
   }
 
   db.run('PRAGMA user_version = 4')
@@ -105,16 +141,22 @@ function runMigration004(db: Database): void {
  * Checks if short_meaning columns already exist before adding
  */
 function runMigration005(db: Database): void {
+  // SQL constants for readability
+  const SQL_ADD_KANJI_SHORT_MEANING =
+    'ALTER TABLE kanjis ADD COLUMN short_meaning TEXT'
+  const SQL_ADD_COMPONENT_SHORT_MEANING =
+    'ALTER TABLE components ADD COLUMN short_meaning TEXT'
+
   // Check if columns already exist
   const kanjiColumns = getTableColumns(db, 'kanjis')
   const componentColumns = getTableColumns(db, 'components')
 
   if (!kanjiColumns.includes('short_meaning')) {
-    db.run('ALTER TABLE kanjis ADD COLUMN short_meaning TEXT')
+    db.run(SQL_ADD_KANJI_SHORT_MEANING)
   }
 
   if (!componentColumns.includes('short_meaning')) {
-    db.run('ALTER TABLE components ADD COLUMN short_meaning TEXT')
+    db.run(SQL_ADD_COMPONENT_SHORT_MEANING)
   }
 
   db.run('PRAGMA user_version = 5')
@@ -125,6 +167,14 @@ function runMigration005(db: Database): void {
  * Migrates japanese_name to search_keywords and drops japanese_name column
  */
 function runMigration006(db: Database): void {
+  // SQL constants for readability
+  const SQL_ADD_SEARCH_KEYWORDS =
+    'ALTER TABLE components ADD COLUMN search_keywords TEXT'
+  const SQL_MIGRATE_KEYWORDS =
+    'UPDATE components SET search_keywords = japanese_name WHERE japanese_name IS NOT NULL'
+  const SQL_DROP_JAPANESE_NAME =
+    'ALTER TABLE components DROP COLUMN japanese_name'
+
   // Check if migration already applied
   const componentColumns = getTableColumns(db, 'components')
 
@@ -133,13 +183,11 @@ function runMigration006(db: Database): void {
     componentColumns.includes('japanese_name') &&
     !componentColumns.includes('search_keywords')
   ) {
-    db.run('ALTER TABLE components ADD COLUMN search_keywords TEXT')
-    db.run(
-      'UPDATE components SET search_keywords = japanese_name WHERE japanese_name IS NOT NULL'
-    )
+    db.run(SQL_ADD_SEARCH_KEYWORDS)
+    db.run(SQL_MIGRATE_KEYWORDS)
     // Try to drop old column (SQLite 3.35.0+)
     try {
-      db.run('ALTER TABLE components DROP COLUMN japanese_name')
+      db.run(SQL_DROP_JAPANESE_NAME)
     } catch {
       // If DROP COLUMN fails, column remains but won't be used
     }
@@ -148,7 +196,7 @@ function runMigration006(db: Database): void {
     !componentColumns.includes('search_keywords')
   ) {
     // Neither exists, just add search_keywords
-    db.run('ALTER TABLE components ADD COLUMN search_keywords TEXT')
+    db.run(SQL_ADD_SEARCH_KEYWORDS)
   }
 
   db.run('PRAGMA user_version = 6')
@@ -207,11 +255,11 @@ function runMigration011(db: Database): void {
   )
   const hasOnReadings = (tablesResult[0]?.values.length ?? 0) > 0
 
-  if (!hasOnReadings) {
-    db.run(migration011)
-  } else {
+  if (hasOnReadings) {
     // Tables already exist, just set version
     db.run('PRAGMA user_version = 11')
+  } else {
+    db.run(migration011)
   }
 }
 
@@ -226,11 +274,11 @@ function runMigration012(db: Database): void {
   )
   const hasKanjiMeanings = (tablesResult[0]?.values.length ?? 0) > 0
 
-  if (!hasKanjiMeanings) {
-    db.run(migration012)
-  } else {
+  if (hasKanjiMeanings) {
     // Tables already exist, just set version
     db.run('PRAGMA user_version = 12')
+  } else {
+    db.run(migration012)
   }
 }
 
@@ -253,6 +301,10 @@ function runMigration013(db: Database): void {
   }
 
   // Add phonetic_loan type if not exists
+  // NOTE: This inline seed INSERT is intentional — it is a one-time reference data
+  // entry tightly coupled to the schema change in this migration. Extracting it
+  // to a separate seed process would add complexity without practical benefit for
+  // this single-user tool.
   const typeResult = db.exec(
     "SELECT id FROM classification_types WHERE type_name = 'phonetic_loan'"
   )
@@ -295,11 +347,11 @@ function runMigration016(db: Database): void {
   )
   const hasVocabulary = (tablesResult[0]?.values.length ?? 0) > 0
 
-  if (!hasVocabulary) {
-    db.run(migration016)
-  } else {
+  if (hasVocabulary) {
     // Table already exists, just set version
     db.run('PRAGMA user_version = 16')
+  } else {
+    db.run(migration016)
   }
 }
 
@@ -312,32 +364,74 @@ function runMigration017(db: Database): void {
 }
 
 /**
+ * Run migration 018
+ * Adds missing updated_at triggers for tables created in migrations 014-016
+ */
+function runMigration018(db: Database): void {
+  db.run(migration018)
+}
+
+/**
+ * Run migration 019
+ * Drops the unused notes_cultural column that was added in migration 002
+ * but never used in TypeScript types, queries, or mutations.
+ */
+function runMigration019(db: Database): void {
+  const columns = getTableColumns(db, 'kanjis')
+  if (columns.includes('notes_cultural')) {
+    // DROP COLUMN requires SQLite 3.35.0+; wrapped in try/catch for safety.
+    try {
+      db.run(migration019)
+    } catch {
+      // Older SQLite — skip; the column is harmlessly unused.
+      db.run('PRAGMA user_version = 19')
+    }
+  } else {
+    db.run('PRAGMA user_version = 19')
+  }
+}
+
+/**
  * Execute early migrations (versions 1-8)
  */
 function applyEarlyMigrations(db: Database, currentVersion: number): void {
   if (currentVersion < 1) {
-    db.run(migration001)
+    runWithTransaction(db, () => db.run(migration001))
   }
   if (currentVersion < 2) {
-    runMigration002(db)
+    runWithTransaction(db, () => {
+      runMigration002(db)
+    })
   }
   if (currentVersion < 3) {
-    runMigration003(db)
+    runWithTransaction(db, () => {
+      runMigration003(db)
+    })
   }
   if (currentVersion < 4) {
-    runMigration004(db)
+    runWithTransaction(db, () => {
+      runMigration004(db)
+    })
   }
   if (currentVersion < 5) {
-    runMigration005(db)
+    runWithTransaction(db, () => {
+      runMigration005(db)
+    })
   }
   if (currentVersion < 6) {
-    runMigration006(db)
+    runWithTransaction(db, () => {
+      runMigration006(db)
+    })
   }
   if (currentVersion < 7) {
-    runMigration007(db)
+    runWithTransaction(db, () => {
+      runMigration007(db)
+    })
   }
   if (currentVersion < 8) {
-    runMigration008(db)
+    runWithTransaction(db, () => {
+      runMigration008(db)
+    })
   }
 }
 
@@ -346,37 +440,65 @@ function applyEarlyMigrations(db: Database, currentVersion: number): void {
  */
 function applyMiddleMigrations(db: Database, currentVersion: number): void {
   if (currentVersion < 9) {
-    runMigration009(db)
+    runWithTransaction(db, () => {
+      runMigration009(db)
+    })
   }
   if (currentVersion < 10) {
-    runMigration010(db)
+    runWithTransaction(db, () => {
+      runMigration010(db)
+    })
   }
   if (currentVersion < 11) {
-    runMigration011(db)
+    runWithTransaction(db, () => {
+      runMigration011(db)
+    })
   }
   if (currentVersion < 12) {
-    runMigration012(db)
+    runWithTransaction(db, () => {
+      runMigration012(db)
+    })
   }
   if (currentVersion < 13) {
-    runMigration013(db)
+    runWithTransaction(db, () => {
+      runMigration013(db)
+    })
   }
 }
 
 /**
- * Execute late migrations (versions 14-17)
+ * Execute late migrations (versions 14-18)
  */
 function applyLateMigrations(db: Database, currentVersion: number): void {
   if (currentVersion < 14) {
-    runMigration014(db)
+    runWithTransaction(db, () => {
+      runMigration014(db)
+    })
   }
   if (currentVersion < 15) {
-    runMigration015(db)
+    runWithTransaction(db, () => {
+      runMigration015(db)
+    })
   }
   if (currentVersion < 16) {
-    runMigration016(db)
+    runWithTransaction(db, () => {
+      runMigration016(db)
+    })
   }
   if (currentVersion < 17) {
-    runMigration017(db)
+    runWithTransaction(db, () => {
+      runMigration017(db)
+    })
+  }
+  if (currentVersion < 18) {
+    runWithTransaction(db, () => {
+      runMigration018(db)
+    })
+  }
+  if (currentVersion < 19) {
+    runWithTransaction(db, () => {
+      runMigration019(db)
+    })
   }
 }
 
@@ -401,12 +523,11 @@ export function runMigrations(db: Database): void {
   try {
     applyPendingMigrations(db, currentVersion)
   } catch (error) {
-    // If migration fails, log error but don't crash the app
-    // The database will be in an inconsistent state, but the app can still function
-    // In production, this should trigger a database reset or recovery mechanism
-    console.error('Migration failed:', error)
+    // Re-throw with a more descriptive message. The error propagates to
+    // App.vue which surfaces it to the user.
     throw new Error(
-      `Database migration failed: ${error instanceof Error ? error.message : String(error)}`
+      `Database migration failed: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error }
     )
   }
 }

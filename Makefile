@@ -1,54 +1,292 @@
 # Makefile for Jisaku project
 # Usage:
-#   make lint FILES="src/foo.ts src/bar.ts"
-#   make lint-css FILES="src/foo.vue src/bar.vue"
-#   make format FILES="src/foo.ts src/bar.ts"
-#   make type-check-files FILES="src/foo.ts"
-#   make check         # runs all on all files
-#   make check-changed # runs all on changed files (git)
-#   make fix     # runs all with fixes on all files
-#   make fix-changed # runs all with fixes on changed files (git)
-#   make test-changed  # runs tests on changed files + tests for changed source files
+#   make lint                    # Full CI-style check (Prettier + ESLint + Stylelint + Types)
+#   make lint-fix                # Apply all fixes (format + eslint + stylelint)
+#   make lint FILES="path"       # Check specific files
+#   make lint-fix FILES="path"   # Fix specific files
+#   make type-check              # TypeScript type checking only
+#   make type-check-files FILES="path"       # Per-file type-check (vue-tsc-files)
+#   make type-check-files-check FILES="path" # Per-file type-check (no emit)
+#   make test FILES="path"       # Run tests
+#   make test-changed            # Run tests on changed files
+#
+# Individual tools (for targeted use):
+#   make format / format-check   # Prettier
+#   make eslint / eslint-check   # ESLint
+#   make stylelint / stylelint-check  # Stylelint
+
+# Define phony targets (not actual files)
+.PHONY: check-node test test-e2e test-e2e-vrt lint lint-fix check check-fix ci ci-full lint-changed lint-fix-changed check-changed check-fix-changed test-changed type-check type-check-files type-check-files-check format format-check eslint eslint-check stylelint stylelint-check check-unused check-untested generate-icons help dev build preview install clean
+
+# =============================================================================
+# File Patterns (defined once, used everywhere)
+# =============================================================================
+# These match the patterns in package.json scripts
+JS_GLOB = './**/*.{js,ts,vue}'
+PRETTIER_GLOB = './**/*.{js,ts,vue,css,scss,md,json}'
+STYLE_GLOB = 'src/**/*.{css,vue}'
 
 # Default to all files if FILES is not set
 FILES ?= .
-STYLELINT_FILES = $(filter %.css %.vue,$(FILES))
-# Per-tool file filters
+
+# File filters for different tools (when FILES is specified)
 ESLINT_FILES = $(filter %.ts %.tsx %.js %.jsx %.vue,$(FILES))
-PRETTIER_FILES = $(filter %.ts %.tsx %.js %.jsx %.vue %.css %.json %.md,$(FILES))
+PRETTIER_FILES = $(filter %.ts %.tsx %.js %.jsx %.vue %.css %.scss %.json %.md,$(FILES))
+STYLELINT_FILES = $(filter %.css %.scss %.vue,$(FILES))
 TSCFILES_FILES = $(filter %.ts %.tsx %.vue,$(FILES))
 
-# Lint JS/TS files
-lint:
-	@if [ "$(FILES)" = "." ]; then pnpm lint; elif [ -n "$(ESLINT_FILES)" ]; then pnpm eslint $(ESLINT_FILES) --fix; fi
+# Node version guard.
+# package.json requires Node ^24.0.0. Running these targets on an older Node
+# (a system install ahead of nvm on PATH, say) crashes corepack's pnpm shim with an
+# opaque "TypeError: Invalid host defined options" that looks like a pnpm bug. Fail
+# early with the actual cause instead. .nvmrc pins the version for `nvm use`.
+check-node:
+	@v=$$(node -v 2>/dev/null | sed 's/^v//'); \
+	if [ -z "$$v" ]; then echo "error: node is not on PATH."; exit 1; fi; \
+	maj=$${v%%.*}; \
+	if [ "$$maj" -ge 24 ]; then exit 0; fi; \
+	echo "error: Node $$v is too old — this project needs ^24.0.0."; \
+	echo "       Run 'nvm use' (see .nvmrc), or 'nvm install 24' if it is not installed."; \
+	exit 1
 
+# =============================================================================
+# Type Checking
+# =============================================================================
+
+# Type check (always full project - can't easily do per-file with vue-tsc)
+type-check: check-node
+	pnpm type-check
+
+# Per-file type-check helpers – these use vue-tsc-files and honour the
+# FILES variable.
 # Type-check specific files
-type-check-files:
-	@if [ "$(FILES)" = "." ]; then pnpm type-check; elif [ -n "$(TSCFILES_FILES)" ]; then npx vue-tsc-files $(TSCFILES_FILES); fi
+type-check-files: check-node
+	@if [ "$(FILES)" = "." ]; then pnpm type-check; elif [ -n "$(TSCFILES_FILES)" ]; then pnpm exec vue-tsc-files $(TSCFILES_FILES); fi
 
 # Type-check specific files (no emit, check only)
-type-check-files-check:
-	@if [ "$(FILES)" = "." ]; then pnpm type-check; elif [ -n "$(TSCFILES_FILES)" ]; then npx vue-tsc-files $(TSCFILES_FILES); fi
+type-check-files-check: check-node
+	@if [ "$(FILES)" = "." ]; then pnpm type-check; elif [ -n "$(TSCFILES_FILES)" ]; then pnpm exec vue-tsc-files $(TSCFILES_FILES); fi
 
-# Lint CSS/Vue files
-lint-css:
-	@if [ "$(FILES)" = "." ]; then pnpm lint:css; elif [ -n "$(STYLELINT_FILES)" ]; then pnpm stylelint $(STYLELINT_FILES) --fix; fi
+# =============================================================================
+# Formatting (Prettier)
+# =============================================================================
 
-# Format files
-format:
-	@if [ "$(FILES)" = "." ]; then pnpm format; elif [ -n "$(PRETTIER_FILES)" ]; then pnpm prettier --write --list-different $(PRETTIER_FILES); fi
+# Format files with fixes
+format: check-node
+	@if [ "$(FILES)" = "." ]; then \
+	pnpm prettier-fix-only $(PRETTIER_GLOB); \
+	elif [ -n "$(PRETTIER_FILES)" ]; then \
+	pnpm prettier-fix-only $(PRETTIER_FILES); \
+	fi
 
-# Lint (no fix)
-lint-check:
-	@if [ "$(FILES)" = "." ]; then pnpm lint:check; elif [ -n "$(ESLINT_FILES)" ]; then pnpm eslint $(ESLINT_FILES); fi
+# Format check (no fixes)
+format-check: check-node
+	@if [ "$(FILES)" = "." ]; then \
+	pnpm prettier-only $(PRETTIER_GLOB); \
+	elif [ -n "$(PRETTIER_FILES)" ]; then \
+	pnpm prettier-only $(PRETTIER_FILES); \
+	fi
 
-# Lint CSS (no fix)
-lint-css-check:
-	@if [ "$(FILES)" = "." ]; then pnpm lint:css:check; elif [ -n "$(STYLELINT_FILES)" ]; then pnpm stylelint $(STYLELINT_FILES); fi
+# =============================================================================
+# ESLint (JS/TS/Vue)
+# =============================================================================
 
-# Format check (no write)
-format-check:
-	@if [ "$(FILES)" = "." ]; then pnpm format:check; elif [ -n "$(PRETTIER_FILES)" ]; then pnpm prettier --check $(PRETTIER_FILES); fi
+# ESLint with fixes
+eslint: check-node
+	@if [ "$(FILES)" = "." ]; then \
+	pnpm eslint-fix-only $(JS_GLOB); \
+	elif [ -n "$(ESLINT_FILES)" ]; then \
+	pnpm eslint-fix-only $(ESLINT_FILES); \
+	fi
+
+# ESLint check (no fixes)
+eslint-check: check-node
+	@if [ "$(FILES)" = "." ]; then \
+	pnpm eslint-only $(JS_GLOB); \
+	elif [ -n "$(ESLINT_FILES)" ]; then \
+	pnpm eslint-only $(ESLINT_FILES); \
+	fi
+
+# =============================================================================
+# Stylelint (CSS/SCSS/Vue styles)
+# =============================================================================
+
+# Stylelint with fixes
+stylelint: check-node
+	@if [ "$(FILES)" = "." ]; then \
+	pnpm stylelint-fix-only $(STYLE_GLOB); \
+	elif [ -n "$(STYLELINT_FILES)" ]; then \
+	pnpm stylelint-fix-only $(STYLELINT_FILES); \
+	fi
+
+# Stylelint check (no fixes)
+stylelint-check: check-node
+	@if [ "$(FILES)" = "." ]; then \
+	pnpm stylelint-only $(STYLE_GLOB); \
+	elif [ -n "$(STYLELINT_FILES)" ]; then \
+	pnpm stylelint-only $(STYLELINT_FILES); \
+	fi
+
+# =============================================================================
+# Testing
+# =============================================================================
+
+# Run all tests
+test: check-node
+	@if [ "$(FILES)" = "." ]; then \
+	pnpm test; \
+	else \
+	pnpm test $(FILES); \
+	fi
+
+# Run E2E tests
+test-e2e: check-node
+	@if [ "$(FILES)" = "." ]; then \
+	pnpm test:e2e; \
+	else \
+	pnpm test:e2e $(FILES); \
+	fi
+
+# Visual regression tests (multi-file, easy command)
+# Pass UPDATE=1 to regenerate baselines: make test-e2e-vrt UPDATE=1
+test-e2e-vrt: check-node
+	@if [ -d e2e/visual ]; then \
+		echo "Running visual regression tests..."; \
+		if [ "$(UPDATE)" = "1" ]; then \
+			pnpm test:e2e:vrt --update-snapshots; \
+		else \
+			pnpm test:e2e:vrt; \
+		fi; \
+	else \
+		echo "No visual regression tests configured (e2e/visual/ directory missing)"; \
+	fi
+
+# =============================================================================
+# Combined Commands (lint = CI-style check)
+# =============================================================================
+
+# Full CI-style lint check (matches pnpm lint behavior)
+# Runs: Prettier check + ESLint check + Stylelint check + Type check
+lint:
+	@echo "Running type check..."
+	@$(MAKE) type-check
+	@echo "Checking formatting (Prettier)..."
+	@$(MAKE) format-check FILES="$(FILES)"
+	@echo "Checking ESLint..."
+	@$(MAKE) eslint-check FILES="$(FILES)"
+	@echo "Checking Stylelint..."
+	@$(MAKE) stylelint-check FILES="$(FILES)"
+	@echo "All lint checks complete!"
+
+# Apply all fixes (format + eslint + stylelint)
+lint-fix:
+	@echo "Running type check..."
+	@$(MAKE) type-check
+	@echo "Fixing formatting (Prettier)..."
+	@$(MAKE) format FILES="$(FILES)"
+	@echo "Fixing ESLint issues..."
+	@$(MAKE) eslint FILES="$(FILES)"
+	@echo "Fixing Stylelint issues..."
+	@$(MAKE) stylelint FILES="$(FILES)"
+	@echo "All fixes applied!"
+
+# Aliases for backwards compatibility
+check: lint
+check-fix: lint-fix
+
+# CI commands
+ci:
+	$(MAKE) lint && $(MAKE) test && python3 find-unused-files.py && python3 find-untested-files.py
+
+ci-full:
+	$(MAKE) lint && $(MAKE) test && $(MAKE) test-e2e && $(MAKE) test-e2e-vrt && python3 find-unused-files.py && python3 find-untested-files.py
+
+# =============================================================================
+# Git-Changed File Commands
+# =============================================================================
+
+# Get changed files (staged and unstaged, excluding deleted)
+# Falls back to staged changes (--cached) if HEAD doesn't exist (new repo)
+changed_files = $(shell git diff --name-only --diff-filter=ACMRTUXB HEAD 2>/dev/null || git diff --name-only --diff-filter=ACMRTUXB --cached)
+
+# Source files that might have tests (exclude test files themselves)
+source_files = $(filter-out %.test.ts %.spec.ts, $(filter %.vue %.ts %.tsx %.js %.jsx, $(changed_files)))
+
+# Generate test file paths from source files (assume .test.ts extension)
+test_files_from_source = $(addsuffix .test.ts, $(basename $(source_files)))
+
+# Changed test files
+changed_test_files = $(filter %.test.ts %.spec.ts, $(changed_files))
+
+# All test files to run (deduplicated)
+test_files_to_run = $(sort $(test_files_from_source) $(changed_test_files))
+
+# Run lint on changed files only (no fixes)
+lint-changed:
+	@if [ -n "$(changed_files)" ]; then \
+		$(MAKE) lint FILES="$(changed_files)"; \
+	else \
+		echo "No changed files to check"; \
+	fi
+
+# Run lint-fix on changed files
+lint-fix-changed:
+	@if [ -n "$(changed_files)" ]; then \
+		$(MAKE) lint-fix FILES="$(changed_files)"; \
+	else \
+		echo "No changed files to check"; \
+	fi
+
+# Aliases for backwards compatibility
+check-changed: lint-changed
+check-fix-changed: lint-fix-changed
+
+# Run tests for changed files (including tests for changed source files)
+test-changed: check-node
+	@if [ -n "$(test_files_to_run)" ]; then \
+		echo "Running tests: $(test_files_to_run)"; \
+		existing_tests=""; \
+		for f in $(test_files_to_run); do \
+			if [ -f "$$f" ]; then \
+				existing_tests="$$existing_tests $$f"; \
+			fi; \
+		done; \
+		if [ -n "$$existing_tests" ]; then \
+			pnpm test $$existing_tests; \
+		else \
+			echo "No test files found for changed files"; \
+		fi; \
+	else \
+		echo "No test files to run"; \
+	fi
+
+# =============================================================================
+# Development Server & Build
+# =============================================================================
+
+# Start development server
+dev: check-node
+	pnpm dev
+
+# Build for production
+build: check-node
+	pnpm build
+
+# Preview production build
+preview: check-node
+	pnpm preview
+
+# Install dependencies
+install: check-node
+	pnpm install
+
+# Remove build artifacts and caches
+clean:
+	rm -rf dist node_modules/.cache playwright-report test-results
+
+# =============================================================================
+# Audit Commands
+# =============================================================================
 
 # Check for unused files
 check-unused:
@@ -58,51 +296,40 @@ check-unused:
 check-untested:
 	python3 find-untested-files.py
 
-# Run all checks (no type-check)
-check:
-	make lint-check FILES="$(FILES)" && make lint-css-check FILES="$(FILES)" && make format-check FILES="$(FILES)" && make type-check-files-check FILES="$(FILES)" && make check-unused && make check-untested
+# Generate PWA icons (run after changing app theme colour or character)
+generate-icons: check-node
+	pnpm exec tsx scripts/generate-pwa-icons.ts
 
-# Run all fixes (no type-check)
-fix:
-	make lint FILES="$(FILES)" && make lint-css FILES="$(FILES)" && make format FILES="$(FILES)" && make type-check-files FILES="$(FILES)"
-
-# Run on changed files (git diff --name-only + untracked)
-changed_files=$(shell git diff --name-only --diff-filter=ACMRTUXB && git ls-files --others --exclude-standard)
-
-# Test files logic for changed files
-# Source files that might have tests (exclude test files themselves)
-source_files = $(filter-out %.test.ts %.spec.ts, $(filter %.vue %.ts %.tsx %.js %.jsx, $(changed_files)))
-# Generate test files from source files (assume .test.ts extension)
-test_files_from_source = $(addsuffix .test.ts, $(basename $(source_files)))
-# Changed test files
-changed_test_files = $(filter %.test.ts %.spec.ts, $(changed_files))
-# All test files to run
-test_files_to_run = $(sort $(test_files_from_source) $(changed_test_files))
-
-check-changed:
-	make check FILES="$(changed_files)"
-
-fix-changed:
-	make fix FILES="$(changed_files)"
-
-# Run tests on changed files (including tests for changed source files)
-test-changed:
-	@if [ -n "$(test_files_to_run)" ]; then pnpm test $(test_files_to_run); fi
-
-# ============================================================================
-# Legacy Code Targets
-# ============================================================================
-# Legacy code is excluded from normal lint/check by default.
-# Use these targets to explicitly lint or test legacy code.
-
-# Lint legacy code (opt-in)
-lint-legacy:
-	pnpm eslint src/legacy e2e/legacy --fix
-
-# Check legacy code (no fix)
-check-legacy:
-	pnpm eslint src/legacy e2e/legacy
-
-# Run E2E tests on legacy UI
-test-e2e-legacy:
-	pnpm playwright test --project=legacy
+# Display available targets
+help:
+	@echo "Jisaku Makefile — available targets:"
+	@echo ""
+	@echo "  Lint & Type Check"
+	@echo "    lint                   Full lint (type-check + prettier + eslint + stylelint)"
+	@echo "    lint-fix               Apply all lint fixes"
+	@echo "    lint-changed           Lint only git-changed files"
+	@echo "    lint-fix-changed       Fix only git-changed files"
+	@echo "    type-check             TypeScript type check (full project)"
+	@echo "    type-check-files       Per-file type check (use FILES=...)"
+	@echo ""
+	@echo "  Testing"
+	@echo "    test                   Run unit tests (use FILES=... for specific files)"
+	@echo "    test-changed           Run unit tests for git-changed files"
+	@echo "    test-e2e               Run E2E tests in Chromium"
+	@echo "    test-e2e-vrt           Run visual regression tests"
+	@echo ""
+	@echo "  CI"
+	@echo "    ci                     lint + unit tests + unused/untested checks"
+	@echo "    ci-full                lint + unit + e2e + vrt + unused/untested checks"
+	@echo ""
+	@echo "  Development"
+	@echo "    dev                    Start development server"
+	@echo "    build                  Production build"
+	@echo "    preview                Preview production build"
+	@echo "    install                Install dependencies"
+	@echo "    clean                  Remove build artifacts and caches"
+	@echo ""
+	@echo "  Utilities"
+	@echo "    check-unused           Find unused source files"
+	@echo "    check-untested         Find untested source files"
+	@echo "    generate-icons         Regenerate PWA icons"

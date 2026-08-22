@@ -6,9 +6,7 @@
  * Applies theme, header, and layout wrapper.
  */
 
-import { BaseToast } from '@/base/components'
-
-import { SharedHeader } from '@/shared/components'
+import { SharedHeader, SharedToast } from '@/shared/components'
 import { useTheme } from '@/shared/composables'
 
 import KanjiListRoot from '@/modules/kanji-list/components/KanjiListRoot.vue'
@@ -23,7 +21,7 @@ useTheme()
     <main class="kanji-list-page-main">
       <KanjiListRoot />
     </main>
-    <BaseToast />
+    <SharedToast />
   </div>
 </template>
 

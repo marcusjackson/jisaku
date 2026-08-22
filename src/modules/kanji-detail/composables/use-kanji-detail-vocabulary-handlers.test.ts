@@ -76,20 +76,18 @@ const mockVocabKanjiRepository = {
 }
 
 const mockVocabularyRepository = {
-  create: vi.fn(
-    (input: CreateVocabularyInput): Vocabulary => ({
-      id: 999,
-      word: input.word,
-      kana: input.kana,
-      shortMeaning: input.shortMeaning ?? null,
-      searchKeywords: null,
-      jlptLevel: null,
-      isCommon: false,
-      description: null,
-      createdAt: '',
-      updatedAt: ''
-    })
-  )
+  create: vi.fn((input: CreateVocabularyInput): Vocabulary => ({
+    id: 999,
+    word: input.word,
+    kana: input.kana,
+    shortMeaning: input.shortMeaning ?? null,
+    searchKeywords: null,
+    jlptLevel: null,
+    isCommon: false,
+    description: null,
+    createdAt: '',
+    updatedAt: ''
+  }))
 }
 
 vi.mock('@/api/vocabulary', () => ({

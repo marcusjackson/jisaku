@@ -25,8 +25,8 @@ const tooltipText: string =
 
 <template>
   <span
+    :aria-label="tooltipText"
     class="shared-position-badge"
-    :title="tooltipText"
   >
     {{ displayName }}
   </span>
@@ -38,18 +38,20 @@ const tooltipText: string =
   justify-content: center;
   align-items: center;
   padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background-color: var(--color-bg-secondary);
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: help;
-  transition: all 0.2s ease;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .shared-position-badge:hover {
-  border-color: var(--color-border-default);
+  border-color: var(--color-border-focus);
   background-color: var(--color-bg-tertiary);
 }
 </style>

@@ -32,9 +32,8 @@ describe('vocabCreateSchema', () => {
         kana: 'にほん'
       })
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toBe('Word is required')
-      }
+      if (result.success) throw new Error('Expected parse to fail')
+      expect(result.error.issues[0]?.message).toBe('Word is required')
     })
 
     it('allows empty kana (optional field)', () => {
@@ -43,9 +42,8 @@ describe('vocabCreateSchema', () => {
         kana: ''
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.kana).toBe('')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.kana).toBe('')
     })
 
     it('rejects word over 100 characters', () => {

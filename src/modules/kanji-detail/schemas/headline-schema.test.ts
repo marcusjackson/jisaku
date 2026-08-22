@@ -15,9 +15,8 @@ describe('kanjiHeadlineSchema', () => {
         searchKeywords: ''
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.character).toBe('水')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.character).toBe('水')
     })
 
     it('rejects empty character', () => {
@@ -64,9 +63,8 @@ describe('kanjiHeadlineSchema', () => {
         searchKeywords: ''
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.shortMeaning).toBe('water')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.shortMeaning).toBe('water')
     })
 
     it('rejects shortMeaning over 100 characters', () => {
@@ -105,9 +103,8 @@ describe('kanjiHeadlineSchema', () => {
         searchKeywords: 'mizu, sui'
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.searchKeywords).toBe('mizu, sui')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.searchKeywords).toBe('mizu, sui')
     })
 
     it('rejects searchKeywords over 500 characters', () => {

@@ -10,6 +10,8 @@ export type {
   ComponentFilters,
   ComponentForm,
   ComponentGrouping,
+  ComponentGroupingMember,
+  ComponentGroupingWithMembers,
   ComponentOccurrence,
   CreateComponentFormInput,
   CreateComponentGroupingInput,

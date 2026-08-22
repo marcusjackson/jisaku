@@ -6,6 +6,8 @@
  * so file upload is tested via modelValue prop and E2E tests cover the rest.
  */
 
+import { defineComponent, h } from 'vue'
+
 import userEvent from '@testing-library/user-event'
 import { render, screen, waitFor } from '@testing-library/vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -33,7 +35,9 @@ describe('BaseFileInput', () => {
       render(BaseFileInput)
 
       expect(screen.getByTestId('file-input-drop-zone')).toBeInTheDocument()
-      expect(screen.getByRole('button')).toBeInTheDocument()
+      expect(
+        screen.getByText('Drag and drop or click to browse')
+      ).toBeInTheDocument()
     })
 
     it('renders with label when provided', () => {
@@ -214,13 +218,54 @@ describe('BaseFileInput', () => {
       expect(screen.getByText('Invalid file type')).toBeInTheDocument()
     })
 
-    it('has a focusable browse button', () => {
+    it('has a focusable drop zone button', () => {
       render(BaseFileInput)
 
-      const browseButton = screen.getByRole('button', { name: /browse/i })
-      expect(browseButton).toBeInTheDocument()
-      // Button should not be disabled
-      expect(browseButton).not.toBeDisabled()
+      const dropZone = screen.getByTestId('file-input-drop-zone')
+      expect(dropZone).toBeInTheDocument()
+      // Native button should not be disabled
+      expect(dropZone).not.toBeDisabled()
+    })
+
+    it('associates label with input via matching for/id (useId)', () => {
+      render(BaseFileInput, {
+        props: { label: 'Profile Photo' }
+      })
+
+      const label = screen.getByText('Profile Photo')
+      const input = screen.getByTestId('file-input-hidden')
+
+      const forAttr = label.getAttribute('for')
+      const idAttr = input.getAttribute('id')
+
+      expect(forAttr).toBeTruthy()
+      expect(idAttr).toBeTruthy()
+      expect(forAttr).toBe(idAttr)
+    })
+
+    it('generates unique ids for multiple instances in the same app', () => {
+      // Render two instances in the same Vue app tree to verify useId() uniqueness
+      const Wrapper = defineComponent({
+        setup() {
+          return () =>
+            h('div', [
+              h(BaseFileInput, { label: 'First' }),
+              h(BaseFileInput, { label: 'Second' })
+            ])
+        }
+      })
+
+      const { container } = render(Wrapper)
+
+      const inputs = container.querySelectorAll('input[type="file"]')
+      expect(inputs).toHaveLength(2)
+
+      const id1 = inputs[0]?.getAttribute('id')
+      const id2 = inputs[1]?.getAttribute('id')
+
+      expect(id1).toBeTruthy()
+      expect(id2).toBeTruthy()
+      expect(id1).not.toBe(id2)
     })
 
     it('has remove button with proper aria-label', async () => {

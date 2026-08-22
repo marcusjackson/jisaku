@@ -128,9 +128,8 @@ describe('vocabHeadlineSchema', () => {
         searchKeywords: ''
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.shortMeaning).toBe('Japanese language')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.shortMeaning).toBe('Japanese language')
     })
 
     it('accepts empty searchKeywords', () => {
@@ -151,9 +150,8 @@ describe('vocabHeadlineSchema', () => {
         searchKeywords: 'nihongo, japanese'
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.searchKeywords).toBe('nihongo, japanese')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.searchKeywords).toBe('nihongo, japanese')
     })
 
     it('rejects shortMeaning exceeding max length', () => {

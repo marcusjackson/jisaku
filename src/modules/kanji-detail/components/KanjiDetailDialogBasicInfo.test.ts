@@ -74,6 +74,8 @@ function mockClassificationType(
     description: null,
     descriptionShort: null,
     displayOrder: 0,
+    createdAt: '2024-01-01T00:00:00',
+    updatedAt: '2024-01-01T00:00:00',
     nameJapanese: '象形文字',
     nameEnglish: null,
     ...overrides

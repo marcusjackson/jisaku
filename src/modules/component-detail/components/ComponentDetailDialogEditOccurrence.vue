@@ -204,7 +204,7 @@ function handleCancel(): void {
 }
 
 .dialog-edit-occurrence-kanji-character {
-  font-family: var(--font-family-jp);
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-semibold);
 }

@@ -10,10 +10,10 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
 import { BaseRepository } from '../base-repository'
-import { EntityNotFoundError } from '../types'
 
-import type { Orderable, Repository } from '../types'
+import type { Orderable, Repository } from '../api-types'
 import type {
   ClassificationType,
   CreateClassificationTypeInput,
@@ -32,6 +32,8 @@ interface ClassificationTypeRow {
   description: string | null
   description_short: string | null
   display_order: number
+  created_at: string
+  updated_at: string
 }
 
 // ============================================================================
@@ -69,7 +71,9 @@ class ClassificationTypeRepositoryImpl
       nameEnglish: r.name_english,
       description: r.description,
       descriptionShort: r.description_short,
-      displayOrder: r.display_order
+      displayOrder: r.display_order,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at
     }
   }
 
@@ -105,10 +109,7 @@ class ClassificationTypeRepositoryImpl
   // ==========================================================================
 
   create(input: CreateClassificationTypeInput): ClassificationType {
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM classification_types'
-    )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
+    const maxOrder = this.getMaxDisplayOrder('classification_types')
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     this.run(
@@ -130,7 +131,7 @@ class ClassificationTypeRepositoryImpl
 
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created classification type')
+      throw new CreateError('ClassificationType')
     }
 
     schedulePersist()
@@ -171,6 +172,7 @@ class ClassificationTypeRepositoryImpl
       return existing
     }
 
+    sets.push("updated_at = datetime('now')")
     values.push(id)
     this.run(
       `UPDATE classification_types SET ${sets.join(', ')} WHERE id = ?`,
@@ -179,7 +181,7 @@ class ClassificationTypeRepositoryImpl
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('ClassificationType disappeared after update')
+      throw new UpdateError('ClassificationType', id)
     }
 
     schedulePersist()
@@ -187,20 +189,42 @@ class ClassificationTypeRepositoryImpl
   }
 
   remove(id: number): void {
-    this.run('DELETE FROM classification_types WHERE id = ?', [id])
+    this.withTransaction(() => {
+      this.run(
+        'DELETE FROM kanji_classifications WHERE classification_type_id = ?',
+        [id]
+      )
+      this.run('DELETE FROM classification_types WHERE id = ?', [id])
+    })
     schedulePersist()
+  }
+
+  // ==========================================================================
+  // Usage
+  // ==========================================================================
+
+  /** Return the number of kanji that use this classification type. */
+  getUsageCount(id: number): number {
+    const result = this.exec(
+      'SELECT COUNT(*) as count FROM kanji_classifications WHERE classification_type_id = ?',
+      [id]
+    )
+    return (result[0]?.values[0]?.[0] as number | null) ?? 0
   }
 
   // ==========================================================================
   // Ordering
   // ==========================================================================
 
+  /** Reorder classification types by assigning `display_order` values matching the provided id array. */
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run(
-        'UPDATE classification_types SET display_order = ? WHERE id = ?',
-        [index, id]
-      )
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run(
+          'UPDATE classification_types SET display_order = ? WHERE id = ?',
+          [index, id]
+        )
+      })
     })
     schedulePersist()
   }
@@ -210,12 +234,11 @@ class ClassificationTypeRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a classification type repository instance bound to the active database.
+ * @returns Repository for managing classification types (CRUD, reorder).
+ * @example const repo = useClassificationTypeRepository(); repo.getAll()
+ */
 export function useClassificationTypeRepository(): ClassificationTypeRepositoryImpl {
   return new ClassificationTypeRepositoryImpl()
-}
-
-export type {
-  ClassificationType,
-  CreateClassificationTypeInput,
-  UpdateClassificationTypeInput
 }

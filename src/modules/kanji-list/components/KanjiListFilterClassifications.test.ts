@@ -19,7 +19,9 @@ const mockClassificationTypes: ClassificationType[] = [
     nameEnglish: null,
     description: null,
     descriptionShort: null,
-    displayOrder: 1
+    displayOrder: 1,
+    createdAt: '2024-01-01T00:00:00',
+    updatedAt: '2024-01-01T00:00:00'
   },
   {
     id: 2,
@@ -28,7 +30,9 @@ const mockClassificationTypes: ClassificationType[] = [
     nameEnglish: null,
     description: null,
     descriptionShort: null,
-    displayOrder: 2
+    displayOrder: 2,
+    createdAt: '2024-01-01T00:00:00',
+    updatedAt: '2024-01-01T00:00:00'
   }
 ]
 

@@ -19,8 +19,8 @@ ALTER TABLE kanjis RENAME COLUMN stroke_count TO stroke_count_old;
 ALTER TABLE kanjis RENAME COLUMN stroke_count_new TO stroke_count;
 
 -- Recreate the indexes on the new column
-CREATE INDEX idx_kanjis_stroke_count ON kanjis(stroke_count);
-CREATE INDEX idx_kanjis_radical_order ON kanjis(
+CREATE INDEX IF NOT EXISTS idx_kanjis_stroke_count ON kanjis(stroke_count);
+CREATE INDEX IF NOT EXISTS idx_kanjis_radical_order ON kanjis(
     radical_stroke_count,
     (stroke_count - COALESCE(radical_stroke_count, 0)),
     stroke_count

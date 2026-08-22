@@ -10,13 +10,21 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import {
+  CreateError,
+  EntityNotFoundError,
+  RepositoryError,
+  UpdateError
+} from '../api-types'
 import { BaseRepository } from '../base-repository'
-import { EntityNotFoundError } from '../types'
 
-import type { ChildRepository, Orderable } from '../types'
+import { READING_LEVELS } from './reading-types'
+
+import type { ChildRepository, Orderable } from '../api-types'
 import type {
   CreateKunReadingInput,
   KunReading,
+  ReadingLevel,
   UpdateKunReadingInput
 } from './reading-types'
 
@@ -59,12 +67,19 @@ class KunReadingRepositoryImpl
 
   protected mapRow(row: Record<string, unknown>): KunReading {
     const r = row as unknown as KunReadingRow
+    if (!(READING_LEVELS as readonly string[]).includes(r.reading_level)) {
+      throw new RepositoryError(
+        `Invalid reading_level: '${r.reading_level}'`,
+        'mapRow',
+        'KunReading'
+      )
+    }
     return {
       id: r.id,
       kanjiId: r.kanji_id,
       reading: r.reading,
       okurigana: r.okurigana,
-      readingLevel: r.reading_level as KunReading['readingLevel'],
+      readingLevel: r.reading_level as ReadingLevel,
       displayOrder: r.display_order,
       createdAt: r.created_at,
       updatedAt: r.updated_at
@@ -99,13 +114,15 @@ class KunReadingRepositoryImpl
   // Write Operations
   // ==========================================================================
 
+  /**
+   * @throws {CreateError} If the insert fails
+   */
   create(input: CreateKunReadingInput): KunReading {
-    // Get max display_order for this kanji
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM kun_readings WHERE kanji_id = ?',
+    const maxOrder = this.getMaxDisplayOrder(
+      'kun_readings',
+      'WHERE kanji_id = ?',
       [input.kanjiId]
     )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     this.run(
@@ -125,13 +142,17 @@ class KunReadingRepositoryImpl
 
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created kun-reading')
+      throw new CreateError('KunReading')
     }
 
     schedulePersist()
     return created
   }
 
+  /**
+   * @throws {EntityNotFoundError} If the reading does not exist
+   * @throws {UpdateError} If the update fails to return
+   */
   update(id: number, input: UpdateKunReadingInput): KunReading {
     const existing = this.getById(id)
     if (!existing) {
@@ -158,20 +179,23 @@ class KunReadingRepositoryImpl
       return existing
     }
 
-    sets.push('updated_at = datetime("now")')
+    sets.push("updated_at = datetime('now')")
     values.push(id)
 
     this.run(`UPDATE kun_readings SET ${sets.join(', ')} WHERE id = ?`, values)
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('KunReading disappeared after update')
+      throw new UpdateError('KunReading', id)
     }
 
     schedulePersist()
     return updated
   }
 
+  /**
+   * Delete a kun-reading by id.
+   */
   remove(id: number): void {
     this.run('DELETE FROM kun_readings WHERE id = ?', [id])
     schedulePersist()
@@ -182,11 +206,13 @@ class KunReadingRepositoryImpl
   // ==========================================================================
 
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run('UPDATE kun_readings SET display_order = ? WHERE id = ?', [
-        index,
-        id
-      ])
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run('UPDATE kun_readings SET display_order = ? WHERE id = ?', [
+          index,
+          id
+        ])
+      })
     })
     schedulePersist()
   }
@@ -196,8 +222,11 @@ class KunReadingRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a kun-reading repository instance bound to the active database.
+ * @returns Repository for managing kanji kun-yomi readings (CRUD, reorder).
+ * @example const repo = useKunReadingRepository(); repo.getByParentId(1)
+ */
 export function useKunReadingRepository(): KunReadingRepositoryImpl {
   return new KunReadingRepositoryImpl()
 }
-
-export type { CreateKunReadingInput, KunReading, UpdateKunReadingInput }

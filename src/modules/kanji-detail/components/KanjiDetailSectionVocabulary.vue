@@ -40,7 +40,6 @@ const dialogOpen = ref(false)
   >
     <template #actions>
       <BaseButton
-        data-testid="vocabulary-edit-button"
         size="sm"
         variant="secondary"
         @click="dialogOpen = true"

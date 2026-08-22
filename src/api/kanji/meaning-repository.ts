@@ -10,10 +10,10 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
 import { BaseRepository } from '../base-repository'
-import { EntityNotFoundError } from '../types'
 
-import type { ChildRepository, Orderable } from '../types'
+import type { ChildRepository, Orderable } from '../api-types'
 import type {
   CreateKanjiMeaningInput,
   KanjiMeaning,
@@ -103,11 +103,11 @@ class KanjiMeaningRepositoryImpl
 
   create(input: CreateKanjiMeaningInput): KanjiMeaning {
     // Get max display_order for this kanji
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM kanji_meanings WHERE kanji_id = ?',
+    const maxOrder = this.getMaxDisplayOrder(
+      'kanji_meanings',
+      'WHERE kanji_id = ?',
       [input.kanjiId]
     )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     this.run(
@@ -126,7 +126,7 @@ class KanjiMeaningRepositoryImpl
 
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created meaning')
+      throw new CreateError('KanjiMeaning')
     }
 
     schedulePersist()
@@ -155,7 +155,7 @@ class KanjiMeaningRepositoryImpl
       return existing
     }
 
-    sets.push('updated_at = datetime("now")')
+    sets.push("updated_at = datetime('now')")
     values.push(id)
 
     this.run(
@@ -165,7 +165,7 @@ class KanjiMeaningRepositoryImpl
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('KanjiMeaning disappeared after update')
+      throw new UpdateError('KanjiMeaning', id)
     }
 
     schedulePersist()
@@ -173,7 +173,12 @@ class KanjiMeaningRepositoryImpl
   }
 
   remove(id: number): void {
-    this.run('DELETE FROM kanji_meanings WHERE id = ?', [id])
+    this.withTransaction(() => {
+      this.run('DELETE FROM kanji_meaning_group_members WHERE meaning_id = ?', [
+        id
+      ])
+      this.run('DELETE FROM kanji_meanings WHERE id = ?', [id])
+    })
     schedulePersist()
   }
 
@@ -182,11 +187,13 @@ class KanjiMeaningRepositoryImpl
   // ==========================================================================
 
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run('UPDATE kanji_meanings SET display_order = ? WHERE id = ?', [
-        index,
-        id
-      ])
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run('UPDATE kanji_meanings SET display_order = ? WHERE id = ?', [
+          index,
+          id
+        ])
+      })
     })
     schedulePersist()
   }
@@ -196,8 +203,11 @@ class KanjiMeaningRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a kanji meaning repository instance bound to the active database.
+ * @returns Repository for managing kanji meanings (CRUD, reorder).
+ * @example const repo = useKanjiMeaningRepository(); repo.getByParentId(1)
+ */
 export function useKanjiMeaningRepository(): KanjiMeaningRepositoryImpl {
   return new KanjiMeaningRepositoryImpl()
 }
-
-export type { CreateKanjiMeaningInput, KanjiMeaning, UpdateKanjiMeaningInput }

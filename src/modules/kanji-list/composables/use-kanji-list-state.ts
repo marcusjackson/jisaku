@@ -86,6 +86,20 @@ function countActiveFilters(f: KanjiListFilters): number {
 }
 
 /**
+ * Text filters mapping to their corresponding search ref properties
+ */
+const TEXT_FILTER_REFS: Record<
+  'character' | 'searchKeywords' | 'meanings' | 'onYomi' | 'kunYomi',
+  keyof UseKanjiListUrlSync
+> = {
+  character: 'characterSearch',
+  searchKeywords: 'keywordsSearch',
+  meanings: 'meaningsSearch',
+  onYomi: 'onYomiSearch',
+  kunYomi: 'kunYomiSearch'
+}
+
+/**
  * Create filter update handler function
  */
 function createFilterUpdater(urlSync: UseKanjiListUrlSync) {
@@ -94,24 +108,10 @@ function createFilterUpdater(urlSync: UseKanjiListUrlSync) {
     value: KanjiListFilters[K]
   ): void => {
     // Handle debounced text inputs through refs
-    if (key === 'character') {
-      urlSync.characterSearch.value = typeof value === 'string' ? value : ''
-      return
-    }
-    if (key === 'searchKeywords') {
-      urlSync.keywordsSearch.value = typeof value === 'string' ? value : ''
-      return
-    }
-    if (key === 'meanings') {
-      urlSync.meaningsSearch.value = typeof value === 'string' ? value : ''
-      return
-    }
-    if (key === 'onYomi') {
-      urlSync.onYomiSearch.value = typeof value === 'string' ? value : ''
-      return
-    }
-    if (key === 'kunYomi') {
-      urlSync.kunYomiSearch.value = typeof value === 'string' ? value : ''
+    if (key in TEXT_FILTER_REFS) {
+      const refKey = TEXT_FILTER_REFS[key as keyof typeof TEXT_FILTER_REFS]
+      const ref = urlSync[refKey] as Ref<string>
+      ref.value = typeof value === 'string' ? value : ''
       return
     }
 
@@ -134,6 +134,11 @@ function createFilterUpdater(urlSync: UseKanjiListUrlSync) {
   }
 }
 
+/**
+ * Manages URL-synced filter state for the kanji list.
+ *
+ * @returns Reactive filter state, update/clear functions, and refresh trigger
+ */
 export function useKanjiListState(): UseKanjiListState {
   const urlSync = useKanjiListUrlSync()
   const refreshTrigger = ref(0)

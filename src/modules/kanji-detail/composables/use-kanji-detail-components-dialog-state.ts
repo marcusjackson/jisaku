@@ -13,12 +13,29 @@ import { usePositionTypeRepository } from '@/api/position/position-type-reposito
 
 import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types'
 import type { Component } from '@/api/component/component-types'
-import type { Ref } from 'vue'
+import type { PositionType } from '@/api/position'
+import type { ComputedRef, Ref } from 'vue'
 
 interface Props {
   open: boolean
   allComponents: Component[]
   linkedOccurrences: ComponentOccurrenceWithDetails[]
+}
+
+interface ComponentFormEntry {
+  id: number
+  formCharacter: string
+  formName: string | null
+}
+
+interface UseKanjiDetailComponentsDialogStateReturn {
+  positionTypes: Ref<PositionType[]>
+  quickCreateSearchTerm: Ref<string>
+  quickCreateDialogOpen: Ref<boolean>
+  showConfirmDialog: Ref<boolean>
+  pendingRemoveOccurrenceId: Ref<number | null>
+  componentFormsMap: Ref<Map<number, ComponentFormEntry[]>>
+  availableComponents: ComputedRef<Component[]>
 }
 
 function loadFormData(
@@ -45,7 +62,16 @@ function loadFormData(
   })
 }
 
-export function useKanjiDetailComponentsDialogState(props: Props) {
+/**
+ * Manages local dialog state for the components occurrence editor.
+ * Provides position types, form map, quick-create state, and confirm dialog refs.
+ *
+ * @param props - Dialog open state and component/occurrence data
+ * @returns Reactive state for the components dialog
+ */
+export function useKanjiDetailComponentsDialogState(
+  props: Props
+): UseKanjiDetailComponentsDialogStateReturn {
   const positionTypeRepo = usePositionTypeRepository()
   const positionTypes = ref(positionTypeRepo.getAll())
   const formRepo = useComponentFormRepository()

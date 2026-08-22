@@ -30,6 +30,8 @@ import {
 import { useDatabase } from './use-database'
 import { useToast } from './use-toast'
 
+import type { Ref } from 'vue'
+
 /** Counts of seed data for testing */
 export const SEED_DATA_COUNTS = {
   classifications: SEED_CLASSIFICATIONS.length,
@@ -43,7 +45,21 @@ export const SEED_DATA_COUNTS = {
   vocabulary: SEED_VOCABULARY.length
 } as const
 
-export function useSeedData() {
+/** Return type for useSeedData composable */
+export interface UseSeedData {
+  /** Seed the database with sample data */
+  seed: () => Promise<void>
+  /** Clear all seeded data from the database */
+  clear: () => Promise<void>
+  /** Whether seeding is in progress */
+  isSeeding: Ref<boolean>
+  /** Whether clearing is in progress */
+  isClearing: Ref<boolean>
+  /** Counts of seed data items by category */
+  seedDataCounts: typeof SEED_DATA_COUNTS
+}
+
+export function useSeedData(): UseSeedData {
   const { exec, persist, run } = useDatabase()
   const { error: showError, success: showSuccess } = useToast()
   const isSeeding = ref(false)

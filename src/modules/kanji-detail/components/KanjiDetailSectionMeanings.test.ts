@@ -45,7 +45,9 @@ describe('KanjiDetailSectionMeanings', () => {
 
   it('has edit button', () => {
     render(KanjiDetailSectionMeanings, { props: defaultProps })
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /edit meanings/i })
+    ).toBeInTheDocument()
   })
 
   it('shows empty state when no meanings', () => {

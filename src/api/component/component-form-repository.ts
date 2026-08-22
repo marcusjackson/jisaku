@@ -10,10 +10,10 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
 import { BaseRepository } from '../base-repository'
-import { EntityNotFoundError } from '../types'
 
-import type { ChildRepository, Orderable } from '../types'
+import type { ChildRepository, Orderable } from '../api-types'
 import type {
   ComponentForm,
   CreateComponentFormInput,
@@ -112,11 +112,11 @@ class ComponentFormRepositoryImpl
   // ==========================================================================
 
   create(input: CreateComponentFormInput): ComponentForm {
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM component_forms WHERE component_id = ?',
+    const maxOrder = this.getMaxDisplayOrder(
+      'component_forms',
+      'WHERE component_id = ?',
       [input.componentId]
     )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     this.run(
@@ -138,7 +138,7 @@ class ComponentFormRepositoryImpl
 
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created component form')
+      throw new CreateError('ComponentForm')
     }
 
     schedulePersist()
@@ -175,7 +175,7 @@ class ComponentFormRepositoryImpl
       return existing
     }
 
-    sets.push('updated_at = datetime("now")')
+    sets.push("updated_at = datetime('now')")
     values.push(id)
 
     this.run(
@@ -185,7 +185,7 @@ class ComponentFormRepositoryImpl
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('ComponentForm disappeared after update')
+      throw new UpdateError('ComponentForm', id)
     }
 
     schedulePersist()
@@ -202,11 +202,13 @@ class ComponentFormRepositoryImpl
   // ==========================================================================
 
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run('UPDATE component_forms SET display_order = ? WHERE id = ?', [
-        index,
-        id
-      ])
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run('UPDATE component_forms SET display_order = ? WHERE id = ?', [
+          index,
+          id
+        ])
+      })
     })
     schedulePersist()
   }
@@ -216,12 +218,11 @@ class ComponentFormRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a component form repository instance bound to the active database.
+ * @returns Repository for managing component forms (CRUD, reorder).
+ * @example const repo = useComponentFormRepository(); repo.getByParentId(1)
+ */
 export function useComponentFormRepository(): ComponentFormRepositoryImpl {
   return new ComponentFormRepositoryImpl()
-}
-
-export type {
-  ComponentForm,
-  CreateComponentFormInput,
-  UpdateComponentFormInput
 }

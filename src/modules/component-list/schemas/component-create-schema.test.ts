@@ -24,19 +24,17 @@ describe('componentCreateSchema', () => {
     it('rejects empty string', () => {
       const result = componentCreateSchema.safeParse({ character: '' })
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toBe('Please enter a character')
-      }
+      if (result.success) throw new Error('Expected parse to fail')
+      expect(result.error.issues[0]?.message).toBe('Please enter a character')
     })
 
     it('rejects multiple characters', () => {
       const result = componentCreateSchema.safeParse({ character: '日月' })
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toBe(
-          'Please enter only one character'
-        )
-      }
+      if (result.success) throw new Error('Expected parse to fail')
+      expect(result.error.issues[0]?.message).toBe(
+        'Please enter only one character'
+      )
     })
 
     it('rejects whitespace-only input', () => {

@@ -143,4 +143,34 @@ describe('useClassificationTypeRepository', function () {
       expect(type1?.displayOrder).toBe(1)
     })
   })
+
+  describe('getUsageCount', () => {
+    it('returns 0 when classification type is not referenced by any kanji', () => {
+      const repo = useClassificationTypeRepository()
+      // Insert a new classification type with no kanji linked to it
+      const newType = repo.create({ typeName: 'unused_type' })
+
+      expect(repo.getUsageCount(newType.id)).toBe(0)
+    })
+
+    it('returns positive count when classification type is referenced by kanji', () => {
+      // Seed a kanji and link it to classification type id=1
+      testDb.run(`INSERT INTO kanjis (character) VALUES ('水')`)
+      const kanjiResult = testDb.exec('SELECT last_insert_rowid() as id')
+      const kanjiId = kanjiResult[0]?.values[0]?.[0] as number
+
+      testDb.run(
+        `INSERT INTO kanji_classifications (kanji_id, classification_type_id, display_order) VALUES (?, 1, 0)`,
+        [kanjiId]
+      )
+
+      const repo = useClassificationTypeRepository()
+      expect(repo.getUsageCount(1)).toBe(1)
+    })
+
+    it('returns 0 for a classification type id that does not exist', () => {
+      const repo = useClassificationTypeRepository()
+      expect(repo.getUsageCount(9999)).toBe(0)
+    })
+  })
 })

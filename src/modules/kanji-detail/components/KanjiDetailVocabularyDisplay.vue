@@ -51,7 +51,7 @@ defineProps<{
 .vocabulary-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2xs);
+  gap: var(--spacing-0-5);
   margin: 0;
   padding: 0;
 }

@@ -15,14 +15,20 @@ describe('quickCreateKanjiSchema', () => {
       expect(result.success).toBe(true)
     })
 
+    it('accepts valid surrogate-pair character (multi-code-unit single grapheme)', () => {
+      const result = quickCreateKanjiSchema.safeParse({
+        character: '\uD840\uDC0B' // 𠀋 — single grapheme, two UTF-16 code units
+      })
+      expect(result.success).toBe(true)
+    })
+
     it('rejects empty character', () => {
       const result = quickCreateKanjiSchema.safeParse({
         character: ''
       })
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toBe('Character is required')
-      }
+      if (result.success) throw new Error('Expected parse to fail')
+      expect(result.error.issues[0]?.message).toBe('Please enter a character')
     })
 
     it('rejects multiple characters', () => {
@@ -30,11 +36,10 @@ describe('quickCreateKanjiSchema', () => {
         character: '明暗'
       })
       expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toBe(
-          'Must be a single character'
-        )
-      }
+      if (result.success) throw new Error('Expected parse to fail')
+      expect(result.error.issues[0]?.message).toBe(
+        'Please enter only one character'
+      )
     })
   })
 
@@ -45,9 +50,8 @@ describe('quickCreateKanjiSchema', () => {
         shortMeaning: 'bright'
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.shortMeaning).toBe('bright')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.shortMeaning).toBe('bright')
     })
 
     it('accepts missing shortMeaning', () => {
@@ -65,9 +69,8 @@ describe('quickCreateKanjiSchema', () => {
         searchKeywords: 'bright, light, clear'
       })
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.searchKeywords).toBe('bright, light, clear')
-      }
+      if (!result.success) throw new Error('Expected parse to succeed')
+      expect(result.data.searchKeywords).toBe('bright, light, clear')
     })
 
     it('accepts missing searchKeywords', () => {

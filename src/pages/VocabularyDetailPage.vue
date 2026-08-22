@@ -6,9 +6,7 @@
  * Provides layout structure and manages theme.
  */
 
-import { BaseToast } from '@/base/components'
-
-import { SharedHeader } from '@/shared/components'
+import { SharedHeader, SharedToast } from '@/shared/components'
 import { useTheme } from '@/shared/composables'
 
 import { VocabDetailRoot } from '@/modules/vocab-detail'
@@ -22,7 +20,7 @@ useTheme()
     <main class="vocabulary-detail-page-main">
       <VocabDetailRoot />
     </main>
-    <BaseToast />
+    <SharedToast />
   </div>
 </template>
 

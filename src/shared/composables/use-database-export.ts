@@ -3,27 +3,70 @@
  *
  * Composable for database export, import, and clear operations.
  * Used in settings page for data management.
+ *
+ * Uses singleton state pattern — loading refs are shared across all callers
+ * and returned as readonly to protect state integrity.
+ *
+ * @returns Database management functions and loading states
+ * @see {@link UseDatabaseExport} for return type details
  */
 
-import { ref } from 'vue'
+import { onScopeDispose, readonly, ref } from 'vue'
 
 import { useDatabase } from '@/shared/composables/use-database'
 import { useToast } from '@/shared/composables/use-toast'
+import { formatDateForFilename } from '@/shared/utils/date-utils'
 
 import type { Database } from 'sql.js'
-import type { Ref } from 'vue'
+import type { DeepReadonly, Ref } from 'vue'
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+/** Valid SQLite database file extensions */
+const VALID_DB_EXTENSIONS = ['.db', '.sqlite', '.sqlite3'] as const
+
+/** Valid SQLite database MIME types */
+const VALID_DB_MIME_TYPES = [
+  'application/x-sqlite3',
+  'application/vnd.sqlite3',
+  'application/octet-stream'
+] as const
+
+/** Maximum import file size (100 MB) */
+const MAX_DB_FILE_SIZE = 100 * 1024 * 1024
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface UseDatabaseExport {
+  isExporting: DeepReadonly<Ref<boolean>>
+  isImporting: DeepReadonly<Ref<boolean>>
+  isClearing: DeepReadonly<Ref<boolean>>
+  exportDatabase: () => void
+  importDatabase: (file: File) => Promise<boolean>
+  validateDatabaseFile: (file: File) => Promise<boolean>
+  clearDatabase: () => Promise<void>
+}
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+/**
+ * Extract error message from unknown error
+ */
+function getErrorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error ? err.message : fallback
+}
 
 /**
  * Generate a timestamped filename for database export
  */
-function generateExportFilename(): string {
-  const now = new Date()
-  const year = String(now.getFullYear())
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  return `kanji-dictionary-${year}-${month}-${day}-${hours}-${minutes}.db`
+export function generateExportFilename(): string {
+  return `kanji-dictionary-${formatDateForFilename(new Date())}.db`
 }
 
 /**
@@ -36,100 +79,85 @@ function downloadBlob(blob: Blob, filename: string): void {
   link.download = filename
   document.body.appendChild(link)
   link.click()
-  document.body.removeChild(link)
+  link.remove()
   URL.revokeObjectURL(url)
 }
 
-/**
- * Read a file as ArrayBuffer
- */
-async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (reader.result instanceof ArrayBuffer) {
-        resolve(reader.result)
-      } else {
-        reject(new Error('Failed to read file as ArrayBuffer'))
-      }
-    }
-    reader.onerror = () => {
-      reject(new Error('Failed to read file'))
-    }
-    reader.readAsArrayBuffer(file)
-  })
+/** Minimal interface for sql.js Database used during validation */
+interface SqlJsDatabase {
+  exec(sql: string): { values: unknown[][] }[]
+  close(): void
 }
 
 /**
- * Validate that data is a valid SQLite database with expected schema
+ * Validate that data is a valid SQLite database with expected schema.
+ * Ensures the test database instance is always closed, even on error.
  */
 async function validateSqliteData(data: Uint8Array): Promise<boolean> {
+  let testDb: SqlJsDatabase | null = null
   try {
     const { default: initSqlJs } = await import('sql.js')
     const SQL = await initSqlJs({
       locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`
     })
 
-    const testDb = new SQL.Database(data)
+    testDb = new SQL.Database(data)
 
     const result = testDb.exec(
       "SELECT name FROM sqlite_master WHERE type='table'"
     )
 
-    testDb.close()
-
-    const tables = result[0]?.values.map((row) => row[0]) ?? []
+    const tables = result[0]?.values.map((row: unknown[]) => row[0]) ?? []
     return tables.includes('kanjis')
+  } catch {
+    return false
+  } finally {
+    testDb?.close()
+  }
+}
+
+/**
+ * Validate a database file by extension, size, MIME type, and SQLite structure
+ */
+async function performValidate(file: File): Promise<boolean> {
+  try {
+    if (file.size > MAX_DB_FILE_SIZE) return false
+
+    const hasValidMimeType =
+      VALID_DB_MIME_TYPES.includes(
+        file.type as (typeof VALID_DB_MIME_TYPES)[number]
+      ) || !file.type
+
+    const hasValidExtension = VALID_DB_EXTENSIONS.some((ext) =>
+      file.name.toLowerCase().endsWith(ext)
+    )
+
+    if (!hasValidMimeType && !hasValidExtension) return false
+
+    const buffer = await file.arrayBuffer()
+    const data = new Uint8Array(buffer)
+    return await validateSqliteData(data)
   } catch {
     return false
   }
 }
 
-export interface UseDatabaseExport {
-  isExporting: Ref<boolean>
-  isImporting: Ref<boolean>
-  isClearing: Ref<boolean>
-  exportDatabase: () => void
-  importDatabase: (file: File) => Promise<boolean>
-  validateDatabaseFile: (file: File) => Promise<boolean>
-  clearDatabase: () => Promise<void>
-}
+// =============================================================================
+// Singleton State
+// =============================================================================
 
 const isExporting = ref(false)
 const isImporting = ref(false)
 const isClearing = ref(false)
 
-export function useDatabaseExport(): UseDatabaseExport {
-  const { database, persist, replaceDatabase, run } = useDatabase()
-  const toast = useToast()
+// =============================================================================
+// Perform Functions
+// =============================================================================
 
-  function exportDatabase(): void {
-    performExport(database, toast)
-  }
-
-  async function validateDatabaseFile(file: File): Promise<boolean> {
-    return await performValidate(file)
-  }
-
-  async function importDatabase(file: File): Promise<boolean> {
-    return await performImport(file, toast, replaceDatabase)
-  }
-
-  async function clearDatabase(): Promise<void> {
-    await performClear(database, toast, run, persist)
-  }
-
-  return {
-    isExporting,
-    isImporting,
-    isClearing,
-    exportDatabase,
-    importDatabase,
-    validateDatabaseFile,
-    clearDatabase
-  }
-}
-
+/**
+ * Execute database export operation.
+ * Exports current database as a binary file with timestamped filename.
+ */
 function performExport(
   database: Ref<Database | null>,
   toast: ReturnType<typeof useToast>
@@ -139,8 +167,8 @@ function performExport(
     return
   }
 
+  isExporting.value = true
   try {
-    isExporting.value = true
     const data = database.value.export()
     const buffer = new ArrayBuffer(data.length)
     const view = new Uint8Array(buffer)
@@ -150,55 +178,46 @@ function performExport(
     downloadBlob(blob, filename)
     toast.success('Database exported successfully')
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Export failed'
-    toast.error(message)
+    toast.error(getErrorMessage(err, 'Export failed'))
   } finally {
     isExporting.value = false
   }
 }
 
-async function performValidate(file: File): Promise<boolean> {
-  try {
-    const validExtensions = ['.db', '.sqlite', '.sqlite3']
-    const hasValidExtension = validExtensions.some((ext) =>
-      file.name.toLowerCase().endsWith(ext)
-    )
-    if (!hasValidExtension) return false
-
-    const buffer = await readFileAsArrayBuffer(file)
-    const data = new Uint8Array(buffer)
-    return await validateSqliteData(data)
-  } catch {
-    return false
-  }
-}
-
+/**
+ * Execute database import operation.
+ * Validates (extension, size, MIME type, and SQLite structure) and
+ * replaces the current database with imported data.
+ */
 async function performImport(
   file: File,
   toast: ReturnType<typeof useToast>,
   replaceDatabase: (data: Uint8Array) => Promise<void>
 ): Promise<boolean> {
+  isImporting.value = true
   try {
-    isImporting.value = true
-    const buffer = await readFileAsArrayBuffer(file)
-    const data = new Uint8Array(buffer)
-    const isValid = await validateSqliteData(data)
+    const isValid = await performValidate(file)
     if (!isValid) {
       toast.error('Invalid database file')
       return false
     }
+    const buffer = await file.arrayBuffer()
+    const data = new Uint8Array(buffer)
     await replaceDatabase(data)
     toast.success('Database imported successfully')
     return true
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Import failed'
-    toast.error(message)
+    toast.error(getErrorMessage(err, 'Import failed'))
     return false
   } finally {
     isImporting.value = false
   }
 }
 
+/**
+ * Execute database clear operation.
+ * Deletes all data from every table and persists the empty state.
+ */
 async function performClear(
   database: Ref<Database | null>,
   toast: ReturnType<typeof useToast>,
@@ -210,8 +229,8 @@ async function performClear(
     return
   }
 
+  isClearing.value = true
   try {
-    isClearing.value = true
     run('DELETE FROM component_grouping_members')
     run('DELETE FROM component_groupings')
     run('DELETE FROM component_occurrences')
@@ -227,9 +246,36 @@ async function performClear(
     await persist()
     toast.success('All data cleared successfully')
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Clear failed'
-    toast.error(message)
+    toast.error(getErrorMessage(err, 'Clear failed'))
   } finally {
     isClearing.value = false
+  }
+}
+
+// =============================================================================
+// Composable
+// =============================================================================
+
+export function useDatabaseExport(): UseDatabaseExport {
+  const { database, persist, replaceDatabase, run } = useDatabase()
+  const toast = useToast()
+
+  // Reset loading states when composable scope is disposed
+  onScopeDispose(() => {
+    isExporting.value = false
+    isImporting.value = false
+    isClearing.value = false
+  })
+
+  return {
+    isExporting: readonly(isExporting),
+    isImporting: readonly(isImporting),
+    isClearing: readonly(isClearing),
+    exportDatabase: () => {
+      performExport(database, toast)
+    },
+    importDatabase: (file: File) => performImport(file, toast, replaceDatabase),
+    validateDatabaseFile: performValidate,
+    clearDatabase: () => performClear(database, toast, run, persist)
   }
 }

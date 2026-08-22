@@ -94,6 +94,7 @@ function handleSave(data: HeadlineSaveData): void {
       </div>
       <div class="kanji-detail-section-headline-actions">
         <BaseButton
+          aria-label="Edit headline"
           data-testid="headline-edit-button"
           size="sm"
           variant="secondary"

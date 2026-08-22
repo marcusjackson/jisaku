@@ -78,6 +78,7 @@ function handleCreate(): void {
       v-if="filteredComponents.length > 0"
       class="kanji-detail-component-search-results"
     >
+      <!-- Raw <button>: search result item needs full custom styling incompatible with BaseButton -->
       <button
         v-for="component in filteredComponents"
         :key="component.id"
@@ -130,9 +131,9 @@ function handleCreate(): void {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-  max-height: 300px;
+  max-height: var(--list-max-height);
   overflow-y: auto;
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
 }
 
@@ -147,16 +148,16 @@ function handleCreate(): void {
   font-size: var(--font-size-base);
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--transition-normal);
 }
 
 .kanji-detail-component-search-result-item:hover {
   background-color: var(--color-bg-secondary);
 }
 
-.kanji-detail-component-search-result-item:focus {
-  outline: 2px solid var(--color-focus);
-  outline-offset: -2px;
+.kanji-detail-component-search-result-item:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .kanji-detail-component-search-result-character {

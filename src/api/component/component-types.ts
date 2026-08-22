@@ -195,6 +195,23 @@ export interface UpdateComponentGroupingInput {
 // ============================================================================
 
 /**
+ * Member of a component grouping
+ */
+export interface ComponentGroupingMember {
+  id: number
+  groupingId: number
+  occurrenceId: number
+  displayOrder: number
+}
+
+/**
+ * Grouping enriched with denormalised member count
+ */
+export interface ComponentGroupingWithMembers extends ComponentGrouping {
+  occurrenceCount: number
+}
+
+/**
  * Component occurrence with joined kanji and position type data.
  * Used by component detail page to display occurrences with full context.
  */
@@ -224,5 +241,7 @@ export interface OccurrenceWithKanji {
     nameEnglish: string | null
     description: string | null
     displayOrder: number
+    createdAt: string
+    updatedAt: string
   } | null
 }

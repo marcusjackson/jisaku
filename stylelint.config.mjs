@@ -2,6 +2,7 @@
 export default {
   extends: ['stylelint-config-standard', 'stylelint-config-recommended-vue'],
   plugins: ['stylelint-order'],
+  ignoreFiles: ['dist/**/*', 'node_modules/**/*'],
   rules: {
     // Property ordering (concentric pattern: outside-in)
     'order/properties-order': [
@@ -103,15 +104,58 @@ export default {
     // Enforce CSS variables for colors (disallow hardcoded colors)
     'color-no-hex': true,
     'color-named': 'never',
-    'function-disallowed-list': ['rgb', 'rgba', 'hsl', 'hsla'],
+    'function-disallowed-list': [
+      'rgb',
+      'rgba',
+      'hsl',
+      'hsla',
+      'oklch',
+      'lch',
+      'lab',
+      'color-mix'
+    ],
 
-    // Allow var() for colors
+    // Allow var() for colors, spacing, and typography
+    // TO DO: Need to uncomment 'line-height' and 'padding' and properly address
     'declaration-property-value-allowed-list': {
-      '/color$/': ['/^var\\(--/', 'transparent', 'inherit', 'currentColor'],
-      '/background$/': ['/^var\\(--/', 'transparent', 'inherit', 'none'],
-      'background-color': ['/^var\\(--/', 'transparent', 'inherit'],
-      'border-color': ['/^var\\(--/', 'transparent', 'inherit', 'currentColor'],
-      'box-shadow': ['/^var\\(--/', 'none', 'inherit']
+      '/color$/': [
+        String.raw`/^var\(--/`,
+        'transparent',
+        'inherit',
+        'currentColor'
+      ],
+      '/background$/': [
+        String.raw`/^var\(--/`,
+        'transparent',
+        'inherit',
+        'none'
+      ],
+      'background-color': [String.raw`/^var\(--/`, 'transparent', 'inherit'],
+      'border-color': [
+        String.raw`/^var\(--/`,
+        'transparent',
+        'inherit',
+        'currentColor'
+      ],
+      'box-shadow': [String.raw`/^var\(--/`, 'none', 'inherit'],
+      // Spacing: each token must be 0, -1px, auto, inherit, or a CSS variable.
+      // The regex supports one-to-four space-separated shorthand tokens.
+      // 'padding': [String.raw`/^(0|-1px|auto|inherit|var\(--[^)]*\))(\s+(0|-1px|auto|inherit|var\(--[^)]*\)))*$/`],
+      margin: [
+        String.raw`/^(0|-1px|auto|inherit|var\(--[^)]*\))(\s+(0|-1px|auto|inherit|var\(--[^)]*\)))*$/`
+      ],
+      // Typography: enforce design tokens for font properties (single-value)
+      'font-size': [String.raw`/^var\(--/`, 'inherit', 'initial', 'unset'],
+      'font-weight': [
+        String.raw`/^var\(--/`,
+        'inherit',
+        'initial',
+        'unset',
+        'normal',
+        'bolder',
+        'lighter'
+      ]
+      // 'line-height': [String.raw`/^var\(--/`, 'inherit', 'initial', 'normal', 'unset']
     },
 
     // Allow CSS custom properties (variables)
@@ -151,22 +195,13 @@ export default {
   },
   overrides: [
     {
-      files: ['src/styles/tokens.css', 'src/legacy/styles/tokens.css'],
+      files: ['src/styles/tokens.css'],
       rules: {
         // Allow hardcoded values only in tokens file
         'color-no-hex': null,
         'function-disallowed-list': null,
         'declaration-property-value-allowed-list': null
       }
-    },
-    {
-      files: ['src/legacy/**/*.vue', 'src/legacy/**/*.css'],
-      rules: {
-        // Relax rules for legacy code - frozen during refactoring
-        'order/properties-order': null,
-        'selector-class-pattern': null
-      }
     }
-  ],
-  ignoreFiles: ['src/legacy/styles/**/*.css']
+  ]
 }

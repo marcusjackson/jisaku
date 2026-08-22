@@ -10,12 +10,16 @@
 import { useDatabase } from '@/shared/composables/use-database'
 
 import { schedulePersist } from '@/db/indexeddb'
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
 import { BaseRepository } from '../base-repository'
-import { EntityNotFoundError } from '../types'
 
-import type { ChildRepository, Orderable } from '../types'
+import { mapGroupingMemberRow } from './component-grouping-repository-internals'
+
+import type { ChildRepository, Orderable } from '../api-types'
 import type {
   ComponentGrouping,
+  ComponentGroupingMember,
+  ComponentGroupingWithMembers,
   CreateComponentGroupingInput,
   UpdateComponentGroupingInput
 } from './component-types'
@@ -32,6 +36,10 @@ interface ComponentGroupingRow {
   display_order: number
   created_at: string
   updated_at: string
+}
+
+interface ComponentGroupingWithMembersRow extends ComponentGroupingRow {
+  occurrence_count: number
 }
 
 // ============================================================================
@@ -73,43 +81,49 @@ class ComponentGroupingRepositoryImpl
     }
   }
 
-  // ==========================================================================
   // Read Operations
-  // ==========================================================================
-
   getById(id: number): ComponentGrouping | null {
-    const result = this.exec('SELECT * FROM component_groupings WHERE id = ?', [
-      id
-    ])
-    return this.resultToEntity(result)
+    // prettier-ignore
+    return this.resultToEntity(this.exec('SELECT * FROM component_groupings WHERE id = ?', [id]))
   }
 
   getAll(): ComponentGrouping[] {
-    const result = this.exec(
-      'SELECT * FROM component_groupings ORDER BY name ASC'
-    )
-    return this.resultToList(result)
+    // prettier-ignore
+    return this.resultToList(this.exec('SELECT * FROM component_groupings ORDER BY name ASC'))
   }
 
-  /** Get groupings by component (parent) */
-  getByParentId(componentId: number): ComponentGrouping[] {
+  /** Get groupings by component (parent), enriched with member count */
+  getByParentId(componentId: number): ComponentGroupingWithMembers[] {
     const result = this.exec(
-      'SELECT * FROM component_groupings WHERE component_id = ? ORDER BY display_order ASC',
+      `SELECT g.*, COUNT(m.id) AS occurrence_count
+       FROM component_groupings g
+       LEFT JOIN component_grouping_members m ON m.grouping_id = g.id
+       WHERE g.component_id = ?
+       GROUP BY g.id
+       ORDER BY g.display_order ASC`,
       [componentId]
     )
-    return this.resultToList(result)
+    const firstResult = result[0]
+    if (!firstResult) return []
+    return firstResult.values.map((row) => {
+      const obj = this.rowToObject({
+        columns: firstResult.columns,
+        values: [row]
+      }) as unknown as ComponentGroupingWithMembersRow
+      return {
+        ...this.mapRow(obj as unknown as Record<string, unknown>),
+        occurrenceCount: obj.occurrence_count
+      }
+    })
   }
 
-  // ==========================================================================
   // Write Operations
-  // ==========================================================================
-
   create(input: CreateComponentGroupingInput): ComponentGrouping {
-    const maxResult = this.exec(
-      'SELECT MAX(display_order) as max_order FROM component_groupings WHERE component_id = ?',
+    const maxOrder = this.getMaxDisplayOrder(
+      'component_groupings',
+      'WHERE component_id = ?',
       [input.componentId]
     )
-    const maxOrder = (maxResult[0]?.values[0]?.[0] as number | null) ?? -1
     const displayOrder = input.displayOrder ?? maxOrder + 1
 
     this.run(
@@ -124,7 +138,7 @@ class ComponentGroupingRepositoryImpl
 
     const created = this.getById(newId)
     if (!created) {
-      throw new Error('Failed to retrieve created component grouping')
+      throw new CreateError('ComponentGrouping')
     }
 
     schedulePersist()
@@ -153,7 +167,7 @@ class ComponentGroupingRepositoryImpl
       return existing
     }
 
-    sets.push('updated_at = datetime("now")')
+    sets.push("updated_at = datetime('now')")
     values.push(id)
 
     this.run(
@@ -163,7 +177,7 @@ class ComponentGroupingRepositoryImpl
 
     const updated = this.getById(id)
     if (!updated) {
-      throw new Error('ComponentGrouping disappeared after update')
+      throw new UpdateError('ComponentGrouping', id)
     }
 
     schedulePersist()
@@ -171,28 +185,123 @@ class ComponentGroupingRepositoryImpl
   }
 
   remove(id: number): void {
-    this.run('DELETE FROM component_groupings WHERE id = ?', [id])
+    this.withTransaction(() => {
+      this.run('DELETE FROM component_grouping_members WHERE grouping_id = ?', [
+        id
+      ])
+      this.run('DELETE FROM component_groupings WHERE id = ?', [id])
+    })
     schedulePersist()
   }
 
   /** Remove all groupings for a component */
   removeByComponentId(componentId: number): void {
-    this.run('DELETE FROM component_groupings WHERE component_id = ?', [
-      componentId
-    ])
+    this.withTransaction(() => {
+      this.run(
+        `DELETE FROM component_grouping_members
+       WHERE grouping_id IN (SELECT id FROM component_groupings WHERE component_id = ?)`,
+        [componentId]
+      )
+      // prettier-ignore
+      this.run('DELETE FROM component_groupings WHERE component_id = ?', [componentId])
+    })
     schedulePersist()
   }
 
-  // ==========================================================================
   // Ordering
-  // ==========================================================================
-
   reorder(ids: number[]): void {
-    ids.forEach((id, index) => {
-      this.run(
-        'UPDATE component_groupings SET display_order = ? WHERE id = ?',
-        [index, id]
+    this.withTransaction(() => {
+      ids.forEach((id, index) => {
+        this.run(
+          'UPDATE component_groupings SET display_order = ? WHERE id = ?',
+          [index, id]
+        )
+      })
+    })
+    schedulePersist()
+  }
+
+  /** Get all members for a grouping ordered by display_order */
+  getMembers(groupingId: number): ComponentGroupingMember[] {
+    const result = this.exec(
+      'SELECT * FROM component_grouping_members WHERE grouping_id = ? ORDER BY display_order ASC',
+      [groupingId]
+    )
+    const firstResult = result[0]
+    if (!firstResult) return []
+    return firstResult.values.map((row) =>
+      mapGroupingMemberRow(
+        this.rowToObject({ columns: firstResult.columns, values: [row] })
       )
+    )
+  }
+
+  /** Get all members for all groupings of a component, grouped by grouping ID */
+  getMembersByComponentId(
+    componentId: number
+  ): Map<number, ComponentGroupingMember[]> {
+    const result = this.exec(
+      `SELECT m.* FROM component_grouping_members m
+       INNER JOIN component_groupings g ON g.id = m.grouping_id
+       WHERE g.component_id = ?
+       ORDER BY m.display_order ASC`,
+      [componentId]
+    )
+    const map = new Map<number, ComponentGroupingMember[]>()
+    const firstResult = result[0]
+    if (!firstResult) return map
+    for (const row of firstResult.values) {
+      const member = mapGroupingMemberRow(
+        this.rowToObject({ columns: firstResult.columns, values: [row] })
+      )
+      const existing = map.get(member.groupingId)
+      if (existing) {
+        existing.push(member)
+      } else {
+        map.set(member.groupingId, [member])
+      }
+    }
+    return map
+  }
+
+  /**
+   * Add a member to a grouping (idempotent via INSERT OR IGNORE).
+   *
+   * @returns `true` if the member was inserted, `false` if it already existed.
+   */
+  addMember(groupingId: number, occurrenceId: number): boolean {
+    const maxOrder = this.getMaxDisplayOrder(
+      'component_grouping_members',
+      'WHERE grouping_id = ?',
+      [groupingId]
+    )
+    this.run(
+      'INSERT OR IGNORE INTO component_grouping_members (grouping_id, occurrence_id, display_order) VALUES (?, ?, ?)',
+      [groupingId, occurrenceId, maxOrder + 1]
+    )
+    schedulePersist()
+    const changesResult = this.exec('SELECT changes() as rows_changed')
+    return ((changesResult[0]?.values[0]?.[0] as number | null) ?? 0) > 0
+  }
+
+  /** Remove a member from a grouping */
+  removeMember(groupingId: number, occurrenceId: number): void {
+    this.run(
+      'DELETE FROM component_grouping_members WHERE grouping_id = ? AND occurrence_id = ?',
+      [groupingId, occurrenceId]
+    )
+    schedulePersist()
+  }
+
+  /** Reorder members within a grouping */
+  reorderMembers(groupingId: number, occurrenceIds: number[]): void {
+    this.withTransaction(() => {
+      occurrenceIds.forEach((occurrenceId, index) => {
+        this.run(
+          'UPDATE component_grouping_members SET display_order = ? WHERE grouping_id = ? AND occurrence_id = ?',
+          [index, groupingId, occurrenceId]
+        )
+      })
     })
     schedulePersist()
   }
@@ -202,12 +311,11 @@ class ComponentGroupingRepositoryImpl
 // Factory Function
 // ============================================================================
 
+/**
+ * Creates a component grouping repository instance bound to the active database.
+ * @returns Repository for managing component groupings with members.
+ * @example const repo = useComponentGroupingRepository(); repo.getByParentId(1)
+ */
 export function useComponentGroupingRepository(): ComponentGroupingRepositoryImpl {
   return new ComponentGroupingRepositoryImpl()
-}
-
-export type {
-  ComponentGrouping,
-  CreateComponentGroupingInput,
-  UpdateComponentGroupingInput
 }
