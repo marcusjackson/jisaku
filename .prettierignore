@@ -32,3 +32,6 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+
+# Machine-written by fleet-sync (hash-guarded); formatting it would break the guard
+scripts/check-links.mjs

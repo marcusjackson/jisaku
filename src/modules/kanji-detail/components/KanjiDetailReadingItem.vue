@@ -10,7 +10,7 @@ import { computed } from 'vue'
 
 import { BaseButton, BaseInput, BaseSelect } from '@/base/components'
 
-import { readingLevels } from '../schemas/kanji-detail-on-reading-schema'
+import { readingLevels } from '../utils/constants'
 
 import type { ReadingLevel } from '../kanji-detail-types'
 
@@ -94,27 +94,16 @@ const canMoveDown = computed(() => props.index < props.total - 1)
           placeholder="Reading"
           @update:model-value="emit('update:reading', String($event))"
         />
-        <span
-          v-if="warning"
-          class="reading-item-warning"
-          >{{ warning }}</span
-        >
+        <span v-if="warning" class="reading-item-warning">{{ warning }}</span>
       </div>
 
-      <div
-        v-if="showOkurigana"
-        class="reading-item-field reading-item-field-okurigana"
-      >
+      <div v-if="showOkurigana" class="reading-item-field reading-item-field-okurigana">
         <BaseInput
           :model-value="okurigana"
           placeholder="Okurigana"
           @update:model-value="emit('update:okurigana', String($event))"
         />
-        <span
-          v-if="okuriganaWarning"
-          class="reading-item-warning"
-          >{{ okuriganaWarning }}</span
-        >
+        <span v-if="okuriganaWarning" class="reading-item-warning">{{ okuriganaWarning }}</span>
       </div>
 
       <div class="reading-item-field reading-item-field-level">

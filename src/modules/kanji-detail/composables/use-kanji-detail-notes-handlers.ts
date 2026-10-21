@@ -5,83 +5,75 @@
  * Provides save handlers for all four note field types and stroke images.
  */
 
-import { useKanjiRepository } from '@/api/kanji'
+import { useKanjiRepository } from '@/api/kanji';
 
-import { useToast } from '@/shared/composables'
+import { useToast } from '@/shared/composables';
 
-import type { Kanji } from '@/api/kanji'
-import type { Ref } from 'vue'
+import type { Kanji } from '@/api/kanji';
+import type { Ref } from 'vue';
 
-export interface KanjiDetailNotesHandlers {
-  handleSemanticNotesSave: (value: string | null) => void
-  handleEtymologyNotesSave: (value: string | null) => void
-  handleEducationNotesSave: (value: string | null) => void
-  handlePersonalNotesSave: (value: string | null) => void
-  handleStrokeDiagramSave: (value: Uint8Array | null) => void
-  handleStrokeAnimationSave: (value: Uint8Array | null) => void
+export interface UseKanjiDetailNotesHandlersReturn {
+  handleSemanticNotesSave: (value: string | null) => void;
+  handleEtymologyNotesSave: (value: string | null) => void;
+  handleEducationNotesSave: (value: string | null) => void;
+  handlePersonalNotesSave: (value: string | null) => void;
+  handleStrokeDiagramSave: (value: Uint8Array | null) => void;
+  handleStrokeAnimationSave: (value: Uint8Array | null) => void;
 }
 
-type NoteField =
-  | 'notesSemantic'
-  | 'notesEtymology'
-  | 'notesEducationMnemonics'
-  | 'notesPersonal'
-type StrokeField = 'strokeDiagramImage' | 'strokeGifImage'
+type NoteField = 'notesSemantic' | 'notesEtymology' | 'notesEducationMnemonics' | 'notesPersonal';
+type StrokeField = 'strokeDiagramImage' | 'strokeGifImage';
 
 /**
  * Provides note and stroke image save handlers for the kanji detail page.
  *
  * @param kanji - Reactive reference to the current kanji
- * @returns Handlers for saving education notes, personal notes, and stroke images
+ * @returns Handlers for saving the four notes (semantic, etymology, education, personal) and the stroke diagram and animation images
  */
 export function useKanjiDetailNotesHandlers(
   kanji: Ref<Kanji | null>
-): KanjiDetailNotesHandlers {
-  const kanjiRepo = useKanjiRepository()
-  const toast = useToast()
+): UseKanjiDetailNotesHandlersReturn {
+  const kanjiRepo = useKanjiRepository();
+  const toast = useToast();
 
   function saveNote(field: NoteField, value: string | null, msg: string): void {
-    if (!kanji.value) return
+    if (!kanji.value) return;
     try {
-      kanji.value = kanjiRepo.updateField(kanji.value.id, field, value)
-      toast.success(msg)
+      kanji.value = kanjiRepo.updateField(kanji.value.id, field, value);
+      toast.success(msg);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save notes')
+      toast.error(err instanceof Error ? err.message : 'Failed to save notes');
     }
   }
 
-  function saveStroke(
-    field: StrokeField,
-    value: Uint8Array | null,
-    msg: string
-  ): void {
-    if (!kanji.value) return
+  function saveStroke(field: StrokeField, value: Uint8Array | null, msg: string): void {
+    if (!kanji.value) return;
     try {
-      kanji.value = kanjiRepo.updateField(kanji.value.id, field, value)
-      toast.success(msg)
+      kanji.value = kanjiRepo.updateField(kanji.value.id, field, value);
+      toast.success(msg);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save image')
+      toast.error(err instanceof Error ? err.message : 'Failed to save image');
     }
   }
 
   return {
     handleSemanticNotesSave: (v) => {
-      saveNote('notesSemantic', v, 'Semantic notes saved')
+      saveNote('notesSemantic', v, 'Semantic notes saved');
     },
     handleEtymologyNotesSave: (v) => {
-      saveNote('notesEtymology', v, 'Etymology notes saved')
+      saveNote('notesEtymology', v, 'Etymology notes saved');
     },
     handleEducationNotesSave: (v) => {
-      saveNote('notesEducationMnemonics', v, 'Education notes saved')
+      saveNote('notesEducationMnemonics', v, 'Education notes saved');
     },
     handlePersonalNotesSave: (v) => {
-      saveNote('notesPersonal', v, 'Personal notes saved')
+      saveNote('notesPersonal', v, 'Personal notes saved');
     },
     handleStrokeDiagramSave: (v) => {
-      saveStroke('strokeDiagramImage', v, 'Stroke diagram saved')
+      saveStroke('strokeDiagramImage', v, 'Stroke diagram saved');
     },
     handleStrokeAnimationSave: (v) => {
-      saveStroke('strokeGifImage', v, 'Stroke animation saved')
-    }
-  }
+      saveStroke('strokeGifImage', v, 'Stroke animation saved');
+    },
+  };
 }

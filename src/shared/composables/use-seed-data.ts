@@ -4,16 +4,13 @@
  * Composable for seeding and clearing development data.
  * Used in settings page for developer tools and kanji list for quick access.
  *
- * Note: This is separate from the legacy implementation to maintain
- * different data formats during the transition period. Legacy uses
- * full display labels (e.g., '10級') while refactored uses type-safe
- * keys (e.g., '10') that map to labels via KENTEI_LABELS lookup.
+ * Seed data uses type-safe keys (e.g., '10') that map to display labels
+ * (e.g., '10級') via the KENTEI_LABELS lookup.
  */
 
-import { ref } from 'vue'
+import { ref } from 'vue';
 
 import {
-  clearAllTables,
   formatSeedMessage,
   hasSeededData,
   SEED_CLASSIFICATIONS,
@@ -25,15 +22,16 @@ import {
   SEED_POSITION_TYPES,
   SEED_READING_GROUPS,
   SEED_VOCABULARY,
-  seedAllTables
-} from './seed-data'
-import { useDatabase } from './use-database'
-import { useToast } from './use-toast'
+  seedAllTables,
+} from './seed-data';
+import { useDatabase } from './use-database';
+import { useDatabaseExport } from './use-database-export';
+import { useToast } from './use-toast';
 
-import type { Ref } from 'vue'
+import type { Ref } from 'vue';
 
 /** Counts of seed data for testing */
-export const SEED_DATA_COUNTS = {
+const SEED_DATA_COUNTS = {
   classifications: SEED_CLASSIFICATIONS.length,
   components: SEED_COMPONENTS.length,
   kanji: SEED_KANJI.length,
@@ -42,58 +40,56 @@ export const SEED_DATA_COUNTS = {
   onReadings: SEED_ON_READINGS.length,
   positionTypes: SEED_POSITION_TYPES.length,
   readingGroups: SEED_READING_GROUPS.length,
-  vocabulary: SEED_VOCABULARY.length
-} as const
+  vocabulary: SEED_VOCABULARY.length,
+} as const;
 
 /** Return type for useSeedData composable */
-export interface UseSeedData {
+export interface UseSeedDataReturn {
   /** Seed the database with sample data */
-  seed: () => Promise<void>
-  /** Clear all seeded data from the database */
-  clear: () => Promise<void>
+  seed: () => Promise<void>;
+  /** Clear all data from the database */
+  clear: () => Promise<void>;
   /** Whether seeding is in progress */
-  isSeeding: Ref<boolean>
+  isSeeding: Ref<boolean>;
   /** Whether clearing is in progress */
-  isClearing: Ref<boolean>
+  isClearing: Ref<boolean>;
   /** Counts of seed data items by category */
-  seedDataCounts: typeof SEED_DATA_COUNTS
+  seedDataCounts: typeof SEED_DATA_COUNTS;
 }
 
-export function useSeedData(): UseSeedData {
-  const { exec, persist, run } = useDatabase()
-  const { error: showError, success: showSuccess } = useToast()
-  const isSeeding = ref(false)
-  const isClearing = ref(false)
+export function useSeedData(): UseSeedDataReturn {
+  const { exec, persist, run, transaction } = useDatabase();
+  const { error: showError, success: showSuccess } = useToast();
+  const { clearDatabase } = useDatabaseExport();
+  const isSeeding = ref(false);
+  const isClearing = ref(false);
 
   async function seed() {
-    if (isSeeding.value) return
-    isSeeding.value = true
+    if (isSeeding.value) return;
+    isSeeding.value = true;
     try {
-      const results = seedAllTables(exec, run)
+      const results = transaction(() => seedAllTables(exec, run));
       if (!hasSeededData(results)) {
-        showError('Database already has data')
-        return
+        showError('Database already has data');
+        return;
       }
-      await persist()
-      showSuccess(formatSeedMessage(results))
+      await persist();
+      showSuccess(formatSeedMessage(results));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to seed data')
+      showError(err instanceof Error ? err.message : 'Failed to seed data');
     } finally {
-      isSeeding.value = false
+      isSeeding.value = false;
     }
   }
 
   async function clear() {
-    if (isClearing.value) return
-    isClearing.value = true
+    if (isClearing.value) return;
+    isClearing.value = true;
     try {
-      clearAllTables(run)
-      await persist()
-      showSuccess('All data cleared')
-    } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to clear data')
+      // The production clear owns the table list, the transaction and the toasts.
+      await clearDatabase();
     } finally {
-      isClearing.value = false
+      isClearing.value = false;
     }
   }
 
@@ -102,6 +98,6 @@ export function useSeedData(): UseSeedData {
     isClearing,
     isSeeding,
     seed,
-    seedDataCounts: SEED_DATA_COUNTS
-  }
+    seedDataCounts: SEED_DATA_COUNTS,
+  };
 }

@@ -32,9 +32,6 @@ function handleCancel(): void {
     description="Enter the kanji character to create a new entry."
     title="Add New Kanji"
   >
-    <KanjiListDialogCreate
-      @cancel="handleCancel"
-      @created="handleCreated"
-    />
+    <KanjiListDialogCreate @cancel="handleCancel" @created="handleCreated" />
   </BaseDialog>
 </template>

@@ -40,14 +40,8 @@ const toggleExpanded = () => {
 </script>
 
 <template>
-  <div
-    v-if="displayText"
-    class="occurrence-notes"
-  >
-    <p
-      class="occurrence-notes-text"
-      :class="{ 'is-expanded': isExpanded }"
-    >
+  <div v-if="displayText" class="occurrence-notes">
+    <p class="occurrence-notes-text">
       {{ displayText }}{{ !isExpanded && shouldTruncate ? '...' : '' }}
     </p>
     <BaseButton
@@ -75,7 +69,6 @@ const toggleExpanded = () => {
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
   white-space: pre-wrap;
-  transition: max-height var(--transition-fast);
 }
 
 .occurrence-notes-toggle {

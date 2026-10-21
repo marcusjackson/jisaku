@@ -16,19 +16,11 @@ defineProps<{
 </script>
 
 <template>
-  <div
-    v-if="vocabulary.length === 0"
-    class="empty-state"
-    data-testid="vocabulary-empty-state"
-  >
+  <div v-if="vocabulary.length === 0" class="empty-state" data-testid="vocabulary-empty-state">
     <p class="empty-message">No vocabulary entries found for this kanji.</p>
   </div>
 
-  <ul
-    v-else
-    class="vocabulary-list"
-    data-testid="vocabulary-list"
-  >
+  <ul v-else class="vocabulary-list" data-testid="vocabulary-list">
     <KanjiDetailVocabularyItem
       v-for="item in vocabulary"
       :key="item.vocabularyId"

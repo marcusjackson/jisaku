@@ -2,25 +2,25 @@
  * Component Occurrence Repository - Data access for component occurrences.
  * @module api/component
  */
-import { useDatabase } from '@/shared/composables/use-database'
+import { useDatabase } from '@/shared/composables/use-database';
 
-import { schedulePersist } from '@/db/indexeddb'
-import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
-import { BaseRepository } from '../base-repository'
+import { schedulePersist } from '@/db/indexeddb';
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types';
+import { BaseRepository } from '../base-repository';
 
 import {
   type ComponentOccurrenceRow,
   mapOccurrenceWithKanjiRow,
-  type OccurrenceWithKanjiRow
-} from './component-occurrence-repository-internals'
+  type OccurrenceWithKanjiRow,
+} from './component-occurrence-repository-internals';
 
-import type { ChildRepository, Orderable, QueryResult } from '../api-types'
+import type { ChildRepository, Orderable, QueryResult } from '../api-types';
 import type {
   ComponentOccurrence,
   CreateComponentOccurrenceInput,
   OccurrenceWithKanji,
-  UpdateComponentOccurrenceInput
-} from './component-types'
+  UpdateComponentOccurrenceInput,
+} from './component-types';
 
 /**
  * Data access layer for component occurrences.
@@ -39,20 +39,20 @@ class ComponentOccurrenceRepositoryImpl
     >,
     Orderable
 {
-  protected tableName = 'component_occurrences'
+  protected tableName = 'component_occurrences';
 
-  private readonly exec: ReturnType<typeof useDatabase>['exec']
-  private readonly run: ReturnType<typeof useDatabase>['run']
+  private readonly exec: ReturnType<typeof useDatabase>['exec'];
+  private readonly run: ReturnType<typeof useDatabase>['run'];
 
   constructor() {
-    super()
-    const db = useDatabase()
-    this.exec = db.exec
-    this.run = db.run
+    super();
+    const db = useDatabase();
+    this.exec = db.exec;
+    this.run = db.run;
   }
 
   protected mapRow(row: Record<string, unknown>): ComponentOccurrence {
-    const r = row as unknown as ComponentOccurrenceRow
+    const r = row as unknown as ComponentOccurrenceRow;
     return {
       id: r.id,
       kanjiId: r.kanji_id,
@@ -63,25 +63,20 @@ class ComponentOccurrenceRepositoryImpl
       analysisNotes: r.analysis_notes,
       displayOrder: r.display_order,
       createdAt: r.created_at,
-      updatedAt: r.updated_at
-    }
+      updatedAt: r.updated_at,
+    };
   }
 
   // Read Operations
 
   getById(id: number): ComponentOccurrence | null {
-    const result = this.exec(
-      'SELECT * FROM component_occurrences WHERE id = ?',
-      [id]
-    )
-    return this.resultToEntity(result)
+    const result = this.exec('SELECT * FROM component_occurrences WHERE id = ?', [id]);
+    return this.resultToEntity(result);
   }
 
   getAll(): ComponentOccurrence[] {
-    const result = this.exec(
-      'SELECT * FROM component_occurrences ORDER BY display_order ASC'
-    )
-    return this.resultToList(result)
+    const result = this.exec('SELECT * FROM component_occurrences ORDER BY display_order ASC');
+    return this.resultToList(result);
   }
 
   /** Get occurrences by kanji (parent) */
@@ -89,17 +84,8 @@ class ComponentOccurrenceRepositoryImpl
     const result = this.exec(
       'SELECT * FROM component_occurrences WHERE kanji_id = ? ORDER BY display_order ASC',
       [kanjiId]
-    )
-    return this.resultToList(result)
-  }
-
-  /** Get all occurrences of a specific component across all kanji */
-  getByComponentId(componentId: number): ComponentOccurrence[] {
-    const result = this.exec(
-      'SELECT * FROM component_occurrences WHERE component_id = ? ORDER BY kanji_id, display_order',
-      [componentId]
-    )
-    return this.resultToList(result)
+    );
+    return this.resultToList(result);
   }
 
   /** Get occurrences by component with joined kanji and position data */
@@ -118,44 +104,33 @@ class ComponentOccurrenceRepositoryImpl
       LEFT JOIN kanjis k ON co.kanji_id = k.id
       LEFT JOIN position_types pt ON co.position_type_id = pt.id
       WHERE co.component_id = ?
-      ORDER BY co.display_order`,
+      ORDER BY co.display_order, co.id`,
       [componentId]
-    )
-    return this.mapJoinedResult(result)
+    );
+    return this.mapJoinedResult(result);
   }
 
   /** Map joined query result to OccurrenceWithKanji array */
   private mapJoinedResult(result: QueryResult[]): OccurrenceWithKanji[] {
-    if (result.length === 0 || !result[0]) return []
-    const { columns, values } = result[0]
+    if (result.length === 0 || !result[0]) return [];
+    const { columns, values } = result[0];
     return values.map((row) =>
       mapOccurrenceWithKanjiRow(
         this.rowToObject({
           columns,
-          values: [row]
+          values: [row],
         }) as unknown as OccurrenceWithKanjiRow
       )
-    )
-  }
-
-  /** Get the radical occurrence for a kanji (if exists) */
-  getRadicalOccurrence(kanjiId: number): ComponentOccurrence | null {
-    const result = this.exec(
-      'SELECT * FROM component_occurrences WHERE kanji_id = ? AND is_radical = 1',
-      [kanjiId]
-    )
-    return this.resultToEntity(result)
+    );
   }
 
   // Write Operations
 
   create(input: CreateComponentOccurrenceInput): ComponentOccurrence {
-    const maxOrder = this.getMaxDisplayOrder(
-      'component_occurrences',
-      'WHERE kanji_id = ?',
-      [input.kanjiId]
-    )
-    const displayOrder = input.displayOrder ?? maxOrder + 1
+    const maxOrder = this.getMaxDisplayOrder('component_occurrences', 'WHERE kanji_id = ?', [
+      input.kanjiId,
+    ]);
+    const displayOrder = input.displayOrder ?? maxOrder + 1;
 
     this.run(
       `INSERT INTO component_occurrences (
@@ -169,81 +144,72 @@ class ComponentOccurrenceRepositoryImpl
         input.positionTypeId ?? null,
         input.isRadical ? 1 : 0,
         input.analysisNotes ?? null,
-        displayOrder
+        displayOrder,
       ]
-    )
+    );
 
-    const idResult = this.exec('SELECT last_insert_rowid() as id')
-    const newId = idResult[0]?.values[0]?.[0] as number
+    const idResult = this.exec('SELECT last_insert_rowid() as id');
+    const newId = idResult[0]?.values[0]?.[0] as number;
 
-    const created = this.getById(newId)
+    const created = this.getById(newId);
     if (!created) {
-      throw new CreateError('ComponentOccurrence')
+      throw new CreateError('ComponentOccurrence');
     }
 
-    schedulePersist()
-    return created
+    schedulePersist();
+    return created;
   }
 
-  update(
-    id: number,
-    input: UpdateComponentOccurrenceInput
-  ): ComponentOccurrence {
-    const existing = this.getById(id)
+  update(id: number, input: UpdateComponentOccurrenceInput): ComponentOccurrence {
+    const existing = this.getById(id);
     if (!existing) {
-      throw new EntityNotFoundError('ComponentOccurrence', id)
+      throw new EntityNotFoundError('ComponentOccurrence', id);
     }
 
-    const sets: string[] = []
-    const values: unknown[] = []
+    const sets: string[] = [];
+    const values: unknown[] = [];
 
     if (input.componentFormId !== undefined) {
-      sets.push('component_form_id = ?')
-      values.push(input.componentFormId)
+      sets.push('component_form_id = ?');
+      values.push(input.componentFormId);
     }
     if (input.positionTypeId !== undefined) {
-      sets.push('position_type_id = ?')
-      values.push(input.positionTypeId)
+      sets.push('position_type_id = ?');
+      values.push(input.positionTypeId);
     }
     if (input.isRadical !== undefined) {
-      sets.push('is_radical = ?')
-      values.push(input.isRadical ? 1 : 0)
+      sets.push('is_radical = ?');
+      values.push(input.isRadical ? 1 : 0);
     }
     if (input.analysisNotes !== undefined) {
-      sets.push('analysis_notes = ?')
-      values.push(input.analysisNotes)
+      sets.push('analysis_notes = ?');
+      values.push(input.analysisNotes);
     }
 
     if (sets.length === 0) {
-      return existing
+      return existing;
     }
 
-    sets.push("updated_at = datetime('now')")
-    values.push(id)
+    sets.push("updated_at = datetime('now')");
+    values.push(id);
 
-    this.run(
-      `UPDATE component_occurrences SET ${sets.join(', ')} WHERE id = ?`,
-      values
-    )
+    this.run(`UPDATE component_occurrences SET ${sets.join(', ')} WHERE id = ?`, values);
 
-    const updated = this.getById(id)
+    const updated = this.getById(id);
     if (!updated) {
-      throw new UpdateError('ComponentOccurrence', id)
+      throw new UpdateError('ComponentOccurrence', id);
     }
 
-    schedulePersist()
-    return updated
+    schedulePersist();
+    return updated;
   }
 
   remove(id: number): void {
-    this.run('DELETE FROM component_occurrences WHERE id = ?', [id])
-    schedulePersist()
-  }
-
-  /** Remove all occurrences for a kanji */
-  removeByKanjiId(kanjiId: number): void {
-    this.run('DELETE FROM component_occurrences WHERE kanji_id = ?', [kanjiId])
-    schedulePersist()
+    this.withTransaction(() => {
+      this.run('DELETE FROM component_grouping_members WHERE occurrence_id = ?', [id]);
+      this.run('DELETE FROM component_occurrences WHERE id = ?', [id]);
+    });
+    schedulePersist();
   }
 
   // Ordering
@@ -252,17 +218,12 @@ class ComponentOccurrenceRepositoryImpl
   reorder(ids: number[]): void {
     this.withTransaction(() => {
       ids.forEach((id, index) => {
-        this.run(
-          'UPDATE component_occurrences SET display_order = ? WHERE id = ?',
-          [index, id]
-        )
-      })
-    })
-    schedulePersist()
+        this.run('UPDATE component_occurrences SET display_order = ? WHERE id = ?', [index, id]);
+      });
+    });
+    schedulePersist();
   }
 }
-
-/** Factory function */
 
 /**
  * Creates a component occurrence repository instance bound to the active database.
@@ -270,5 +231,5 @@ class ComponentOccurrenceRepositoryImpl
  * @example const repo = useComponentOccurrenceRepository(); repo.getByParentId(1)
  */
 export function useComponentOccurrenceRepository(): ComponentOccurrenceRepositoryImpl {
-  return new ComponentOccurrenceRepositoryImpl()
+  return new ComponentOccurrenceRepositoryImpl();
 }

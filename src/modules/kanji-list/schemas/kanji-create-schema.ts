@@ -6,12 +6,12 @@
  * @module modules/kanji-list
  */
 
-import { z } from 'zod'
+import { z } from 'zod';
 
-import { singleCharacterSchema } from '@/shared/validation'
+import { singleCharacterSchema } from '@/shared/validation';
 
 export const kanjiCreateSchema = z.object({
-  character: singleCharacterSchema
-})
+  character: singleCharacterSchema,
+});
 
-export type KanjiCreateData = z.infer<typeof kanjiCreateSchema>
+export type KanjiCreateData = z.infer<typeof kanjiCreateSchema>;

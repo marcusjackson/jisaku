@@ -2,29 +2,31 @@
  * Tests for useDatabaseExport composable
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { effectScope } from 'vue';
 
-import {
-  generateExportFilename,
-  useDatabaseExport
-} from './use-database-export'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockRun = vi.fn()
-const mockPersist = vi.fn().mockResolvedValue(undefined)
-const mockReplaceDatabase = vi.fn().mockResolvedValue(undefined)
-const mockExport = vi.fn().mockReturnValue(new Uint8Array([1, 2, 3]))
-const mockDatabase = { value: { export: mockExport } }
-const mockSuccess = vi.fn()
-const mockError = vi.fn()
+import { generateExportFilename, useDatabaseExport } from './use-database-export';
+
+const mockRun = vi.fn();
+const mockPersist = vi.fn().mockResolvedValue(undefined);
+const mockReplaceDatabase = vi.fn().mockResolvedValue(undefined);
+const mockExport = vi.fn().mockReturnValue(new Uint8Array([1, 2, 3]));
+const mockDatabase = { value: { export: mockExport, run: vi.fn() } };
+const mockSuccess = vi.fn();
+const mockError = vi.fn();
 
 vi.mock('@/shared/composables/use-database', () => ({
   useDatabase: () => ({
     database: mockDatabase,
     persist: mockPersist,
     replaceDatabase: mockReplaceDatabase,
-    run: mockRun
-  })
-}))
+    run: mockRun,
+    transaction: (fn: () => void) => {
+      fn();
+    },
+  }),
+}));
 
 vi.mock('@/shared/composables/use-toast', () => ({
   useToast: () => ({
@@ -34,185 +36,203 @@ vi.mock('@/shared/composables/use-toast', () => ({
     warning: vi.fn(),
     toasts: { value: [] },
     addToast: vi.fn(),
-    removeToast: vi.fn()
-  })
-}))
+    removeToast: vi.fn(),
+  }),
+}));
 
 describe('useDatabaseExport', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-  })
+    vi.clearAllMocks();
+  });
 
   it('initializes with correct default values', () => {
-    const { isClearing, isExporting, isImporting } = useDatabaseExport()
+    const { isClearing, isExporting, isImporting } = useDatabaseExport();
 
-    expect(isExporting.value).toBe(false)
-    expect(isImporting.value).toBe(false)
-    expect(isClearing.value).toBe(false)
-  })
+    expect(isExporting.value).toBe(false);
+    expect(isImporting.value).toBe(false);
+    expect(isClearing.value).toBe(false);
+  });
 
   it('returns all expected functions', () => {
-    const result = useDatabaseExport()
+    const result = useDatabaseExport();
 
-    expect(result.exportDatabase).toBeDefined()
-    expect(result.importDatabase).toBeDefined()
-    expect(result.validateDatabaseFile).toBeDefined()
-    expect(result.clearDatabase).toBeDefined()
-  })
-})
+    expect(result.exportDatabase).toBeDefined();
+    expect(result.importDatabase).toBeDefined();
+    expect(result.validateDatabaseFile).toBeDefined();
+    expect(result.clearDatabase).toBeDefined();
+  });
+});
+
+describe('shared loading state', () => {
+  it('keeps isImporting true when one caller scope is disposed mid-import', () => {
+    const scope = effectScope();
+    const flags = scope.run(() => useDatabaseExport());
+    // A file whose read never settles holds the import in flight
+    const pending = {
+      name: 'x.db',
+      size: 1,
+      type: '',
+      arrayBuffer: () => new Promise<ArrayBuffer>(() => undefined),
+    } as unknown as File;
+    void flags?.importDatabase(pending);
+    expect(flags?.isImporting.value).toBe(true);
+
+    scope.stop();
+
+    expect(useDatabaseExport().isImporting.value).toBe(true);
+  });
+});
 
 describe('generateExportFilename', () => {
   beforeEach(() => {
-    vi.useFakeTimers()
-  })
+    vi.useFakeTimers();
+  });
 
   afterEach(() => {
-    vi.useRealTimers()
-  })
+    vi.useRealTimers();
+  });
 
   it('uses kanji-dictionary prefix', () => {
-    vi.setSystemTime(new Date(2026, 1, 15, 14, 30))
-    expect(generateExportFilename()).toMatch(/^kanji-dictionary-/)
-  })
+    vi.setSystemTime(new Date(2026, 1, 15, 14, 30));
+    expect(generateExportFilename()).toMatch(/^kanji-dictionary-/);
+  });
 
   it('formats as kanji-dictionary-YYYY-MM-DD-HHMM.db', () => {
-    vi.setSystemTime(new Date(2026, 1, 15, 14, 30))
-    expect(generateExportFilename()).toBe('kanji-dictionary-2026-02-15-1430.db')
-  })
+    vi.setSystemTime(new Date(2026, 1, 15, 14, 30));
+    expect(generateExportFilename()).toBe('kanji-dictionary-2026-02-15-1430.db');
+  });
 
   it('zero-pads month, day, hours, and minutes', () => {
-    vi.setSystemTime(new Date(2026, 0, 5, 3, 7))
-    expect(generateExportFilename()).toBe('kanji-dictionary-2026-01-05-0307.db')
-  })
+    vi.setSystemTime(new Date(2026, 0, 5, 3, 7));
+    expect(generateExportFilename()).toBe('kanji-dictionary-2026-01-05-0307.db');
+  });
 
   it('has .db extension', () => {
-    vi.setSystemTime(new Date(2026, 1, 15, 14, 30))
-    expect(generateExportFilename()).toMatch(/\.db$/)
-  })
-})
+    vi.setSystemTime(new Date(2026, 1, 15, 14, 30));
+    expect(generateExportFilename()).toMatch(/\.db$/);
+  });
+});
 
 describe('exportDatabase', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockExport.mockReturnValue(new Uint8Array([1, 2, 3]))
-    mockPersist.mockResolvedValue(undefined)
-    mockReplaceDatabase.mockResolvedValue(undefined)
-  })
+    vi.clearAllMocks();
+    mockExport.mockReturnValue(new Uint8Array([1, 2, 3]));
+    mockPersist.mockResolvedValue(undefined);
+    mockReplaceDatabase.mockResolvedValue(undefined);
+  });
 
   it('shows error toast when database not initialized', () => {
-    const originalValue = mockDatabase.value
-    mockDatabase.value = null as unknown as typeof originalValue
+    const originalValue = mockDatabase.value;
+    mockDatabase.value = null as unknown as typeof originalValue;
 
-    const { exportDatabase } = useDatabaseExport()
-    exportDatabase()
+    const { exportDatabase } = useDatabaseExport();
+    exportDatabase();
 
-    expect(mockError).toHaveBeenCalledWith('Database not initialized')
+    expect(mockError).toHaveBeenCalledWith('Database not initialized');
 
-    mockDatabase.value = originalValue
-  })
+    mockDatabase.value = originalValue;
+  });
 
   it('shows error toast when export throws', () => {
     mockExport.mockImplementationOnce(() => {
-      throw new Error('Export error')
-    })
+      throw new Error('Export error');
+    });
 
-    const { exportDatabase } = useDatabaseExport()
-    exportDatabase()
+    const { exportDatabase } = useDatabaseExport();
+    exportDatabase();
 
-    expect(mockError).toHaveBeenCalledWith('Export error')
-  })
+    expect(mockError).toHaveBeenCalledWith('Export error');
+  });
 
   it('resets isExporting on error', () => {
     mockExport.mockImplementationOnce(() => {
-      throw new Error('Export error')
-    })
+      throw new Error('Export error');
+    });
 
-    const { exportDatabase, isExporting } = useDatabaseExport()
-    exportDatabase()
+    const { exportDatabase, isExporting } = useDatabaseExport();
+    exportDatabase();
 
-    expect(isExporting.value).toBe(false)
-  })
+    expect(isExporting.value).toBe(false);
+  });
 
   it('shows success toast on successful export', () => {
     const mockAnchor = {
       href: '',
       download: '',
       click: vi.fn(),
-      remove: vi.fn()
-    } as unknown as HTMLAnchorElement
-    vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor)
-    vi.spyOn(document.body, 'appendChild').mockReturnValue(mockAnchor)
+      remove: vi.fn(),
+    } as unknown as HTMLAnchorElement;
+    vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor);
+    vi.spyOn(document.body, 'appendChild').mockReturnValue(mockAnchor);
 
-    const { exportDatabase } = useDatabaseExport()
-    exportDatabase()
+    const { exportDatabase } = useDatabaseExport();
+    exportDatabase();
 
-    expect(mockSuccess).toHaveBeenCalledWith('Database exported successfully')
-  })
-})
+    expect(mockSuccess).toHaveBeenCalledWith('Database exported successfully');
+  });
+});
 
 describe('clearDatabase', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockPersist.mockResolvedValue(undefined)
-  })
+    vi.clearAllMocks();
+    mockPersist.mockResolvedValue(undefined);
+  });
 
   it('shows error toast when database not initialized', async () => {
-    const originalValue = mockDatabase.value
-    mockDatabase.value = null as unknown as typeof originalValue
+    const originalValue = mockDatabase.value;
+    mockDatabase.value = null as unknown as typeof originalValue;
 
-    const { clearDatabase } = useDatabaseExport()
-    await clearDatabase()
+    const { clearDatabase } = useDatabaseExport();
+    await clearDatabase();
 
-    expect(mockError).toHaveBeenCalledWith('Database not initialized')
+    expect(mockError).toHaveBeenCalledWith('Database not initialized');
 
-    mockDatabase.value = originalValue
-  })
+    mockDatabase.value = originalValue;
+  });
 
   it('runs DELETE statements for all tables', async () => {
-    const { clearDatabase } = useDatabaseExport()
-    await clearDatabase()
+    const { clearDatabase } = useDatabaseExport();
+    await clearDatabase();
 
-    expect(mockRun).toHaveBeenCalledWith(
-      'DELETE FROM component_grouping_members'
-    )
-    expect(mockRun).toHaveBeenCalledWith('DELETE FROM vocabulary')
-    expect(mockRun).toHaveBeenCalledWith('DELETE FROM kanjis')
-    expect(mockRun).toHaveBeenCalledWith('DELETE FROM components')
-  })
+    expect(mockRun).toHaveBeenCalledWith('DELETE FROM component_grouping_members');
+    expect(mockRun).toHaveBeenCalledWith('DELETE FROM vocabulary');
+    expect(mockRun).toHaveBeenCalledWith('DELETE FROM kanjis');
+    expect(mockRun).toHaveBeenCalledWith('DELETE FROM components');
+  });
 
   it('calls persist after clearing', async () => {
-    const { clearDatabase } = useDatabaseExport()
-    await clearDatabase()
+    const { clearDatabase } = useDatabaseExport();
+    await clearDatabase();
 
-    expect(mockPersist).toHaveBeenCalled()
-  })
+    expect(mockPersist).toHaveBeenCalled();
+  });
 
   it('shows success toast after clearing', async () => {
-    const { clearDatabase } = useDatabaseExport()
-    await clearDatabase()
+    const { clearDatabase } = useDatabaseExport();
+    await clearDatabase();
 
-    expect(mockSuccess).toHaveBeenCalledWith('All data cleared successfully')
-  })
+    expect(mockSuccess).toHaveBeenCalledWith('All data cleared successfully');
+  });
 
   it('shows error toast when clear fails', async () => {
     mockRun.mockImplementationOnce(() => {
-      throw new Error('DB error')
-    })
+      throw new Error('DB error');
+    });
 
-    const { clearDatabase } = useDatabaseExport()
-    await clearDatabase()
+    const { clearDatabase } = useDatabaseExport();
+    await clearDatabase();
 
-    expect(mockError).toHaveBeenCalledWith('DB error')
-  })
+    expect(mockError).toHaveBeenCalledWith('DB error');
+  });
 
   it('resets isClearing flag on error', async () => {
     mockRun.mockImplementationOnce(() => {
-      throw new Error('DB error')
-    })
+      throw new Error('DB error');
+    });
 
-    const { clearDatabase, isClearing } = useDatabaseExport()
-    await clearDatabase()
+    const { clearDatabase, isClearing } = useDatabaseExport();
+    await clearDatabase();
 
-    expect(isClearing.value).toBe(false)
-  })
-})
+    expect(isClearing.value).toBe(false);
+  });
+});

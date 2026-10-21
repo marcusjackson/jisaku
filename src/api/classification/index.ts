@@ -11,9 +11,9 @@ export type {
   CreateClassificationTypeInput,
   CreateKanjiClassificationInput,
   KanjiClassification,
-  UpdateClassificationTypeInput
-} from './classification-types'
+  UpdateClassificationTypeInput,
+} from './classification-types';
 
 // Repositories
-export { useClassificationTypeRepository } from './classification-type-repository'
-export { useKanjiClassificationRepository } from './kanji-classification-repository'
+export { useClassificationTypeRepository } from './classification-type-repository';
+export { useKanjiClassificationRepository } from './kanji-classification-repository';

@@ -23,45 +23,30 @@ import VocabDetailDialogHeadline from './VocabDetailDialogHeadline.vue'
 import type { HeadlineSaveData } from '../vocab-detail-types'
 import type { Vocabulary } from '@/api/vocabulary'
 
-defineProps<{
+const props = defineProps<{
   vocab: Vocabulary
-}>()
-
-const emit = defineEmits<{
-  save: [data: HeadlineSaveData]
+  /** Saves the headline; returns whether it saved, so the dialog can close */
+  save: (data: HeadlineSaveData) => boolean
 }>()
 
 const isDialogOpen = ref(false)
 
 function handleSave(data: HeadlineSaveData): void {
-  emit('save', data)
-  isDialogOpen.value = false
+  if (props.save(data)) isDialogOpen.value = false
 }
 </script>
 
 <template>
-  <section
-    class="vocab-detail-section-headline"
-    data-testid="vocab-detail-headline"
-  >
-    <SharedBackButton
-      label="Back to Vocabulary List"
-      :to="ROUTES.VOCABULARY_LIST"
-    />
+  <section class="vocab-detail-section-headline" data-testid="vocab-detail-headline">
+    <SharedBackButton label="Back to Vocabulary List" :to="ROUTES.VOCABULARY_LIST" />
 
     <div class="vocab-detail-section-headline-content">
       <div class="vocab-detail-section-headline-main">
         <div class="vocab-detail-section-headline-text">
-          <span
-            class="vocab-detail-section-headline-word"
-            data-testid="vocab-word"
-          >
+          <span class="vocab-detail-section-headline-word" data-testid="vocab-word" lang="ja">
             {{ vocab.word }}
           </span>
-          <span
-            class="vocab-detail-section-headline-kana"
-            data-testid="vocab-kana"
-          >
+          <span class="vocab-detail-section-headline-kana" data-testid="vocab-kana" lang="ja">
             {{ vocab.kana }}
           </span>
         </div>
@@ -74,9 +59,7 @@ function handleSave(data: HeadlineSaveData): void {
             >
               {{ vocab.shortMeaning }}
             </span>
-            <SharedSearchKeywordsIndicator
-              :search-keywords="vocab.searchKeywords"
-            />
+            <SharedSearchKeywordsIndicator :search-keywords="vocab.searchKeywords" />
           </div>
         </div>
       </div>
@@ -98,6 +81,7 @@ function handleSave(data: HeadlineSaveData): void {
       :kana="vocab.kana"
       :search-keywords="vocab.searchKeywords"
       :short-meaning="vocab.shortMeaning"
+      :vocab-id="vocab.id"
       :word="vocab.word"
       @save="handleSave"
     />

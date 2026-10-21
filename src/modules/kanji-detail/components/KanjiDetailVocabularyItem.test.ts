@@ -2,14 +2,14 @@
  * Tests for KanjiDetailVocabularyItem component
  */
 
-import { renderWithProviders as render } from '@test/helpers/render'
-import { userEvent } from '@testing-library/user-event'
-import { screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { renderWithProviders as render } from '@test/helpers/render';
+import { userEvent } from '@testing-library/user-event';
+import { screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import KanjiDetailVocabularyItem from './KanjiDetailVocabularyItem.vue'
+import KanjiDetailVocabularyItem from './KanjiDetailVocabularyItem.vue';
 
-import type { VocabularyListItem } from '../kanji-detail-types'
+import type { VocabularyListItem } from '../kanji-detail-types';
 
 describe('KanjiDetailVocabularyItem', () => {
   const mockVocabulary: VocabularyListItem = {
@@ -17,32 +17,32 @@ describe('KanjiDetailVocabularyItem', () => {
     vocabularyId: 1,
     word: '明日',
     kana: 'あした',
-    shortMeaning: 'tomorrow'
-  }
+    shortMeaning: 'tomorrow',
+  };
 
   it('renders vocabulary word', () => {
     render(KanjiDetailVocabularyItem, {
-      props: { vocabulary: mockVocabulary }
-    })
+      props: { vocabulary: mockVocabulary },
+    });
 
-    expect(screen.getByText('明日')).toBeInTheDocument()
-  })
+    expect(screen.getByText('明日')).toBeInTheDocument();
+  });
 
   it('renders vocabulary kana in parentheses', () => {
     render(KanjiDetailVocabularyItem, {
-      props: { vocabulary: mockVocabulary }
-    })
+      props: { vocabulary: mockVocabulary },
+    });
 
-    expect(screen.getByText('(あした)', { exact: false })).toBeInTheDocument()
-  })
+    expect(screen.getByText('(あした)', { exact: false })).toBeInTheDocument();
+  });
 
   it('renders vocabulary short meaning with dash prefix', () => {
     render(KanjiDetailVocabularyItem, {
-      props: { vocabulary: mockVocabulary }
-    })
+      props: { vocabulary: mockVocabulary },
+    });
 
-    expect(screen.getByText('- tomorrow', { exact: false })).toBeInTheDocument()
-  })
+    expect(screen.getByText('- tomorrow', { exact: false })).toBeInTheDocument();
+  });
 
   it('does not render kana when not provided', () => {
     const vocabWithoutKana: VocabularyListItem = {
@@ -50,15 +50,15 @@ describe('KanjiDetailVocabularyItem', () => {
       vocabularyId: 1,
       word: '明日',
       kana: '',
-      shortMeaning: 'tomorrow'
-    }
+      shortMeaning: 'tomorrow',
+    };
 
     render(KanjiDetailVocabularyItem, {
-      props: { vocabulary: vocabWithoutKana }
-    })
+      props: { vocabulary: vocabWithoutKana },
+    });
 
-    expect(screen.queryByText(/\(/)).not.toBeInTheDocument()
-  })
+    expect(screen.queryByText(/\(/)).not.toBeInTheDocument();
+  });
 
   it('does not render short meaning when null', () => {
     const vocabWithoutMeaning: VocabularyListItem = {
@@ -66,91 +66,89 @@ describe('KanjiDetailVocabularyItem', () => {
       vocabularyId: 1,
       word: '明日',
       kana: 'あした',
-      shortMeaning: null
-    }
+      shortMeaning: null,
+    };
 
     render(KanjiDetailVocabularyItem, {
-      props: { vocabulary: vocabWithoutMeaning }
-    })
+      props: { vocabulary: vocabWithoutMeaning },
+    });
 
-    expect(screen.queryByText(/-/)).not.toBeInTheDocument()
-  })
+    expect(screen.queryByText(/-/)).not.toBeInTheDocument();
+  });
 
   it('renders as a link to vocabulary detail page', () => {
     render(KanjiDetailVocabularyItem, {
-      props: { vocabulary: mockVocabulary }
-    })
+      props: { vocabulary: mockVocabulary },
+    });
 
-    const link = screen.getByRole('link')
-    expect(link).toHaveAttribute('href', '/vocabulary/1')
-  })
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/vocabulary/1');
+  });
 
   it('includes test id with vocabulary id', () => {
     render(KanjiDetailVocabularyItem, {
-      props: { vocabulary: mockVocabulary }
-    })
+      props: { vocabulary: mockVocabulary },
+    });
 
-    expect(screen.getByTestId('vocabulary-item-1')).toBeInTheDocument()
-  })
+    expect(screen.getByTestId('vocabulary-item-1')).toBeInTheDocument();
+  });
 
   describe('edit mode', () => {
     it('renders as editable item when editMode is true', () => {
       render(KanjiDetailVocabularyItem, {
-        props: { vocabulary: mockVocabulary, editMode: true }
-      })
+        props: { vocabulary: mockVocabulary, editMode: true },
+      });
 
       // Should not be a link
-      expect(screen.queryByRole('link')).not.toBeInTheDocument()
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
 
       // Should display content
-      expect(screen.getByText('明日')).toBeInTheDocument()
-    })
+      expect(screen.getByText('明日')).toBeInTheDocument();
+    });
 
     it('does not show remove button when destructiveMode is false', () => {
       render(KanjiDetailVocabularyItem, {
         props: {
           vocabulary: mockVocabulary,
           editMode: true,
-          destructiveMode: false
-        }
-      })
+          destructiveMode: false,
+        },
+      });
 
       expect(
         screen.queryByRole('button', { name: /remove vocabulary link/i })
-      ).not.toBeInTheDocument()
-    })
+      ).not.toBeInTheDocument();
+    });
 
     it('shows remove button when destructiveMode is true', () => {
       render(KanjiDetailVocabularyItem, {
         props: {
           vocabulary: mockVocabulary,
           editMode: true,
-          destructiveMode: true
-        }
-      })
+          destructiveMode: true,
+        },
+      });
 
-      expect(
-        screen.getByRole('button', { name: /remove vocabulary link/i })
-      ).toBeInTheDocument()
-    })
+      expect(screen.getByRole('button', { name: /remove vocabulary link/i })).toBeInTheDocument();
+    });
 
     it('emits remove event when remove button clicked', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       const { emitted } = render(KanjiDetailVocabularyItem, {
         props: {
           vocabulary: mockVocabulary,
           editMode: true,
-          destructiveMode: true
-        }
-      })
+          destructiveMode: true,
+        },
+      });
 
       const removeButton = screen.getByRole('button', {
-        name: /remove vocabulary link/i
-      })
-      await user.click(removeButton)
+        name: /remove vocabulary link/i,
+      });
+      await user.click(removeButton);
 
-      expect(emitted()['remove']).toBeTruthy()
-      expect(emitted()['remove']).toHaveLength(1)
-    })
-  })
-})
+      expect(emitted()['remove']).toBeTruthy();
+      expect(emitted()['remove']).toHaveLength(1);
+    });
+  });
+});

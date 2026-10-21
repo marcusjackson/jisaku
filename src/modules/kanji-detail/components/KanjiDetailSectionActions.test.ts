@@ -1,95 +1,88 @@
 /**
  * KanjiDetailSectionActions Tests
  *
- * Tests for the actions section component.
+ * Tests for the actions section component, with the real delete confirmation dialog.
  */
 
-import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { renderWithProviders as render } from '@test/helpers/render';
+import { userEvent } from '@testing-library/user-event';
+import { screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import KanjiDetailSectionActions from './KanjiDetailSectionActions.vue'
+import KanjiDetailSectionActions from './KanjiDetailSectionActions.vue';
 
-// Mock vue-router
-vi.mock('vue-router', () => ({
-  RouterLink: {
-    name: 'RouterLink',
-    template: '<a><slot /></a>',
-    props: ['to']
-  }
-}))
+function renderActions(props: { destructiveMode?: boolean; isDeleting?: boolean } = {}) {
+  return render(KanjiDetailSectionActions, {
+    props: { destructiveMode: false, isDeleting: false, ...props },
+  });
+}
 
 describe('KanjiDetailSectionActions', () => {
-  const createWrapper = (props = {}) => {
-    return mount(KanjiDetailSectionActions, {
-      props: {
-        destructiveMode: false,
-        isDeleting: false,
-        ...props
-      },
-      global: {
-        stubs: {
-          SharedBackButton: true,
-          SharedConfirmDialog: true,
-          BaseButton: {
-            name: 'BaseButton',
-            template: '<button :disabled="disabled"><slot /></button>',
-            props: ['disabled', 'variant']
-          },
-          BaseSwitch: {
-            name: 'BaseSwitch',
-            template:
-              '<input type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" />',
-            props: ['modelValue']
-          }
-        }
-      }
-    })
-  }
-
   it('renders destructive mode toggle', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.text()).toContain('Destructive Mode')
-  })
+    renderActions();
+    expect(screen.getByText('Destructive Mode')).toBeInTheDocument();
+  });
 
   it('renders delete button', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.html()).toContain('Delete Kanji')
-  })
+    renderActions();
+    expect(screen.getByRole('button', { name: /delete kanji/i })).toBeInTheDocument();
+  });
 
   it('renders back button', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.findComponent({ name: 'SharedBackButton' }).exists()).toBe(
-      true
-    )
-  })
+    renderActions();
+    expect(screen.getByText('Back to Kanji List')).toBeInTheDocument();
+  });
 
   it('disables delete button when destructive mode is off', () => {
-    const wrapper = createWrapper({ destructiveMode: false })
-    const deleteButton = wrapper.find('button')
-    expect(deleteButton.attributes('disabled')).toBeDefined()
-  })
+    renderActions({ destructiveMode: false });
+    expect(screen.getByRole('button', { name: /delete kanji/i })).toBeDisabled();
+  });
 
   it('enables delete button when destructive mode is on', () => {
-    const wrapper = createWrapper({ destructiveMode: true })
-    const deleteButton = wrapper.find('button')
-    expect(deleteButton.attributes('disabled')).toBeUndefined()
-  })
+    renderActions({ destructiveMode: true });
+    expect(screen.getByRole('button', { name: /delete kanji/i })).toBeEnabled();
+  });
 
   it('disables delete button when deleting', () => {
-    const wrapper = createWrapper({ destructiveMode: true, isDeleting: true })
-    const deleteButton = wrapper.find('button')
-    expect(deleteButton.attributes('disabled')).toBeDefined()
-  })
+    renderActions({ destructiveMode: true, isDeleting: true });
+    expect(screen.getByTestId('delete-kanji-button')).toBeDisabled();
+  });
 
   it('shows deleting text when deleting', () => {
-    const wrapper = createWrapper({ isDeleting: true })
-    expect(wrapper.html()).toContain('Deleting...')
-  })
+    renderActions({ isDeleting: true });
+    expect(screen.getByText('Deleting...')).toBeInTheDocument();
+  });
 
   it('emits update:destructiveMode when switch is toggled', async () => {
-    const wrapper = createWrapper()
-    const switchInput = wrapper.find('input[type="checkbox"]')
-    await switchInput.setValue(true)
-    expect(wrapper.emitted('update:destructiveMode')).toBeTruthy()
-  })
-})
+    const user = userEvent.setup();
+    const { emitted } = renderActions();
+
+    await user.click(screen.getByRole('switch', { name: 'Destructive mode' }));
+
+    expect(emitted()['update:destructiveMode']).toEqual([[true]]);
+  });
+
+  describe('delete confirmation', () => {
+    it('emits delete only after the dialog is confirmed', async () => {
+      const user = userEvent.setup();
+      const { emitted } = renderActions({ destructiveMode: true });
+
+      await user.click(screen.getByRole('button', { name: /delete kanji/i }));
+      expect(emitted()['delete']).toBeUndefined();
+
+      await user.click(await screen.findByRole('button', { name: 'Delete' }));
+
+      expect(emitted()['delete']).toHaveLength(1);
+    });
+
+    it('does not emit delete when the dialog is cancelled', async () => {
+      const user = userEvent.setup();
+      const { emitted } = renderActions({ destructiveMode: true });
+
+      await user.click(screen.getByRole('button', { name: /delete kanji/i }));
+      await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+      expect(emitted()['delete']).toBeUndefined();
+    });
+  });
+});

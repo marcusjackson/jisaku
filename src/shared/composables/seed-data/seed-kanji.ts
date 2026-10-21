@@ -6,14 +6,14 @@
  */
 
 export interface SeedKanjiData {
-  character: string
-  strokeCount: number
-  shortMeaning: string
-  searchKeywords: string
-  jlptLevel: string
-  joyoLevel: string | null
-  kenteiLevel: string
-  notesPersonal: string
+  character: string;
+  strokeCount: number;
+  shortMeaning: string;
+  searchKeywords: string;
+  jlptLevel: string;
+  joyoLevel: string | null;
+  kenteiLevel: string;
+  notesPersonal: string;
 }
 
 export const SEED_KANJI: SeedKanjiData[] = [
@@ -25,7 +25,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
     kenteiLevel: '10',
-    notesPersonal: 'Sun, day. One of the most fundamental kanji.'
+    notesPersonal: 'Sun, day. One of the most fundamental kanji.',
   },
   {
     character: '月',
@@ -35,7 +35,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
     kenteiLevel: '10',
-    notesPersonal: 'Moon, month. Pictograph of a crescent moon.'
+    notesPersonal: 'Moon, month. Pictograph of a crescent moon.',
   },
   {
     character: '水',
@@ -45,7 +45,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
     kenteiLevel: '10',
-    notesPersonal: 'Water. Pictograph of flowing water.'
+    notesPersonal: 'Water. Pictograph of flowing water.',
   },
   {
     character: '火',
@@ -55,7 +55,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
     kenteiLevel: '10',
-    notesPersonal: 'Fire. Pictograph of flames.'
+    notesPersonal: 'Fire. Pictograph of flames.',
   },
   {
     character: '木',
@@ -65,7 +65,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
     kenteiLevel: '10',
-    notesPersonal: 'Tree, wood. Pictograph of a tree.'
+    notesPersonal: 'Tree, wood. Pictograph of a tree.',
   },
   {
     character: '金',
@@ -75,7 +75,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
     kenteiLevel: '9',
-    notesPersonal: 'Gold, metal, money.'
+    notesPersonal: 'Gold, metal, money.',
   },
   {
     character: '土',
@@ -85,7 +85,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
     kenteiLevel: '10',
-    notesPersonal: 'Earth, soil, ground.'
+    notesPersonal: 'Earth, soil, ground.',
   },
   {
     character: '山',
@@ -95,7 +95,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
     kenteiLevel: '10',
-    notesPersonal: 'Mountain. Pictograph of three peaks.'
+    notesPersonal: 'Mountain. Pictograph of three peaks.',
   },
   {
     character: '川',
@@ -105,7 +105,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
     kenteiLevel: '10',
-    notesPersonal: 'River. Pictograph of flowing water between banks.'
+    notesPersonal: 'River. Pictograph of flowing water between banks.',
   },
   {
     character: '人',
@@ -115,7 +115,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N5',
     joyoLevel: 'elementary1',
     kenteiLevel: '10',
-    notesPersonal: 'Person. Pictograph of a standing person.'
+    notesPersonal: 'Person. Pictograph of a standing person.',
   },
   {
     character: '空',
@@ -125,7 +125,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N4',
     joyoLevel: 'elementary1',
     kenteiLevel: '9',
-    notesPersonal: 'Sky, empty. Represents openness above.'
+    notesPersonal: 'Sky, empty. Represents openness above.',
   },
   {
     character: '海',
@@ -135,7 +135,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N4',
     joyoLevel: 'elementary2',
     kenteiLevel: '8',
-    notesPersonal: 'Sea, ocean. Contains the water radical.'
+    notesPersonal: 'Sea, ocean. Contains the water radical.',
   },
   {
     character: '花',
@@ -145,7 +145,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N4',
     joyoLevel: 'elementary1',
     kenteiLevel: '9',
-    notesPersonal: 'Flower. Contains the grass radical.'
+    notesPersonal: 'Flower. Contains the grass radical.',
   },
   {
     character: '愛',
@@ -155,7 +155,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N3',
     joyoLevel: 'elementary4',
     kenteiLevel: '6',
-    notesPersonal: 'Love, affection. Contains the heart radical.'
+    notesPersonal: 'Love, affection. Contains the heart radical.',
   },
   {
     character: '夢',
@@ -165,7 +165,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N2',
     joyoLevel: 'elementary5',
     kenteiLevel: '5',
-    notesPersonal: 'Dream.'
+    notesPersonal: 'Dream.',
   },
   {
     character: '桜',
@@ -175,7 +175,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N2',
     joyoLevel: 'elementary5',
     kenteiLevel: '5',
-    notesPersonal: 'Cherry blossom. Iconic symbol of Japan.'
+    notesPersonal: 'Cherry blossom. Iconic symbol of Japan.',
   },
   {
     character: '鬱',
@@ -185,8 +185,7 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N1',
     joyoLevel: 'secondary',
     kenteiLevel: 'pre1',
-    notesPersonal:
-      'Depression, melancholy. One of the most complex common kanji.'
+    notesPersonal: 'Depression, melancholy. One of the most complex common kanji.',
   },
   {
     character: '薔',
@@ -196,18 +195,16 @@ export const SEED_KANJI: SeedKanjiData[] = [
     jlptLevel: 'N1',
     joyoLevel: null,
     kenteiLevel: '1',
-    notesPersonal: 'Rose (part of 薔薇 - bara).'
-  }
-]
+    notesPersonal: 'Rose (part of 薔薇 - bara).',
+  },
+];
 
 /**
  * Seeds kanji data into the database
  * @param run - function to execute SQL statements
  * @returns number of kanji seeded
  */
-export function seedKanji(
-  run: (sql: string, params?: unknown[]) => void
-): number {
+export function seedKanji(run: (sql: string, params?: unknown[]) => void): number {
   for (const kanji of SEED_KANJI) {
     run(
       `INSERT INTO kanjis (character, stroke_count, short_meaning, search_keywords, jlpt_level, joyo_level, kanji_kentei_level, notes_personal)
@@ -220,9 +217,9 @@ export function seedKanji(
         kanji.jlptLevel,
         kanji.joyoLevel,
         kanji.kenteiLevel,
-        kanji.notesPersonal
+        kanji.notesPersonal,
       ]
-    )
+    );
   }
-  return SEED_KANJI.length
+  return SEED_KANJI.length;
 }

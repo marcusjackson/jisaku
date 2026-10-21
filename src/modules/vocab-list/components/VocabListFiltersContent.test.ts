@@ -2,16 +2,16 @@
  * VocabListFiltersContent Tests
  */
 
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import VocabListFiltersContent from './VocabListFiltersContent.vue'
+import VocabListFiltersContent from './VocabListFiltersContent.vue';
 
-import type { VocabListFilters } from '../vocab-list-types'
-import type { Kanji } from '@/api/kanji'
+import type { VocabListFilters } from '../vocab-list-types';
+import type { Kanji } from '@/api/kanji';
 
-const mockFilters: VocabListFilters = {}
-const mockKanjiList: Kanji[] = []
+const mockFilters: VocabListFilters = {};
+const mockKanjiList: Kanji[] = [];
 
 // Mock emit handlers
 const defaultProps = {
@@ -23,24 +23,22 @@ const defaultProps = {
   'onUpdate:wordSearch': vi.fn(),
   'onUpdate:searchText': vi.fn(),
   'onUpdate:kanaSearch': vi.fn(),
-  onUpdateFilter: vi.fn()
-}
+  onUpdateFilter: vi.fn(),
+};
 
 describe('VocabListFiltersContent', () => {
   it('renders search filter', () => {
-    render(VocabListFiltersContent, { props: defaultProps })
-    expect(
-      screen.getByRole('textbox', { name: /display.*keywords/i })
-    ).toBeInTheDocument()
-  })
+    render(VocabListFiltersContent, { props: defaultProps });
+    expect(screen.getByRole('textbox', { name: /display.*keywords/i })).toBeInTheDocument();
+  });
 
   it('renders kana filter', () => {
-    render(VocabListFiltersContent, { props: defaultProps })
-    expect(screen.getByRole('textbox', { name: /kana/i })).toBeInTheDocument()
-  })
+    render(VocabListFiltersContent, { props: defaultProps });
+    expect(screen.getByRole('textbox', { name: /kana/i })).toBeInTheDocument();
+  });
 
   it('renders JLPT level filter', () => {
-    render(VocabListFiltersContent, { props: defaultProps })
-    expect(screen.getByRole('button', { name: 'N5' })).toBeInTheDocument()
-  })
-})
+    render(VocabListFiltersContent, { props: defaultProps });
+    expect(screen.getByRole('button', { name: 'N5' })).toBeInTheDocument();
+  });
+});

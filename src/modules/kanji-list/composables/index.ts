@@ -4,12 +4,6 @@
  * Re-exports all composables for the kanji list module.
  */
 
-export { type UseKanjiListData, useKanjiListData } from './use-kanji-list-data'
-export {
-  type UseKanjiListState,
-  useKanjiListState
-} from './use-kanji-list-state'
-export {
-  type UseKanjiListUrlSync,
-  useKanjiListUrlSync
-} from './use-kanji-list-url-sync'
+export { useKanjiListData, type UseKanjiListDataReturn } from './use-kanji-list-data';
+export { useKanjiListState, type UseKanjiListStateReturn } from './use-kanji-list-state';
+export { useKanjiListUrlSync, type UseKanjiListUrlSyncReturn } from './use-kanji-list-url-sync';

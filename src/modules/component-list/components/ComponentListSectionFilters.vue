@@ -60,7 +60,7 @@ function toggleCollapsed(): void {
     data-testid="component-list-filters"
   >
     <!-- Collapsible Header -->
-    <!-- Raw <button>: collapsible header needs full custom styling incompatible with BaseButton -->
+    <!-- Raw <button>: collapsible header, bare layout incompatible with BaseButton -->
     <button
       :aria-expanded="!isCollapsed"
       class="component-list-filters-header"
@@ -70,10 +70,7 @@ function toggleCollapsed(): void {
     >
       <span class="component-list-filters-header-text">
         Filters
-        <span
-          v-if="activeFilterCount > 0"
-          class="component-list-filters-badge"
-        >
+        <span v-if="activeFilterCount > 0" class="component-list-filters-badge">
           {{ activeFilterCount }}
         </span>
       </span>
@@ -98,10 +95,7 @@ function toggleCollapsed(): void {
     </button>
 
     <!-- Collapsible Content -->
-    <div
-      v-show="!isCollapsed"
-      class="component-list-filters-expanded-content"
-    >
+    <div v-show="!isCollapsed" class="component-list-filters-expanded-content">
       <div class="component-list-filters-scrollable-content">
         <ComponentListFiltersContent
           :character-search="characterSearch"

@@ -6,7 +6,7 @@
  * Displays text in view mode, switches to editable textarea in edit mode.
  */
 
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { BaseButton } from '@/base/components'
 
@@ -38,7 +38,7 @@ const charCount = computed(() => {
   return props.modelValue?.length ?? 0
 })
 
-// Emit character count on mount and whenever it changes
+// Emit character count on setup (immediate) and whenever it changes
 watch(
   charCount,
   (count) => {
@@ -46,11 +46,6 @@ watch(
   },
   { immediate: true }
 )
-
-// Also emit on mount to ensure initial count is sent
-onMounted(() => {
-  emit('update:charCount', charCount.value)
-})
 
 // Computed display text
 const displayText = computed(() => {
@@ -88,7 +83,7 @@ function handleKeydown(event: KeyboardEvent): void {
 
 <template>
   <!-- Display mode -->
-  <!-- Raw <button>: display/edit trigger needs custom textarea styling incompatible with BaseButton -->
+  <!-- Raw <button>: display/edit trigger, bare layout incompatible with BaseButton -->
   <button
     v-if="!isEditing"
     class="notes-textarea-display"
@@ -106,11 +101,7 @@ function handleKeydown(event: KeyboardEvent): void {
   </button>
 
   <!-- Edit mode -->
-  <div
-    v-else
-    class="notes-textarea-edit"
-    data-testid="notes-edit"
-  >
+  <div v-else class="notes-textarea-edit" data-testid="notes-edit">
     <textarea
       v-model="editValue"
       aria-label="Notes"
@@ -119,20 +110,8 @@ function handleKeydown(event: KeyboardEvent): void {
       @keydown="handleKeydown"
     />
     <div class="notes-textarea-actions">
-      <BaseButton
-        size="sm"
-        variant="primary"
-        @click="handleSave"
-      >
-        Save
-      </BaseButton>
-      <BaseButton
-        size="sm"
-        variant="secondary"
-        @click="handleCancel"
-      >
-        Cancel
-      </BaseButton>
+      <BaseButton size="sm" variant="primary" @click="handleSave"> Save </BaseButton>
+      <BaseButton size="sm" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
     </div>
   </div>
 </template>
@@ -196,7 +175,7 @@ function handleKeydown(event: KeyboardEvent): void {
   resize: vertical;
 }
 
-.notes-textarea-input:focus {
+.notes-textarea-input:focus-visible {
   border-color: var(--color-primary);
   box-shadow: var(--focus-ring);
   outline: none;

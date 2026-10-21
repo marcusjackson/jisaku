@@ -5,32 +5,32 @@
  * for component grouping members.
  */
 
-import type { useComponentGroupingRepository } from '@/api/component'
-import type { ComponentGroupingMember } from '@/api/component'
-import type { useToast } from '@/shared/composables'
-import type { Ref } from 'vue'
+import type { useComponentGroupingRepository } from '@/api/component';
+import type { ComponentGroupingMember } from '@/api/component';
+import type { useToast } from '@/shared/composables';
+import type { Ref } from 'vue';
 
-type GroupingRepo = ReturnType<typeof useComponentGroupingRepository>
-type Toast = ReturnType<typeof useToast>
-type Reloader = () => void
-type MemberReloader = (groupingId: number) => void
+type GroupingRepo = ReturnType<typeof useComponentGroupingRepository>;
+type Toast = ReturnType<typeof useToast>;
+type Reloader = () => void;
+type MemberReloader = (groupingId: number) => void;
 
 /** Dependencies for member handler creation */
 export interface GroupingMemberHandlerDeps {
-  groupingRepo: GroupingRepo
-  toast: Toast
-  reloadGroupings: Reloader
-  reloadMembers: MemberReloader
-  managingGroupingId: Ref<number | null>
-  managingGroupingMembers: Ref<ComponentGroupingMember[]>
+  groupingRepo: GroupingRepo;
+  toast: Toast;
+  reloadGroupings: Reloader;
+  reloadMembers: MemberReloader;
+  managingGroupingId: Ref<number | null>;
+  managingGroupingMembers: Ref<ComponentGroupingMember[]>;
 }
 
 /** Return type of member handlers */
 export interface GroupingMemberHandlers {
-  handleManageMembersOpen: (groupingId: number) => void
-  handleMemberAdd: (groupingId: number, occurrenceId: number) => void
-  handleMemberRemove: (groupingId: number, occurrenceId: number) => void
-  handleMemberReorder: (groupingId: number, ids: number[]) => void
+  handleManageMembersOpen: (groupingId: number) => void;
+  handleMemberAdd: (groupingId: number, occurrenceId: number) => void;
+  handleMemberRemove: (groupingId: number, occurrenceId: number) => void;
+  handleMemberReorder: (groupingId: number, ids: number[]) => void;
 }
 
 export function createGroupingMemberHandlers(
@@ -42,8 +42,8 @@ export function createGroupingMemberHandlers(
     managingGroupingMembers,
     reloadGroupings,
     reloadMembers,
-    toast
-  } = deps
+    toast,
+  } = deps;
 
   return {
     handleManageMembersOpen: createManageMembersOpen(
@@ -51,20 +51,10 @@ export function createGroupingMemberHandlers(
       managingGroupingMembers,
       groupingRepo
     ),
-    handleMemberAdd: createMemberAdd(
-      groupingRepo,
-      reloadMembers,
-      reloadGroupings,
-      toast
-    ),
-    handleMemberRemove: createMemberRemove(
-      groupingRepo,
-      reloadMembers,
-      reloadGroupings,
-      toast
-    ),
-    handleMemberReorder: createMemberReorder(groupingRepo, reloadMembers, toast)
-  }
+    handleMemberAdd: createMemberAdd(groupingRepo, reloadMembers, reloadGroupings, toast),
+    handleMemberRemove: createMemberRemove(groupingRepo, reloadMembers, reloadGroupings, toast),
+    handleMemberReorder: createMemberReorder(groupingRepo, reloadMembers, reloadGroupings, toast),
+  };
 }
 
 // ============================================================================
@@ -77,9 +67,9 @@ function createManageMembersOpen(
   repo: GroupingRepo
 ) {
   return (groupingId: number): void => {
-    managingGroupingId.value = groupingId
-    managingGroupingMembers.value = repo.getMembers(groupingId)
-  }
+    managingGroupingId.value = groupingId;
+    managingGroupingMembers.value = repo.getMembers(groupingId);
+  };
 }
 
 function createMemberAdd(
@@ -90,14 +80,14 @@ function createMemberAdd(
 ) {
   return (groupingId: number, occurrenceId: number): void => {
     try {
-      repo.addMember(groupingId, occurrenceId)
-      reloadMembers(groupingId)
-      reloadGroupings()
-      toast.success('Member added')
+      const added = repo.addMember(groupingId, occurrenceId);
+      reloadMembers(groupingId);
+      reloadGroupings();
+      if (added) toast.success('Member added');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to add member')
+      toast.error(err instanceof Error ? err.message : 'Failed to add member');
     }
-  }
+  };
 }
 
 function createMemberRemove(
@@ -108,31 +98,29 @@ function createMemberRemove(
 ) {
   return (groupingId: number, occurrenceId: number): void => {
     try {
-      repo.removeMember(groupingId, occurrenceId)
-      reloadMembers(groupingId)
-      reloadGroupings()
-      toast.success('Member removed')
+      repo.removeMember(groupingId, occurrenceId);
+      reloadMembers(groupingId);
+      reloadGroupings();
+      toast.success('Member removed');
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'Failed to remove member'
-      )
+      toast.error(err instanceof Error ? err.message : 'Failed to remove member');
     }
-  }
+  };
 }
 
 function createMemberReorder(
   repo: GroupingRepo,
   reloadMembers: MemberReloader,
+  reloadGroupings: Reloader,
   toast: Toast
 ) {
   return (groupingId: number, ids: number[]): void => {
     try {
-      repo.reorderMembers(groupingId, ids)
-      reloadMembers(groupingId)
+      repo.reorderMembers(groupingId, ids);
+      reloadMembers(groupingId);
+      reloadGroupings();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'Failed to reorder members'
-      )
+      toast.error(err instanceof Error ? err.message : 'Failed to reorder members');
     }
-  }
+  };
 }

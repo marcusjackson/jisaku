@@ -2,7 +2,7 @@
 /**
  * VocabListFilterSearch
  *
- * Text input filter for search in word, short meaning, and keywords.
+ * Text input filter for search in short meaning and keywords.
  */
 
 import { BaseInput } from '@/base/components'

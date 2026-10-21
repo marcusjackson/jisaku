@@ -5,30 +5,26 @@
  * Reduces import count in KanjiDetailRoot.
  */
 
-import { useKanjiDetailNotesHandlers } from './use-kanji-detail-notes-handlers'
-import { useKanjiDetailSaveHandlers } from './use-kanji-detail-save-handlers'
+import { useKanjiDetailNotesHandlers } from './use-kanji-detail-notes-handlers';
+import { useKanjiDetailSaveHandlers } from './use-kanji-detail-save-handlers';
 
-import type {
-  BasicInfoSaveData,
-  MeaningsSaveData,
-  ReadingsSaveData
-} from '../kanji-detail-types'
-import type { Kanji } from '@/api/kanji'
-import type { Ref } from 'vue'
+import type { BasicInfoSaveData, MeaningsSaveData, ReadingsSaveData } from '../kanji-detail-types';
+import type { Kanji } from '@/api/kanji';
+import type { Ref } from 'vue';
 
 interface UseKanjiDetailAllHandlersReturn {
   // Save handlers
-  handleBasicInfoSave: (data: BasicInfoSaveData) => void
-  handleMeaningsSave: (data: MeaningsSaveData) => void
-  handleReadingsSave: (data: ReadingsSaveData) => void
+  handleBasicInfoSave: (data: BasicInfoSaveData) => boolean;
+  handleMeaningsSave: (data: MeaningsSaveData) => boolean;
+  handleReadingsSave: (data: ReadingsSaveData) => boolean;
   // Notes handlers
-  handleSemanticNotesSave: (value: string | null) => void
-  handleEtymologyNotesSave: (value: string | null) => void
-  handleEducationNotesSave: (value: string | null) => void
-  handlePersonalNotesSave: (value: string | null) => void
+  handleSemanticNotesSave: (value: string | null) => void;
+  handleEtymologyNotesSave: (value: string | null) => void;
+  handleEducationNotesSave: (value: string | null) => void;
+  handlePersonalNotesSave: (value: string | null) => void;
   // Stroke handlers
-  handleStrokeDiagramSave: (value: Uint8Array | null) => void
-  handleStrokeAnimationSave: (value: Uint8Array | null) => void
+  handleStrokeDiagramSave: (value: Uint8Array | null) => void;
+  handleStrokeAnimationSave: (value: Uint8Array | null) => void;
 }
 
 /**
@@ -47,11 +43,7 @@ export function useKanjiDetailAllHandlers(
   handleSaveMeanings: (data: MeaningsSaveData) => void
 ): UseKanjiDetailAllHandlersReturn {
   const { handleBasicInfoSave, handleMeaningsSave, handleReadingsSave } =
-    useKanjiDetailSaveHandlers(
-      saveBasicInfo,
-      handleSaveReadings,
-      handleSaveMeanings
-    )
+    useKanjiDetailSaveHandlers(saveBasicInfo, handleSaveReadings, handleSaveMeanings);
 
   const {
     handleEducationNotesSave,
@@ -59,8 +51,8 @@ export function useKanjiDetailAllHandlers(
     handlePersonalNotesSave,
     handleSemanticNotesSave,
     handleStrokeAnimationSave,
-    handleStrokeDiagramSave
-  } = useKanjiDetailNotesHandlers(kanji)
+    handleStrokeDiagramSave,
+  } = useKanjiDetailNotesHandlers(kanji);
 
   return {
     handleBasicInfoSave,
@@ -71,6 +63,6 @@ export function useKanjiDetailAllHandlers(
     handleEducationNotesSave,
     handlePersonalNotesSave,
     handleStrokeDiagramSave,
-    handleStrokeAnimationSave
-  }
+    handleStrokeAnimationSave,
+  };
 }

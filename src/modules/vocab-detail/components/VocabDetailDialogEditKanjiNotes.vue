@@ -47,7 +47,6 @@ function handleSubmit(): void {
     id: props.vocabKanji.id,
     notes: localNotes.value.trim() || null
   })
-  open.value = false
 }
 
 function handleCancel(): void {
@@ -63,18 +62,12 @@ function handleCancel(): void {
     title="Edit Analysis Notes"
     @update:open="(val: boolean) => emit('update:open', val)"
   >
-    <div
-      v-if="vocabKanji"
-      class="dialog-edit-notes-content"
-    >
+    <div v-if="vocabKanji" class="dialog-edit-notes-content">
       <div class="dialog-edit-notes-kanji">
-        <span class="dialog-edit-notes-kanji-character">
+        <span class="dialog-edit-notes-kanji-character" lang="ja">
           {{ vocabKanji.kanji.character }}
         </span>
-        <span
-          v-if="vocabKanji.kanji.shortMeaning"
-          class="dialog-edit-notes-kanji-meaning"
-        >
+        <span v-if="vocabKanji.kanji.shortMeaning" class="dialog-edit-notes-kanji-meaning">
           {{ vocabKanji.kanji.shortMeaning }}
         </span>
       </div>
@@ -89,19 +82,8 @@ function handleCancel(): void {
         />
 
         <div class="dialog-edit-notes-actions">
-          <BaseButton
-            type="button"
-            variant="secondary"
-            @click="handleCancel"
-          >
-            Cancel
-          </BaseButton>
-          <BaseButton
-            type="submit"
-            variant="primary"
-          >
-            Save
-          </BaseButton>
+          <BaseButton type="button" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
+          <BaseButton type="submit" variant="primary"> Save </BaseButton>
         </div>
       </form>
     </div>
@@ -129,6 +111,7 @@ function handleCancel(): void {
 }
 
 .dialog-edit-notes-kanji-character {
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-none);

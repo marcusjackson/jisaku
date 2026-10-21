@@ -1,59 +1,19 @@
 <!doctype html>
-<html
-  lang="en"
-  translate="no"
->
+<html lang="en" translate="no">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="color-scheme"
-      content="light dark"
-    />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="/favicon.svg"
-    />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-    <meta
-      name="description"
-      content="Personal kanji dictionary curation app"
-    />
-    <meta
-      name="theme-color"
-      content="#4f7d8c"
-    />
-    <meta
-      http-equiv="Content-Language"
-      content="en"
-    />
-    <meta
-      name="google"
-      content="notranslate"
-    />
-    <meta
-      name="apple-mobile-web-app-capable"
-      content="yes"
-    />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="default"
-    />
-    <meta
-      name="apple-mobile-web-app-title"
-      content="Mizukara"
-    />
-    <meta
-      name="robots"
-      content="noindex, nofollow"
-    />
-    <link
-      rel="apple-touch-icon"
-      href="/apple-touch-icon.png"
-    />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Personal kanji dictionary curation app" />
+    <meta name="theme-color" content="#4f7d8c" />
+    <meta http-equiv="Content-Language" content="en" />
+    <meta name="google" content="notranslate" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Jisaku" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <style>
       .noscript-message {
         font-family: sans-serif;
@@ -62,18 +22,28 @@
       }
     </style>
     <title>Jisaku</title>
+    <!-- Apply the saved or system theme before first paint. Mirrors getInitialTheme in src/shared/composables/use-theme.ts. -->
+    <script>
+      try {
+        var saved = localStorage.getItem('jisaku-theme')
+        if (
+          saved === 'dark' ||
+          (!saved && matchMedia('(prefers-color-scheme: dark)').matches)
+        ) {
+          document.documentElement.dataset.theme = 'dark'
+        }
+      } catch (e) {
+        // Storage can be blocked; the app falls back to the system theme
+      }
+    </script>
   </head>
   <body class="notranslate">
     <div id="app"></div>
     <noscript>
       <p class="noscript-message">
-        Jisaku requires JavaScript to run. Please enable JavaScript in your
-        browser settings.
+        Jisaku requires JavaScript to run. Please enable JavaScript in your browser settings.
       </p>
     </noscript>
-    <script
-      type="module"
-      src="/src/main.ts"
-    ></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -6,16 +6,16 @@
  */
 
 export interface SeedComponentData {
-  character: string
-  strokeCount: number
-  shortMeaning: string
-  searchKeywords: string
-  description: string
-  sourceKanjiCharacter?: string
-  canBeRadical: boolean
-  kangxiNumber?: number
-  kangxiMeaning?: string
-  radicalNameJapanese?: string
+  character: string;
+  strokeCount: number;
+  shortMeaning: string;
+  searchKeywords: string;
+  description: string;
+  sourceKanjiCharacter?: string;
+  canBeRadical: boolean;
+  kangxiNumber?: number;
+  kangxiMeaning?: string;
+  radicalNameJapanese?: string;
 }
 
 export const SEED_COMPONENTS: SeedComponentData[] = [
@@ -29,7 +29,7 @@ export const SEED_COMPONENTS: SeedComponentData[] = [
     canBeRadical: true,
     kangxiNumber: 9,
     kangxiMeaning: 'person',
-    radicalNameJapanese: 'にんべん'
+    radicalNameJapanese: 'にんべん',
   },
   {
     character: '氵',
@@ -41,7 +41,7 @@ export const SEED_COMPONENTS: SeedComponentData[] = [
     canBeRadical: true,
     kangxiNumber: 85,
     kangxiMeaning: 'water',
-    radicalNameJapanese: 'さんずい'
+    radicalNameJapanese: 'さんずい',
   },
   {
     character: '口',
@@ -52,7 +52,7 @@ export const SEED_COMPONENTS: SeedComponentData[] = [
     canBeRadical: true,
     kangxiNumber: 30,
     kangxiMeaning: 'mouth',
-    radicalNameJapanese: 'くち'
+    radicalNameJapanese: 'くち',
   },
   {
     character: '女',
@@ -63,7 +63,7 @@ export const SEED_COMPONENTS: SeedComponentData[] = [
     canBeRadical: true,
     kangxiNumber: 38,
     kangxiMeaning: 'woman',
-    radicalNameJapanese: 'おんな'
+    radicalNameJapanese: 'おんな',
   },
   {
     character: '艹',
@@ -74,7 +74,7 @@ export const SEED_COMPONENTS: SeedComponentData[] = [
     canBeRadical: true,
     kangxiNumber: 140,
     kangxiMeaning: 'grass',
-    radicalNameJapanese: 'くさかんむり'
+    radicalNameJapanese: 'くさかんむり',
   },
   {
     character: '宀',
@@ -85,7 +85,7 @@ export const SEED_COMPONENTS: SeedComponentData[] = [
     canBeRadical: true,
     kangxiNumber: 40,
     kangxiMeaning: 'roof',
-    radicalNameJapanese: 'うかんむり'
+    radicalNameJapanese: 'うかんむり',
   },
   {
     character: '心',
@@ -96,7 +96,7 @@ export const SEED_COMPONENTS: SeedComponentData[] = [
     canBeRadical: true,
     kangxiNumber: 61,
     kangxiMeaning: 'heart',
-    radicalNameJapanese: 'こころ'
+    radicalNameJapanese: 'こころ',
   },
   {
     character: '木',
@@ -107,9 +107,9 @@ export const SEED_COMPONENTS: SeedComponentData[] = [
     canBeRadical: true,
     kangxiNumber: 75,
     kangxiMeaning: 'tree',
-    radicalNameJapanese: 'き'
-  }
-]
+    radicalNameJapanese: 'き',
+  },
+];
 
 /**
  * Seeds component data into the database
@@ -122,12 +122,12 @@ export function seedComponents(
   run: (sql: string, params?: unknown[]) => void
 ): number {
   for (const component of SEED_COMPONENTS) {
-    let sourceKanjiId: number | null = null
+    let sourceKanjiId: number | null = null;
     if (component.sourceKanjiCharacter) {
       const result = exec('SELECT id FROM kanjis WHERE character = ?', [
-        component.sourceKanjiCharacter
-      ])
-      sourceKanjiId = (result[0]?.values[0]?.[0] as number | undefined) ?? null
+        component.sourceKanjiCharacter,
+      ]);
+      sourceKanjiId = (result[0]?.values[0]?.[0] as number | undefined) ?? null;
     }
 
     run(
@@ -143,11 +143,11 @@ export function seedComponents(
         component.canBeRadical ? 1 : 0,
         component.kangxiNumber ?? null,
         component.kangxiMeaning ?? null,
-        component.radicalNameJapanese ?? null
+        component.radicalNameJapanese ?? null,
       ]
-    )
+    );
   }
-  return SEED_COMPONENTS.length
+  return SEED_COMPONENTS.length;
 }
 
 /**
@@ -163,26 +163,21 @@ export function seedComponentOccurrences(
     ['海', '氵'],
     ['花', '艹'],
     ['空', '宀'],
-    ['愛', '心']
-  ]
+    ['愛', '心'],
+  ];
 
   for (const [kanjiChar, componentChar] of links) {
-    const kanjiResult = exec('SELECT id FROM kanjis WHERE character = ?', [
-      kanjiChar
-    ])
-    const kanjiId = kanjiResult[0]?.values[0]?.[0] as number | undefined
+    const kanjiResult = exec('SELECT id FROM kanjis WHERE character = ?', [kanjiChar]);
+    const kanjiId = kanjiResult[0]?.values[0]?.[0] as number | undefined;
 
-    const componentResult = exec(
-      'SELECT id FROM components WHERE character = ?',
-      [componentChar]
-    )
-    const compId = componentResult[0]?.values[0]?.[0] as number | undefined
+    const componentResult = exec('SELECT id FROM components WHERE character = ?', [componentChar]);
+    const compId = componentResult[0]?.values[0]?.[0] as number | undefined;
 
     if (kanjiId && compId) {
       run(
         'INSERT INTO component_occurrences (kanji_id, component_id, display_order) VALUES (?, ?, ?)',
         [kanjiId, compId, 0]
-      )
+      );
     }
   }
 }

@@ -58,32 +58,14 @@ function handleCancel(): void {
 <template>
   <div class="stroke-order-edit-mode">
     <div class="stroke-order-edit-mode-inputs">
-      <BaseFileInput
-        v-model="localDiagram"
-        accept="image/*"
-        label="Stroke Diagram"
-      />
+      <BaseFileInput v-model="localDiagram" accept="image/*" label="Stroke Diagram" />
 
-      <BaseFileInput
-        v-model="localGif"
-        accept="image/gif"
-        label="Stroke Animation"
-      />
+      <BaseFileInput v-model="localGif" accept="image/gif" label="Stroke Animation" />
     </div>
 
     <div class="stroke-order-edit-mode-actions">
-      <BaseButton
-        variant="secondary"
-        @click="handleCancel"
-      >
-        Cancel
-      </BaseButton>
-      <BaseButton
-        variant="primary"
-        @click="handleSave"
-      >
-        Save
-      </BaseButton>
+      <BaseButton variant="secondary" @click="handleCancel"> Cancel </BaseButton>
+      <BaseButton variant="primary" @click="handleSave"> Save </BaseButton>
     </div>
   </div>
 </template>

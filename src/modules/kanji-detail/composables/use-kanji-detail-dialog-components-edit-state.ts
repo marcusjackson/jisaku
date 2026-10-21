@@ -6,24 +6,21 @@
  * within the 225-line UI component size limit.
  */
 
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue';
 
-import { useKanjiDetailDialogComponentsSave } from './use-kanji-detail-dialog-components-save'
+import { useKanjiDetailDialogComponentsSave } from './use-kanji-detail-dialog-components-save';
 
-import type {
-  ComponentOccurrenceWithDetails,
-  DialogComponentChanges
-} from '../kanji-detail-types'
-import type { EditOccurrence } from '../utils/edit-occurrence-types'
-import type { Ref } from 'vue'
+import type { ComponentOccurrenceWithDetails, DialogComponentChanges } from '../kanji-detail-types';
+import type { EditOccurrence } from '../utils/edit-occurrence-types';
+import type { Ref } from 'vue';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface EmitFn {
-  (event: 'save', changes: DialogComponentChanges): void
-  (event: 'update:open', open: boolean): void
+  (event: 'save', changes: DialogComponentChanges): void;
+  (event: 'update:open', open: boolean): void;
 }
 
 // ============================================================================
@@ -31,9 +28,9 @@ interface EmitFn {
 // ============================================================================
 
 interface UseKanjiDetailDialogComponentsEditStateReturn {
-  editOccurrences: Ref<EditOccurrence[]>
-  handleSave: () => void
-  handleCancel: () => void
+  editOccurrences: Ref<EditOccurrence[]>;
+  handleSave: () => void;
+  handleCancel: () => void;
 }
 
 /**
@@ -50,13 +47,13 @@ export function useKanjiDetailDialogComponentsEditState(
   isOpen: Ref<boolean>,
   emit: EmitFn
 ): UseKanjiDetailDialogComponentsEditStateReturn {
-  const editOccurrences = ref<EditOccurrence[]>([])
-  const linkedOccurrencesRef = computed(() => linkedOccurrences.value)
+  const editOccurrences = ref<EditOccurrence[]>([]);
+  const linkedOccurrencesRef = computed(() => linkedOccurrences.value);
 
   const { calculateSaveData } = useKanjiDetailDialogComponentsSave(
     editOccurrences,
     linkedOccurrencesRef
-  )
+  );
 
   // Initialize edit state from props when dialog opens
   watch(
@@ -71,21 +68,20 @@ export function useKanjiDetailDialogComponentsEditState(
           isRadical: occ.isRadical,
           component: occ.component,
           position: occ.position ? occ.position.positionName : null,
-          form: occ.form
-        }))
+          form: occ.form,
+        }));
       }
     },
     { immediate: true }
-  )
+  );
 
   function handleSave(): void {
-    emit('save', calculateSaveData())
-    emit('update:open', false)
+    emit('save', calculateSaveData());
   }
 
   function handleCancel(): void {
-    emit('update:open', false)
+    emit('update:open', false);
   }
 
-  return { editOccurrences, handleSave, handleCancel }
+  return { editOccurrences, handleSave, handleCancel };
 }

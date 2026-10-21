@@ -16,9 +16,9 @@ export type {
   VocabKanjiWithKanji,
   VocabKanjiWithVocabulary,
   Vocabulary,
-  VocabularyFilters
-} from './vocabulary-types'
+  VocabularyFilters,
+} from './vocabulary-types';
 
 // Repositories
-export { useVocabKanjiRepository } from './vocab-kanji-repository'
-export { useVocabularyRepository } from './vocabulary-repository'
+export { useVocabKanjiRepository } from './vocab-kanji-repository';
+export { useVocabularyRepository } from './vocabulary-repository';

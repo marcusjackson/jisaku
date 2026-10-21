@@ -6,7 +6,7 @@
  * or creating a new kanji via quick-create.
  */
 
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import BaseDialog from '@/base/components/BaseDialog.vue'
 
@@ -37,6 +37,11 @@ const open = defineModel<boolean>('open', { default: false })
 const quickCreateOpen = ref(false)
 const quickCreateInitialCharacter = ref<string | undefined>(undefined)
 
+// Quick create is nested in this dialog: closing this one closes it too
+watch(open, (isOpen) => {
+  if (!isOpen) quickCreateOpen.value = false
+})
+
 // Map kanji to entity options for search component
 const kanjiOptions = computed<EntityOption[]>(() =>
   props.allKanji.map((k) => ({
@@ -49,7 +54,6 @@ const kanjiOptions = computed<EntityOption[]>(() =>
 
 function handleSelect(entity: EntityOption): void {
   emit('select', entity.id)
-  open.value = false
 }
 
 function handleCreateNew(searchTerm: string): void {
@@ -59,8 +63,6 @@ function handleCreateNew(searchTerm: string): void {
 
 function handleQuickCreate(data: QuickCreateKanjiData): void {
   emit('create', data)
-  quickCreateOpen.value = false
-  open.value = false
 }
 
 function handleQuickCreateCancel(): void {

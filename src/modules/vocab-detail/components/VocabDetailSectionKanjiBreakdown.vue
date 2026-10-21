@@ -32,17 +32,17 @@ interface Props {
   allKanji: Kanji[]
   /** Whether destructive actions (delete) are enabled */
   isDestructiveMode: boolean
+  /** Links a kanji; returns whether it saved, so the dialog can close */
+  add: (kanjiId: number) => boolean
+  /** Creates and links a kanji; returns whether it saved */
+  create: (data: QuickCreateKanjiData) => boolean
+  /** Updates analysis notes; returns whether it saved */
+  updateNotes: (id: number, notes: string | null) => boolean
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  /** Link existing kanji */
-  add: [kanjiId: number]
-  /** Create new kanji and link */
-  create: [data: QuickCreateKanjiData]
-  /** Update analysis notes */
-  'update-notes': [id: number, notes: string | null]
   /** Reorder breakdown entries */
   reorder: [ids: number[]]
   /** Remove a kanji link */
@@ -78,13 +78,11 @@ function handleAddClick() {
 }
 
 function handleAddSelect(kanjiId: number) {
-  emit('add', kanjiId)
-  showAddDialog.value = false
+  if (props.add(kanjiId)) showAddDialog.value = false
 }
 
 function handleAddCreate(data: QuickCreateKanjiData) {
-  emit('create', data)
-  showAddDialog.value = false
+  if (props.create(data)) showAddDialog.value = false
 }
 
 // =============================================================================
@@ -97,9 +95,10 @@ function handleEditClick(item: VocabKanjiWithKanji) {
 }
 
 function handleEditSubmit(data: { id: number; notes: string | null }) {
-  emit('update-notes', data.id, data.notes)
-  showEditDialog.value = false
-  editingItem.value = null
+  if (props.updateNotes(data.id, data.notes)) {
+    showEditDialog.value = false
+    editingItem.value = null
+  }
 }
 
 function handleEditCancel() {
@@ -164,30 +163,19 @@ function handleMoveDown(index: number) {
     title="Kanji Breakdown"
   >
     <template #actions="{ isOpen }">
-      <BaseButton
-        v-if="isOpen"
-        size="sm"
-        variant="secondary"
-        @click="handleAddClick"
-      >
+      <BaseButton v-if="isOpen" size="sm" variant="secondary" @click="handleAddClick">
         Add Kanji
       </BaseButton>
     </template>
 
     <div class="breakdown-content">
       <!-- Empty state -->
-      <p
-        v-if="kanjiBreakdown.length === 0"
-        class="empty-state"
-      >
+      <p v-if="kanjiBreakdown.length === 0" class="empty-state">
         No kanji linked yet. Add kanji that make up this word.
       </p>
 
       <!-- Breakdown list -->
-      <div
-        v-else
-        class="breakdown-list"
-      >
+      <div v-else class="breakdown-list">
         <VocabDetailKanjiBreakdownItem
           v-for="(item, index) in kanjiBreakdown"
           :key="item.id"

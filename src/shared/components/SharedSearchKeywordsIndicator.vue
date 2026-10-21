@@ -21,17 +21,17 @@ const props = defineProps<{
 
 const isOpen = ref(false)
 const contentRef = ref<HTMLElement>()
+const triggerRef = ref<HTMLElement>()
 
 const tooltipMessage = computed(() => {
   const trimmed = props.searchKeywords?.trim()
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should show fallback
-  return trimmed || 'No search keywords set'
+  return trimmed === undefined || trimmed === '' ? 'No search keywords set' : trimmed
 })
 
 const handleOutsideClick = (event: Event) => {
   if (!isOpen.value) return
   const target = event.target as Node
-  const trigger = document.querySelector('[aria-label="Show search keywords"]')
+  const trigger = triggerRef.value
   if (
     contentRef.value &&
     !contentRef.value.contains(target) &&
@@ -54,17 +54,15 @@ onUnmounted(() => {
   <TooltipProvider>
     <TooltipRoot v-model:open="isOpen">
       <TooltipTrigger as-child>
+        <!-- Raw <button>: Reka TooltipTrigger as-child, which manages focus and keyboard -->
         <button
+          ref="triggerRef"
           aria-label="Show search keywords"
           class="indicator"
           type="button"
           @click="isOpen = !isOpen"
         >
-          <svg
-            class="indicator-icon"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
+          <svg class="indicator-icon" fill="currentColor" viewBox="0 0 20 20">
             <path
               clip-rule="evenodd"
               d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
@@ -74,16 +72,11 @@ onUnmounted(() => {
         </button>
       </TooltipTrigger>
       <TooltipPortal>
-        <TooltipContent
-          class="tooltip"
-          :side-offset="5"
-        >
-          <div
-            ref="contentRef"
-            class="tooltip-wrapper"
-          >
+        <TooltipContent class="tooltip" :side-offset="5">
+          <div ref="contentRef" class="tooltip-wrapper">
             <div class="tooltip-header">
               <span class="tooltip-title">Search Keywords</span>
+              <!-- Raw <button>: icon control (close), bare layout incompatible with BaseButton -->
               <button
                 aria-label="Close"
                 class="tooltip-close"
@@ -161,6 +154,12 @@ onUnmounted(() => {
 
 :deep(.tooltip-close:hover) {
   color: var(--color-text-primary);
+}
+
+:deep(.tooltip-close:focus-visible) {
+  border-radius: var(--radius-sm);
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 :deep(.tooltip-content) {

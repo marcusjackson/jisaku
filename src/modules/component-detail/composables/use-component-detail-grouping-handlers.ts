@@ -6,41 +6,40 @@
  * to use-component-detail-grouping-member-handlers.ts.
  */
 
-import { useComponentGroupingRepository } from '@/api/component'
+import { useComponentGroupingRepository } from '@/api/component';
 
-import { useToast } from '@/shared/composables'
+import { useToast } from '@/shared/composables';
 
 import {
   createGroupingAdd,
   createGroupingRemove,
   createGroupingReorder,
-  createGroupingUpdate
-} from './use-component-detail-grouping-crud-handlers'
-import { createGroupingMemberHandlers } from './use-component-detail-grouping-member-handlers'
+  createGroupingUpdate,
+} from './use-component-detail-grouping-crud-handlers';
+import { createGroupingMemberHandlers } from './use-component-detail-grouping-member-handlers';
 
-import type { GroupingFormData } from '../component-detail-types'
-import type { GroupingMemberHandlers } from './use-component-detail-grouping-member-handlers'
-import type {
-  ComponentGroupingMember,
-  ComponentGroupingWithMembers
-} from '@/api/component'
-import type { Ref } from 'vue'
+import type { GroupingFormData } from '../component-detail-types';
+import type { GroupingMemberHandlers } from './use-component-detail-grouping-member-handlers';
+import type { ComponentGroupingMember, ComponentGroupingWithMembers } from '@/api/component';
+import type { Ref } from 'vue';
 
 /** Dependencies for the composable */
 interface UseComponentDetailGroupingHandlersDeps {
-  componentId: Ref<number | null>
-  groupings: Ref<ComponentGroupingWithMembers[]>
-  allGroupingMembers: Ref<Map<number, ComponentGroupingMember[]>>
-  managingGroupingId: Ref<number | null>
-  managingGroupingMembers: Ref<ComponentGroupingMember[]>
+  componentId: Ref<number | null>;
+  groupings: Ref<ComponentGroupingWithMembers[]>;
+  allGroupingMembers: Ref<Map<number, ComponentGroupingMember[]>>;
+  managingGroupingId: Ref<number | null>;
+  managingGroupingMembers: Ref<ComponentGroupingMember[]>;
 }
 
 /** Return type of the composable */
 interface UseComponentDetailGroupingHandlersReturn extends GroupingMemberHandlers {
-  handleGroupingAdd: (data: GroupingFormData) => void
-  handleGroupingUpdate: (id: number, data: GroupingFormData) => void
-  handleGroupingRemove: (id: number) => void
-  handleGroupingReorder: (ids: number[]) => void
+  handleGroupingAdd: (data: GroupingFormData) => boolean;
+  handleGroupingUpdate: (id: number, data: GroupingFormData) => boolean;
+  handleGroupingRemove: (id: number) => void;
+  handleGroupingReorder: (ids: number[]) => void;
+  /** Reloads the groupings list and the all-members map */
+  reloadGroupings: () => void;
 }
 
 // Helper to reload groupings and all members map from repository
@@ -51,10 +50,10 @@ function createGroupingsReloader(
   repo: ReturnType<typeof useComponentGroupingRepository>
 ) {
   return (): void => {
-    if (componentId.value === null) return
-    groupings.value = repo.getByParentId(componentId.value)
-    allGroupingMembers.value = repo.getMembersByComponentId(componentId.value)
-  }
+    if (componentId.value === null) return;
+    groupings.value = repo.getByParentId(componentId.value);
+    allGroupingMembers.value = repo.getMembersByComponentId(componentId.value);
+  };
 }
 
 // Helper to reload members from repository
@@ -63,8 +62,8 @@ function createMembersReloader(
   repo: ReturnType<typeof useComponentGroupingRepository>
 ) {
   return (groupingId: number): void => {
-    managingGroupingMembers.value = repo.getMembers(groupingId)
-  }
+    managingGroupingMembers.value = repo.getMembers(groupingId);
+  };
 }
 
 /**
@@ -77,20 +76,17 @@ export function useComponentDetailGroupingHandlers(
   deps: UseComponentDetailGroupingHandlersDeps
 ): UseComponentDetailGroupingHandlersReturn {
   // prettier-ignore
-  const { allGroupingMembers, componentId, groupings, managingGroupingId, managingGroupingMembers } = deps
-  const groupingRepo = useComponentGroupingRepository()
-  const toast = useToast()
+  const { allGroupingMembers, componentId, groupings, managingGroupingId, managingGroupingMembers } = deps;
+  const groupingRepo = useComponentGroupingRepository();
+  const toast = useToast();
 
   const reloadGroupings = createGroupingsReloader(
     componentId,
     groupings,
     allGroupingMembers,
     groupingRepo
-  )
-  const reloadMembers = createMembersReloader(
-    managingGroupingMembers,
-    groupingRepo
-  )
+  );
+  const reloadMembers = createMembersReloader(managingGroupingMembers, groupingRepo);
 
   const memberHandlers = createGroupingMemberHandlers({
     groupingRepo,
@@ -98,31 +94,15 @@ export function useComponentDetailGroupingHandlers(
     reloadGroupings,
     reloadMembers,
     managingGroupingId,
-    managingGroupingMembers
-  })
+    managingGroupingMembers,
+  });
 
   return {
-    handleGroupingAdd: createGroupingAdd(
-      componentId,
-      groupingRepo,
-      reloadGroupings,
-      toast
-    ),
-    handleGroupingUpdate: createGroupingUpdate(
-      groupingRepo,
-      reloadGroupings,
-      toast
-    ),
-    handleGroupingRemove: createGroupingRemove(
-      groupingRepo,
-      reloadGroupings,
-      toast
-    ),
-    handleGroupingReorder: createGroupingReorder(
-      groupingRepo,
-      reloadGroupings,
-      toast
-    ),
-    ...memberHandlers
-  }
+    handleGroupingAdd: createGroupingAdd(componentId, groupingRepo, reloadGroupings, toast),
+    handleGroupingUpdate: createGroupingUpdate(groupingRepo, reloadGroupings, toast),
+    handleGroupingRemove: createGroupingRemove(groupingRepo, reloadGroupings, toast),
+    handleGroupingReorder: createGroupingReorder(groupingRepo, reloadGroupings, toast),
+    reloadGroupings,
+    ...memberHandlers,
+  };
 }

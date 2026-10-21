@@ -7,9 +7,9 @@
  */
 
 // Types
-export * from './component-list-types'
+export * from './component-list-types';
 
 // Composables
-export * from './composables'
+export * from './composables';
 
 // Components are imported directly in pages, not re-exported here

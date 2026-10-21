@@ -7,31 +7,31 @@
  * @module api/kanji
  */
 
-import { useDatabase } from '@/shared/composables/use-database'
+import { useDatabase } from '@/shared/composables/use-database';
 
-import { schedulePersist } from '@/db/indexeddb'
-import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
-import { BaseRepository } from '../base-repository'
+import { schedulePersist } from '@/db/indexeddb';
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types';
+import { BaseRepository } from '../base-repository';
 
-import type { ChildRepository, Orderable } from '../api-types'
+import type { ChildRepository, Orderable } from '../api-types';
 import type {
   CreateKanjiMeaningInput,
   KanjiMeaning,
-  UpdateKanjiMeaningInput
-} from './meaning-types'
+  UpdateKanjiMeaningInput,
+} from './meaning-types';
 
 // ============================================================================
 // Row Type
 // ============================================================================
 
 interface KanjiMeaningRow {
-  id: number
-  kanji_id: number
-  meaning_text: string
-  additional_info: string | null
-  display_order: number
-  created_at: string
-  updated_at: string
+  id: number;
+  kanji_id: number;
+  meaning_text: string;
+  additional_info: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // ============================================================================
@@ -41,27 +41,23 @@ interface KanjiMeaningRow {
 class KanjiMeaningRepositoryImpl
   extends BaseRepository<KanjiMeaning>
   implements
-    ChildRepository<
-      KanjiMeaning,
-      CreateKanjiMeaningInput,
-      UpdateKanjiMeaningInput
-    >,
+    ChildRepository<KanjiMeaning, CreateKanjiMeaningInput, UpdateKanjiMeaningInput>,
     Orderable
 {
-  protected tableName = 'kanji_meanings'
+  protected tableName = 'kanji_meanings';
 
-  private readonly exec: ReturnType<typeof useDatabase>['exec']
-  private readonly run: ReturnType<typeof useDatabase>['run']
+  private readonly exec: ReturnType<typeof useDatabase>['exec'];
+  private readonly run: ReturnType<typeof useDatabase>['run'];
 
   constructor() {
-    super()
-    const db = useDatabase()
-    this.exec = db.exec
-    this.run = db.run
+    super();
+    const db = useDatabase();
+    this.exec = db.exec;
+    this.run = db.run;
   }
 
   protected mapRow(row: Record<string, unknown>): KanjiMeaning {
-    const r = row as unknown as KanjiMeaningRow
+    const r = row as unknown as KanjiMeaningRow;
     return {
       id: r.id,
       kanjiId: r.kanji_id,
@@ -69,8 +65,8 @@ class KanjiMeaningRepositoryImpl
       additionalInfo: r.additional_info,
       displayOrder: r.display_order,
       createdAt: r.created_at,
-      updatedAt: r.updated_at
-    }
+      updatedAt: r.updated_at,
+    };
   }
 
   // ==========================================================================
@@ -78,23 +74,21 @@ class KanjiMeaningRepositoryImpl
   // ==========================================================================
 
   getById(id: number): KanjiMeaning | null {
-    const result = this.exec('SELECT * FROM kanji_meanings WHERE id = ?', [id])
-    return this.resultToEntity(result)
+    const result = this.exec('SELECT * FROM kanji_meanings WHERE id = ?', [id]);
+    return this.resultToEntity(result);
   }
 
   getAll(): KanjiMeaning[] {
-    const result = this.exec(
-      'SELECT * FROM kanji_meanings ORDER BY display_order ASC'
-    )
-    return this.resultToList(result)
+    const result = this.exec('SELECT * FROM kanji_meanings ORDER BY display_order ASC');
+    return this.resultToList(result);
   }
 
   getByParentId(kanjiId: number): KanjiMeaning[] {
     const result = this.exec(
       'SELECT * FROM kanji_meanings WHERE kanji_id = ? ORDER BY display_order ASC',
       [kanjiId]
-    )
-    return this.resultToList(result)
+    );
+    return this.resultToList(result);
   }
 
   // ==========================================================================
@@ -103,83 +97,71 @@ class KanjiMeaningRepositoryImpl
 
   create(input: CreateKanjiMeaningInput): KanjiMeaning {
     // Get max display_order for this kanji
-    const maxOrder = this.getMaxDisplayOrder(
-      'kanji_meanings',
-      'WHERE kanji_id = ?',
-      [input.kanjiId]
-    )
-    const displayOrder = input.displayOrder ?? maxOrder + 1
+    const maxOrder = this.getMaxDisplayOrder('kanji_meanings', 'WHERE kanji_id = ?', [
+      input.kanjiId,
+    ]);
+    const displayOrder = input.displayOrder ?? maxOrder + 1;
 
     this.run(
       `INSERT INTO kanji_meanings (kanji_id, meaning_text, additional_info, display_order)
        VALUES (?, ?, ?, ?)`,
-      [
-        input.kanjiId,
-        input.meaningText,
-        input.additionalInfo ?? null,
-        displayOrder
-      ]
-    )
+      [input.kanjiId, input.meaningText, input.additionalInfo ?? null, displayOrder]
+    );
 
-    const idResult = this.exec('SELECT last_insert_rowid() as id')
-    const newId = idResult[0]?.values[0]?.[0] as number
+    const idResult = this.exec('SELECT last_insert_rowid() as id');
+    const newId = idResult[0]?.values[0]?.[0] as number;
 
-    const created = this.getById(newId)
+    const created = this.getById(newId);
     if (!created) {
-      throw new CreateError('KanjiMeaning')
+      throw new CreateError('KanjiMeaning');
     }
 
-    schedulePersist()
-    return created
+    schedulePersist();
+    return created;
   }
 
   update(id: number, input: UpdateKanjiMeaningInput): KanjiMeaning {
-    const existing = this.getById(id)
+    const existing = this.getById(id);
     if (!existing) {
-      throw new EntityNotFoundError('KanjiMeaning', id)
+      throw new EntityNotFoundError('KanjiMeaning', id);
     }
 
-    const sets: string[] = []
-    const values: unknown[] = []
+    const sets: string[] = [];
+    const values: unknown[] = [];
 
     if (input.meaningText !== undefined) {
-      sets.push('meaning_text = ?')
-      values.push(input.meaningText)
+      sets.push('meaning_text = ?');
+      values.push(input.meaningText);
     }
     if (input.additionalInfo !== undefined) {
-      sets.push('additional_info = ?')
-      values.push(input.additionalInfo)
+      sets.push('additional_info = ?');
+      values.push(input.additionalInfo);
     }
 
     if (sets.length === 0) {
-      return existing
+      return existing;
     }
 
-    sets.push("updated_at = datetime('now')")
-    values.push(id)
+    sets.push("updated_at = datetime('now')");
+    values.push(id);
 
-    this.run(
-      `UPDATE kanji_meanings SET ${sets.join(', ')} WHERE id = ?`,
-      values
-    )
+    this.run(`UPDATE kanji_meanings SET ${sets.join(', ')} WHERE id = ?`, values);
 
-    const updated = this.getById(id)
+    const updated = this.getById(id);
     if (!updated) {
-      throw new UpdateError('KanjiMeaning', id)
+      throw new UpdateError('KanjiMeaning', id);
     }
 
-    schedulePersist()
-    return updated
+    schedulePersist();
+    return updated;
   }
 
   remove(id: number): void {
     this.withTransaction(() => {
-      this.run('DELETE FROM kanji_meaning_group_members WHERE meaning_id = ?', [
-        id
-      ])
-      this.run('DELETE FROM kanji_meanings WHERE id = ?', [id])
-    })
-    schedulePersist()
+      this.run('DELETE FROM kanji_meaning_group_members WHERE meaning_id = ?', [id]);
+      this.run('DELETE FROM kanji_meanings WHERE id = ?', [id]);
+    });
+    schedulePersist();
   }
 
   // ==========================================================================
@@ -189,13 +171,10 @@ class KanjiMeaningRepositoryImpl
   reorder(ids: number[]): void {
     this.withTransaction(() => {
       ids.forEach((id, index) => {
-        this.run('UPDATE kanji_meanings SET display_order = ? WHERE id = ?', [
-          index,
-          id
-        ])
-      })
-    })
-    schedulePersist()
+        this.run('UPDATE kanji_meanings SET display_order = ? WHERE id = ?', [index, id]);
+      });
+    });
+    schedulePersist();
   }
 }
 
@@ -209,5 +188,5 @@ class KanjiMeaningRepositoryImpl
  * @example const repo = useKanjiMeaningRepository(); repo.getByParentId(1)
  */
 export function useKanjiMeaningRepository(): KanjiMeaningRepositoryImpl {
-  return new KanjiMeaningRepositoryImpl()
+  return new KanjiMeaningRepositoryImpl();
 }

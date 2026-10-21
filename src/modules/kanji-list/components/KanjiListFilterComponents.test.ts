@@ -4,12 +4,12 @@
  * Tests for multi-select component filter.
  */
 
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import KanjiListFilterComponents from './KanjiListFilterComponents.vue'
+import KanjiListFilterComponents from './KanjiListFilterComponents.vue';
 
-import type { Component } from '@/api/component'
+import type { Component } from '@/api/component';
 
 const mockComponents: Component[] = [
   {
@@ -25,7 +25,7 @@ const mockComponents: Component[] = [
     kangxiMeaning: null,
     radicalNameJapanese: null,
     createdAt: '2024-01-01',
-    updatedAt: '2024-01-01'
+    updatedAt: '2024-01-01',
   },
   {
     id: 2,
@@ -40,42 +40,42 @@ const mockComponents: Component[] = [
     kangxiMeaning: null,
     radicalNameJapanese: null,
     createdAt: '2024-01-01',
-    updatedAt: '2024-01-01'
-  }
-]
+    updatedAt: '2024-01-01',
+  },
+];
 
 describe('KanjiListFilterComponents', () => {
   it('renders with label', () => {
     render(KanjiListFilterComponents, {
       props: {
         modelValue: [],
-        components: mockComponents
-      }
-    })
+        components: mockComponents,
+      },
+    });
 
-    expect(screen.getByText(/components/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/components/i)).toBeInTheDocument();
+  });
 
   it('shows placeholder text when empty', () => {
     render(KanjiListFilterComponents, {
       props: {
         modelValue: [],
-        components: mockComponents
-      }
-    })
+        components: mockComponents,
+      },
+    });
 
-    expect(screen.getByRole('combobox')).toBeInTheDocument()
-  })
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
 
   it('shows selected component count when items selected', () => {
     render(KanjiListFilterComponents, {
       props: {
         modelValue: [1, 2],
-        components: mockComponents
-      }
-    })
+        components: mockComponents,
+      },
+    });
 
     // Component should render with selected values
-    expect(screen.getByRole('combobox')).toBeInTheDocument()
-  })
-})
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+});

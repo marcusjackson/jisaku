@@ -7,16 +7,16 @@
  * @module api/vocabulary
  */
 
-import { VocabularyMutations } from './vocabulary-mutations'
-import { VocabularyQueries } from './vocabulary-queries'
+import { VocabularyMutations } from './vocabulary-mutations';
+import { VocabularyQueries } from './vocabulary-queries';
 
-import type { FieldUpdatable, Repository, UpdatableField } from '../api-types'
+import type { FieldUpdatable, Repository, UpdatableField } from '../api-types';
 import type {
   CreateVocabularyInput,
   UpdateVocabularyInput,
   Vocabulary,
-  VocabularyFilters
-} from './vocabulary-types'
+  VocabularyFilters,
+} from './vocabulary-types';
 
 // ============================================================================
 // Repository Implementation
@@ -27,12 +27,12 @@ class VocabularyRepositoryImpl
     Repository<Vocabulary, CreateVocabularyInput, UpdateVocabularyInput>,
     FieldUpdatable<Vocabulary>
 {
-  private readonly queries: VocabularyQueries
-  private readonly mutations: VocabularyMutations
+  private readonly queries: VocabularyQueries;
+  private readonly mutations: VocabularyMutations;
 
   constructor() {
-    this.queries = new VocabularyQueries()
-    this.mutations = new VocabularyMutations(this.queries)
+    this.queries = new VocabularyQueries();
+    this.mutations = new VocabularyMutations(this.queries);
   }
 
   // ==========================================================================
@@ -40,27 +40,19 @@ class VocabularyRepositoryImpl
   // ==========================================================================
 
   getById(id: number): Vocabulary | null {
-    return this.queries.getById(id)
+    return this.queries.getById(id);
   }
 
   getAll(): Vocabulary[] {
-    return this.queries.getAll()
+    return this.queries.getAll();
   }
 
   getByWord(word: string): Vocabulary | null {
-    return this.queries.getByWord(word)
-  }
-
-  getByIds(ids: number[]): Vocabulary[] {
-    return this.queries.getByIds(ids)
-  }
-
-  getCommonWords(): Vocabulary[] {
-    return this.queries.getCommonWords()
+    return this.queries.getByWord(word);
   }
 
   search(filters?: VocabularyFilters): Vocabulary[] {
-    return this.queries.search(filters)
+    return this.queries.search(filters);
   }
 
   // ==========================================================================
@@ -68,11 +60,11 @@ class VocabularyRepositoryImpl
   // ==========================================================================
 
   create(input: CreateVocabularyInput): Vocabulary {
-    return this.mutations.create(input)
+    return this.mutations.create(input);
   }
 
   update(id: number, input: UpdateVocabularyInput): Vocabulary {
-    return this.mutations.update(id, input)
+    return this.mutations.update(id, input);
   }
 
   updateField<K extends UpdatableField<Vocabulary>>(
@@ -80,11 +72,11 @@ class VocabularyRepositoryImpl
     field: K,
     value: Vocabulary[K]
   ): Vocabulary {
-    return this.mutations.updateField(id, field, value)
+    return this.mutations.updateField(id, field, value);
   }
 
   remove(id: number): void {
-    this.mutations.remove(id)
+    this.mutations.remove(id);
   }
 }
 
@@ -98,5 +90,5 @@ class VocabularyRepositoryImpl
  * @example const repo = useVocabularyRepository(); repo.search({ jlptLevels: ['N5'] })
  */
 export function useVocabularyRepository(): VocabularyRepositoryImpl {
-  return new VocabularyRepositoryImpl()
+  return new VocabularyRepositoryImpl();
 }

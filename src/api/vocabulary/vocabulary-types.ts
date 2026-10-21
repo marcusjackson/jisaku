@@ -6,7 +6,7 @@
  * @module api/vocabulary
  */
 
-import type { JlptLevel, Kanji } from '@/api/kanji'
+import type { JlptLevel, Kanji } from '@/api/kanji';
 
 // ============================================================================
 // Vocabulary-specific Types
@@ -16,7 +16,7 @@ import type { JlptLevel, Kanji } from '@/api/kanji'
  * JLPT level for vocabulary
  * Vocabulary supports 'non-jlpt' in addition to standard N5-N1 levels
  */
-export type VocabJlptLevel = JlptLevel | 'non-jlpt'
+export type VocabJlptLevel = JlptLevel | 'non-jlpt';
 
 /** Valid vocabulary JLPT level values — used for runtime DB row validation */
 export const VOCAB_JLPT_LEVELS: readonly VocabJlptLevel[] = [
@@ -25,8 +25,8 @@ export const VOCAB_JLPT_LEVELS: readonly VocabJlptLevel[] = [
   'N3',
   'N2',
   'N1',
-  'non-jlpt'
-]
+  'non-jlpt',
+];
 
 // ============================================================================
 // Entity Interfaces
@@ -36,29 +36,29 @@ export const VOCAB_JLPT_LEVELS: readonly VocabJlptLevel[] = [
  * Vocabulary entity - Japanese words/phrases
  */
 export interface Vocabulary {
-  id: number
-  word: string
-  kana: string
-  shortMeaning: string | null
-  searchKeywords: string | null
-  jlptLevel: VocabJlptLevel | null
-  isCommon: boolean
-  description: string | null
-  createdAt: string
-  updatedAt: string
+  id: number;
+  word: string;
+  kana: string;
+  shortMeaning: string | null;
+  searchKeywords: string | null;
+  jlptLevel: VocabJlptLevel | null;
+  isCommon: boolean;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
  * Vocab-Kanji junction - links vocabulary to constituent kanji
  */
 export interface VocabKanji {
-  id: number
-  vocabId: number
-  kanjiId: number
-  analysisNotes: string | null
-  displayOrder: number
-  createdAt: string
-  updatedAt: string
+  id: number;
+  vocabId: number;
+  kanjiId: number;
+  analysisNotes: string | null;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============================================================================
@@ -69,43 +69,41 @@ export interface VocabKanji {
  * Input for creating a new vocabulary entry
  */
 export interface CreateVocabularyInput {
-  word: string
-  kana: string
-  shortMeaning?: string | null
-  searchKeywords?: string | null
-  jlptLevel?: VocabJlptLevel | null
-  isCommon?: boolean
-  description?: string | null
+  word: string;
+  kana: string;
+  shortMeaning?: string | null;
+  searchKeywords?: string | null;
+  jlptLevel?: VocabJlptLevel | null;
+  isCommon?: boolean;
+  description?: string | null;
 }
 
 /**
  * Input for updating a vocabulary entry
  */
-export type UpdateVocabularyInput = Partial<CreateVocabularyInput>
+export type UpdateVocabularyInput = Partial<CreateVocabularyInput>;
 
 /** Description filled filter values */
-export type DescriptionFilledFilter = 'filled' | 'empty' | null
+export type DescriptionFilledFilter = 'filled' | 'empty' | null;
 
 /**
  * Filters for searching vocabulary
  */
 export interface VocabularyFilters {
-  /** Search by exact word match */
-  word?: string
+  /** Search words that contain the typed text */
+  word?: string;
   /** Search in short_meaning and search_keywords */
-  search?: string
+  search?: string;
   /** Search specifically in kana field */
-  kana?: string
+  kana?: string;
   /** Filter by JLPT levels (any of) */
-  jlptLevels?: VocabJlptLevel[]
+  jlptLevels?: VocabJlptLevel[];
   /** Filter to common words only */
-  isCommon?: boolean
-  /** Filter by kanji contained in word (single) */
-  containsKanjiId?: number
+  isCommon?: boolean;
   /** Filter by kanji contained in word (ALL must match - AND logic) */
-  containsKanjiIds?: number[]
+  containsKanjiIds?: number[];
   /** Filter by description presence */
-  descriptionFilled?: DescriptionFilledFilter
+  descriptionFilled?: DescriptionFilledFilter;
 }
 
 // ============================================================================
@@ -116,18 +114,18 @@ export interface VocabularyFilters {
  * Input for creating a vocab-kanji link
  */
 export interface CreateVocabKanjiInput {
-  vocabId: number
-  kanjiId: number
-  analysisNotes?: string | null
-  displayOrder?: number
+  vocabId: number;
+  kanjiId: number;
+  analysisNotes?: string | null;
+  displayOrder?: number;
 }
 
 /**
  * Input for updating a vocab-kanji link
  */
 export interface UpdateVocabKanjiInput {
-  analysisNotes?: string | null
-  displayOrder?: number
+  analysisNotes?: string | null;
+  displayOrder?: number;
 }
 
 // ============================================================================
@@ -139,8 +137,8 @@ export interface UpdateVocabKanjiInput {
  * Used for displaying vocabulary that contains a specific kanji
  */
 export interface VocabKanjiWithVocabulary {
-  vocabKanji: VocabKanji
-  vocabulary: Vocabulary
+  vocabKanji: VocabKanji;
+  vocabulary: Vocabulary;
 }
 
 /**
@@ -148,5 +146,5 @@ export interface VocabKanjiWithVocabulary {
  * Used for displaying the kanji breakdown of a vocabulary word
  */
 export interface VocabKanjiWithKanji extends VocabKanji {
-  kanji: Kanji
+  kanji: Kanji;
 }

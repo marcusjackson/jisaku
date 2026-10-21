@@ -41,11 +41,10 @@ const {
   updateFilter
 } = useKanjiListState()
 
-// Data fetching
+// Data fetching. A failed load is toasted by the data composable; only init failures replace the page.
 const {
   classificationTypes,
   components,
-  fetchError,
   kanjiList,
   loadKanji,
   loadReferenceData,
@@ -54,7 +53,7 @@ const {
 } = useKanjiListData()
 
 const isDialogOpen = ref(false)
-const displayError = computed(() => initError.value ?? fetchError.value)
+const displayError = computed(() => initError.value)
 
 // Watch for filter changes
 watch(
@@ -98,32 +97,18 @@ onMounted(async () => {
 
 <template>
   <!-- Loading state -->
-  <div
-    v-if="isInitializing"
-    class="kanji-list-root-loading"
-  >
-    <BaseSpinner
-      label="Loading database..."
-      size="lg"
-    />
+  <div v-if="isInitializing" class="kanji-list-root-loading">
+    <BaseSpinner label="Loading database..." size="lg" />
   </div>
 
   <!-- Error state -->
-  <div
-    v-else-if="displayError"
-    class="kanji-list-root-error"
-  >
-    <p class="kanji-list-root-error-title">
-      An error occurred while loading data
-    </p>
+  <div v-else-if="displayError" class="kanji-list-root-error">
+    <p class="kanji-list-root-error-title">An error occurred while loading data</p>
     <p class="kanji-list-root-error-message">{{ displayError.message }}</p>
   </div>
 
   <!-- Content -->
-  <div
-    v-else-if="isInitialized"
-    class="kanji-list-root"
-  >
+  <div v-else-if="isInitialized" class="kanji-list-root">
     <KanjiListSectionFilters
       :active-filter-count="activeFilterCount"
       :character-search="characterSearch"
@@ -153,10 +138,7 @@ onMounted(async () => {
       @refresh="triggerRefresh"
     />
 
-    <KanjiListSectionDialog
-      v-model:open="isDialogOpen"
-      @created="handleKanjiCreated"
-    />
+    <KanjiListSectionDialog v-model:open="isDialogOpen" @created="handleKanjiCreated" />
   </div>
 </template>
 

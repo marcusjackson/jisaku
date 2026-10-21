@@ -39,11 +39,11 @@ const {
   updateFilter
 } = useComponentListState()
 
-// Data fetching
-const { componentList, fetchError, loadComponents } = useComponentListData()
+// Data fetching. A failed load is toasted by the data composable; only init failures replace the page.
+const { componentList, loadComponents } = useComponentListData()
 
 const isDialogOpen = ref(false)
-const displayError = computed(() => initError.value ?? fetchError.value)
+const displayError = computed(() => initError.value)
 
 // Watch for filter changes
 watch(
@@ -88,32 +88,18 @@ onMounted(async () => {
 
 <template>
   <!-- Loading state -->
-  <div
-    v-if="isInitializing"
-    class="component-list-root-loading"
-  >
-    <BaseSpinner
-      label="Loading database..."
-      size="lg"
-    />
+  <div v-if="isInitializing" class="component-list-root-loading">
+    <BaseSpinner label="Loading database..." size="lg" />
   </div>
 
   <!-- Error state -->
-  <div
-    v-else-if="displayError"
-    class="component-list-root-error"
-  >
-    <p class="component-list-root-error-title">
-      An error occurred while loading data
-    </p>
+  <div v-else-if="displayError" class="component-list-root-error">
+    <p class="component-list-root-error-title">An error occurred while loading data</p>
     <p class="component-list-root-error-message">{{ displayError.message }}</p>
   </div>
 
   <!-- Content -->
-  <div
-    v-else-if="isInitialized"
-    class="component-list-root"
-  >
+  <div v-else-if="isInitialized" class="component-list-root">
     <ComponentListSectionFilters
       :active-filter-count="activeFilterCount"
       :character-search="characterSearch"
@@ -135,10 +121,7 @@ onMounted(async () => {
       @refresh="triggerRefresh"
     />
 
-    <ComponentListSectionDialog
-      v-model:open="isDialogOpen"
-      @created="handleComponentCreated"
-    />
+    <ComponentListSectionDialog v-model:open="isDialogOpen" @created="handleComponentCreated" />
   </div>
 </template>
 

@@ -23,37 +23,29 @@ import ComponentDetailDialogHeadline from './ComponentDetailDialogHeadline.vue'
 import type { HeadlineSaveData } from '../component-detail-types'
 import type { Component } from '@/api/component/component-types'
 
-defineProps<{
+const props = defineProps<{
   component: Component
-}>()
-
-const emit = defineEmits<{
-  save: [data: HeadlineSaveData]
+  /** Saves the headline; returns whether it saved, so the dialog can close */
+  save: (data: HeadlineSaveData) => boolean
 }>()
 
 const isDialogOpen = ref(false)
 
 function handleSave(data: HeadlineSaveData): void {
-  emit('save', data)
-  isDialogOpen.value = false
+  if (props.save(data)) isDialogOpen.value = false
 }
 </script>
 
 <template>
-  <section
-    class="component-detail-section-headline"
-    data-testid="component-detail-headline"
-  >
-    <SharedBackButton
-      label="Back to Component List"
-      :to="ROUTES.COMPONENT_LIST"
-    />
+  <section class="component-detail-section-headline" data-testid="component-detail-headline">
+    <SharedBackButton label="Back to Component List" :to="ROUTES.COMPONENT_LIST" />
 
     <div class="component-detail-section-headline-content">
       <div class="component-detail-section-headline-main">
         <span
           class="component-detail-section-headline-character"
           data-testid="component-character"
+          lang="ja"
         >
           {{ component.character }}
         </span>
@@ -66,9 +58,7 @@ function handleSave(data: HeadlineSaveData): void {
             >
               {{ component.shortMeaning }}
             </span>
-            <SharedSearchKeywordsIndicator
-              :search-keywords="component.searchKeywords"
-            />
+            <SharedSearchKeywordsIndicator :search-keywords="component.searchKeywords" />
           </div>
         </div>
       </div>

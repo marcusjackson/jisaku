@@ -13,6 +13,8 @@ import BaseSelect from '@/base/components/BaseSelect.vue'
 import BaseSwitch from '@/base/components/BaseSwitch.vue'
 import BaseTextarea from '@/base/components/BaseTextarea.vue'
 
+import { NONE_VALUE } from '../component-detail-types'
+
 import type { OccurrenceUpdateData } from '../component-detail-types'
 import type { ComponentForm, OccurrenceWithKanji } from '@/api/component'
 import type { PositionType } from '@/api/position/position-types'
@@ -34,10 +36,6 @@ const emit = defineEmits<{
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
-
-// Use '__none__' as sentinel value for "None" option
-// Reka UI SelectItem doesn't allow empty string values
-const NONE_VALUE = '__none__'
 
 // Form state
 const positionTypeId = ref<string>(NONE_VALUE)
@@ -95,7 +93,6 @@ function handleSubmit(): void {
     analysisNotes: analysisNotes.value.trim() || null
   }
   emit('submit', data)
-  open.value = false
 }
 
 function handleCancel(): void {
@@ -111,18 +108,12 @@ function handleCancel(): void {
     title="Edit Occurrence"
     @update:open="(val: boolean) => emit('update:open', val)"
   >
-    <div
-      v-if="occurrence"
-      class="dialog-edit-occurrence-content"
-    >
+    <div v-if="occurrence" class="dialog-edit-occurrence-content">
       <div class="dialog-edit-occurrence-kanji">
-        <span class="dialog-edit-occurrence-kanji-character">
+        <span class="dialog-edit-occurrence-kanji-character" lang="ja">
           {{ occurrence.kanji.character }}
         </span>
-        <span
-          v-if="occurrence.kanji.shortMeaning"
-          class="dialog-edit-occurrence-kanji-meaning"
-        >
+        <span v-if="occurrence.kanji.shortMeaning" class="dialog-edit-occurrence-kanji-meaning">
           {{ occurrence.kanji.shortMeaning }}
         </span>
       </div>
@@ -149,11 +140,7 @@ function handleCancel(): void {
           placeholder="Select form..."
         />
 
-        <BaseSwitch
-          v-model="isRadical"
-          aria-label="Is Radical"
-          label="Is Radical"
-        />
+        <BaseSwitch v-model="isRadical" aria-label="Is Radical" label="Is Radical" />
 
         <BaseTextarea
           v-model="analysisNotes"
@@ -167,20 +154,8 @@ function handleCancel(): void {
 
     <template #footer>
       <div class="dialog-edit-occurrence-actions">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="handleCancel"
-        >
-          Cancel
-        </BaseButton>
-        <BaseButton
-          form="edit-occurrence-form"
-          type="submit"
-          variant="primary"
-        >
-          Save
-        </BaseButton>
+        <BaseButton type="button" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
+        <BaseButton form="edit-occurrence-form" type="submit" variant="primary"> Save </BaseButton>
       </div>
     </template>
   </BaseDialog>

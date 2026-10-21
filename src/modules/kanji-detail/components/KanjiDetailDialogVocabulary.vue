@@ -6,7 +6,7 @@
  * Supports searching/linking existing vocabulary, quick-creating new entries, and unlinking.
  */
 
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { BaseButton, BaseDialog } from '@/base/components'
 
@@ -51,8 +51,6 @@ const excludedIds = computed<number[]>(() =>
 /** Handle selecting vocabulary from search */
 function handleSelect(vocabularyId: number): void {
   emit('link', vocabularyId)
-  emit('update:open', false)
-  resetToSearchMode()
 }
 
 /** Handle create button click - switch to quick-create mode */
@@ -64,8 +62,6 @@ function handleCreateClick(searchTerm: string): void {
 /** Handle quick-create form submit */
 function handleQuickCreate(data: KanjiDetailVocabularyQuickCreateData): void {
   emit('create', data)
-  emit('update:open', false)
-  resetToSearchMode()
 }
 
 /** Handle quick-create cancel */
@@ -78,6 +74,15 @@ function resetToSearchMode(): void {
   isQuickCreateMode.value = false
   quickCreateSearchTerm.value = ''
 }
+
+// The section closes the dialog after a successful link or create; start the
+// next opening from the search view.
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (!isOpen) resetToSearchMode()
+  }
+)
 
 /** Handle remove button click - show confirmation */
 function handleRemoveClick(vocabularyId: number): void {
@@ -102,11 +107,7 @@ function handleRemoveCancel(): void {
 </script>
 
 <template>
-  <BaseDialog
-    :open="props.open"
-    title="Link Vocabulary"
-    @update:open="emit('update:open', $event)"
-  >
+  <BaseDialog :open="props.open" title="Link Vocabulary" @update:open="emit('update:open', $event)">
     <div class="vocabulary-dialog-content">
       <!-- Linked Vocabulary List (when destructive mode enabled) -->
       <div
@@ -114,10 +115,7 @@ function handleRemoveCancel(): void {
         class="vocabulary-dialog-section"
       >
         <h3 class="vocabulary-dialog-section-title">Linked Vocabulary</h3>
-        <ul
-          class="vocabulary-dialog-list"
-          data-testid="linked-vocabulary-list"
-        >
+        <ul class="vocabulary-dialog-list" data-testid="linked-vocabulary-list">
           <KanjiDetailVocabularyItem
             v-for="item in props.linkedVocabulary"
             :key="item.vocabularyId"
@@ -130,10 +128,7 @@ function handleRemoveCancel(): void {
       </div>
 
       <!-- Search Mode -->
-      <div
-        v-if="!isQuickCreateMode"
-        class="vocabulary-dialog-section"
-      >
+      <div v-if="!isQuickCreateMode" class="vocabulary-dialog-section">
         <h3 class="vocabulary-dialog-section-title">Add Vocabulary</h3>
         <KanjiDetailVocabularySearch
           :all-vocabulary="props.allVocabulary"
@@ -152,16 +147,8 @@ function handleRemoveCancel(): void {
         @create="handleQuickCreate"
       />
 
-      <div
-        v-if="!isQuickCreateMode"
-        class="vocabulary-dialog-actions"
-      >
-        <BaseButton
-          variant="secondary"
-          @click="emit('update:open', false)"
-        >
-          Close
-        </BaseButton>
+      <div v-if="!isQuickCreateMode" class="vocabulary-dialog-actions">
+        <BaseButton variant="secondary" @click="emit('update:open', false)"> Close </BaseButton>
       </div>
     </div>
 

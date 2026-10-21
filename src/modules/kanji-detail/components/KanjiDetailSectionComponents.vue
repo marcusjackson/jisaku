@@ -8,14 +8,17 @@
 
 import { ref } from 'vue'
 
-import BaseButton from '@/base/components/BaseButton.vue'
+import { BaseButton } from '@/base/components'
 
-import SharedSection from '@/shared/components/SharedSection.vue'
+import { SharedSection } from '@/shared/components'
 
 import KanjiDetailComponentsDisplay from './KanjiDetailComponentsDisplay.vue'
 import KanjiDetailDialogComponents from './KanjiDetailDialogComponents.vue'
 
-import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types'
+import type {
+  ComponentOccurrenceWithDetails,
+  DialogComponentChanges
+} from '../kanji-detail-types'
 import type { Component } from '@/api/component/component-types'
 import type { QuickCreateComponentData } from '@/shared/validation/quick-create-component-schema'
 
@@ -26,42 +29,25 @@ const props = defineProps<{
   linkedOccurrences: ComponentOccurrenceWithDetails[]
   /** Enable destructive operations (unlink) */
   destructiveMode?: boolean
-}>()
-
-const emit = defineEmits<{
-  /** User wants to save component changes */
-  save: [
-    changes: {
-      toLink: {
-        componentId: number
-        positionTypeId: number | null
-        componentFormId: number | null
-        isRadical: boolean
-      }[]
-      toUpdate: {
-        id: number
-        positionTypeId: number | null
-        componentFormId: number | null
-        isRadical: boolean
-      }[]
-      toDelete: number[]
-    }
-  ]
-  /** User wants to create a new component and link it */
-  create: [data: QuickCreateComponentData]
+  /** Saves component changes; returns whether it saved, so the dialog can close */
+  save: (changes: DialogComponentChanges) => boolean
+  /** Creates a component; returns whether it saved */
+  create: (data: QuickCreateComponentData) => boolean
 }>()
 
 const dialogOpen = ref(false)
+
+function handleSave(changes: DialogComponentChanges): void {
+  if (props.save(changes)) dialogOpen.value = false
+}
 </script>
 
 <template>
-  <SharedSection
-    description="Structural parts or graphical elements within this kanji"
-    title="Components"
-  >
+  <SharedSection title="Components">
     <template #actions>
       <BaseButton
-        data-testid="basic-info-edit-button"
+        aria-label="Edit components"
+        data-testid="components-edit-button"
         size="sm"
         variant="secondary"
         @click="dialogOpen = true"
@@ -75,10 +61,10 @@ const dialogOpen = ref(false)
     <KanjiDetailDialogComponents
       v-model:open="dialogOpen"
       :all-components="props.allComponents"
+      :create="props.create"
       :destructive-mode="props.destructiveMode"
       :linked-occurrences="props.linkedOccurrences"
-      @create="(data) => emit('create', data)"
-      @save="(changes) => emit('save', changes)"
+      @save="handleSave"
     />
   </SharedSection>
 </template>

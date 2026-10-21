@@ -46,40 +46,28 @@ const { handleBasicInfoSave, handleDelete, handleHeadlineSave } =
 <template>
   <div class="vocab-detail-root">
     <div class="vocab-detail-root-container">
-      <div
-        v-if="isLoading"
-        class="vocab-detail-root-loading"
-      >
+      <div v-if="isLoading" class="vocab-detail-root-loading">
         <BaseSpinner size="lg" />
       </div>
 
-      <div
-        v-else-if="loadError"
-        class="vocab-detail-root-error"
-      >
+      <div v-else-if="loadError" class="vocab-detail-root-error" role="alert">
         <p>{{ loadError }}</p>
       </div>
 
       <template v-else-if="vocab">
-        <VocabDetailSectionHeadline
-          :vocab="vocab"
-          @save="handleHeadlineSave"
-        />
+        <VocabDetailSectionHeadline :save="handleHeadlineSave" :vocab="vocab" />
 
-        <VocabDetailSectionBasicInfo
-          :vocab="vocab"
-          @save="handleBasicInfoSave"
-        />
+        <VocabDetailSectionBasicInfo :save="handleBasicInfoSave" :vocab="vocab" />
 
         <VocabDetailSectionKanjiBreakdown
+          :add="handleAdd"
           :all-kanji="allKanji"
+          :create="handleCreate"
           :is-destructive-mode="isDestructiveMode"
           :kanji-breakdown="kanjiBreakdown"
-          @add="handleAdd"
-          @create="handleCreate"
+          :update-notes="handleUpdateNotes"
           @remove="handleRemove"
           @reorder="handleReorder"
-          @update-notes="handleUpdateNotes"
         />
 
         <VocabDetailSectionActions

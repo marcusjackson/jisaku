@@ -6,45 +6,43 @@
  * @module modules/kanji-detail
  */
 
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue';
 
-import { useComponentFormRepository } from '@/api/component/component-form-repository'
-import { usePositionTypeRepository } from '@/api/position/position-type-repository'
+import { useComponentFormRepository } from '@/api/component/component-form-repository';
+import { usePositionTypeRepository } from '@/api/position/position-type-repository';
 
-import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types'
-import type { Component } from '@/api/component/component-types'
-import type { PositionType } from '@/api/position'
-import type { ComputedRef, Ref } from 'vue'
+import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types';
+import type { EditOccurrence } from '../utils/edit-occurrence-types';
+import type { Component } from '@/api/component/component-types';
+import type { PositionType } from '@/api/position';
+import type { ComputedRef, Ref } from 'vue';
 
 interface Props {
-  open: boolean
-  allComponents: Component[]
-  linkedOccurrences: ComponentOccurrenceWithDetails[]
+  open: boolean;
+  allComponents: Component[];
+  linkedOccurrences: ComponentOccurrenceWithDetails[];
 }
 
 interface ComponentFormEntry {
-  id: number
-  formCharacter: string
-  formName: string | null
+  id: number;
+  formCharacter: string;
+  formName: string | null;
 }
 
 interface UseKanjiDetailComponentsDialogStateReturn {
-  positionTypes: Ref<PositionType[]>
-  quickCreateSearchTerm: Ref<string>
-  quickCreateDialogOpen: Ref<boolean>
-  showConfirmDialog: Ref<boolean>
-  pendingRemoveOccurrenceId: Ref<number | null>
-  componentFormsMap: Ref<Map<number, ComponentFormEntry[]>>
-  availableComponents: ComputedRef<Component[]>
+  positionTypes: Ref<PositionType[]>;
+  quickCreateSearchTerm: Ref<string>;
+  quickCreateDialogOpen: Ref<boolean>;
+  showConfirmDialog: Ref<boolean>;
+  pendingRemoveOccurrenceId: Ref<number | null>;
+  componentFormsMap: Ref<Map<number, ComponentFormEntry[]>>;
+  availableComponents: ComputedRef<Component[]>;
 }
 
 function loadFormData(
   props: Props,
   componentFormsMap: Ref<
-    Map<
-      number,
-      { id: number; formCharacter: string; formName: string | null }[]
-    >
+    Map<number, { id: number; formCharacter: string; formName: string | null }[]>
   >,
   formRepo: ReturnType<typeof useComponentFormRepository>
 ) {
@@ -55,11 +53,11 @@ function loadFormData(
         formRepo.getByParentId(occ.componentId).map((f) => ({
           id: f.id,
           formCharacter: f.formCharacter,
-          formName: f.formName
+          formName: f.formName,
         }))
-      )
+      );
     }
-  })
+  });
 }
 
 /**
@@ -67,45 +65,47 @@ function loadFormData(
  * Provides position types, form map, quick-create state, and confirm dialog refs.
  *
  * @param props - Dialog open state and component/occurrence data
+ * @param editOccurrences - The dialog's edit list; its components are not offered again
  * @returns Reactive state for the components dialog
  */
 export function useKanjiDetailComponentsDialogState(
-  props: Props
+  props: Props,
+  editOccurrences: Ref<EditOccurrence[]>
 ): UseKanjiDetailComponentsDialogStateReturn {
-  const positionTypeRepo = usePositionTypeRepository()
-  const positionTypes = ref(positionTypeRepo.getAll())
-  const formRepo = useComponentFormRepository()
-  const quickCreateSearchTerm = ref('')
-  const quickCreateDialogOpen = ref(false)
-  const showConfirmDialog = ref(false)
-  const pendingRemoveOccurrenceId: Ref<number | null> = ref(null)
+  const positionTypeRepo = usePositionTypeRepository();
+  const positionTypes = ref(positionTypeRepo.getAll());
+  const formRepo = useComponentFormRepository();
+  const quickCreateSearchTerm = ref('');
+  const quickCreateDialogOpen = ref(false);
+  const showConfirmDialog = ref(false);
+  const pendingRemoveOccurrenceId: Ref<number | null> = ref(null);
 
   const componentFormsMap = ref<
-    Map<
-      number,
-      { id: number; formCharacter: string; formName: string | null }[]
-    >
-  >(new Map())
+    Map<number, { id: number; formCharacter: string; formName: string | null }[]>
+  >(new Map());
 
-  const linkedComponentIds = computed(() =>
-    props.linkedOccurrences.map((occ) => occ.componentId)
-  )
+  // The edit list, not the saved links: a component picked in this dialog (or
+  // unlinked but not yet saved) is already spoken for, so it is not offered again.
+  const takenComponentIds = computed(
+    () => new Set(editOccurrences.value.map((occ) => occ.componentId))
+  );
   const availableComponents = computed(() =>
-    props.allComponents.filter(
-      (comp) => !linkedComponentIds.value.includes(comp.id)
-    )
-  )
+    props.allComponents.filter((comp) => !takenComponentIds.value.has(comp.id))
+  );
 
   watch(
     () => props.open,
     (isOpen) => {
       if (isOpen) {
-        loadFormData(props, componentFormsMap, formRepo)
+        // Forms and position types may have changed elsewhere since the last open
+        componentFormsMap.value.clear();
+        positionTypes.value = positionTypeRepo.getAll();
+        loadFormData(props, componentFormsMap, formRepo);
       } else {
-        quickCreateSearchTerm.value = ''
+        quickCreateSearchTerm.value = '';
       }
     }
-  )
+  );
 
   return {
     positionTypes,
@@ -114,6 +114,6 @@ export function useKanjiDetailComponentsDialogState(
     showConfirmDialog,
     pendingRemoveOccurrenceId,
     componentFormsMap,
-    availableComponents
-  }
+    availableComponents,
+  };
 }

@@ -35,9 +35,13 @@ function isSelected(level: VocabJlptLevel): boolean {
 
 <template>
   <div class="vocab-list-filter-jlpt">
-    <span class="vocab-list-filter-jlpt-label">JLPT Level</span>
-    <div class="vocab-list-filter-jlpt-chips">
-      <!-- Raw <button>: chip/toggle needs full style override incompatible with BaseButton -->
+    <span id="vocab-list-filter-jlpt-label" class="vocab-list-filter-jlpt-label">JLPT Level</span>
+    <div
+      aria-labelledby="vocab-list-filter-jlpt-label"
+      class="vocab-list-filter-jlpt-chips"
+      role="group"
+    >
+      <!-- Raw <button>: chip toggle, bare layout incompatible with BaseButton -->
       <button
         v-for="level in levels"
         :key="level"

@@ -6,33 +6,30 @@
  * @module api/component
  */
 
-import { useDatabase } from '@/shared/composables/use-database'
+import { useDatabase } from '@/shared/composables/use-database';
 
-import { schedulePersist } from '@/db/indexeddb'
-import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
+import { schedulePersist } from '@/db/indexeddb';
+import { inTransaction } from '@/db/transaction';
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types';
 
-import type { UpdatableField } from '../api-types'
-import type { ComponentQueries } from './component-queries'
-import type {
-  Component,
-  CreateComponentInput,
-  UpdateComponentInput
-} from './component-types'
+import type { UpdatableField } from '../api-types';
+import type { ComponentQueries } from './component-queries';
+import type { Component, CreateComponentInput, UpdateComponentInput } from './component-types';
 
 // ============================================================================
 // Mutation Operations
 // ============================================================================
 
 export class ComponentMutations {
-  private readonly run: ReturnType<typeof useDatabase>['run']
-  private readonly exec: ReturnType<typeof useDatabase>['exec']
-  private readonly queries: ComponentQueries
+  private readonly run: ReturnType<typeof useDatabase>['run'];
+  private readonly exec: ReturnType<typeof useDatabase>['exec'];
+  private readonly queries: ComponentQueries;
 
   constructor(queries: ComponentQueries) {
-    const db = useDatabase()
-    this.run = db.run
-    this.exec = db.exec
-    this.queries = queries
+    const db = useDatabase();
+    this.run = db.run;
+    this.exec = db.exec;
+    this.queries = queries;
   }
 
   /**
@@ -59,29 +56,29 @@ export class ComponentMutations {
         input.canBeRadical ? 1 : 0,
         input.kangxiNumber ?? null,
         input.kangxiMeaning ?? null,
-        input.radicalNameJapanese ?? null
+        input.radicalNameJapanese ?? null,
       ]
-    )
+    );
 
-    const idResult = this.exec('SELECT last_insert_rowid() as id')
-    const newId = idResult[0]?.values[0]?.[0] as number
+    const idResult = this.exec('SELECT last_insert_rowid() as id');
+    const newId = idResult[0]?.values[0]?.[0] as number;
 
-    const created = this.queries.getById(newId)
+    const created = this.queries.getById(newId);
     if (!created) {
-      throw new CreateError('Component')
+      throw new CreateError('Component');
     }
 
-    schedulePersist()
-    return created
+    schedulePersist();
+    return created;
   }
 
   /** Build SQL SET clauses from input object */
   private buildUpdateSets(input: UpdateComponentInput): {
-    sets: string[]
-    values: unknown[]
+    sets: string[];
+    values: unknown[];
   } {
-    const sets: string[] = []
-    const values: unknown[] = []
+    const sets: string[] = [];
+    const values: unknown[] = [];
 
     const fieldMap = {
       character: 'character',
@@ -92,23 +89,23 @@ export class ComponentMutations {
       description: 'description',
       kangxiNumber: 'kangxi_number',
       kangxiMeaning: 'kangxi_meaning',
-      radicalNameJapanese: 'radical_name_japanese'
-    } satisfies Partial<Record<UpdatableField<Component>, string>>
+      radicalNameJapanese: 'radical_name_japanese',
+    } satisfies Partial<Record<UpdatableField<Component>, string>>;
 
     for (const [key, column] of Object.entries(fieldMap)) {
-      const value = input[key as keyof UpdateComponentInput]
+      const value = input[key as keyof UpdateComponentInput];
       if (value !== undefined) {
-        sets.push(`${column} = ?`)
-        values.push(value)
+        sets.push(`${column} = ?`);
+        values.push(value);
       }
     }
 
     if (input.canBeRadical !== undefined) {
-      sets.push('can_be_radical = ?')
-      values.push(input.canBeRadical ? 1 : 0)
+      sets.push('can_be_radical = ?');
+      values.push(input.canBeRadical ? 1 : 0);
     }
 
-    return { sets, values }
+    return { sets, values };
   }
 
   /**
@@ -121,28 +118,28 @@ export class ComponentMutations {
    * @throws {UpdateError} If the update fails to return
    */
   update(id: number, input: UpdateComponentInput): Component {
-    const existing = this.queries.getById(id)
+    const existing = this.queries.getById(id);
     if (!existing) {
-      throw new EntityNotFoundError('Component', id)
+      throw new EntityNotFoundError('Component', id);
     }
 
-    const { sets, values } = this.buildUpdateSets(input)
+    const { sets, values } = this.buildUpdateSets(input);
     if (sets.length === 0) {
-      return existing
+      return existing;
     }
 
-    sets.push("updated_at = datetime('now')")
-    values.push(id)
+    sets.push("updated_at = datetime('now')");
+    values.push(id);
 
-    this.run(`UPDATE components SET ${sets.join(', ')} WHERE id = ?`, values)
+    this.run(`UPDATE components SET ${sets.join(', ')} WHERE id = ?`, values);
 
-    const updated = this.queries.getById(id)
+    const updated = this.queries.getById(id);
     if (!updated) {
-      throw new UpdateError('Component', id)
+      throw new UpdateError('Component', id);
     }
 
-    schedulePersist()
-    return updated
+    schedulePersist();
+    return updated;
   }
 
   /**
@@ -160,7 +157,7 @@ export class ComponentMutations {
     field: K,
     value: Component[K]
   ): Component {
-    return this.update(id, { [field]: value })
+    return this.update(id, { [field]: value });
   }
 
   /**
@@ -169,7 +166,24 @@ export class ComponentMutations {
    * @param id - Component id
    */
   remove(id: number): void {
-    this.run('DELETE FROM components WHERE id = ?', [id])
-    schedulePersist()
+    inTransaction(this.run, () => {
+      this.run(
+        `DELETE FROM component_grouping_members WHERE grouping_id IN (
+           SELECT id FROM component_groupings WHERE component_id = ?
+         )`,
+        [id]
+      );
+      this.run(
+        `DELETE FROM component_grouping_members WHERE occurrence_id IN (
+           SELECT id FROM component_occurrences WHERE component_id = ?
+         )`,
+        [id]
+      );
+      this.run('DELETE FROM component_groupings WHERE component_id = ?', [id]);
+      this.run('DELETE FROM component_forms WHERE component_id = ?', [id]);
+      this.run('DELETE FROM component_occurrences WHERE component_id = ?', [id]);
+      this.run('DELETE FROM components WHERE id = ?', [id]);
+    });
+    schedulePersist();
   }
 }

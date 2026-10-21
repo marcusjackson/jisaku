@@ -15,10 +15,7 @@
     viewBox="0 0 472.615 472.615"
   >
     <g stroke-width="0"></g>
-    <g
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    ></g>
+    <g stroke-linecap="round" stroke-linejoin="round"></g>
     <g>
       <g>
         <g>

@@ -3,16 +3,16 @@
  *
  * Note: Uses BaseDialog which renders via portal.
  * Tests use stubs to avoid portal issues.
- * Full behavior is tested via E2E tests.
+ * E2E coverage: e2e/component-detail-occurrences.test.ts (edits occurrence metadata).
  */
 
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { mount } from '@vue/test-utils';
+import { describe, expect, it } from 'vitest';
 
-import ComponentDetailDialogEditOccurrence from './ComponentDetailDialogEditOccurrence.vue'
+import ComponentDetailDialogEditOccurrence from './ComponentDetailDialogEditOccurrence.vue';
 
-import type { ComponentForm, OccurrenceWithKanji } from '@/api/component'
-import type { PositionType } from '@/api/position/position-types'
+import type { ComponentForm, OccurrenceWithKanji } from '@/api/component';
+import type { PositionType } from '@/api/position/position-types';
 
 describe('ComponentDetailDialogEditOccurrence', () => {
   const mockOccurrence: OccurrenceWithKanji = {
@@ -30,7 +30,7 @@ describe('ComponentDetailDialogEditOccurrence', () => {
       id: 10,
       character: '明',
       shortMeaning: 'bright',
-      strokeCount: 8
+      strokeCount: 8,
     },
     position: {
       id: 1,
@@ -40,9 +40,9 @@ describe('ComponentDetailDialogEditOccurrence', () => {
       description: null,
       displayOrder: 0,
       createdAt: '2024-01-01T00:00:00',
-      updatedAt: '2024-01-01T00:00:00'
-    }
-  }
+      updatedAt: '2024-01-01T00:00:00',
+    },
+  };
 
   const mockPositionTypes: PositionType[] = [
     {
@@ -53,7 +53,7 @@ describe('ComponentDetailDialogEditOccurrence', () => {
       description: null,
       displayOrder: 0,
       createdAt: '2024-01-01T00:00:00',
-      updatedAt: '2024-01-01T00:00:00'
+      updatedAt: '2024-01-01T00:00:00',
     },
     {
       id: 2,
@@ -63,9 +63,9 @@ describe('ComponentDetailDialogEditOccurrence', () => {
       description: null,
       displayOrder: 1,
       createdAt: '2024-01-01T00:00:00',
-      updatedAt: '2024-01-01T00:00:00'
-    }
-  ]
+      updatedAt: '2024-01-01T00:00:00',
+    },
+  ];
 
   const mockForms: ComponentForm[] = [
     {
@@ -77,9 +77,9 @@ describe('ComponentDetailDialogEditOccurrence', () => {
       usageNotes: null,
       displayOrder: 0,
       createdAt: '2024-01-01',
-      updatedAt: '2024-01-01'
-    }
-  ]
+      updatedAt: '2024-01-01',
+    },
+  ];
 
   function mountDialog(props = {}, modelValue = true) {
     return mount(ComponentDetailDialogEditOccurrence, {
@@ -87,12 +87,12 @@ describe('ComponentDetailDialogEditOccurrence', () => {
         open: modelValue,
         'onUpdate:open': (...args: unknown[]) => {
           // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-          args
+          args;
         },
         occurrence: mockOccurrence,
         positionTypes: mockPositionTypes,
         forms: mockForms,
-        ...props
+        ...props,
       },
       global: {
         stubs: {
@@ -105,12 +105,12 @@ describe('ComponentDetailDialogEditOccurrence', () => {
                 <slot />
                 <slot name="footer" />
               </div>
-            `
+            `,
           },
           BaseButton: {
             props: ['disabled', 'variant', 'type', 'form'],
             template:
-              '<button :type="type" :form="form" @click="$emit(\'click\')"><slot /></button>'
+              '<button :type="type" :form="form" @click="$emit(\'click\')"><slot /></button>',
           },
           BaseSelect: {
             props: ['modelValue', 'options', 'label', 'name', 'placeholder'],
@@ -124,7 +124,7 @@ describe('ComponentDetailDialogEditOccurrence', () => {
                   </option>
                 </select>
               </div>
-            `
+            `,
           },
           BaseSwitch: {
             props: ['modelValue', 'label'],
@@ -134,7 +134,7 @@ describe('ComponentDetailDialogEditOccurrence', () => {
                 <label>{{ label }}</label>
                 <input type="checkbox" :checked="modelValue" @change="$emit('update:modelValue', $event.target.checked)" />
               </div>
-            `
+            `,
           },
           BaseTextarea: {
             props: ['modelValue', 'label', 'name', 'placeholder', 'rows'],
@@ -148,94 +148,171 @@ describe('ComponentDetailDialogEditOccurrence', () => {
                   @input="$emit('update:modelValue', $event.target.value)"
                 />
               </div>
-            `
-          }
-        }
-      }
-    })
+            `,
+          },
+        },
+      },
+    });
   }
 
   it('renders dialog when open', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
-  })
+    const wrapper = mountDialog();
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
+  });
 
   it('does not render when closed', () => {
-    const wrapper = mountDialog({}, false)
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
-  })
+    const wrapper = mountDialog({}, false);
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+  });
 
   it('renders title', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.find('h2').text()).toBe('Edit Occurrence')
-  })
+    const wrapper = mountDialog();
+    expect(wrapper.find('h2').text()).toBe('Edit Occurrence');
+  });
 
   it('displays kanji character', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.text()).toContain('明')
-  })
+    const wrapper = mountDialog();
+    expect(wrapper.text()).toContain('明');
+  });
 
   it('displays kanji meaning', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.text()).toContain('bright')
-  })
+    const wrapper = mountDialog();
+    expect(wrapper.text()).toContain('bright');
+  });
 
   it('renders position type select', () => {
-    const wrapper = mountDialog()
+    const wrapper = mountDialog();
     // Find by label text
-    expect(wrapper.text()).toContain('Position Type')
-    expect(wrapper.findAll('.base-select').length).toBeGreaterThanOrEqual(1)
-  })
+    expect(wrapper.text()).toContain('Position Type');
+    expect(wrapper.findAll('.base-select').length).toBeGreaterThanOrEqual(1);
+  });
 
   it('renders form select when forms exist', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.text()).toContain('Component Form')
-    expect(wrapper.findAll('.base-select').length).toBeGreaterThanOrEqual(2)
-  })
+    const wrapper = mountDialog();
+    expect(wrapper.text()).toContain('Component Form');
+    expect(wrapper.findAll('.base-select').length).toBeGreaterThanOrEqual(2);
+  });
 
   it('hides form select when no forms exist', () => {
-    const wrapper = mountDialog({ forms: [] })
-    expect(wrapper.text()).not.toContain('Component Form')
-  })
+    const wrapper = mountDialog({ forms: [] });
+    expect(wrapper.text()).not.toContain('Component Form');
+  });
 
   it('renders is radical switch', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.text()).toContain('Is Radical')
-  })
+    const wrapper = mountDialog();
+    expect(wrapper.text()).toContain('Is Radical');
+  });
 
   it('renders analysis notes textarea', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.text()).toContain('Analysis Notes')
-    expect(wrapper.find('.base-textarea').exists()).toBe(true)
-  })
+    const wrapper = mountDialog();
+    expect(wrapper.text()).toContain('Analysis Notes');
+    expect(wrapper.find('.base-textarea').exists()).toBe(true);
+  });
 
   it('renders cancel button', () => {
-    const wrapper = mountDialog()
+    const wrapper = mountDialog();
     const cancelButton = wrapper.findAll('button').find((b) => {
-      return b.text() === 'Cancel'
-    })
-    expect(cancelButton?.exists()).toBe(true)
-  })
+      return b.text() === 'Cancel';
+    });
+    expect(cancelButton?.exists()).toBe(true);
+  });
 
   it('renders save button', () => {
-    const wrapper = mountDialog()
+    const wrapper = mountDialog();
     const saveButton = wrapper.findAll('button').find((b) => {
-      return b.text() === 'Save'
-    })
-    expect(saveButton?.exists()).toBe(true)
-  })
+      return b.text() === 'Save';
+    });
+    expect(saveButton?.exists()).toBe(true);
+  });
 
   it('emits cancel when cancel button is clicked', async () => {
-    const wrapper = mountDialog()
+    const wrapper = mountDialog();
     const cancelButton = wrapper.findAll('button').find((b) => {
-      return b.text() === 'Cancel'
-    })
-    await cancelButton?.trigger('click')
-    expect(wrapper.emitted('cancel')).toBeTruthy()
-  })
+      return b.text() === 'Cancel';
+    });
+    await cancelButton?.trigger('click');
+    expect(wrapper.emitted('cancel')).toBeTruthy();
+  });
 
   it('does not render content when occurrence is null', () => {
-    const wrapper = mountDialog({ occurrence: null })
-    expect(wrapper.find('.dialog-edit-occurrence-content').exists()).toBe(false)
-  })
-})
+    const wrapper = mountDialog({ occurrence: null });
+    expect(wrapper.find('.dialog-edit-occurrence-content').exists()).toBe(false);
+  });
+
+  describe('submit', () => {
+    async function submit(wrapper: ReturnType<typeof mountDialog>) {
+      await wrapper.find('form').trigger('submit');
+      return wrapper.emitted('submit')?.[0]?.[0];
+    }
+
+    it('emits the occurrence values unchanged', async () => {
+      const wrapper = mountDialog();
+      expect(await submit(wrapper)).toEqual({
+        positionTypeId: 1,
+        componentFormId: null,
+        isRadical: false,
+        analysisNotes: 'Test notes',
+      });
+    });
+
+    it('converts selected ids to numbers', async () => {
+      const wrapper = mountDialog();
+      const selects = wrapper.findAll('select');
+      await selects[0]!.setValue('2');
+      await selects[1]!.setValue('1');
+      expect(await submit(wrapper)).toMatchObject({
+        positionTypeId: 2,
+        componentFormId: 1,
+      });
+    });
+
+    it('converts None selections to null', async () => {
+      const wrapper = mountDialog({
+        occurrence: { ...mockOccurrence, componentFormId: 1 },
+      });
+      const selects = wrapper.findAll('select');
+      await selects[0]!.setValue('__none__');
+      await selects[1]!.setValue('__none__');
+      expect(await submit(wrapper)).toMatchObject({
+        positionTypeId: null,
+        componentFormId: null,
+      });
+    });
+
+    it('sends the radical flag', async () => {
+      const wrapper = mountDialog();
+      await wrapper.find('input[type="checkbox"]').setValue(true);
+      expect(await submit(wrapper)).toMatchObject({ isRadical: true });
+    });
+
+    it('trims the notes and sends blank notes as null', async () => {
+      const wrapper = mountDialog();
+      await wrapper.find('textarea').setValue('  padded  ');
+      expect(await submit(wrapper)).toMatchObject({ analysisNotes: 'padded' });
+
+      await wrapper.find('textarea').setValue('   ');
+      await wrapper.find('form').trigger('submit');
+      expect(wrapper.emitted('submit')?.[1]?.[0]).toMatchObject({ analysisNotes: null });
+    });
+  });
+
+  describe('reopening', () => {
+    it('resets the fields to the occurrence values', async () => {
+      const wrapper = mountDialog();
+      await wrapper.findAll('select')[0]!.setValue('2');
+      await wrapper.find('input[type="checkbox"]').setValue(true);
+      await wrapper.find('textarea').setValue('changed');
+
+      await wrapper.setProps({ open: false });
+      await wrapper.setProps({ open: true });
+      await wrapper.find('form').trigger('submit');
+
+      expect(wrapper.emitted('submit')?.[0]?.[0]).toEqual({
+        positionTypeId: 1,
+        componentFormId: null,
+        isRadical: false,
+        analysisNotes: 'Test notes',
+      });
+    });
+  });
+});

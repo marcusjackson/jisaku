@@ -6,10 +6,10 @@
  * Full integration testing should be done via E2E tests.
  */
 
-import { render } from '@testing-library/vue'
-import { describe, expect, it, vi } from 'vitest'
+import { render } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import ComponentListRoot from './ComponentListRoot.vue'
+import ComponentListRoot from './ComponentListRoot.vue';
 
 // Mock database
 vi.mock('@/shared/composables/use-database', () => ({
@@ -17,19 +17,19 @@ vi.mock('@/shared/composables/use-database', () => ({
     isInitializing: { value: false },
     isInitialized: { value: false },
     initError: { value: null },
-    initialize: vi.fn().mockResolvedValue(undefined)
-  })
-}))
+    initialize: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
 
 // Mock router
 vi.mock('vue-router', () => ({
   useRoute: () => ({
-    query: {}
+    query: {},
   }),
   useRouter: () => ({
-    replace: vi.fn()
-  })
-}))
+    replace: vi.fn(),
+  }),
+}));
 
 // Mock repositories
 vi.mock('@/api/component', () => ({
@@ -37,22 +37,22 @@ vi.mock('@/api/component', () => ({
     search: vi.fn().mockReturnValue([]),
     getAll: vi.fn().mockReturnValue([]),
     getFormsCount: vi.fn().mockReturnValue(new Map()),
-    getGroupingsCount: vi.fn().mockReturnValue(new Map())
-  })
-}))
+    getGroupingsCount: vi.fn().mockReturnValue(new Map()),
+  }),
+}));
 
 describe('ComponentListRoot', () => {
   it('renders without crashing', () => {
-    const { container } = render(ComponentListRoot)
+    const { container } = render(ComponentListRoot);
 
     // Component should mount and render
-    expect(container).toBeTruthy()
-  })
+    expect(container).toBeTruthy();
+  });
 
   it('mounts with child components', () => {
-    const { container } = render(ComponentListRoot)
+    const { container } = render(ComponentListRoot);
 
     // Should have some content (loading, filters, or list)
-    expect(container.innerHTML.length).toBeGreaterThan(0)
-  })
-})
+    expect(container.innerHTML.length).toBeGreaterThan(0);
+  });
+});

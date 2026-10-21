@@ -4,11 +4,17 @@
  * Tests for the component list data composable.
  */
 
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { useComponentListData } from './use-component-list-data'
+const toastError = vi.hoisted(() => vi.fn());
 
-import type { Component, ComponentFilters } from '@/api/component'
+vi.mock('@/shared/composables', () => ({
+  useToast: () => ({ error: toastError, success: vi.fn() }),
+}));
+
+import { useComponentListData } from './use-component-list-data';
+
+import type { Component, ComponentFilters } from '@/api/component';
 
 // Mock data
 const mockComponents: Component[] = [
@@ -25,7 +31,7 @@ const mockComponents: Component[] = [
     kangxiMeaning: 'one',
     radicalNameJapanese: null,
     createdAt: '2024-01-01',
-    updatedAt: '2024-01-01'
+    updatedAt: '2024-01-01',
   },
   {
     id: 2,
@@ -40,175 +46,206 @@ const mockComponents: Component[] = [
     kangxiMeaning: 'line',
     radicalNameJapanese: null,
     createdAt: '2024-01-01',
-    updatedAt: '2024-01-01'
-  }
-]
+    updatedAt: '2024-01-01',
+  },
+];
 
 const mockFormsCount = new Map([
   [1, 2],
-  [2, 0]
-])
+  [2, 0],
+]);
 const mockGroupingsCount = new Map([
   [1, 1],
-  [2, 0]
-])
+  [2, 0],
+]);
+
+let searchError: Error | null = null;
 
 // Mock repositories
 vi.mock('@/api/component', () => ({
   useComponentRepository: () => ({
-    search: vi
-      .fn()
-      .mockImplementation((filters: Partial<ComponentFilters> = {}) => {
-        let results = [...mockComponents]
+    search: vi.fn().mockImplementation((filters: Partial<ComponentFilters> = {}) => {
+      if (searchError) throw searchError;
+      let results = [...mockComponents];
 
-        // Handle kangxiSearch filter
-        if (filters.kangxiSearch) {
-          const searchLower = filters.kangxiSearch.toLowerCase().trim()
-          const num = parseInt(searchLower, 10)
-          results = results.filter((comp) => {
-            if (!isNaN(num) && comp.kangxiNumber === num) return true
-            if (comp.kangxiMeaning?.toLowerCase().includes(searchLower))
-              return true
-            return false
-          })
-        }
+      // Handle kangxiSearch filter
+      if (filters.kangxiSearch) {
+        const searchLower = filters.kangxiSearch.toLowerCase().trim();
+        const num = parseInt(searchLower, 10);
+        results = results.filter((comp) => {
+          if (!isNaN(num) && comp.kangxiNumber === num) return true;
+          if (comp.kangxiMeaning?.toLowerCase().includes(searchLower)) return true;
+          return false;
+        });
+      }
 
-        return results
-      }),
+      return results;
+    }),
     getAll: vi.fn().mockReturnValue(mockComponents),
     getFormsCount: vi.fn().mockReturnValue(mockFormsCount),
-    getGroupingsCount: vi.fn().mockReturnValue(mockGroupingsCount)
-  })
-}))
+    getGroupingsCount: vi.fn().mockReturnValue(mockGroupingsCount),
+  }),
+}));
 
 describe('useComponentListData', () => {
   describe('initial state', () => {
     it('initializes with empty component list', () => {
-      const { componentList } = useComponentListData()
-      expect(componentList.value).toEqual([])
-    })
+      const { componentList } = useComponentListData();
+      expect(componentList.value).toEqual([]);
+    });
 
     it('initializes with no fetch error', () => {
-      const { fetchError } = useComponentListData()
-      expect(fetchError.value).toBeNull()
-    })
-  })
+      const { fetchError } = useComponentListData();
+      expect(fetchError.value).toBeNull();
+    });
+  });
 
   describe('loadComponents', () => {
     it('loads component list from repository', () => {
-      const { componentList, loadComponents } = useComponentListData()
+      const { componentList, loadComponents } = useComponentListData();
 
-      loadComponents({})
+      loadComponents({});
 
-      expect(componentList.value).toEqual(mockComponents)
-    })
+      expect(componentList.value).toEqual(mockComponents);
+    });
 
     it('filters by character', () => {
-      const { componentList, loadComponents } = useComponentListData()
+      const { componentList, loadComponents } = useComponentListData();
 
-      loadComponents({ character: '一' })
+      loadComponents({ character: '一' });
 
-      expect(componentList.value).toHaveLength(1)
-      expect(componentList.value[0]!.character).toBe('一')
-    })
+      expect(componentList.value).toHaveLength(1);
+      expect(componentList.value[0]!.character).toBe('一');
+    });
 
     it('filters by searchKeywords', () => {
-      const { loadComponents } = useComponentListData()
+      const { loadComponents } = useComponentListData();
 
-      loadComponents({ searchKeywords: 'test' })
+      loadComponents({ searchKeywords: 'test' });
 
       // Keywords passed to search method
-      expect(true).toBe(true)
-    })
+      expect(true).toBe(true);
+    });
 
     it('filters by canBeRadical', () => {
-      const { loadComponents } = useComponentListData()
+      const { loadComponents } = useComponentListData();
 
-      loadComponents({ canBeRadical: true })
+      loadComponents({ canBeRadical: true });
 
       // Boolean filter passed to search method
-      expect(true).toBe(true)
-    })
+      expect(true).toBe(true);
+    });
 
     it('filters by stroke count range', () => {
-      const { loadComponents } = useComponentListData()
+      const { loadComponents } = useComponentListData();
 
-      loadComponents({ strokeCountMin: 1, strokeCountMax: 5 })
+      loadComponents({ strokeCountMin: 1, strokeCountMax: 5 });
 
       // Range filters passed to search method
-      expect(true).toBe(true)
-    })
+      expect(true).toBe(true);
+    });
 
     it('filters by kangxi search (number)', () => {
-      const { componentList, loadComponents } = useComponentListData()
+      const { componentList, loadComponents } = useComponentListData();
 
-      loadComponents({ kangxiSearch: '1' })
+      loadComponents({ kangxiSearch: '1' });
 
-      expect(componentList.value).toHaveLength(1)
-      expect(componentList.value[0]!.kangxiNumber).toBe(1)
-    })
+      expect(componentList.value).toHaveLength(1);
+      expect(componentList.value[0]!.kangxiNumber).toBe(1);
+    });
 
     it('filters by kangxi search (meaning)', () => {
-      const { componentList, loadComponents } = useComponentListData()
+      const { componentList, loadComponents } = useComponentListData();
 
-      loadComponents({ kangxiSearch: 'one' })
+      loadComponents({ kangxiSearch: 'one' });
 
-      expect(componentList.value).toHaveLength(1)
-      expect(componentList.value[0]!.kangxiMeaning).toBe('one')
-    })
+      expect(componentList.value).toHaveLength(1);
+      expect(componentList.value[0]!.kangxiMeaning).toBe('one');
+    });
 
     it('filters by description presence (has)', () => {
-      const { componentList, loadComponents } = useComponentListData()
+      const { componentList, loadComponents } = useComponentListData();
 
-      loadComponents({ descriptionPresence: 'has' })
+      loadComponents({ descriptionPresence: 'has' });
 
-      expect(componentList.value).toHaveLength(1)
-      expect(componentList.value[0]!.description).toBe('One')
-    })
+      expect(componentList.value).toHaveLength(1);
+      expect(componentList.value[0]!.description).toBe('One');
+    });
 
     it('filters by description presence (missing)', () => {
-      const { componentList, loadComponents } = useComponentListData()
+      const { componentList, loadComponents } = useComponentListData();
 
-      loadComponents({ descriptionPresence: 'missing' })
+      loadComponents({ descriptionPresence: 'missing' });
 
-      expect(componentList.value).toHaveLength(1)
-      expect(componentList.value[0]!.description).toBeNull()
-    })
+      expect(componentList.value).toHaveLength(1);
+      expect(componentList.value[0]!.description).toBeNull();
+    });
 
     it('filters by forms presence (has)', () => {
-      const { componentList, loadComponents } = useComponentListData()
+      const { componentList, loadComponents } = useComponentListData();
 
-      loadComponents({ formsPresence: 'has' })
+      loadComponents({ formsPresence: 'has' });
 
-      expect(componentList.value).toHaveLength(1)
-      expect(componentList.value[0]!.id).toBe(1)
-    })
+      expect(componentList.value).toHaveLength(1);
+      expect(componentList.value[0]!.id).toBe(1);
+    });
 
     it('filters by forms presence (missing)', () => {
-      const { componentList, loadComponents } = useComponentListData()
+      const { componentList, loadComponents } = useComponentListData();
 
-      loadComponents({ formsPresence: 'missing' })
+      loadComponents({ formsPresence: 'missing' });
 
-      expect(componentList.value).toHaveLength(1)
-      expect(componentList.value[0]!.id).toBe(2)
-    })
+      expect(componentList.value).toHaveLength(1);
+      expect(componentList.value[0]!.id).toBe(2);
+    });
 
     it('filters by groupings presence (has)', () => {
-      const { componentList, loadComponents } = useComponentListData()
+      const { componentList, loadComponents } = useComponentListData();
 
-      loadComponents({ groupingsPresence: 'has' })
+      loadComponents({ groupingsPresence: 'has' });
 
-      expect(componentList.value).toHaveLength(1)
-      expect(componentList.value[0]!.id).toBe(1)
-    })
+      expect(componentList.value).toHaveLength(1);
+      expect(componentList.value[0]!.id).toBe(1);
+    });
 
     it('filters by groupings presence (missing)', () => {
-      const { componentList, loadComponents } = useComponentListData()
+      const { componentList, loadComponents } = useComponentListData();
 
-      loadComponents({ groupingsPresence: 'missing' })
+      loadComponents({ groupingsPresence: 'missing' });
 
-      expect(componentList.value).toHaveLength(1)
-      expect(componentList.value[0]!.id).toBe(2)
-    })
-  })
-})
+      expect(componentList.value).toHaveLength(1);
+      expect(componentList.value[0]!.id).toBe(2);
+    });
+  });
+
+  describe('load failures', () => {
+    afterEach(() => {
+      searchError = null;
+    });
+
+    it('toasts the error and sets fetchError when a load throws', () => {
+      toastError.mockClear();
+      searchError = new Error('driver error');
+      const { fetchError, loadComponents } = useComponentListData();
+
+      loadComponents({});
+
+      expect(fetchError.value?.message).toBe('driver error');
+      expect(toastError).toHaveBeenCalledWith('driver error');
+    });
+
+    it('keeps the previous list and clears fetchError on the next load', () => {
+      const { componentList, fetchError, loadComponents } = useComponentListData();
+      loadComponents({});
+      const previous = componentList.value;
+
+      searchError = new Error('driver error');
+      loadComponents({});
+      expect(componentList.value).toBe(previous);
+
+      searchError = null;
+      loadComponents({});
+      expect(fetchError.value).toBeNull();
+    });
+  });
+});

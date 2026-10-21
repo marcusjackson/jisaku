@@ -5,42 +5,42 @@
  * Classification Types settings section (CRUD + reordering).
  */
 
-import { onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue';
 
-import { useClassificationTypeRepository } from '@/api/classification'
+import { useClassificationTypeRepository } from '@/api/classification';
 
-import { useToast } from '@/shared/composables/use-toast'
+import { useToast } from '@/shared/composables/use-toast';
 
-import { emptyClassificationTypeForm } from '../settings-types'
+import { emptyClassificationTypeForm } from '../settings-types';
 import {
   loadClassificationTypes,
   makeCreateHandlers,
   makeDeleteHandlers,
-  makeEditHandlers
-} from '../utils/classification-type-handlers'
-import { makeReorderHandlers } from '../utils/classification-type-reorder-handlers'
+  makeEditHandlers,
+} from '../utils/classification-type-handlers';
+import { makeReorderHandlers } from '../utils/classification-type-reorder-handlers';
 
 import type {
   ClassificationTypeFormValues,
-  ClassificationTypeSectionState
-} from '../settings-types'
-import type { ClassificationType } from '@/api/classification'
-import type { Ref } from 'vue'
+  ClassificationTypeSectionState,
+} from '../settings-types';
+import type { ClassificationType } from '@/api/classification';
+import type { Ref } from 'vue';
 
-type UseClassificationTypeSectionReturn = {
-  classificationTypes: Ref<ClassificationType[]>
-  showCreateDialog: Ref<boolean>
-  showEditDialog: Ref<boolean>
-  showDeleteDialog: Ref<boolean>
-  editingItem: Ref<ClassificationType | null>
-  deletingItem: Ref<ClassificationType | null>
-  deleteUsageCount: Ref<number>
-  createForm: Ref<ClassificationTypeFormValues>
-  editForm: Ref<ClassificationTypeFormValues>
+type UseSettingsClassificationTypeSectionReturn = {
+  classificationTypes: Ref<ClassificationType[]>;
+  showCreateDialog: Ref<boolean>;
+  showEditDialog: Ref<boolean>;
+  showDeleteDialog: Ref<boolean>;
+  editingItem: Ref<ClassificationType | null>;
+  deletingItem: Ref<ClassificationType | null>;
+  deleteUsageCount: Ref<number>;
+  createForm: Ref<ClassificationTypeFormValues>;
+  editForm: Ref<ClassificationTypeFormValues>;
 } & ReturnType<typeof makeCreateHandlers> &
   ReturnType<typeof makeEditHandlers> &
   ReturnType<typeof makeDeleteHandlers> &
-  ReturnType<typeof makeReorderHandlers>
+  ReturnType<typeof makeReorderHandlers>;
 
 /**
  * Manages state and handlers for the Classification Types settings section.
@@ -48,9 +48,9 @@ type UseClassificationTypeSectionReturn = {
  *
  * @returns Reactive state and CRUD/reorder handlers for classification types
  */
-export function useClassificationTypeSection(): UseClassificationTypeSectionReturn {
-  const repo = useClassificationTypeRepository()
-  const toast = useToast()
+export function useSettingsClassificationTypeSection(): UseSettingsClassificationTypeSectionReturn {
+  const repo = useClassificationTypeRepository();
+  const toast = useToast();
   const s: ClassificationTypeSectionState = {
     repo,
     toast,
@@ -62,12 +62,12 @@ export function useClassificationTypeSection(): UseClassificationTypeSectionRetu
     deletingItem: ref(null),
     deleteUsageCount: ref(0),
     createForm: ref(emptyClassificationTypeForm()),
-    editForm: ref(emptyClassificationTypeForm())
-  }
+    editForm: ref(emptyClassificationTypeForm()),
+  };
 
   onMounted(() => {
-    loadClassificationTypes(s)
-  })
+    loadClassificationTypes(s);
+  });
 
   return {
     classificationTypes: s.classificationTypes,
@@ -82,6 +82,6 @@ export function useClassificationTypeSection(): UseClassificationTypeSectionRetu
     ...makeCreateHandlers(s),
     ...makeEditHandlers(s),
     ...makeDeleteHandlers(s),
-    ...makeReorderHandlers(s)
-  }
+    ...makeReorderHandlers(s),
+  };
 }

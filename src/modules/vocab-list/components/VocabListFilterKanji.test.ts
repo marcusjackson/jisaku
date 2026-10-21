@@ -2,12 +2,12 @@
  * VocabListFilterKanji Tests
  */
 
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import VocabListFilterKanji from './VocabListFilterKanji.vue'
+import VocabListFilterKanji from './VocabListFilterKanji.vue';
 
-import type { Kanji } from '@/api/kanji'
+import type { Kanji } from '@/api/kanji';
 
 const mockKanjiList: Kanji[] = [
   {
@@ -29,7 +29,7 @@ const mockKanjiList: Kanji[] = [
     identifier: null,
     radicalStrokeCount: null,
     createdAt: '',
-    updatedAt: ''
+    updatedAt: '',
   },
   {
     id: 2,
@@ -50,26 +50,24 @@ const mockKanjiList: Kanji[] = [
     identifier: null,
     radicalStrokeCount: null,
     createdAt: '',
-    updatedAt: ''
-  }
-]
+    updatedAt: '',
+  },
+];
 
 describe('VocabListFilterKanji', () => {
   it('renders combobox', () => {
     render(VocabListFilterKanji, {
-      props: { modelValue: [], allKanji: mockKanjiList }
-    })
+      props: { modelValue: [], allKanji: mockKanjiList },
+    });
 
-    expect(
-      screen.getByRole('combobox', { name: /contains kanji/i })
-    ).toBeInTheDocument()
-  })
+    expect(screen.getByRole('combobox', { name: /contains kanji/i })).toBeInTheDocument();
+  });
 
   it('shows search placeholder when no selection', () => {
     render(VocabListFilterKanji, {
-      props: { modelValue: [], allKanji: mockKanjiList }
-    })
+      props: { modelValue: [], allKanji: mockKanjiList },
+    });
 
-    expect(screen.getByPlaceholderText('Search kanji...')).toBeInTheDocument()
-  })
-})
+    expect(screen.getByPlaceholderText('Search kanji...')).toBeInTheDocument();
+  });
+});

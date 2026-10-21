@@ -5,31 +5,34 @@
  * Manages on-yomi and kun-yomi CRUD operations.
  */
 
-import {
-  processKunReadings,
-  processOnReadings
-} from '../utils/reading-processing'
+import { useDatabase } from '@/shared/composables/use-database';
 
-import type { ReadingsSaveData } from '../kanji-detail-types'
-import type { KunReading, OnReading } from '@/api/kanji'
-import type { useKunReadingRepository } from '@/api/kanji/kun-reading-repository'
-import type { useOnReadingRepository } from '@/api/kanji/on-reading-repository'
-import type { Ref } from 'vue'
+import {
+  normalizeReadings,
+  processKunReadings,
+  processOnReadings,
+} from '../utils/reading-processing';
+
+import type { ReadingsSaveData } from '../kanji-detail-types';
+import type { KunReading, OnReading } from '@/api/kanji';
+import type { useKunReadingRepository } from '@/api/kanji/kun-reading-repository';
+import type { useOnReadingRepository } from '@/api/kanji/on-reading-repository';
+import type { Ref } from 'vue';
 
 interface Repositories {
-  kunReadingRepo: ReturnType<typeof useKunReadingRepository>
-  onReadingRepo: ReturnType<typeof useOnReadingRepository>
+  kunReadingRepo: ReturnType<typeof useKunReadingRepository>;
+  onReadingRepo: ReturnType<typeof useOnReadingRepository>;
 }
 
 interface State {
-  kanjiId: Ref<number>
-  kunReadings: Ref<KunReading[]>
-  onReadings: Ref<OnReading[]>
+  kanjiId: Ref<number>;
+  kunReadings: Ref<KunReading[]>;
+  onReadings: Ref<OnReading[]>;
 }
 
 interface UseKanjiDetailReadingsHandlersReturn {
-  handleSaveReadings: (data: ReadingsSaveData) => void
-  reloadReadings: () => void
+  handleSaveReadings: (data: ReadingsSaveData) => void;
+  reloadReadings: () => void;
 }
 
 /**
@@ -43,31 +46,25 @@ export function useKanjiDetailReadingsHandlers(
   state: State,
   repos: Repositories
 ): UseKanjiDetailReadingsHandlersReturn {
-  const { kanjiId, kunReadings, onReadings } = state
-  const { kunReadingRepo, onReadingRepo } = repos
+  const { kanjiId, kunReadings, onReadings } = state;
+  const { kunReadingRepo, onReadingRepo } = repos;
 
-  function handleSaveReadings(data: ReadingsSaveData): void {
-    processOnReadings(
-      data.onReadings,
-      onReadings.value,
-      kanjiId.value,
-      onReadingRepo
-    )
-    processKunReadings(
-      data.kunReadings,
-      kunReadings.value,
-      kanjiId.value,
-      kunReadingRepo
-    )
-    reloadReadings()
+  const { transaction } = useDatabase();
+
+  function handleSaveReadings(payload: ReadingsSaveData): void {
+    const data = normalizeReadings(payload);
+    // State is refreshed only after the commit, so a rollback leaves the page as it was.
+    transaction(() => {
+      processOnReadings(data.onReadings, onReadings.value, kanjiId.value, onReadingRepo);
+      processKunReadings(data.kunReadings, kunReadings.value, kanjiId.value, kunReadingRepo);
+    });
+    reloadReadings();
   }
 
   function reloadReadings(): void {
-    kunReadings.value = kunReadingRepo.getByParentId(kanjiId.value)
-    onReadings.value = onReadingRepo.getByParentId(kanjiId.value)
+    kunReadings.value = kunReadingRepo.getByParentId(kanjiId.value);
+    onReadings.value = onReadingRepo.getByParentId(kanjiId.value);
   }
 
-  return { handleSaveReadings, reloadReadings }
+  return { handleSaveReadings, reloadReadings };
 }
-
-export type { ReadingLevel } from '@/api/kanji'

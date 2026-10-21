@@ -7,12 +7,12 @@
  */
 
 /** Entity type for entity search */
-export type EntityType = 'kanji' | 'component'
+export type EntityType = 'kanji' | 'component';
 
 /** Entity option for entity search */
 export interface EntityOption {
-  id: number
-  character: string
-  shortMeaning: string | null
-  strokeCount: number | null
+  id: number;
+  character: string;
+  shortMeaning: string | null;
+  strokeCount: number | null;
 }

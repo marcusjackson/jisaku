@@ -32,9 +32,6 @@ function handleCancel(): void {
     description="Enter the component character to create a new entry."
     title="Add New Component"
   >
-    <ComponentListDialogCreate
-      @cancel="handleCancel"
-      @created="handleCreated"
-    />
+    <ComponentListDialogCreate @cancel="handleCancel" @created="handleCreated" />
   </BaseDialog>
 </template>

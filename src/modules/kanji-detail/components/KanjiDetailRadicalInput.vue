@@ -7,7 +7,7 @@
 
 import { computed } from 'vue'
 
-import { BaseCombobox } from '@/base/components'
+import { BaseButton, BaseCombobox } from '@/base/components'
 
 import type { Component as RadicalComponent } from '@/api/component/component-types'
 import type { ComboboxOption } from '@/base/components'
@@ -38,6 +38,15 @@ const handleRadicalChange = (val: string | number | null | undefined) => {
   if (val != null) newRadicalCharacter.value = undefined
 }
 
+const hasRadical = computed(
+  () => radicalValue.value != null || Boolean(newRadicalCharacter.value)
+)
+
+const handleClearRadical = () => {
+  radicalValue.value = null
+  newRadicalCharacter.value = undefined
+}
+
 const handleCreateRadical = (character: string) => {
   emit('createRadical', character)
 }
@@ -54,33 +63,27 @@ const handleCreateRadical = (character: string) => {
       @update:model-value="handleRadicalChange"
     >
       <template #empty="{ searchTerm }">
-        <div
-          v-if="searchTerm && searchTerm.length === 1"
-          class="create-new"
-        >
-          <!-- Raw <button>: inline create action needs custom list-item styling incompatible with BaseButton -->
-          <button
-            class="create-btn"
-            type="button"
-            @click="handleCreateRadical(searchTerm)"
-          >
+        <div v-if="searchTerm && searchTerm.length === 1" class="create-new">
+          <!-- Raw <button>: search-result row (inline create), bare layout incompatible with BaseButton -->
+          <button class="create-btn" type="button" @click="handleCreateRadical(searchTerm)">
             Create new "{{ searchTerm }}"
           </button>
         </div>
-        <div
-          v-else
-          class="empty"
-        >
-          No results
-        </div>
+        <div v-else class="empty">No results</div>
       </template>
     </BaseCombobox>
-    <p
-      v-if="newRadicalCharacter"
-      class="notice"
-      data-testid="radical-creation-notice"
+    <BaseButton
+      v-if="hasRadical"
+      class="clear-radical"
+      data-testid="radical-clear-button"
+      size="sm"
+      variant="ghost"
+      @click="handleClearRadical"
     >
-      New: <strong>{{ newRadicalCharacter }}</strong>
+      Clear radical
+    </BaseButton>
+    <p v-if="newRadicalCharacter" class="notice" data-testid="radical-creation-notice">
+      New: <strong lang="ja">{{ newRadicalCharacter }}</strong>
     </p>
   </div>
 </template>
@@ -88,6 +91,11 @@ const handleCreateRadical = (character: string) => {
 <style scoped>
 .radical-input {
   display: contents;
+}
+
+.clear-radical {
+  grid-column: 1 / -1;
+  justify-self: start;
 }
 
 .create-new,
@@ -108,14 +116,15 @@ const handleCreateRadical = (character: string) => {
 }
 
 .create-btn:hover,
-.create-btn:focus {
+.create-btn:focus-visible {
   border-color: var(--color-primary);
   background: var(--color-primary);
   color: var(--color-text-inverse);
 }
 
-.create-btn:focus {
+.create-btn:focus-visible {
   box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .empty {

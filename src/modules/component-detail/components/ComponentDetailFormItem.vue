@@ -34,10 +34,7 @@ const canMoveDown = computed(() => props.index < props.total - 1)
 </script>
 
 <template>
-  <div
-    class="form-item"
-    :data-testid="`form-item-${form.id}`"
-  >
+  <div class="form-item" :data-testid="`form-item-${form.id}`">
     <div class="form-item-reorder">
       <BaseButton
         aria-label="Move up"
@@ -61,35 +58,19 @@ const canMoveDown = computed(() => props.index < props.total - 1)
 
     <div class="form-item-content">
       <div class="form-item-header">
-        <span class="form-item-character">{{ form.formCharacter }}</span>
-        <span
-          v-if="form.formName"
-          class="form-item-name"
-        >
+        <span class="form-item-character" lang="ja">{{ form.formCharacter }}</span>
+        <span v-if="form.formName" class="form-item-name">
           {{ form.formName }}
         </span>
-        <span
-          v-if="form.strokeCount"
-          class="form-item-strokes"
-        >
-          {{ form.strokeCount }}画
-        </span>
+        <span v-if="form.strokeCount" class="form-item-strokes"> {{ form.strokeCount }}画 </span>
       </div>
-      <p
-        v-if="form.usageNotes"
-        class="form-item-notes"
-      >
+      <p v-if="form.usageNotes" class="form-item-notes">
         {{ form.usageNotes }}
       </p>
     </div>
 
     <div class="form-item-actions">
-      <BaseButton
-        aria-label="Edit"
-        size="sm"
-        variant="secondary"
-        @click="emit('edit')"
-      >
+      <BaseButton aria-label="Edit" size="sm" variant="secondary" @click="emit('edit')">
         Edit
       </BaseButton>
       <BaseButton

@@ -1,72 +1,81 @@
 /**
  * Database Test Seeders - Functions for inserting test data into the database.
  */
-import type { CreateKanjiClassificationInput } from '@/api/classification/classification-types'
+import type { CreateKanjiClassificationInput } from '@/api/classification/classification-types';
 import type {
   Component,
   CreateComponentInput,
-  CreateComponentOccurrenceInput
-} from '@/api/component/component-types'
-import type { CreateGroupMemberInput } from '@/api/kanji/group-member-types'
-import type { CreateKanjiInput, Kanji } from '@/api/kanji/kanji-types'
-import type { CreateKanjiMeaningInput } from '@/api/kanji/meaning-types'
-import type { CreateReadingGroupInput } from '@/api/kanji/reading-group-types'
-import type {
-  CreateKunReadingInput,
-  CreateOnReadingInput
-} from '@/api/kanji/reading-types'
+  CreateComponentOccurrenceInput,
+} from '@/api/component/component-types';
+import type { CreateGroupMemberInput } from '@/api/kanji/group-member-types';
+import type { CreateKanjiInput, Kanji } from '@/api/kanji/kanji-types';
+import type { CreateKanjiMeaningInput } from '@/api/kanji/meaning-types';
+import type { CreateReadingGroupInput } from '@/api/kanji/reading-group-types';
+import type { CreateKunReadingInput, CreateOnReadingInput } from '@/api/kanji/reading-types';
 import type {
   CreateVocabKanjiInput,
-  CreateVocabularyInput
-} from '@/api/vocabulary/vocabulary-types'
-import type { Database } from 'sql.js'
+  CreateVocabularyInput,
+} from '@/api/vocabulary/vocabulary-types';
+import type { Database } from 'sql.js';
 
 // =============================================================================
 // Row Converters
 // =============================================================================
 
-/** Convert a raw SQL row array to a typed Kanji object. */
-function rowToKanji(row: unknown[]): Kanji {
-  return {
-    id: row[0] as number,
-    character: row[1] as string,
-    strokeCount: row[2] as number | null,
-    shortMeaning: row[3] as string | null,
-    searchKeywords: row[4] as string | null,
-    radicalId: row[5] as number | null,
-    jlptLevel: row[6] as Kanji['jlptLevel'],
-    joyoLevel: row[7] as Kanji['joyoLevel'],
-    kanjiKenteiLevel: row[8] as Kanji['kanjiKenteiLevel'],
-    strokeDiagramImage: row[9] as Uint8Array | null,
-    strokeGifImage: row[10] as Uint8Array | null,
-    notesEtymology: row[11] as string | null,
-    notesSemantic: row[12] as string | null,
-    notesEducationMnemonics: row[13] as string | null,
-    notesPersonal: row[14] as string | null,
-    identifier: row[15] as number | null,
-    radicalStrokeCount: row[16] as number | null,
-    createdAt: row[17] as string,
-    updatedAt: row[18] as string
-  }
+/** Read a column by name, so the converters survive column reordering. */
+function reader(result: { columns: string[]; values: unknown[][] }): (name: string) => unknown {
+  const row = result.values[0] ?? [];
+  return (name) => {
+    const index = result.columns.indexOf(name);
+    if (index === -1) throw new Error(`Seeder expected column ${name}`);
+    return row[index];
+  };
 }
 
-/** Convert a raw SQL row array to a typed Component object. */
-function rowToComponent(row: unknown[]): Component {
+/** Convert the first row of a query result to a typed Kanji object. */
+function rowToKanji(result: { columns: string[]; values: unknown[][] }): Kanji {
+  const get = reader(result);
   return {
-    id: row[0] as number,
-    character: row[1] as string,
-    strokeCount: row[2] as number | null,
-    shortMeaning: row[3] as string | null,
-    sourceKanjiId: row[4] as number | null,
-    searchKeywords: row[5] as string | null,
-    description: row[6] as string | null,
-    canBeRadical: Boolean(row[7]),
-    kangxiNumber: row[8] as number | null,
-    kangxiMeaning: row[9] as string | null,
-    radicalNameJapanese: row[10] as string | null,
-    createdAt: row[11] as string,
-    updatedAt: row[12] as string
-  }
+    id: get('id') as number,
+    character: get('character') as string,
+    strokeCount: get('stroke_count') as number | null,
+    shortMeaning: get('short_meaning') as string | null,
+    searchKeywords: get('search_keywords') as string | null,
+    radicalId: get('radical_id') as number | null,
+    jlptLevel: get('jlpt_level') as Kanji['jlptLevel'],
+    joyoLevel: get('joyo_level') as Kanji['joyoLevel'],
+    kanjiKenteiLevel: get('kanji_kentei_level') as Kanji['kanjiKenteiLevel'],
+    strokeDiagramImage: get('stroke_diagram_image') as Uint8Array | null,
+    strokeGifImage: get('stroke_gif_image') as Uint8Array | null,
+    notesEtymology: get('notes_etymology') as string | null,
+    notesSemantic: get('notes_semantic') as string | null,
+    notesEducationMnemonics: get('notes_education_mnemonics') as string | null,
+    notesPersonal: get('notes_personal') as string | null,
+    identifier: get('identifier') as number | null,
+    radicalStrokeCount: get('radical_stroke_count') as number | null,
+    createdAt: get('created_at') as string,
+    updatedAt: get('updated_at') as string,
+  };
+}
+
+/** Convert the first row of a query result to a typed Component object. */
+function rowToComponent(result: { columns: string[]; values: unknown[][] }): Component {
+  const get = reader(result);
+  return {
+    id: get('id') as number,
+    character: get('character') as string,
+    strokeCount: get('stroke_count') as number | null,
+    shortMeaning: get('short_meaning') as string | null,
+    sourceKanjiId: get('source_kanji_id') as number | null,
+    searchKeywords: get('search_keywords') as string | null,
+    description: get('description') as string | null,
+    canBeRadical: Boolean(get('can_be_radical')),
+    kangxiNumber: get('kangxi_number') as number | null,
+    kangxiMeaning: get('kangxi_meaning') as string | null,
+    radicalNameJapanese: get('radical_name_japanese') as string | null,
+    createdAt: get('created_at') as string,
+    updatedAt: get('updated_at') as string,
+  };
 }
 
 // =============================================================================
@@ -90,8 +99,8 @@ export function seedKanji(db: Database, data: CreateKanjiInput): Kanji {
     radicalId = null,
     radicalStrokeCount = null,
     shortMeaning = null,
-    strokeCount
-  } = data
+    strokeCount,
+  } = data;
 
   db.run(
     `INSERT INTO kanjis (character, stroke_count, short_meaning, radical_id, jlpt_level, joyo_level, kanji_kentei_level, notes_etymology, notes_semantic, notes_education_mnemonics, notes_personal, identifier, radical_stroke_count)
@@ -109,26 +118,23 @@ export function seedKanji(db: Database, data: CreateKanjiInput): Kanji {
       notesEducationMnemonics,
       notesPersonal,
       identifier,
-      radicalStrokeCount
+      radicalStrokeCount,
     ]
-  )
+  );
 
-  const result = db.exec('SELECT * FROM kanjis WHERE id = last_insert_rowid()')
-  const row = result[0]?.values[0]
-  if (!row) {
-    throw new Error('Failed to seed kanji')
+  const result = db.exec('SELECT * FROM kanjis WHERE id = last_insert_rowid()');
+  const first = result[0];
+  if (!first?.values[0]) {
+    throw new Error('Failed to seed kanji');
   }
 
-  return rowToKanji(row)
+  return rowToKanji(first);
 }
 
 /**
  * Seed a component into the test database
  */
-export function seedComponent(
-  db: Database,
-  data: CreateComponentInput
-): Component {
+export function seedComponent(db: Database, data: CreateComponentInput): Component {
   const {
     canBeRadical = false,
     character,
@@ -139,8 +145,8 @@ export function seedComponent(
     searchKeywords = null,
     shortMeaning = null,
     sourceKanjiId = null,
-    strokeCount = null
-  } = data
+    strokeCount = null,
+  } = data;
 
   db.run(
     `INSERT INTO components (character, stroke_count, short_meaning, source_kanji_id, search_keywords, description, can_be_radical, kangxi_number, kangxi_meaning, radical_name_japanese)
@@ -155,19 +161,17 @@ export function seedComponent(
       canBeRadical ? 1 : 0,
       kangxiNumber,
       kangxiMeaning,
-      radicalNameJapanese
+      radicalNameJapanese,
     ]
-  )
+  );
 
-  const result = db.exec(
-    'SELECT * FROM components WHERE id = last_insert_rowid()'
-  )
-  const row = result[0]?.values[0]
-  if (!row) {
-    throw new Error('Failed to seed component')
+  const result = db.exec('SELECT * FROM components WHERE id = last_insert_rowid()');
+  const first = result[0];
+  if (!first?.values[0]) {
+    throw new Error('Failed to seed component');
   }
 
-  return rowToComponent(row)
+  return rowToComponent(first);
 }
 
 /**
@@ -184,8 +188,8 @@ export function seedComponentOccurrence(
     componentFormId = null,
     displayOrder = 0,
     isRadical = false,
-    positionTypeId = null
-  } = data
+    positionTypeId = null,
+  } = data;
 
   db.run(
     `INSERT INTO component_occurrences (kanji_id, component_id, component_form_id, position_type_id, is_radical, display_order, analysis_notes)
@@ -197,12 +201,12 @@ export function seedComponentOccurrence(
       positionTypeId,
       isRadical ? 1 : 0,
       displayOrder,
-      analysisNotes
+      analysisNotes,
     ]
-  )
+  );
 
-  const result = db.exec('SELECT last_insert_rowid() as id')
-  return result[0]?.values[0]?.[0] as number
+  const result = db.exec('SELECT last_insert_rowid() as id');
+  return result[0]?.values[0]?.[0] as number;
 }
 
 /**
@@ -213,16 +217,16 @@ export function seedOnReading(
   kanjiId: number,
   data: Omit<CreateOnReadingInput, 'kanjiId'>
 ): number {
-  const { displayOrder = 0, reading, readingLevel = '小' } = data
+  const { displayOrder = 0, reading, readingLevel = '小' } = data;
 
   db.run(
     `INSERT INTO on_readings (kanji_id, reading, reading_level, display_order)
      VALUES (?, ?, ?, ?)`,
     [kanjiId, reading, readingLevel, displayOrder]
-  )
+  );
 
-  const result = db.exec('SELECT last_insert_rowid() as id')
-  return result[0]?.values[0]?.[0] as number
+  const result = db.exec('SELECT last_insert_rowid() as id');
+  return result[0]?.values[0]?.[0] as number;
 }
 
 /**
@@ -233,21 +237,16 @@ export function seedKunReading(
   kanjiId: number,
   data: Omit<CreateKunReadingInput, 'kanjiId'>
 ): number {
-  const {
-    displayOrder = 0,
-    okurigana = null,
-    reading,
-    readingLevel = '小'
-  } = data
+  const { displayOrder = 0, okurigana = null, reading, readingLevel = '小' } = data;
 
   db.run(
     `INSERT INTO kun_readings (kanji_id, reading, okurigana, reading_level, display_order)
      VALUES (?, ?, ?, ?, ?)`,
     [kanjiId, reading, okurigana, readingLevel, displayOrder]
-  )
+  );
 
-  const result = db.exec('SELECT last_insert_rowid() as id')
-  return result[0]?.values[0]?.[0] as number
+  const result = db.exec('SELECT last_insert_rowid() as id');
+  return result[0]?.values[0]?.[0] as number;
 }
 
 /**
@@ -258,16 +257,16 @@ export function seedMeaning(
   kanjiId: number,
   data: Omit<CreateKanjiMeaningInput, 'kanjiId'>
 ): number {
-  const { additionalInfo = null, displayOrder = 0, meaningText } = data
+  const { additionalInfo = null, displayOrder = 0, meaningText } = data;
 
   db.run(
     `INSERT INTO kanji_meanings (kanji_id, meaning_text, additional_info, display_order)
      VALUES (?, ?, ?, ?)`,
     [kanjiId, meaningText, additionalInfo, displayOrder]
-  )
+  );
 
-  const result = db.exec('SELECT last_insert_rowid() as id')
-  return result[0]?.values[0]?.[0] as number
+  const result = db.exec('SELECT last_insert_rowid() as id');
+  return result[0]?.values[0]?.[0] as number;
 }
 
 /**
@@ -278,16 +277,16 @@ export function seedReadingGroup(
   kanjiId: number,
   data: Omit<CreateReadingGroupInput, 'kanjiId'>
 ): number {
-  const { displayOrder = 0, readingText } = data
+  const { displayOrder = 0, readingText } = data;
 
   db.run(
     `INSERT INTO kanji_meaning_reading_groups (kanji_id, reading_text, display_order)
      VALUES (?, ?, ?)`,
     [kanjiId, readingText, displayOrder]
-  )
+  );
 
-  const result = db.exec('SELECT last_insert_rowid() as id')
-  return result[0]?.values[0]?.[0] as number
+  const result = db.exec('SELECT last_insert_rowid() as id');
+  return result[0]?.values[0]?.[0] as number;
 }
 
 /**
@@ -303,10 +302,10 @@ export function seedGroupMember(
     `INSERT INTO kanji_meaning_group_members (reading_group_id, meaning_id, display_order)
      VALUES (?, ?, ?)`,
     [readingGroupId, meaningId, displayOrder]
-  )
+  );
 
-  const result = db.exec('SELECT last_insert_rowid() as id')
-  return result[0]?.values[0]?.[0] as number
+  const result = db.exec('SELECT last_insert_rowid() as id');
+  return result[0]?.values[0]?.[0] as number;
 }
 
 /**
@@ -317,16 +316,16 @@ export function seedClassification(
   kanjiId: number,
   data: Omit<CreateKanjiClassificationInput, 'kanjiId'>
 ): number {
-  const { classificationTypeId, displayOrder = 0 } = data
+  const { classificationTypeId, displayOrder = 0 } = data;
 
   db.run(
     `INSERT INTO kanji_classifications (kanji_id, classification_type_id, display_order)
      VALUES (?, ?, ?)`,
     [kanjiId, classificationTypeId, displayOrder]
-  )
+  );
 
-  const result = db.exec('SELECT last_insert_rowid() as id')
-  return result[0]?.values[0]?.[0] as number
+  const result = db.exec('SELECT last_insert_rowid() as id');
+  return result[0]?.values[0]?.[0] as number;
 }
 
 /**
@@ -346,26 +345,18 @@ export function seedVocabulary(
     kana = null,
     searchKeywords = null,
     shortMeaning = null,
-    word
-  } = data
+    word,
+  } = data;
 
   db.run(
     `INSERT INTO vocabulary (word, kana, short_meaning, search_keywords,
                              jlpt_level, is_common, description)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [
-      word,
-      kana,
-      shortMeaning,
-      searchKeywords,
-      jlptLevel,
-      isCommon ? 1 : 0,
-      description
-    ]
-  )
+    [word, kana, shortMeaning, searchKeywords, jlptLevel, isCommon ? 1 : 0, description]
+  );
 
-  const result = db.exec('SELECT last_insert_rowid() as id')
-  return result[0]?.values[0]?.[0] as number
+  const result = db.exec('SELECT last_insert_rowid() as id');
+  return result[0]?.values[0]?.[0] as number;
 }
 
 /**
@@ -377,14 +368,14 @@ export function seedVocabKanji(
   kanjiId: number,
   data: Omit<CreateVocabKanjiInput, 'vocabId' | 'kanjiId'> = {}
 ): number {
-  const { analysisNotes = null, displayOrder = 0 } = data
+  const { analysisNotes = null, displayOrder = 0 } = data;
 
   db.run(
     `INSERT INTO vocab_kanji (vocab_id, kanji_id, analysis_notes, display_order)
      VALUES (?, ?, ?, ?)`,
     [vocabId, kanjiId, analysisNotes, displayOrder]
-  )
+  );
 
-  const result = db.exec('SELECT last_insert_rowid() as id')
-  return result[0]?.values[0]?.[0] as number
+  const result = db.exec('SELECT last_insert_rowid() as id');
+  return result[0]?.values[0]?.[0] as number;
 }

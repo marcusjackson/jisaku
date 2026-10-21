@@ -27,8 +27,7 @@ const emit = defineEmits<{
 
 const showClearDialog = ref(false)
 
-const seedDisabled = computed(() => props.isSeeding || props.isClearing)
-const clearDisabled = computed(() => props.isClearing || props.isSeeding)
+const busy = computed(() => props.isSeeding || props.isClearing)
 
 function handleSeedClick(): void {
   emit('seed-data')
@@ -55,18 +54,14 @@ function handleClearCancel(): void {
     test-id="settings-dev-tools"
     title="Developer Tools"
   >
-    <p class="description">
-      Tools for testing and development. Only visible in development mode.
-    </p>
+    <p class="description">Tools for testing and development. Only visible in development mode.</p>
 
     <div class="dev-tools-actions">
       <div class="action">
         <h3 class="action-title">Seed Database</h3>
-        <p class="action-description">
-          Add sample kanji data for testing and development.
-        </p>
+        <p class="action-description">Add sample kanji data for testing and development.</p>
         <BaseButton
-          :disabled="seedDisabled"
+          :disabled="busy"
           :loading="isSeeding"
           variant="secondary"
           @click="handleSeedClick"
@@ -77,11 +72,9 @@ function handleClearCancel(): void {
 
       <div class="action">
         <h3 class="action-title">Clear Database</h3>
-        <p class="action-description">
-          Remove all kanji data. This cannot be undone.
-        </p>
+        <p class="action-description">Remove all kanji data. This cannot be undone.</p>
         <BaseButton
-          :disabled="clearDisabled"
+          :disabled="busy"
           :loading="isClearing"
           variant="danger"
           @click="handleClearClick"

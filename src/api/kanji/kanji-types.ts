@@ -9,10 +9,10 @@
 // ============================================================================
 
 /** JLPT proficiency levels */
-export type JlptLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1'
+export type JlptLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
 
 /** Valid JLPT level values — used for runtime DB row validation */
-export const JLPT_LEVELS: readonly JlptLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1']
+export const JLPT_LEVELS: readonly JlptLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 /** Joyo grade levels */
 export type JoyoLevel =
@@ -22,7 +22,7 @@ export type JoyoLevel =
   | 'elementary4'
   | 'elementary5'
   | 'elementary6'
-  | 'secondary'
+  | 'secondary';
 
 /** Valid Joyo level values — used for runtime DB row validation */
 export const JOYO_LEVELS: readonly JoyoLevel[] = [
@@ -32,12 +32,12 @@ export const JOYO_LEVELS: readonly JoyoLevel[] = [
   'elementary4',
   'elementary5',
   'elementary6',
-  'secondary'
-]
+  'secondary',
+];
 
 /** Kanji Kentei levels */
 export type KanjiKenteiLevel =
-  '10' | '9' | '8' | '7' | '6' | '5' | '4' | '3' | 'pre2' | '2' | 'pre1' | '1'
+  '10' | '9' | '8' | '7' | '6' | '5' | '4' | '3' | 'pre2' | '2' | 'pre1' | '1';
 
 /** Valid Kanji Kentei level values — used for runtime DB row validation */
 export const KANJI_KENTEI_LEVELS: readonly KanjiKenteiLevel[] = [
@@ -52,8 +52,8 @@ export const KANJI_KENTEI_LEVELS: readonly KanjiKenteiLevel[] = [
   'pre2',
   '2',
   'pre1',
-  '1'
-]
+  '1',
+];
 
 // ============================================================================
 // Entity Interface
@@ -65,25 +65,25 @@ export const KANJI_KENTEI_LEVELS: readonly KanjiKenteiLevel[] = [
  * Represents a single kanji entry in the database.
  */
 export interface Kanji {
-  id: number
-  character: string
-  strokeCount: number | null
-  shortMeaning: string | null
-  searchKeywords: string | null
-  radicalId: number | null
-  jlptLevel: JlptLevel | null
-  joyoLevel: JoyoLevel | null
-  kanjiKenteiLevel: KanjiKenteiLevel | null
-  strokeDiagramImage: Uint8Array | null
-  strokeGifImage: Uint8Array | null
-  notesEtymology: string | null
-  notesSemantic: string | null
-  notesEducationMnemonics: string | null
-  notesPersonal: string | null
-  identifier: number | null
-  radicalStrokeCount: number | null
-  createdAt: string
-  updatedAt: string
+  id: number;
+  character: string;
+  strokeCount: number | null;
+  shortMeaning: string | null;
+  searchKeywords: string | null;
+  radicalId: number | null;
+  jlptLevel: JlptLevel | null;
+  joyoLevel: JoyoLevel | null;
+  kanjiKenteiLevel: KanjiKenteiLevel | null;
+  strokeDiagramImage: Uint8Array | null;
+  strokeGifImage: Uint8Array | null;
+  notesEtymology: string | null;
+  notesSemantic: string | null;
+  notesEducationMnemonics: string | null;
+  notesPersonal: string | null;
+  identifier: number | null;
+  radicalStrokeCount: number | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============================================================================
@@ -96,22 +96,22 @@ export interface Kanji {
  * Only character is required; all other fields are optional.
  */
 export interface CreateKanjiInput {
-  character: string
-  strokeCount?: number | null
-  shortMeaning?: string | null
-  searchKeywords?: string | null
-  radicalId?: number | null
-  jlptLevel?: JlptLevel | null
-  joyoLevel?: JoyoLevel | null
-  kanjiKenteiLevel?: KanjiKenteiLevel | null
-  strokeDiagramImage?: Uint8Array | null
-  strokeGifImage?: Uint8Array | null
-  notesEtymology?: string | null
-  notesSemantic?: string | null
-  notesEducationMnemonics?: string | null
-  notesPersonal?: string | null
-  identifier?: number | null
-  radicalStrokeCount?: number | null
+  character: string;
+  strokeCount?: number | null;
+  shortMeaning?: string | null;
+  searchKeywords?: string | null;
+  radicalId?: number | null;
+  jlptLevel?: JlptLevel | null;
+  joyoLevel?: JoyoLevel | null;
+  kanjiKenteiLevel?: KanjiKenteiLevel | null;
+  strokeDiagramImage?: Uint8Array | null;
+  strokeGifImage?: Uint8Array | null;
+  notesEtymology?: string | null;
+  notesSemantic?: string | null;
+  notesEducationMnemonics?: string | null;
+  notesPersonal?: string | null;
+  identifier?: number | null;
+  radicalStrokeCount?: number | null;
 }
 
 /**
@@ -119,29 +119,26 @@ export interface CreateKanjiInput {
  *
  * All fields optional - only specified fields will be updated.
  */
-export type UpdateKanjiInput = Partial<CreateKanjiInput>
+export type UpdateKanjiInput = Partial<CreateKanjiInput>;
 
 // ============================================================================
 // Filter Types
 // ============================================================================
 
 /** Filter options for stroke order presence */
-export type StrokeOrderFilterValue = 'has' | 'missing' | null
+export type StrokeOrderFilterValue = 'has' | 'missing' | null;
 
 /** Analysis field length threshold options */
-export type AnalysisLengthThreshold = 'empty' | 'short' | 'medium' | 'long'
+export type AnalysisLengthThreshold = 'empty' | 'short' | 'medium' | 'long';
 
 /** Analysis field names */
 export type AnalysisFieldName =
-  | 'notesEtymology'
-  | 'notesSemantic'
-  | 'notesEducationMnemonics'
-  | 'notesPersonal'
+  'notesEtymology' | 'notesSemantic' | 'notesEducationMnemonics' | 'notesPersonal';
 
 /** Filter configuration for a single analysis field */
 export interface AnalysisFieldFilter {
-  field: AnalysisFieldName
-  threshold: AnalysisLengthThreshold
+  field: AnalysisFieldName;
+  threshold: AnalysisLengthThreshold;
 }
 
 /**
@@ -149,59 +146,52 @@ export interface AnalysisFieldFilter {
  */
 export interface KanjiFilters {
   /** Search in character, short_meaning, search_keywords */
-  search?: string
+  search?: string;
   /** Search by exact character match */
-  character?: string
+  character?: string;
   /** Search in short_meaning and search_keywords */
-  searchKeywords?: string
+  searchKeywords?: string;
   /** Search in meanings (meaning_text only) */
-  meanings?: string
+  meanings?: string;
   /** Search by on-yomi reading */
-  onYomi?: string
+  onYomi?: string;
   /** Search by kun-yomi reading */
-  kunYomi?: string
+  kunYomi?: string;
   /** Filter by JLPT levels (any of) */
-  jlptLevels?: JlptLevel[]
+  jlptLevels?: JlptLevel[];
   /** Filter by Joyo levels (any of) */
-  joyoLevels?: JoyoLevel[]
+  joyoLevels?: JoyoLevel[];
   /** Filter by Kentei levels (any of) */
-  kenteiLevels?: KanjiKenteiLevel[]
+  kenteiLevels?: KanjiKenteiLevel[];
   /** Filter by stroke count range */
-  strokeCountMin?: number
-  strokeCountMax?: number
+  strokeCountMin?: number;
+  strokeCountMax?: number;
   /** Filter by radical */
-  radicalId?: number
+  radicalId?: number;
   /** Filter by component (via component_occurrences) - single component */
-  componentId?: number
+  componentId?: number;
   /** Filter by components (ALL must match - AND logic) */
-  componentIds?: number[]
+  componentIds?: number[];
   /** Filter by classification type - single type */
-  classificationTypeId?: number
+  classificationTypeId?: number;
   /** Filter by classification types (ALL must match - AND logic) */
-  classificationTypeIds?: number[]
+  classificationTypeIds?: number[];
   /** Filter by stroke order diagram presence */
-  strokeOrderDiagram?: StrokeOrderFilterValue
+  strokeOrderDiagram?: StrokeOrderFilterValue;
   /** Filter by stroke order animation presence */
-  strokeOrderAnimation?: StrokeOrderFilterValue
+  strokeOrderAnimation?: StrokeOrderFilterValue;
   /** Filter by analysis field content */
-  analysisFilters?: AnalysisFieldFilter[]
+  analysisFilters?: AnalysisFieldFilter[];
 }
 
 /**
  * Sort options for kanji list
  */
-export type KanjiSortField =
-  | 'character'
-  | 'strokeCount'
-  | 'jlptLevel'
-  | 'joyoLevel'
-  | 'identifier'
-  | 'createdAt'
-  | 'updatedAt'
+export type KanjiSortField = 'character' | 'strokeCount' | 'createdAt';
 
-export type SortDirection = 'asc' | 'desc'
+export type SortDirection = 'asc' | 'desc';
 
 export interface KanjiSortOptions {
-  field: KanjiSortField
-  direction: SortDirection
+  field: KanjiSortField;
+  direction: SortDirection;
 }

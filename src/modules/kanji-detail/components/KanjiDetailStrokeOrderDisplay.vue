@@ -27,26 +27,12 @@ function openLightbox(src: string, alt: string): void {
 </script>
 
 <template>
-  <div
-    class="stroke-order-display"
-    data-testid="stroke-order-display"
-  >
-    <p
-      v-if="isEmpty"
-      class="stroke-order-display-empty"
-    >
-      No stroke order images available
-    </p>
-    <div
-      v-else
-      class="stroke-order-display-grid"
-    >
-      <figure
-        v-if="diagramUrl"
-        class="stroke-order-display-figure"
-      >
+  <div class="stroke-order-display" data-testid="stroke-order-display">
+    <p v-if="isEmpty" class="stroke-order-display-empty">No stroke order images available</p>
+    <div v-else class="stroke-order-display-grid">
+      <figure v-if="diagramUrl" class="stroke-order-display-figure">
         <div class="stroke-order-display-image-wrapper">
-          <!-- Raw <button>: image thumbnail trigger needs zero-padding layout incompatible with BaseButton -->
+          <!-- Raw <button>: image thumbnail, bare layout incompatible with BaseButton -->
           <button
             aria-label="View stroke diagram"
             class="stroke-order-display-thumbnail-button"
@@ -67,15 +53,11 @@ function openLightbox(src: string, alt: string): void {
             >🔍</span
           >
         </div>
-        <figcaption class="stroke-order-display-caption">
-          Stroke Diagram
-        </figcaption>
+        <figcaption class="stroke-order-display-caption">Stroke Diagram</figcaption>
       </figure>
-      <figure
-        v-if="gifUrl"
-        class="stroke-order-display-figure"
-      >
+      <figure v-if="gifUrl" class="stroke-order-display-figure">
         <div class="stroke-order-display-image-wrapper">
+          <!-- Raw <button>: image thumbnail, bare layout incompatible with BaseButton -->
           <button
             aria-label="View stroke animation"
             class="stroke-order-display-thumbnail-button"
@@ -99,11 +81,7 @@ function openLightbox(src: string, alt: string): void {
         <figcaption class="stroke-order-display-caption">Animation</figcaption>
       </figure>
     </div>
-    <SharedImageLightbox
-      v-model:open="lightboxOpen"
-      :alt="lightboxAlt"
-      :src="lightboxSrc"
-    />
+    <SharedImageLightbox v-model:open="lightboxOpen" :alt="lightboxAlt" :src="lightboxSrc" />
   </div>
 </template>
 

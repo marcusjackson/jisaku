@@ -15,7 +15,7 @@
 -- NOTE: This migration uses table recreation pattern for SQLite compatibility
 -- because ALTER TABLE DROP COLUMN doesn't work when FKs reference the table.
 
-PRAGMA foreign_keys = OFF;
+-- Foreign keys are switched off by runMigrations, not here.
 
 -- =============================================================================
 -- STEP 1: ENHANCE COMPONENTS TABLE FIRST
@@ -417,9 +417,6 @@ END;
 -- =============================================================================
 -- FINALIZE
 -- =============================================================================
-
--- Re-enable foreign keys
-PRAGMA foreign_keys = ON;
 
 -- Set schema version
 PRAGMA user_version = 3;

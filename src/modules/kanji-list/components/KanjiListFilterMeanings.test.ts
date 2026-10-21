@@ -4,40 +4,40 @@
  * Tests for meanings search filter component.
  */
 
-import userEvent from '@testing-library/user-event'
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it, vi } from 'vitest'
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import KanjiListFilterMeanings from './KanjiListFilterMeanings.vue'
+import KanjiListFilterMeanings from './KanjiListFilterMeanings.vue';
 
 describe('KanjiListFilterMeanings', () => {
   it('renders with label', () => {
     render(KanjiListFilterMeanings, {
-      props: { modelValue: '' }
-    })
+      props: { modelValue: '' },
+    });
 
-    expect(screen.getByLabelText(/meanings/i)).toBeInTheDocument()
-  })
+    expect(screen.getByLabelText(/meanings/i)).toBeInTheDocument();
+  });
 
   it('displays current value', () => {
     render(KanjiListFilterMeanings, {
-      props: { modelValue: 'day' }
-    })
+      props: { modelValue: 'day' },
+    });
 
-    expect(screen.getByLabelText(/meanings/i)).toHaveValue('day')
-  })
+    expect(screen.getByLabelText(/meanings/i)).toHaveValue('day');
+  });
 
   it('emits update on input', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     const wrapper = render(KanjiListFilterMeanings, {
       props: {
         modelValue: '',
-        'onUpdate:modelValue': vi.fn()
-      }
-    })
+        'onUpdate:modelValue': vi.fn(),
+      },
+    });
 
-    await user.type(screen.getByLabelText(/meanings/i), 'test')
+    await user.type(screen.getByLabelText(/meanings/i), 'test');
 
-    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-  })
-})
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy();
+  });
+});

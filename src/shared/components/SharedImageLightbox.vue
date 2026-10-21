@@ -38,44 +38,25 @@ function handleOpenChange(value: boolean): void {
 </script>
 
 <template>
-  <DialogRoot
-    :open="open"
-    @update:open="handleOpenChange"
-  >
+  <DialogRoot :open="open" @update:open="handleOpenChange">
     <DialogPortal>
       <DialogOverlay class="lightbox-overlay" />
 
-      <DialogContent
-        aria-describedby="lightbox-description"
-        class="lightbox-content"
-      >
+      <DialogContent aria-describedby="lightbox-description" class="lightbox-content">
         <!-- Visually hidden title for screen readers -->
         <DialogTitle class="sr-only"> Image viewer </DialogTitle>
 
-        <DialogDescription
-          id="lightbox-description"
-          class="sr-only"
-        >
+        <DialogDescription id="lightbox-description" class="sr-only">
           {{ alt }}
         </DialogDescription>
 
         <!-- Image container with touch support -->
-        <div
-          class="lightbox-image-container"
-          data-testid="lightbox-image-container"
-        >
-          <img
-            :alt="alt"
-            class="lightbox-image"
-            :src="src"
-          />
+        <div class="lightbox-image-container" data-testid="lightbox-image-container">
+          <img :alt="alt" class="lightbox-image" :src="src" />
         </div>
 
         <!-- Close button -->
-        <DialogClose
-          aria-label="Close"
-          class="lightbox-close"
-        >
+        <DialogClose aria-label="Close" class="lightbox-close">
           <svg
             aria-hidden="true"
             fill="none"

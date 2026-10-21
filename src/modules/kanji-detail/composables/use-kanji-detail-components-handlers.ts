@@ -6,143 +6,112 @@
  * @module modules/kanji-detail
  */
 
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 import {
   useComponentFormRepository,
   useComponentOccurrenceRepository,
-  useComponentRepository
-} from '@/api/component'
-import { usePositionTypeRepository } from '@/api/position'
+  useComponentRepository,
+} from '@/api/component';
+import { usePositionTypeRepository } from '@/api/position';
 
-import { useToast } from '@/shared/composables/use-toast'
+import { useDatabase } from '@/shared/composables/use-database';
+import { useToast } from '@/shared/composables/use-toast';
+import { blankToNull } from '@/shared/utils/text-utils';
 
-import type {
-  ComponentLinkPayload,
-  ComponentOccurrenceWithDetails,
-  ComponentUpdatePayload,
-  DialogComponentChanges
-} from '../kanji-detail-types'
-import type { Component } from '@/api/component/component-types'
-import type { Kanji } from '@/api/kanji/kanji-types'
-import type { QuickCreateComponentData } from '@/shared/validation/quick-create-component-schema'
-import type { ComputedRef, Ref } from 'vue'
+import { refreshOccurrenceDetails } from './use-kanji-detail-components-occurrences';
+
+import type { ComponentOccurrenceWithDetails, DialogComponentChanges } from '../kanji-detail-types';
+import type { Component } from '@/api/component/component-types';
+import type { Kanji } from '@/api/kanji/kanji-types';
+import type { QuickCreateComponentData } from '@/shared/validation/quick-create-component-schema';
+import type { ComputedRef, Ref } from 'vue';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface State {
-  kanji: Ref<Kanji | null>
-  componentOccurrences: Ref<ComponentOccurrenceWithDetails[]>
+  kanji: Ref<Kanji | null>;
+  componentOccurrences: Ref<ComponentOccurrenceWithDetails[]>;
+  /** The kanji's shared component list; reloaded here after a quick-create. */
+  allComponents: Ref<Component[]>;
 }
 
 interface ComponentsContext {
-  state: State
-  toast: ReturnType<typeof useToast>
-  componentRepo: ReturnType<typeof useComponentRepository>
-  occurrenceRepo: ReturnType<typeof useComponentOccurrenceRepository>
-  positionRepo: ReturnType<typeof usePositionTypeRepository>
-  formRepo: ReturnType<typeof useComponentFormRepository>
+  state: State;
+  toast: ReturnType<typeof useToast>;
+  componentRepo: ReturnType<typeof useComponentRepository>;
+  occurrenceRepo: ReturnType<typeof useComponentOccurrenceRepository>;
+  positionRepo: ReturnType<typeof usePositionTypeRepository>;
+  formRepo: ReturnType<typeof useComponentFormRepository>;
+  transaction: ReturnType<typeof useDatabase>['transaction'];
 }
 
 interface UseKanjiDetailComponentsHandlersReturn {
-  allComponents: ComputedRef<Component[]>
-  linkedOccurrences: ComputedRef<ComponentOccurrenceWithDetails[]>
-  handleSave: (changes: DialogComponentChanges) => void
-  handleCreate: (data: QuickCreateComponentData) => void
-  refreshOccurrences: () => void
+  allComponents: Ref<Component[]>;
+  linkedOccurrences: ComputedRef<ComponentOccurrenceWithDetails[]>;
+  handleSave: (changes: DialogComponentChanges) => boolean;
+  handleCreate: (data: QuickCreateComponentData) => boolean;
+  refreshOccurrences: () => void;
 }
 
 // ============================================================================
 // Module-scope implementation functions
 // ============================================================================
 
-function doRefreshOccurrences(ctx: ComponentsContext): void {
-  const kanjiVal = ctx.state.kanji.value
-  if (!kanjiVal) return
-
-  const occurrences = ctx.occurrenceRepo.getByParentId(kanjiVal.id)
-  ctx.state.componentOccurrences.value = occurrences.map((occ) => {
-    const component = ctx.componentRepo.getById(occ.componentId)
-    const position = occ.positionTypeId
-      ? ctx.positionRepo.getById(occ.positionTypeId)
-      : null
-    const form = occ.componentFormId
-      ? ctx.formRepo.getById(occ.componentFormId)
-      : null
-
-    return {
-      ...occ,
-      component: {
-        id: component?.id ?? occ.componentId,
-        character: component?.character ?? '',
-        shortMeaning: component?.shortMeaning ?? null
-      },
-      position,
-      form: form
-        ? {
-            id: form.id,
-            formCharacter: form.formCharacter,
-            formName: form.formName
-          }
-        : null
-    } satisfies ComponentOccurrenceWithDetails
-  })
-}
-
-function doHandleSave(
-  changes: DialogComponentChanges,
-  ctx: ComponentsContext
-): void {
-  const kanjiVal = ctx.state.kanji.value
+function doHandleSave(changes: DialogComponentChanges, ctx: ComponentsContext): boolean {
+  const kanjiVal = ctx.state.kanji.value;
   if (!kanjiVal) {
-    ctx.toast.error('No kanji selected')
-    return
+    ctx.toast.error('No kanji selected');
+    return false;
   }
   try {
-    changes.toLink.forEach((link: ComponentLinkPayload) => {
-      ctx.occurrenceRepo.create({
-        kanjiId: kanjiVal.id,
-        componentId: link.componentId,
-        positionTypeId: link.positionTypeId,
-        componentFormId: link.componentFormId,
-        isRadical: link.isRadical,
-        analysisNotes: null
-      })
-    })
-    changes.toUpdate.forEach((update: ComponentUpdatePayload) => {
-      ctx.occurrenceRepo.update(update.id, {
-        positionTypeId: update.positionTypeId,
-        componentFormId: update.componentFormId,
-        isRadical: update.isRadical
-      })
-    })
-    changes.toDelete.forEach((id) => {
-      ctx.occurrenceRepo.remove(id)
-    })
-    doRefreshOccurrences(ctx)
-    ctx.toast.success('Component changes saved successfully')
+    // One transaction: a failure part-way leaves nothing written, so a retry
+    // from the still-open dialog cannot create duplicate links.
+    ctx.transaction(() => {
+      changes.toLink.forEach((link) => {
+        ctx.occurrenceRepo.create({
+          kanjiId: kanjiVal.id,
+          componentId: link.componentId,
+          positionTypeId: link.positionTypeId,
+          componentFormId: link.componentFormId,
+          isRadical: link.isRadical,
+          analysisNotes: null,
+        });
+      });
+      changes.toUpdate.forEach((update) => {
+        ctx.occurrenceRepo.update(update.id, {
+          positionTypeId: update.positionTypeId,
+          componentFormId: update.componentFormId,
+          isRadical: update.isRadical,
+        });
+      });
+      changes.toDelete.forEach((id) => {
+        ctx.occurrenceRepo.remove(id);
+      });
+    });
+    refreshOccurrenceDetails(ctx);
+    ctx.toast.success('Component changes saved successfully');
+    return true;
   } catch {
-    ctx.toast.error('Failed to save component changes')
+    ctx.toast.error('Failed to save component changes');
+    return false;
   }
 }
 
-function doHandleCreate(
-  data: QuickCreateComponentData,
-  ctx: ComponentsContext
-): void {
+function doHandleCreate(data: QuickCreateComponentData, ctx: ComponentsContext): boolean {
   try {
     ctx.componentRepo.create({
       character: data.character,
-      shortMeaning:
-        data.shortMeaning && data.shortMeaning.trim() !== ''
-          ? data.shortMeaning
-          : null
-    })
-    ctx.toast.success(`Created component "${data.character}"`)
+      shortMeaning: blankToNull(data.shortMeaning),
+    });
+    ctx.state.allComponents.value = ctx.componentRepo.getAll();
+    ctx.toast.success(`Created component "${data.character}"`);
+    return true;
   } catch {
-    ctx.toast.error('Failed to create component')
+    ctx.toast.error('Failed to create component');
+    return false;
   }
 }
 
@@ -153,7 +122,7 @@ function doHandleCreate(
 /**
  * Provides handlers for managing component occurrences on a kanji.
  *
- * @param state - Reactive kanji detail state (kanji + componentOccurrences refs)
+ * @param state - Reactive kanji detail state (kanji, componentOccurrences and allComponents refs)
  * @returns Handlers and computed values for component occurrence management
  */
 export function useKanjiDetailComponentsHandlers(
@@ -165,26 +134,21 @@ export function useKanjiDetailComponentsHandlers(
     componentRepo: useComponentRepository(),
     occurrenceRepo: useComponentOccurrenceRepository(),
     positionRepo: usePositionTypeRepository(),
-    formRepo: useComponentFormRepository()
-  }
-
-  const allComponents = computed<Component[]>(() => ctx.componentRepo.getAll())
+    formRepo: useComponentFormRepository(),
+    transaction: useDatabase().transaction,
+  };
 
   const linkedOccurrences = computed<ComponentOccurrenceWithDetails[]>(
     () => state.componentOccurrences.value
-  )
+  );
 
   return {
-    allComponents,
+    allComponents: state.allComponents,
     linkedOccurrences,
-    handleSave: (changes) => {
-      doHandleSave(changes, ctx)
-    },
-    handleCreate: (data) => {
-      doHandleCreate(data, ctx)
-    },
+    handleSave: (changes) => doHandleSave(changes, ctx),
+    handleCreate: (data) => doHandleCreate(data, ctx),
     refreshOccurrences: () => {
-      doRefreshOccurrences(ctx)
-    }
-  }
+      refreshOccurrenceDetails(ctx);
+    },
+  };
 }

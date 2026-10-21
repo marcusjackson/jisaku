@@ -13,6 +13,8 @@ import { BaseButton } from '@/base/components'
 
 import { SharedPositionBadge } from '@/shared/components'
 
+import { buildRoute, ROUTES } from '@/router/routes'
+
 import ComponentDetailOccurrenceNotes from './ComponentDetailOccurrenceNotes.vue'
 
 import type { ComponentForm, OccurrenceWithKanji } from '@/api/component'
@@ -49,17 +51,13 @@ const assignedForm = computed(() => {
   return props.forms.find((f) => f.id === props.occurrence.componentFormId)
 })
 
-/** Build kanji detail route path directly (path is simpler than named route) */
-const kanjiDetailRoute = computed(
-  () => `/kanji/${String(props.occurrence.kanjiId)}`
+const kanjiDetailRoute = computed(() =>
+  buildRoute(ROUTES.KANJI_DETAIL, { id: String(props.occurrence.kanjiId) })
 )
 </script>
 
 <template>
-  <div
-    class="occurrence-item"
-    :data-testid="`occurrence-item-${String(occurrence.id)}`"
-  >
+  <div class="occurrence-item" :data-testid="`occurrence-item-${String(occurrence.id)}`">
     <div class="occurrence-item-reorder">
       <BaseButton
         aria-label="Move up"
@@ -83,38 +81,21 @@ const kanjiDetailRoute = computed(
 
     <div class="occurrence-item-content">
       <div class="occurrence-item-header">
-        <RouterLink
-          class="occurrence-item-kanji"
-          :to="kanjiDetailRoute"
-        >
+        <RouterLink class="occurrence-item-kanji" lang="ja" :to="kanjiDetailRoute">
           {{ occurrence.kanji.character }}
         </RouterLink>
 
-        <span
-          v-if="occurrence.kanji.shortMeaning"
-          class="occurrence-item-meaning"
-        >
+        <span v-if="occurrence.kanji.shortMeaning" class="occurrence-item-meaning">
           {{ occurrence.kanji.shortMeaning }}
         </span>
 
-        <SharedPositionBadge
-          v-if="occurrence.position"
-          :position="occurrence.position"
-        />
+        <SharedPositionBadge v-if="occurrence.position" :position="occurrence.position" />
 
-        <span
-          v-if="assignedForm"
-          class="occurrence-item-form-badge"
-        >
+        <span v-if="assignedForm" class="occurrence-item-form-badge">
           {{ assignedForm.formName || assignedForm.formCharacter }}
         </span>
 
-        <span
-          v-if="occurrence.isRadical"
-          class="occurrence-item-radical-badge"
-        >
-          Radical
-        </span>
+        <span v-if="occurrence.isRadical" class="occurrence-item-radical-badge"> Radical </span>
       </div>
 
       <ComponentDetailOccurrenceNotes
@@ -124,12 +105,7 @@ const kanjiDetailRoute = computed(
     </div>
 
     <div class="occurrence-item-actions">
-      <BaseButton
-        aria-label="Edit"
-        size="sm"
-        variant="secondary"
-        @click="emit('edit')"
-      >
+      <BaseButton aria-label="Edit" size="sm" variant="secondary" @click="emit('edit')">
         Edit
       </BaseButton>
       <BaseButton

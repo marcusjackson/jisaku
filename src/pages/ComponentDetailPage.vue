@@ -6,19 +6,25 @@
  * Applies theme, header, and layout wrapper.
  */
 
+import { useRoute } from 'vue-router'
+
 import { SharedHeader, SharedToast } from '@/shared/components'
 import { useTheme } from '@/shared/composables'
 
 import ComponentDetailRoot from '@/modules/component-detail/components/ComponentDetailRoot.vue'
 
 useTheme()
+
+const route = useRoute()
 </script>
 
 <template>
   <div class="component-detail-page">
     <SharedHeader />
     <main class="component-detail-page-main">
-      <ComponentDetailRoot />
+      <!-- Keyed on the id: stepping between components starts a fresh page, so Destructive Mode
+           and open dialogs never carry over (behavior.md: Destructive Mode starts off every time). -->
+      <ComponentDetailRoot :key="String(route.params['id'])" />
     </main>
     <SharedToast />
   </div>

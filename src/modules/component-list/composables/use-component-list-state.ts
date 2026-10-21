@@ -7,48 +7,45 @@
  * @module modules/component-list/composables
  */
 
-import { computed, ref } from 'vue'
+import { computed, ref } from 'vue';
+
+import { type ComponentListFilters, FILTER_QUERY_KEYS } from '../component-list-types';
 
 import {
-  type ComponentListFilters,
-  FILTER_QUERY_KEYS
-} from '../component-list-types'
+  useComponentListUrlSync,
+  type UseComponentListUrlSyncReturn,
+} from './use-component-list-url-sync';
 
-import {
-  type UseComponentListUrlSync,
-  useComponentListUrlSync
-} from './use-component-list-url-sync'
-
-import type { ComputedRef, Ref } from 'vue'
+import type { ComputedRef, Ref } from 'vue';
 
 // ============================================================================
 // Composable Interface
 // ============================================================================
 
-export interface UseComponentListState {
+export interface UseComponentListStateReturn {
   /** Current filter state derived from URL */
-  filters: ComputedRef<ComponentListFilters>
+  filters: ComputedRef<ComponentListFilters>;
   /** Whether any filters are active */
-  hasActiveFilters: ComputedRef<boolean>
+  hasActiveFilters: ComputedRef<boolean>;
   /** Count of active filters for badge display */
-  activeFilterCount: ComputedRef<number>
+  activeFilterCount: ComputedRef<number>;
   /** Debounced character search (for input binding) */
-  characterSearch: Ref<string>
+  characterSearch: Ref<string>;
   /** Debounced keywords search (for input binding) */
-  keywordsSearch: Ref<string>
+  keywordsSearch: Ref<string>;
   /** Debounced kangxi search (for input binding) */
-  kangxiSearch: Ref<string>
+  kangxiSearch: Ref<string>;
   /** Update a filter value */
   updateFilter: <K extends keyof ComponentListFilters>(
     key: K,
     value: ComponentListFilters[K]
-  ) => void
+  ) => void;
   /** Clear all filters */
-  clearFilters: () => void
+  clearFilters: () => void;
   /** Trigger for data refresh */
-  refreshTrigger: Ref<number>
+  refreshTrigger: Ref<number>;
   /** Increment refresh trigger to force data reload */
-  triggerRefresh: () => void
+  triggerRefresh: () => void;
 }
 
 // ============================================================================
@@ -68,37 +65,34 @@ function countActiveFilters(f: ComponentListFilters): number {
     f.canBeRadical !== undefined,
     !!f.descriptionPresence,
     !!f.formsPresence,
-    !!f.groupingsPresence
-  ]
-  return checks.filter(Boolean).length
+    !!f.groupingsPresence,
+  ];
+  return checks.filter(Boolean).length;
 }
 
 /**
  * Create filter update handler function
  */
-function createFilterUpdater(urlSync: UseComponentListUrlSync) {
-  return <K extends keyof ComponentListFilters>(
-    key: K,
-    value: ComponentListFilters[K]
-  ): void => {
+function createFilterUpdater(urlSync: UseComponentListUrlSyncReturn) {
+  return <K extends keyof ComponentListFilters>(key: K, value: ComponentListFilters[K]): void => {
     // Handle debounced text inputs through refs
     if (key === 'character') {
-      urlSync.characterSearch.value = typeof value === 'string' ? value : ''
-      return
+      urlSync.characterSearch.value = typeof value === 'string' ? value : '';
+      return;
     }
     if (key === 'searchKeywords') {
-      urlSync.keywordsSearch.value = typeof value === 'string' ? value : ''
-      return
+      urlSync.keywordsSearch.value = typeof value === 'string' ? value : '';
+      return;
     }
     if (key === 'kangxiSearch') {
-      urlSync.kangxiSearch.value = typeof value === 'string' ? value : ''
-      return
+      urlSync.kangxiSearch.value = typeof value === 'string' ? value : '';
+      return;
     }
 
     // All other filters update URL directly
-    const queryKey = FILTER_QUERY_KEYS[key]
-    urlSync.updateQueryParam(queryKey, value)
-  }
+    const queryKey = FILTER_QUERY_KEYS[key];
+    urlSync.updateQueryParam(queryKey, value);
+  };
 }
 
 /**
@@ -106,20 +100,20 @@ function createFilterUpdater(urlSync: UseComponentListUrlSync) {
  *
  * @returns Reactive filter state, update/clear functions, and refresh trigger
  */
-export function useComponentListState(): UseComponentListState {
-  const urlSync = useComponentListUrlSync()
-  const refreshTrigger = ref(0)
+export function useComponentListState(): UseComponentListStateReturn {
+  const urlSync = useComponentListUrlSync();
+  const refreshTrigger = ref(0);
 
-  const filters = computed(() => urlSync.parseFiltersFromUrl())
-  const updateFilter = createFilterUpdater(urlSync)
+  const filters = computed(() => urlSync.parseFiltersFromUrl());
+  const updateFilter = createFilterUpdater(urlSync);
   const clearFilters = (): void => {
-    urlSync.clearQueryParams()
-  }
-  const activeFilterCount = computed(() => countActiveFilters(filters.value))
-  const hasActiveFilters = computed(() => activeFilterCount.value > 0)
+    urlSync.clearQueryParams();
+  };
+  const activeFilterCount = computed(() => countActiveFilters(filters.value));
+  const hasActiveFilters = computed(() => activeFilterCount.value > 0);
   const triggerRefresh = (): void => {
-    refreshTrigger.value++
-  }
+    refreshTrigger.value++;
+  };
 
   return {
     filters,
@@ -131,6 +125,6 @@ export function useComponentListState(): UseComponentListState {
     updateFilter,
     clearFilters,
     refreshTrigger,
-    triggerRefresh
-  }
+    triggerRefresh,
+  };
 }

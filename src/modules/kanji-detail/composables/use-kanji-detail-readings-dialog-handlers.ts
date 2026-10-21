@@ -5,45 +5,38 @@
  * Extracted from KanjiDetailDialogReadings to keep file size under limit.
  */
 
-import type {
-  EditKunReading,
-  EditOnReading,
-  ReadingLevel
-} from '../kanji-detail-types'
-import type { Ref } from 'vue'
+import type { EditKunReading, EditOnReading, ReadingLevel } from '../kanji-detail-types';
+import type { Ref } from 'vue';
 
 // ============================================================================
 // Return type
 // ============================================================================
 
 interface UseKanjiDetailReadingsDialogHandlersReturn {
-  addOnReading: () => void
-  updateOnReadingField: (index: number, value: string) => void
-  updateOnReadingLevel: (index: number, value: ReadingLevel) => void
-  moveOnReading: (index: number, direction: -1 | 1) => void
-  removeOnReading: (index: number) => void
-  addKunReading: () => void
-  updateKunReadingField: (index: number, value: string) => void
-  updateKunOkurigana: (index: number, value: string) => void
-  updateKunReadingLevel: (index: number, value: ReadingLevel) => void
-  moveKunReading: (index: number, direction: -1 | 1) => void
-  removeKunReading: (index: number) => void
+  addOnReading: () => void;
+  updateOnReadingField: (index: number, value: string) => void;
+  updateOnReadingLevel: (index: number, value: ReadingLevel) => void;
+  moveOnReading: (index: number, direction: -1 | 1) => void;
+  removeOnReading: (index: number) => void;
+  addKunReading: () => void;
+  updateKunReadingField: (index: number, value: string) => void;
+  updateKunOkurigana: (index: number, value: string) => void;
+  updateKunReadingLevel: (index: number, value: ReadingLevel) => void;
+  moveKunReading: (index: number, direction: -1 | 1) => void;
+  removeKunReading: (index: number) => void;
 }
 
 // ============================================================================
 // Module-scope implementation functions — On-yomi
 // ============================================================================
 
-function doAddOnReading(
-  editOnReadings: Ref<EditOnReading[]>,
-  nextTempId: Ref<number>
-): void {
+function doAddOnReading(editOnReadings: Ref<EditOnReading[]>, nextTempId: Ref<number>): void {
   editOnReadings.value.push({
     id: nextTempId.value--,
     isNew: true,
     reading: '',
-    readingLevel: '小'
-  })
+    readingLevel: '小',
+  });
 }
 
 function doUpdateOnReadingField(
@@ -51,8 +44,8 @@ function doUpdateOnReadingField(
   index: number,
   value: string
 ): void {
-  const reading = editOnReadings.value[index]
-  if (reading) reading.reading = value
+  const reading = editOnReadings.value[index];
+  if (reading) reading.reading = value;
 }
 
 function doUpdateOnReadingLevel(
@@ -60,24 +53,20 @@ function doUpdateOnReadingLevel(
   index: number,
   value: ReadingLevel
 ): void {
-  const reading = editOnReadings.value[index]
-  if (reading) reading.readingLevel = value
+  const reading = editOnReadings.value[index];
+  if (reading) reading.readingLevel = value;
 }
 
-function doMoveReading<T>(
-  arr: Ref<T[]>,
-  index: number,
-  direction: -1 | 1
-): void {
-  const newIndex = index + direction
-  if (newIndex < 0 || newIndex >= arr.value.length) return
-  const items = [...arr.value]
-  const current = items[index]
-  const target = items[newIndex]
+function doMoveReading<T>(arr: Ref<T[]>, index: number, direction: -1 | 1): void {
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= arr.value.length) return;
+  const items = [...arr.value];
+  const current = items[index];
+  const target = items[newIndex];
   if (current && target) {
-    items[index] = target
-    items[newIndex] = current
-    arr.value = items
+    items[index] = target;
+    items[newIndex] = current;
+    arr.value = items;
   }
 }
 
@@ -85,17 +74,14 @@ function doMoveReading<T>(
 // Module-scope implementation functions — Kun-yomi
 // ============================================================================
 
-function doAddKunReading(
-  editKunReadings: Ref<EditKunReading[]>,
-  nextTempId: Ref<number>
-): void {
+function doAddKunReading(editKunReadings: Ref<EditKunReading[]>, nextTempId: Ref<number>): void {
   editKunReadings.value.push({
     id: nextTempId.value--,
     isNew: true,
     okurigana: '',
     reading: '',
-    readingLevel: '小'
-  })
+    readingLevel: '小',
+  });
 }
 
 function doUpdateKunReadingField(
@@ -103,8 +89,8 @@ function doUpdateKunReadingField(
   index: number,
   value: string
 ): void {
-  const reading = editKunReadings.value[index]
-  if (reading) reading.reading = value
+  const reading = editKunReadings.value[index];
+  if (reading) reading.reading = value;
 }
 
 function doUpdateKunOkurigana(
@@ -112,8 +98,8 @@ function doUpdateKunOkurigana(
   index: number,
   value: string
 ): void {
-  const reading = editKunReadings.value[index]
-  if (reading) reading.okurigana = value
+  const reading = editKunReadings.value[index];
+  if (reading) reading.okurigana = value;
 }
 
 function doUpdateKunReadingLevel(
@@ -121,8 +107,8 @@ function doUpdateKunReadingLevel(
   index: number,
   value: ReadingLevel
 ): void {
-  const reading = editKunReadings.value[index]
-  if (reading) reading.readingLevel = value
+  const reading = editKunReadings.value[index];
+  if (reading) reading.readingLevel = value;
 }
 
 // ============================================================================
@@ -144,37 +130,37 @@ export function useKanjiDetailReadingsDialogHandlers(
 ): UseKanjiDetailReadingsDialogHandlersReturn {
   return {
     addOnReading: () => {
-      doAddOnReading(editOnReadings, nextTempId)
+      doAddOnReading(editOnReadings, nextTempId);
     },
     updateOnReadingField: (i, v) => {
-      doUpdateOnReadingField(editOnReadings, i, v)
+      doUpdateOnReadingField(editOnReadings, i, v);
     },
     updateOnReadingLevel: (i, v) => {
-      doUpdateOnReadingLevel(editOnReadings, i, v)
+      doUpdateOnReadingLevel(editOnReadings, i, v);
     },
     moveOnReading: (i, d) => {
-      doMoveReading(editOnReadings, i, d)
+      doMoveReading(editOnReadings, i, d);
     },
     removeOnReading: (i) => {
-      editOnReadings.value.splice(i, 1)
+      editOnReadings.value.splice(i, 1);
     },
     addKunReading: () => {
-      doAddKunReading(editKunReadings, nextTempId)
+      doAddKunReading(editKunReadings, nextTempId);
     },
     updateKunReadingField: (i, v) => {
-      doUpdateKunReadingField(editKunReadings, i, v)
+      doUpdateKunReadingField(editKunReadings, i, v);
     },
     updateKunOkurigana: (i, v) => {
-      doUpdateKunOkurigana(editKunReadings, i, v)
+      doUpdateKunOkurigana(editKunReadings, i, v);
     },
     updateKunReadingLevel: (i, v) => {
-      doUpdateKunReadingLevel(editKunReadings, i, v)
+      doUpdateKunReadingLevel(editKunReadings, i, v);
     },
     moveKunReading: (i, d) => {
-      doMoveReading(editKunReadings, i, d)
+      doMoveReading(editKunReadings, i, d);
     },
     removeKunReading: (i) => {
-      editKunReadings.value.splice(i, 1)
-    }
-  }
+      editKunReadings.value.splice(i, 1);
+    },
+  };
 }

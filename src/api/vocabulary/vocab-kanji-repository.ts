@@ -7,30 +7,27 @@
  * @module api/vocabulary
  */
 
-import { useDatabase } from '@/shared/composables/use-database'
+import { useDatabase } from '@/shared/composables/use-database';
 
-import { schedulePersist } from '@/db/indexeddb'
-import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
-import { BaseRepository } from '../base-repository'
+import { schedulePersist } from '@/db/indexeddb';
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types';
+import { BaseRepository } from '../base-repository';
 
-import {
-  mapJoinedRow,
-  mapWithKanjiRow
-} from './vocab-kanji-repository-internals'
+import { mapJoinedRow, mapWithKanjiRow } from './vocab-kanji-repository-internals';
 
-import type { ChildRepository, Orderable } from '../api-types'
+import type { ChildRepository, Orderable } from '../api-types';
 import type {
   VocabKanjiRow,
   VocabKanjiWithKanjiRow,
-  VocabKanjiWithVocabularyRow
-} from './vocab-kanji-repository-internals'
+  VocabKanjiWithVocabularyRow,
+} from './vocab-kanji-repository-internals';
 import type {
   CreateVocabKanjiInput,
   UpdateVocabKanjiInput,
   VocabKanji,
   VocabKanjiWithKanji,
-  VocabKanjiWithVocabulary
-} from './vocabulary-types'
+  VocabKanjiWithVocabulary,
+} from './vocabulary-types';
 
 // ============================================================================
 // Repository Implementation
@@ -38,24 +35,22 @@ import type {
 
 class VocabKanjiRepositoryImpl
   extends BaseRepository<VocabKanji>
-  implements
-    ChildRepository<VocabKanji, CreateVocabKanjiInput, UpdateVocabKanjiInput>,
-    Orderable
+  implements ChildRepository<VocabKanji, CreateVocabKanjiInput, UpdateVocabKanjiInput>, Orderable
 {
-  protected tableName = 'vocab_kanji'
+  protected tableName = 'vocab_kanji';
 
-  private readonly exec: ReturnType<typeof useDatabase>['exec']
-  private readonly run: ReturnType<typeof useDatabase>['run']
+  private readonly exec: ReturnType<typeof useDatabase>['exec'];
+  private readonly run: ReturnType<typeof useDatabase>['run'];
 
   constructor() {
-    super()
-    const db = useDatabase()
-    this.exec = db.exec
-    this.run = db.run
+    super();
+    const db = useDatabase();
+    this.exec = db.exec;
+    this.run = db.run;
   }
 
   protected mapRow(row: Record<string, unknown>): VocabKanji {
-    const r = row as unknown as VocabKanjiRow
+    const r = row as unknown as VocabKanjiRow;
     return {
       id: r.id,
       vocabId: r.vocab_id,
@@ -63,8 +58,8 @@ class VocabKanjiRepositoryImpl
       analysisNotes: r.analysis_notes,
       displayOrder: r.display_order,
       createdAt: r.created_at,
-      updatedAt: r.updated_at
-    }
+      updatedAt: r.updated_at,
+    };
   }
 
   // ==========================================================================
@@ -72,31 +67,21 @@ class VocabKanjiRepositoryImpl
   // ==========================================================================
 
   getById(id: number): VocabKanji | null {
-    const result = this.exec('SELECT * FROM vocab_kanji WHERE id = ?', [id])
-    return this.resultToEntity(result)
+    const result = this.exec('SELECT * FROM vocab_kanji WHERE id = ?', [id]);
+    return this.resultToEntity(result);
   }
 
   getAll(): VocabKanji[] {
-    const result = this.exec(
-      'SELECT * FROM vocab_kanji ORDER BY display_order ASC'
-    )
-    return this.resultToList(result)
+    const result = this.exec('SELECT * FROM vocab_kanji ORDER BY display_order ASC');
+    return this.resultToList(result);
   }
 
   getByParentId(vocabId: number): VocabKanji[] {
     const result = this.exec(
       'SELECT * FROM vocab_kanji WHERE vocab_id = ? ORDER BY display_order ASC',
       [vocabId]
-    )
-    return this.resultToList(result)
-  }
-
-  getByKanjiId(kanjiId: number): VocabKanji[] {
-    const result = this.exec(
-      'SELECT * FROM vocab_kanji WHERE kanji_id = ? ORDER BY vocab_id, display_order',
-      [kanjiId]
-    )
-    return this.resultToList(result)
+    );
+    return this.resultToList(result);
   }
 
   getByVocabIdWithKanji(vocabId: number): VocabKanjiWithKanji[] {
@@ -123,17 +108,17 @@ class VocabKanjiRepositoryImpl
       WHERE vk.vocab_id = ?
       ORDER BY vk.display_order`,
       [vocabId]
-    )
-    if (!result[0]) return []
-    const { columns, values } = result[0]
+    );
+    if (!result[0]) return [];
+    const { columns, values } = result[0];
     return values.map((row) =>
       mapWithKanjiRow(
         this.rowToObject({
           columns,
-          values: [row]
+          values: [row],
         }) as unknown as VocabKanjiWithKanjiRow
       )
-    )
+    );
   }
 
   getByKanjiIdWithVocabulary(kanjiId: number): VocabKanjiWithVocabulary[] {
@@ -151,21 +136,21 @@ class VocabKanjiRepositoryImpl
       WHERE vk.kanji_id = ?
       ORDER BY v.word ASC`,
       [kanjiId]
-    )
+    );
 
     if (!result[0]?.values.length) {
-      return []
+      return [];
     }
 
-    const firstResult = result[0]
+    const firstResult = result[0];
     return firstResult.values.map((row) =>
       mapJoinedRow(
         this.rowToObject({
           columns: firstResult.columns,
-          values: [row]
+          values: [row],
         }) as unknown as VocabKanjiWithVocabularyRow
       )
-    )
+    );
   }
 
   // ==========================================================================
@@ -173,66 +158,57 @@ class VocabKanjiRepositoryImpl
   // ==========================================================================
 
   create(input: CreateVocabKanjiInput): VocabKanji {
-    const maxOrder = this.getMaxDisplayOrder(
-      'vocab_kanji',
-      'WHERE vocab_id = ?',
-      [input.vocabId]
-    )
-    const displayOrder = input.displayOrder ?? maxOrder + 1
+    const maxOrder = this.getMaxDisplayOrder('vocab_kanji', 'WHERE vocab_id = ?', [input.vocabId]);
+    const displayOrder = input.displayOrder ?? maxOrder + 1;
 
     this.run(
       `INSERT INTO vocab_kanji (vocab_id, kanji_id, analysis_notes, display_order)
        VALUES (?, ?, ?, ?)`,
       [input.vocabId, input.kanjiId, input.analysisNotes ?? null, displayOrder]
-    )
+    );
 
-    const idResult = this.exec('SELECT last_insert_rowid() as id')
-    const newId = idResult[0]?.values[0]?.[0] as number
+    const idResult = this.exec('SELECT last_insert_rowid() as id');
+    const newId = idResult[0]?.values[0]?.[0] as number;
 
-    const created = this.getById(newId)
-    if (!created) throw new CreateError('VocabKanji')
+    const created = this.getById(newId);
+    if (!created) throw new CreateError('VocabKanji');
 
-    schedulePersist()
-    return created
+    schedulePersist();
+    return created;
   }
 
   update(id: number, input: UpdateVocabKanjiInput): VocabKanji {
-    const existing = this.getById(id)
-    if (!existing) throw new EntityNotFoundError('VocabKanji', id)
+    const existing = this.getById(id);
+    if (!existing) throw new EntityNotFoundError('VocabKanji', id);
 
-    const sets: string[] = []
-    const values: unknown[] = []
+    const sets: string[] = [];
+    const values: unknown[] = [];
 
     if (input.analysisNotes !== undefined) {
-      sets.push('analysis_notes = ?')
-      values.push(input.analysisNotes)
+      sets.push('analysis_notes = ?');
+      values.push(input.analysisNotes);
     }
     if (input.displayOrder !== undefined) {
-      sets.push('display_order = ?')
-      values.push(input.displayOrder)
+      sets.push('display_order = ?');
+      values.push(input.displayOrder);
     }
-    if (sets.length === 0) return existing
+    if (sets.length === 0) return existing;
 
-    sets.push("updated_at = datetime('now')")
-    values.push(id)
+    sets.push("updated_at = datetime('now')");
+    values.push(id);
 
-    this.run(`UPDATE vocab_kanji SET ${sets.join(', ')} WHERE id = ?`, values)
+    this.run(`UPDATE vocab_kanji SET ${sets.join(', ')} WHERE id = ?`, values);
 
-    const updated = this.getById(id)
-    if (!updated) throw new UpdateError('VocabKanji', id)
+    const updated = this.getById(id);
+    if (!updated) throw new UpdateError('VocabKanji', id);
 
-    schedulePersist()
-    return updated
+    schedulePersist();
+    return updated;
   }
 
   remove(id: number): void {
-    this.run('DELETE FROM vocab_kanji WHERE id = ?', [id])
-    schedulePersist()
-  }
-
-  removeByVocabId(vocabId: number): void {
-    this.run('DELETE FROM vocab_kanji WHERE vocab_id = ?', [vocabId])
-    schedulePersist()
+    this.run('DELETE FROM vocab_kanji WHERE id = ?', [id]);
+    schedulePersist();
   }
 
   // ==========================================================================
@@ -242,13 +218,10 @@ class VocabKanjiRepositoryImpl
   reorder(ids: number[]): void {
     this.withTransaction(() => {
       ids.forEach((id, index) => {
-        this.run('UPDATE vocab_kanji SET display_order = ? WHERE id = ?', [
-          index,
-          id
-        ])
-      })
-    })
-    schedulePersist()
+        this.run('UPDATE vocab_kanji SET display_order = ? WHERE id = ?', [index, id]);
+      });
+    });
+    schedulePersist();
   }
 }
 
@@ -262,5 +235,5 @@ class VocabKanjiRepositoryImpl
  * @example const repo = useVocabKanjiRepository(); repo.getByParentId(1)
  */
 export function useVocabKanjiRepository(): VocabKanjiRepositoryImpl {
-  return new VocabKanjiRepositoryImpl()
+  return new VocabKanjiRepositoryImpl();
 }

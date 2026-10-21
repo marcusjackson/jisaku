@@ -40,17 +40,17 @@ interface Props {
   isDestructiveMode: boolean
   /** All kanji for search (excluding already linked) */
   allKanji: Kanji[]
+  /** Links a kanji; returns whether it saved, so the dialog can close */
+  add: (kanjiId: number) => boolean
+  /** Creates and links a kanji; returns whether it saved */
+  create: (data: QuickCreateKanjiData) => boolean
+  /** Updates occurrence metadata; returns whether it saved */
+  update: (id: number, data: OccurrenceUpdateData) => boolean
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  /** Link a kanji to this component */
-  add: [kanjiId: number]
-  /** Create new kanji and link it */
-  create: [data: QuickCreateKanjiData]
-  /** Update occurrence metadata */
-  update: [id: number, data: OccurrenceUpdateData]
   /** Remove occurrence */
   remove: [id: number]
   /** Reorder occurrences */
@@ -87,13 +87,11 @@ function handleAddClick() {
 }
 
 function handleAddSelect(kanjiId: number) {
-  emit('add', kanjiId)
-  showAddDialog.value = false
+  if (props.add(kanjiId)) showAddDialog.value = false
 }
 
 function handleAddCreate(data: QuickCreateKanjiData) {
-  emit('create', data)
-  showAddDialog.value = false
+  if (props.create(data)) showAddDialog.value = false
 }
 
 // =============================================================================
@@ -106,11 +104,11 @@ function handleEditClick(occurrence: OccurrenceWithKanji) {
 }
 
 function handleEditSubmit(data: OccurrenceUpdateData) {
-  if (editingOccurrence.value) {
-    emit('update', editingOccurrence.value.id, data)
+  if (!editingOccurrence.value) return
+  if (props.update(editingOccurrence.value.id, data)) {
+    showEditDialog.value = false
+    editingOccurrence.value = null
   }
-  showEditDialog.value = false
-  editingOccurrence.value = null
 }
 
 function handleEditCancel() {
@@ -165,9 +163,6 @@ function handleMoveDown(index: number) {
   ids[index + 1] = current
   emit('reorder', ids)
 }
-
-// Expose for testing
-defineExpose({ excludedKanjiIds })
 </script>
 
 <template>
@@ -178,30 +173,19 @@ defineExpose({ excludedKanjiIds })
     title="Kanji Occurrences"
   >
     <template #actions="{ isOpen }">
-      <BaseButton
-        v-if="isOpen"
-        size="sm"
-        variant="secondary"
-        @click="handleAddClick"
-      >
+      <BaseButton v-if="isOpen" size="sm" variant="secondary" @click="handleAddClick">
         Add Kanji
       </BaseButton>
     </template>
 
     <div class="occurrences-content">
       <!-- Empty state -->
-      <p
-        v-if="occurrences.length === 0"
-        class="empty-state"
-      >
+      <p v-if="occurrences.length === 0" class="empty-state">
         No kanji linked yet. Add kanji that use this component.
       </p>
 
       <!-- Occurrences list -->
-      <div
-        v-else
-        class="occurrences-list"
-      >
+      <div v-else class="occurrences-list">
         <ComponentDetailOccurrenceItem
           v-for="(occurrence, index) in occurrences"
           :key="occurrence.id"

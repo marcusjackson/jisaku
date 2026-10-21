@@ -41,8 +41,8 @@ function getCurrentValue(modelValue: boolean | undefined): string {
 
 <template>
   <div class="component-list-filter-radical-status">
-    <span class="component-list-filter-radical-status-label">Radical</span>
     <BaseSelect
+      label="Radical"
       :model-value="getCurrentValue(modelValue)"
       :options="options"
       @update:model-value="handleChange"
@@ -56,11 +56,5 @@ function getCurrentValue(modelValue: boolean | undefined): string {
   flex-direction: column;
   gap: var(--spacing-1);
   min-width: 120px;
-}
-
-.component-list-filter-radical-status-label {
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
 }
 </style>

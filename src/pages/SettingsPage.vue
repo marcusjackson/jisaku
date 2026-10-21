@@ -8,12 +8,8 @@
 
 import SharedHeader from '@/shared/components/SharedHeader.vue'
 import SharedToast from '@/shared/components/SharedToast.vue'
-import { useTheme } from '@/shared/composables'
 
 import { SettingsRoot } from '@/modules/settings'
-
-// Initialize theme on page load
-useTheme()
 </script>
 
 <template>

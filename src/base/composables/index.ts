@@ -6,11 +6,10 @@
  * @module base/composables
  */
 
-export { useBlobUrl } from './use-blob-url'
-export type { ComboboxOption } from './use-combobox'
-export { useCombobox } from './use-combobox'
-export type { ComboboxOption as ComboboxMultiOption } from './use-combobox-multi'
-export { useComboboxMulti } from './use-combobox-multi'
-export { useDebounce } from './use-debounce'
-export type { UseFileInputOptions } from './use-file-input'
-export { useFileInput, useFilePreview } from './use-file-input'
+export { useBlobUrl } from './use-blob-url';
+export type { ComboboxOption, ComboboxOptionBase } from './use-combobox';
+export { useCombobox } from './use-combobox';
+export { useComboboxMulti } from './use-combobox-multi';
+export { useDebounce } from './use-debounce';
+export type { UseFileInputOptions } from './use-file-input';
+export { useFileInput, useFilePreview } from './use-file-input';

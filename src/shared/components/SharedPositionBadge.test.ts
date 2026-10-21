@@ -2,17 +2,15 @@
  * SharedPositionBadge Tests
  */
 
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import SharedPositionBadge from './SharedPositionBadge.vue'
+import SharedPositionBadge from './SharedPositionBadge.vue';
 
-import type { PositionType } from '@/api/position/position-types'
+import type { PositionType } from '@/api/position/position-types';
 
 describe('SharedPositionBadge', () => {
-  const createMockPosition = (
-    overrides: Partial<PositionType> = {}
-  ): PositionType => ({
+  const createMockPosition = (overrides: Partial<PositionType> = {}): PositionType => ({
     description: 'Full description',
     displayOrder: 0,
     id: 1,
@@ -21,77 +19,90 @@ describe('SharedPositionBadge', () => {
     positionName: 'hen',
     createdAt: '2024-01-01T00:00:00',
     updatedAt: '2024-01-01T00:00:00',
-    ...overrides
-  })
+    ...overrides,
+  });
 
   it('renders without crashing', () => {
-    const position = createMockPosition()
+    const position = createMockPosition();
     render(SharedPositionBadge, {
-      props: { position }
-    })
+      props: { position },
+    });
 
-    expect(screen.getByText('ε΄')).toBeInTheDocument()
-  })
+    expect(screen.getByText('ε΄')).toBeInTheDocument();
+  });
 
   it('displays Japanese name when available', () => {
     const position = createMockPosition({
       nameEnglish: 'Left side',
-      nameJapanese: 'ε΄'
-    })
+      nameJapanese: 'ε΄',
+    });
     render(SharedPositionBadge, {
-      props: { position }
-    })
+      props: { position },
+    });
 
-    expect(screen.getByText('ε΄')).toBeInTheDocument()
-  })
+    expect(screen.getByText('ε΄')).toBeInTheDocument();
+  });
 
   it('displays English name when Japanese name is null', () => {
     const position = createMockPosition({
       nameEnglish: 'Left side',
-      nameJapanese: null
-    })
+      nameJapanese: null,
+    });
     render(SharedPositionBadge, {
-      props: { position }
-    })
+      props: { position },
+    });
 
-    expect(screen.getByText('Left side')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Left side')).toBeInTheDocument();
+  });
 
   it('displays position name when both Japanese and English names are null', () => {
     const position = createMockPosition({
       nameEnglish: null,
       nameJapanese: null,
-      positionName: 'hen'
-    })
+      positionName: 'hen',
+    });
     render(SharedPositionBadge, {
-      props: { position }
-    })
+      props: { position },
+    });
 
-    expect(screen.getByText('hen')).toBeInTheDocument()
-  })
+    expect(screen.getByText('hen')).toBeInTheDocument();
+  });
 
   it('shows description in aria-label (accessible on touch devices)', () => {
     const position = createMockPosition({
-      description: 'Full description text'
-    })
+      description: 'Full description text',
+    });
     render(SharedPositionBadge, {
-      props: { position }
-    })
+      props: { position },
+    });
 
-    const badge = screen.getByText('ε΄')
-    expect(badge).toHaveAttribute('aria-label', 'Full description text')
-  })
+    const badge = screen.getByText('ε΄');
+    expect(badge).toHaveAttribute('aria-label', 'Full description text');
+  });
 
   it('shows position name in aria-label when description is null', () => {
     const position = createMockPosition({
       description: null,
-      positionName: 'hen'
-    })
+      positionName: 'hen',
+    });
     render(SharedPositionBadge, {
-      props: { position }
-    })
+      props: { position },
+    });
 
-    const badge = screen.getByText('ε΄')
-    expect(badge).toHaveAttribute('aria-label', 'hen')
-  })
-})
+    const badge = screen.getByText('ε΄');
+    expect(badge).toHaveAttribute('aria-label', 'hen');
+  });
+
+  it('updates the name and tooltip when the position prop changes', async () => {
+    const { rerender } = render(SharedPositionBadge, {
+      props: { position: createMockPosition({ nameJapanese: 'AAA', description: 'first' }) },
+    });
+    expect(screen.getByText('AAA')).toHaveAttribute('aria-label', 'first');
+
+    await rerender({
+      position: createMockPosition({ nameJapanese: 'BBB', description: 'second' }),
+    });
+
+    expect(screen.getByText('BBB')).toHaveAttribute('aria-label', 'second');
+  });
+});

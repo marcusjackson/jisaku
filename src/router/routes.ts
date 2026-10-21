@@ -14,8 +14,8 @@ export const ROUTES = {
   COMPONENT_DETAIL: '/components/:id',
   VOCABULARY_LIST: '/vocabulary',
   VOCABULARY_DETAIL: '/vocabulary/:id',
-  SETTINGS: '/settings'
-} as const
+  SETTINGS: '/settings',
+} as const;
 
 /**
  * Helper to build a route with parameters
@@ -25,9 +25,9 @@ export function buildRoute(
   path: (typeof ROUTES)[keyof typeof ROUTES],
   params: Record<string, string | number>
 ): string {
-  let result: string = path
+  let result: string = path;
   for (const [key, value] of Object.entries(params)) {
-    result = result.replace(`:${key}`, String(value))
+    result = result.replace(`:${key}`, String(value));
   }
-  return result
+  return result;
 }

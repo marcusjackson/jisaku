@@ -34,6 +34,7 @@ function handleMaxChange(value: string | number | undefined): void {
     <div class="kanji-list-filter-stroke-range-inputs">
       <BaseInput
         inputmode="numeric"
+        label="Minimum"
         :model-value="min?.toString() ?? ''"
         pattern="[0-9]*"
         placeholder="Min"
@@ -43,6 +44,7 @@ function handleMaxChange(value: string | number | undefined): void {
       <span class="kanji-list-filter-stroke-range-separator">–</span>
       <BaseInput
         inputmode="numeric"
+        label="Maximum"
         :model-value="max?.toString() ?? ''"
         pattern="[0-9]*"
         placeholder="Max"
@@ -78,5 +80,18 @@ function handleMaxChange(value: string | number | undefined): void {
 
 .kanji-list-filter-stroke-range-separator {
   color: var(--color-text-secondary);
+}
+
+/* Visually hidden labels: the visible "Strokes" caption groups the pair */
+.kanji-list-filter-stroke-range-inputs :deep(.base-input-label) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border-width: 0;
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 </style>

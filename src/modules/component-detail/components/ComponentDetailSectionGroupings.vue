@@ -41,13 +41,15 @@ interface Props {
   managingGroupingMembers: ComponentGroupingMember[]
   /** Whether destructive mode is enabled */
   isDestructiveMode: boolean
+  /** Adds a grouping; returns whether it saved, so the dialog can close */
+  addGrouping: (data: GroupingFormData) => boolean
+  /** Updates a grouping; returns whether it saved, so the dialog can close */
+  updateGrouping: (id: number, data: GroupingFormData) => boolean
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  add: [data: GroupingFormData]
-  update: [id: number, data: GroupingFormData]
   remove: [id: number]
   reorder: [ids: number[]]
   manageMembers: [groupingId: number]
@@ -82,15 +84,21 @@ const editInitial = computed<GroupingFormData | undefined>(() => {
   }
 })
 
-/** Resolve member occurrences for a grouping in display order */
-function getMemberOccurrences(groupingId: number): OccurrenceWithKanji[] {
-  const members = props.allGroupingMembers.get(groupingId)
-  if (!members || members.length === 0) return []
-  const sorted = [...members].sort((a, b) => a.displayOrder - b.displayOrder)
-  return sorted
-    .map((m) => props.occurrences.find((o) => o.id === m.occurrenceId))
-    .filter((o): o is OccurrenceWithKanji => o !== undefined)
-}
+/** Member occurrences of every grouping in display order, keyed by grouping ID */
+const memberOccurrencesByGrouping = computed(() => {
+  const occurrenceById = new Map(props.occurrences.map((o) => [o.id, o]))
+  const result = new Map<number, OccurrenceWithKanji[]>()
+  for (const [groupingId, members] of props.allGroupingMembers) {
+    const sorted = [...members].sort((a, b) => a.displayOrder - b.displayOrder)
+    result.set(
+      groupingId,
+      sorted
+        .map((m) => occurrenceById.get(m.occurrenceId))
+        .filter((o): o is OccurrenceWithKanji => o !== undefined)
+    )
+  }
+  return result
+})
 
 // =============================================================================
 // Handlers - Add
@@ -101,8 +109,7 @@ function handleAddClick() {
 }
 
 function handleAddSubmit(data: GroupingFormData) {
-  emit('add', data)
-  showAddDialog.value = false
+  if (props.addGrouping(data)) showAddDialog.value = false
 }
 
 // =============================================================================
@@ -115,9 +122,8 @@ function handleEditClick(grouping: ComponentGroupingWithMembers) {
 }
 
 function handleEditSubmit(data: GroupingFormData) {
-  if (editingGrouping.value) {
-    emit('update', editingGrouping.value.id, data)
-  }
+  if (!editingGrouping.value) return
+  if (!props.updateGrouping(editingGrouping.value.id, data)) return
   showEditDialog.value = false
   editingGrouping.value = null
 }
@@ -207,37 +213,26 @@ function handleMoveDown(index: number) {
     title="Groupings"
   >
     <template #actions="{ isOpen }">
-      <BaseButton
-        v-if="isOpen"
-        size="sm"
-        variant="secondary"
-        @click="handleAddClick"
-      >
+      <BaseButton v-if="isOpen" size="sm" variant="secondary" @click="handleAddClick">
         Add Grouping
       </BaseButton>
     </template>
 
     <div class="groupings-content">
       <!-- Empty state -->
-      <p
-        v-if="groupings.length === 0"
-        class="empty-state"
-      >
+      <p v-if="groupings.length === 0" class="empty-state">
         No groupings yet. Group occurrences by position or visual pattern.
       </p>
 
       <!-- Groupings list -->
-      <div
-        v-else
-        class="groupings-list"
-      >
+      <div v-else class="groupings-list">
         <ComponentDetailGroupingItem
           v-for="(grouping, index) in groupings"
           :key="grouping.id"
           :grouping="grouping"
           :index="index"
           :is-destructive-mode="isDestructiveMode"
-          :member-occurrences="getMemberOccurrences(grouping.id)"
+          :member-occurrences="memberOccurrencesByGrouping.get(grouping.id) ?? []"
           :total="groupings.length"
           @delete="handleDeleteClick(grouping)"
           @edit="handleEditClick(grouping)"

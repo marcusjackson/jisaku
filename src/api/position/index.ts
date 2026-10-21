@@ -9,8 +9,8 @@
 export type {
   CreatePositionTypeInput,
   PositionType,
-  UpdatePositionTypeInput
-} from './position-types'
+  UpdatePositionTypeInput,
+} from './position-types';
 
 // Repositories
-export { usePositionTypeRepository } from './position-type-repository'
+export { usePositionTypeRepository } from './position-type-repository';

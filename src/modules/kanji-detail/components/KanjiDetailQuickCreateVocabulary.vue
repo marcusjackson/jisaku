@@ -39,8 +39,9 @@ const [kana, kanaAttrs] = defineField('kana')
 const [shortMeaning, shortMeaningAttrs] = defineField('shortMeaning')
 
 const onSubmit = handleSubmit((values) => {
+  // The parent closes the dialog on success, which unmounts this form; a failed
+  // create keeps the typed values so the user can fix them.
   emit('create', values)
-  resetForm()
 })
 
 function handleCancel(): void {
@@ -56,19 +57,9 @@ function handleCancel(): void {
     @submit.prevent="onSubmit"
   >
     <div class="quick-create-vocabulary-fields">
-      <BaseInput
-        v-model="word"
-        :error="errors.word"
-        label="Word"
-        v-bind="wordAttrs"
-      />
+      <BaseInput v-model="word" :error="errors.word" label="Word" v-bind="wordAttrs" />
 
-      <BaseInput
-        v-model="kana"
-        :error="errors.kana"
-        label="Kana (optional)"
-        v-bind="kanaAttrs"
-      />
+      <BaseInput v-model="kana" :error="errors.kana" label="Kana (optional)" v-bind="kanaAttrs" />
 
       <BaseInput
         v-model="shortMeaning"
@@ -79,20 +70,9 @@ function handleCancel(): void {
     </div>
 
     <div class="quick-create-vocabulary-actions">
-      <BaseButton
-        type="button"
-        variant="secondary"
-        @click="handleCancel"
-      >
-        Cancel
-      </BaseButton>
+      <BaseButton type="button" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
 
-      <BaseButton
-        type="submit"
-        variant="primary"
-      >
-        Create & Link
-      </BaseButton>
+      <BaseButton type="submit" variant="primary"> Create & Link </BaseButton>
     </div>
   </form>
 </template>

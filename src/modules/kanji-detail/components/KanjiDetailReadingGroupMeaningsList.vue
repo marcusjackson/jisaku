@@ -26,23 +26,10 @@ const emit = defineEmits<{
   <div class="group-meanings-content">
     <div class="group-meanings-label">Meanings in this group:</div>
 
-    <div
-      v-if="meanings.length === 0"
-      class="group-meanings-empty"
-    >
-      No meanings assigned.
-    </div>
+    <div v-if="meanings.length === 0" class="group-meanings-empty">No meanings assigned.</div>
 
-    <ol
-      v-else
-      class="group-meanings-list"
-      :start="1"
-    >
-      <li
-        v-for="(meaning, mIndex) in meanings"
-        :key="meaning.id"
-        class="group-meaning-item"
-      >
+    <ol v-else class="group-meanings-list" :start="1">
+      <li v-for="(meaning, mIndex) in meanings" :key="meaning.id" class="group-meaning-item">
         <span class="group-meaning-text">
           {{ meaning.meaningText }}
         </span>

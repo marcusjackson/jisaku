@@ -52,44 +52,21 @@ function getSeedingState(): boolean {
 </script>
 
 <template>
-  <div
-    class="vocab-list-section-list"
-    data-testid="vocab-list-section-list"
-  >
+  <div class="vocab-list-section-list" data-testid="vocab-list-section-list">
     <header class="vocab-list-section-list-header">
       <h1 class="vocab-list-section-list-title">Vocabulary</h1>
-      <BaseButton
-        data-testid="vocab-add-button"
-        @click="emit('addVocab')"
-      >
-        Add New
-      </BaseButton>
+      <BaseButton data-testid="vocab-add-button" @click="emit('addVocab')"> Add New </BaseButton>
     </header>
 
     <!-- Empty: no results from filter -->
-    <div
-      v-if="vocabList.length === 0 && hasActiveFilters"
-      class="vocab-list-section-list-empty"
-    >
-      <p class="vocab-list-section-list-empty-text">
-        No vocabulary matches your filters.
-      </p>
+    <div v-if="vocabList.length === 0 && hasActiveFilters" class="vocab-list-section-list-empty">
+      <p class="vocab-list-section-list-empty-text">No vocabulary matches your filters.</p>
     </div>
 
     <!-- Empty: no vocabulary at all -->
-    <div
-      v-else-if="vocabList.length === 0"
-      class="vocab-list-section-list-empty"
-    >
-      <p class="vocab-list-section-list-empty-text">
-        No vocabulary yet. Add your first one!
-      </p>
-      <BaseButton
-        size="lg"
-        @click="emit('addVocab')"
-      >
-        Add First Vocabulary
-      </BaseButton>
+    <div v-else-if="vocabList.length === 0" class="vocab-list-section-list-empty">
+      <p class="vocab-list-section-list-empty-text">No vocabulary yet. Add your first one!</p>
+      <BaseButton size="lg" @click="emit('addVocab')"> Add First Vocabulary </BaseButton>
 
       <template v-if="isDevelopment">
         <BaseButton
@@ -100,23 +77,13 @@ function getSeedingState(): boolean {
         >
           {{ getSeedingState() ? 'Seeding...' : 'Seed Data' }}
         </BaseButton>
-        <p class="vocab-list-section-list-seed-hint">
-          Load example data for testing
-        </p>
+        <p class="vocab-list-section-list-seed-hint">Load example data for testing</p>
       </template>
     </div>
 
     <!-- Vocabulary grid -->
-    <div
-      v-else
-      class="vocab-list-section-list-grid"
-      data-testid="vocab-list-grid"
-    >
-      <VocabListCard
-        v-for="vocab in vocabList"
-        :key="vocab.id"
-        :vocabulary="vocab"
-      />
+    <div v-else class="vocab-list-section-list-grid" data-testid="vocab-list-grid">
+      <VocabListCard v-for="vocab in vocabList" :key="vocab.id" :vocabulary="vocab" />
     </div>
   </div>
 </template>

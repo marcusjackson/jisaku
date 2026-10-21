@@ -18,17 +18,11 @@ const props = defineProps<{
 
 <template>
   <div class="kanji-detail-components-display">
-    <div
-      v-if="props.occurrences.length === 0"
-      class="kanji-detail-components-display-empty"
-    >
+    <div v-if="props.occurrences.length === 0" class="kanji-detail-components-display-empty">
       <p>No components have been linked to this kanji yet.</p>
     </div>
 
-    <div
-      v-else
-      class="kanji-detail-components-display-grid"
-    >
+    <div v-else class="kanji-detail-components-display-grid">
       <KanjiDetailComponentItem
         v-for="occurrence in props.occurrences"
         :key="occurrence.id"
@@ -56,17 +50,7 @@ const props = defineProps<{
   gap: var(--spacing-md);
 }
 
-/* Allow 2 cards side-by-side on mobile */
-@media (width >= 320px) and (width < 768px) {
-  .kanji-detail-components-display-grid {
-    grid-template-columns: repeat(
-      auto-fit,
-      minmax(var(--grid-item-min-md), 1fr)
-    );
-  }
-}
-
-/* More cards on larger screens */
+/* Wider minimum card width on larger screens */
 @media (width >= 768px) {
   .kanji-detail-components-display-grid {
     grid-template-columns: repeat(

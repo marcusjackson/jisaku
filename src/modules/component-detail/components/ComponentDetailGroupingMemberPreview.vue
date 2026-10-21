@@ -6,11 +6,11 @@
  * Shows first N members with a "Show more" toggle when there are extras.
  */
 
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import type { OccurrenceWithKanji } from '@/api/component'
 
-defineProps<{
+const props = defineProps<{
   /** Resolved member occurrences in display order */
   occurrences: OccurrenceWithKanji[]
 }>()
@@ -19,23 +19,23 @@ defineProps<{
 const PREVIEW_LIMIT = 5
 
 const isExpanded = ref(false)
+
+const visibleOccurrences = computed(() =>
+  isExpanded.value ? props.occurrences : props.occurrences.slice(0, PREVIEW_LIMIT)
+)
 </script>
 
 <template>
-  <div
-    v-if="occurrences.length > 0"
-    class="member-preview"
-  >
+  <div v-if="occurrences.length > 0" class="member-preview">
     <span
-      v-for="occ in isExpanded
-        ? occurrences
-        : occurrences.slice(0, PREVIEW_LIMIT)"
+      v-for="occ in visibleOccurrences"
       :key="occ.id"
       class="member-kanji"
+      lang="ja"
       :title="occ.kanji.shortMeaning ?? occ.kanji.character"
       >{{ occ.kanji.character }}</span
     >
-    <!-- Raw <button>: inline text toggle needs custom link-like styling incompatible with BaseButton -->
+    <!-- Raw <button>: inline text toggle, bare layout incompatible with BaseButton -->
     <button
       v-if="occurrences.length > PREVIEW_LIMIT"
       class="member-toggle"
@@ -65,6 +65,7 @@ const isExpanded = ref(false)
   padding: var(--spacing-1) var(--spacing-xs);
   border-radius: var(--radius-sm);
   background-color: var(--color-bg-tertiary);
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-base);
 }
 
@@ -72,7 +73,7 @@ const isExpanded = ref(false)
   padding: var(--spacing-1) var(--spacing-xs);
   border: none;
   background: none;
-  color: var(--color-text-link);
+  color: var(--color-primary);
   font-size: var(--font-size-sm);
   cursor: pointer;
 }

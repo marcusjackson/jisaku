@@ -1,3 +1,6 @@
+# Source repo: private on a plan without GitHub Pages, so this workflow cannot run here (the Pages API
+# returns 404). The release sync copies it to the public mirror, where it does run. Edit it in the source
+# repo, then release.
 name: Deploy to GitHub Pages
 
 on:
@@ -26,13 +29,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -47,7 +50,7 @@ jobs:
         uses: actions/configure-pages@v6
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist
 

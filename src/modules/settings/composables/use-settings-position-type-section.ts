@@ -5,42 +5,39 @@
  * Position Types settings section (CRUD + reordering).
  */
 
-import { onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue';
 
-import { usePositionTypeRepository } from '@/api/position'
+import { usePositionTypeRepository } from '@/api/position';
 
-import { useToast } from '@/shared/composables/use-toast'
+import { useToast } from '@/shared/composables/use-toast';
 
-import { emptyPositionTypeForm } from '../settings-types'
+import { emptyPositionTypeForm } from '../settings-types';
 import {
   loadPositionTypes,
   makeCreateHandlers,
   makeDeleteHandlers,
-  makeEditHandlers
-} from '../utils/position-type-handlers'
-import { makeReorderHandlers } from '../utils/position-type-reorder-handlers'
+  makeEditHandlers,
+} from '../utils/position-type-handlers';
+import { makeReorderHandlers } from '../utils/position-type-reorder-handlers';
 
-import type {
-  PositionTypeFormValues,
-  PositionTypeSectionState
-} from '../settings-types'
-import type { PositionType } from '@/api/position'
-import type { Ref } from 'vue'
+import type { PositionTypeFormValues, PositionTypeSectionState } from '../settings-types';
+import type { PositionType } from '@/api/position';
+import type { Ref } from 'vue';
 
-type UsePositionTypeSectionReturn = {
-  positionTypes: Ref<PositionType[]>
-  showCreateDialog: Ref<boolean>
-  showEditDialog: Ref<boolean>
-  showDeleteDialog: Ref<boolean>
-  editingItem: Ref<PositionType | null>
-  deletingItem: Ref<PositionType | null>
-  deleteUsageCount: Ref<number>
-  createForm: Ref<PositionTypeFormValues>
-  editForm: Ref<PositionTypeFormValues>
+type UseSettingsPositionTypeSectionReturn = {
+  positionTypes: Ref<PositionType[]>;
+  showCreateDialog: Ref<boolean>;
+  showEditDialog: Ref<boolean>;
+  showDeleteDialog: Ref<boolean>;
+  editingItem: Ref<PositionType | null>;
+  deletingItem: Ref<PositionType | null>;
+  deleteUsageCount: Ref<number>;
+  createForm: Ref<PositionTypeFormValues>;
+  editForm: Ref<PositionTypeFormValues>;
 } & ReturnType<typeof makeCreateHandlers> &
   ReturnType<typeof makeEditHandlers> &
   ReturnType<typeof makeDeleteHandlers> &
-  ReturnType<typeof makeReorderHandlers>
+  ReturnType<typeof makeReorderHandlers>;
 
 /**
  * Manages state and handlers for the Position Types settings section.
@@ -48,9 +45,9 @@ type UsePositionTypeSectionReturn = {
  *
  * @returns Reactive state and CRUD/reorder handlers for position types
  */
-export function usePositionTypeSection(): UsePositionTypeSectionReturn {
-  const repo = usePositionTypeRepository()
-  const toast = useToast()
+export function useSettingsPositionTypeSection(): UseSettingsPositionTypeSectionReturn {
+  const repo = usePositionTypeRepository();
+  const toast = useToast();
   const s: PositionTypeSectionState = {
     repo,
     toast,
@@ -62,12 +59,12 @@ export function usePositionTypeSection(): UsePositionTypeSectionReturn {
     deletingItem: ref(null),
     deleteUsageCount: ref(0),
     createForm: ref(emptyPositionTypeForm()),
-    editForm: ref(emptyPositionTypeForm())
-  }
+    editForm: ref(emptyPositionTypeForm()),
+  };
 
   onMounted(() => {
-    loadPositionTypes(s)
-  })
+    loadPositionTypes(s);
+  });
 
   return {
     positionTypes: s.positionTypes,
@@ -82,6 +79,6 @@ export function usePositionTypeSection(): UsePositionTypeSectionReturn {
     ...makeCreateHandlers(s),
     ...makeEditHandlers(s),
     ...makeDeleteHandlers(s),
-    ...makeReorderHandlers(s)
-  }
+    ...makeReorderHandlers(s),
+  };
 }

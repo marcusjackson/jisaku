@@ -17,11 +17,11 @@
  * Never regenerate baselines to silence a regression.
  */
 
-import { expect } from '@playwright/test'
+import { expect } from '@playwright/test';
 
-import type { Page } from '@playwright/test'
+import type { Page } from '@playwright/test';
 
-export { TIMEOUTS, VIEWPORTS } from '../helpers/test-constants'
+export { TIMEOUTS, VIEWPORTS } from '../helpers/test-constants';
 
 /**
  * Screenshot threshold constants for VRT tests.
@@ -31,8 +31,8 @@ export { TIMEOUTS, VIEWPORTS } from '../helpers/test-constants'
  */
 export const THRESHOLDS = {
   component: 0.01,
-  page: 0.02
-} as const
+  page: 0.02,
+} as const;
 
 /**
  * Injects a `<style>` tag that disables all CSS animations and transitions
@@ -57,7 +57,7 @@ export const THRESHOLDS = {
  */
 export async function disableAnimations(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    const style = document.createElement('style')
+    const style = document.createElement('style');
     style.textContent = `
       *, *::before, *::after {
         animation-duration: 0s !important;
@@ -65,9 +65,9 @@ export async function disableAnimations(page: Page): Promise<void> {
         transition-duration: 0s !important;
         transition-delay: 0s !important;
       }
-    `
-    document.head.appendChild(style)
-  })
+    `;
+    document.head.appendChild(style);
+  });
 }
 
 /**
@@ -75,7 +75,7 @@ export async function disableAnimations(page: Page): Promise<void> {
  * Prevents font-swap flakiness in screenshots.
  */
 export async function waitForFonts(page: Page): Promise<void> {
-  await page.evaluate(() => document.fonts.ready)
+  await page.evaluate(() => document.fonts.ready);
 }
 
 /**
@@ -97,8 +97,8 @@ export async function waitForFonts(page: Page): Promise<void> {
  */
 export async function enableDarkMode(page: Page): Promise<void> {
   await page.evaluate(() => {
-    document.documentElement.dataset['theme'] = 'dark'
-  })
+    document.documentElement.dataset['theme'] = 'dark';
+  });
 }
 
 /**
@@ -111,5 +111,5 @@ export async function enableDarkMode(page: Page): Promise<void> {
  * triggers a toast, before capturing screenshots.
  */
 export async function waitForToastsGone(page: Page): Promise<void> {
-  await expect(page.getByTestId('toast-description')).toHaveCount(0)
+  await expect(page.getByTestId('toast-description')).toHaveCount(0);
 }

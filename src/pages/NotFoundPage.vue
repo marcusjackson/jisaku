@@ -26,15 +26,8 @@ function goHome(): void {
 <template>
   <main class="not-found-page">
     <h1>Page Not Found</h1>
-    <p class="not-found-page__message">
-      The page you're looking for doesn't exist.
-    </p>
-    <BaseButton
-      variant="primary"
-      @click="goHome"
-    >
-      Go to Home
-    </BaseButton>
+    <p class="not-found-page__message">The page you're looking for doesn't exist.</p>
+    <BaseButton variant="primary" @click="goHome"> Go to Home </BaseButton>
   </main>
 </template>
 

@@ -132,11 +132,7 @@ const entityTypeName = computed(() => {
 
 <template>
   <div class="shared-entity-search">
-    <label
-      v-if="label"
-      class="shared-entity-search-label"
-      :for="comboboxId"
-    >
+    <label v-if="label" class="shared-entity-search-label" :for="comboboxId">
       {{ label }}
     </label>
 
@@ -153,10 +149,7 @@ const entityTypeName = computed(() => {
           class="shared-entity-search-input"
           :placeholder="placeholder"
         />
-        <ComboboxTrigger
-          aria-label="Toggle options"
-          class="shared-entity-search-trigger"
-        >
+        <ComboboxTrigger aria-label="Toggle options" class="shared-entity-search-trigger">
           <svg
             aria-hidden="true"
             fill="none"
@@ -174,11 +167,7 @@ const entityTypeName = computed(() => {
       </ComboboxAnchor>
 
       <ComboboxPortal>
-        <ComboboxContent
-          class="shared-entity-search-content"
-          position="popper"
-          :side-offset="4"
-        >
+        <ComboboxContent class="shared-entity-search-content" position="popper" :side-offset="4">
           <ComboboxViewport class="shared-entity-search-viewport">
             <ComboboxItem
               v-for="option in filteredOptions"
@@ -187,9 +176,7 @@ const entityTypeName = computed(() => {
               :value="option"
               @select="(event: Event) => handleItemSelect(event, option)"
             >
-              <ComboboxItemIndicator
-                class="shared-entity-search-item-indicator"
-              >
+              <ComboboxItemIndicator class="shared-entity-search-item-indicator">
                 <svg
                   fill="none"
                   height="16"
@@ -203,9 +190,11 @@ const entityTypeName = computed(() => {
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
               </ComboboxItemIndicator>
-              <span class="shared-entity-search-item-character">{{
-                option.character
-              }}</span>
+              <span
+                class="shared-entity-search-item-character"
+                lang="ja"
+                >{{ option.character }}</span
+              >
               <span class="shared-entity-search-item-text">{{
                 formatOption(option)
               }}</span>
@@ -216,6 +205,7 @@ const entityTypeName = computed(() => {
             </ComboboxEmpty>
 
             <div class="shared-entity-search-create-separator" />
+            <!-- Raw <button>: search-result row (create), bare layout incompatible with BaseButton -->
             <button
               class="shared-entity-search-create-button"
               type="button"
@@ -223,10 +213,7 @@ const entityTypeName = computed(() => {
             >
               <span class="shared-entity-search-create-icon">+</span>
               Create New {{ entityTypeName }}
-              <span
-                v-if="searchTerm.trim()"
-                class="shared-entity-search-create-term"
-              >
+              <span v-if="searchTerm.trim()" class="shared-entity-search-create-term">
                 "{{ searchTerm.trim() }}"
               </span>
             </button>

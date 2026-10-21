@@ -24,38 +24,30 @@ import type { HeadlineSaveData } from '../kanji-detail-types'
 import type { Component as RadicalComponent } from '@/api/component/component-types'
 import type { Kanji } from '@/api/kanji/kanji-types'
 
-defineProps<{
+const props = defineProps<{
   kanji: Kanji
   radical: RadicalComponent | null
-}>()
-
-const emit = defineEmits<{
-  save: [data: HeadlineSaveData]
+  /** Saves the headline; returns whether it saved, so the dialog can close */
+  save: (data: HeadlineSaveData) => boolean
 }>()
 
 const isDialogOpen = ref(false)
 
 function handleSave(data: HeadlineSaveData): void {
-  emit('save', data)
-  isDialogOpen.value = false
+  if (props.save(data)) isDialogOpen.value = false
 }
 </script>
 
 <template>
-  <section
-    class="kanji-detail-section-headline"
-    data-testid="kanji-detail-headline"
-  >
-    <SharedBackButton
-      label="Back to Kanji List"
-      :to="ROUTES.KANJI_LIST"
-    />
+  <section class="kanji-detail-section-headline" data-testid="kanji-detail-headline">
+    <SharedBackButton label="Back to Kanji List" :to="ROUTES.KANJI_LIST" />
 
     <div class="kanji-detail-section-headline-content">
       <div class="kanji-detail-section-headline-main">
         <span
           class="kanji-detail-section-headline-character"
           data-testid="kanji-character"
+          lang="ja"
         >
           {{ kanji.character }}
         </span>
@@ -68,19 +60,15 @@ function handleSave(data: HeadlineSaveData): void {
             >
               {{ kanji.shortMeaning }}
             </span>
-            <SharedSearchKeywordsIndicator
-              :search-keywords="kanji.searchKeywords"
-            />
+            <SharedSearchKeywordsIndicator :search-keywords="kanji.searchKeywords" />
           </div>
           <span
             v-if="radical"
             class="kanji-detail-section-headline-radical"
             data-testid="kanji-radical"
           >
-            <span class="kanji-detail-section-headline-radical-label"
-              >Radical:</span
-            >
-            <span class="kanji-detail-section-headline-radical-char">
+            <span class="kanji-detail-section-headline-radical-label">Radical:</span>
+            <span class="kanji-detail-section-headline-radical-char" lang="ja">
               {{ radical.character }}
             </span>
             <span

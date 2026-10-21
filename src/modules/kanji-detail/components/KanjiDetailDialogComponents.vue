@@ -6,7 +6,7 @@
  * Changes are not persisted until the user clicks Save.
  */
 
-import { computed } from 'vue'
+import { computed, toRef } from 'vue'
 
 import BaseButton from '@/base/components/BaseButton.vue'
 import BaseDialog from '@/base/components/BaseDialog.vue'
@@ -38,6 +38,8 @@ const props = defineProps<{
   linkedOccurrences: ComponentOccurrenceWithDetails[]
   /** Whether destructive mode is enabled (shows unlink buttons) */
   destructiveMode: boolean
+  /** Creates a component; returns whether it saved, so the quick-create dialog can close */
+  create: (data: QuickCreateComponentData) => boolean
 }>()
 
 const emit = defineEmits<{
@@ -45,8 +47,6 @@ const emit = defineEmits<{
   'update:open': [open: boolean]
   /** Save all changes */
   save: [changes: DialogComponentChanges]
-  /** Create new component */
-  create: [data: QuickCreateComponentData]
 }>()
 
 // Edit state, watch initialization, and save/cancel logic
@@ -65,7 +65,7 @@ const {
   quickCreateDialogOpen,
   quickCreateSearchTerm,
   showConfirmDialog
-} = useKanjiDetailComponentsDialogState(props)
+} = useKanjiDetailComponentsDialogState(props, editOccurrences)
 
 // Dialog handlers
 const {
@@ -76,7 +76,7 @@ const {
   handleUnlinkRequest
 } = useKanjiDetailDialogComponentsHandlers(
   editOccurrences,
-  props.allComponents,
+  toRef(props, 'allComponents'),
   pendingRemoveOccurrenceId,
   showConfirmDialog
 )
@@ -118,7 +118,7 @@ function handleQuickCreateCancel(): void {
 }
 
 function handleQuickCreateConfirm(data: QuickCreateComponentData): void {
-  emit('create', data)
+  if (!props.create(data)) return
   quickCreateDialogOpen.value = false
   quickCreateSearchTerm.value = ''
 }
@@ -139,9 +139,7 @@ function handleUnlinkCancel(): void {
     <div class="kanji-detail-dialog-components-body">
       <!-- Search Section -->
       <div class="kanji-detail-dialog-components-section">
-        <h3 class="kanji-detail-dialog-components-section-title">
-          Add Component
-        </h3>
+        <h3 class="kanji-detail-dialog-components-section-title">Add Component</h3>
         <KanjiDetailComponentSearch
           :available-components="availableComponents"
           @create="handleQuickCreateRequest"
@@ -150,10 +148,7 @@ function handleUnlinkCancel(): void {
       </div>
 
       <!-- Linked Occurrences Section -->
-      <div
-        v-if="visibleOccurrences.length > 0"
-        class="kanji-detail-dialog-components-section"
-      >
+      <div v-if="visibleOccurrences.length > 0" class="kanji-detail-dialog-components-section">
         <h3 class="kanji-detail-dialog-components-section-title">
           Linked Components ({{ visibleOccurrences.length }})
         </h3>
@@ -187,19 +182,8 @@ function handleUnlinkCancel(): void {
 
     <template #footer>
       <div class="kanji-detail-dialog-components-footer">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="handleCancel"
-        >
-          Cancel
-        </BaseButton>
-        <BaseButton
-          type="button"
-          @click="handleSave"
-        >
-          Save
-        </BaseButton>
+        <BaseButton type="button" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
+        <BaseButton type="button" @click="handleSave"> Save </BaseButton>
       </div>
     </template>
   </BaseDialog>

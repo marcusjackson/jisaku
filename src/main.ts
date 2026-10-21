@@ -1,19 +1,16 @@
-import { createApp } from 'vue'
+import { createApp } from 'vue';
 
-import { useToast } from '@/shared/composables/use-toast'
+import { handleAppError } from '@/shared/utils/app-error-handler';
 
-import App from './App.vue'
-import router from './router'
+import App from './App.vue';
+import router from './router';
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(router)
+app.use(router);
 
 // Global error handler — catches unhandled errors from Vue's component lifecycle.
 // Surfaces a toast so the user is notified of unexpected failures without silent swallowing.
-app.config.errorHandler = (_err, _vm, _info) => {
-  const { error } = useToast()
-  error('An unexpected error occurred. Please reload the page.')
-}
+app.config.errorHandler = handleAppError;
 
-app.mount('#app')
+app.mount('#app');

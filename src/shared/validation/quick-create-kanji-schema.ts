@@ -5,17 +5,17 @@
  * Note: stroke_count, readings, and other details can be added later on detail page.
  */
 
-import { z } from 'zod'
+import { z } from 'zod';
 
-import { singleCharacterSchema } from './common-schemas'
+import { searchKeywordsSchema, shortMeaningSchema, singleCharacterSchema } from './common-schemas';
 
 export const quickCreateKanjiSchema = z.object({
   character: singleCharacterSchema,
 
-  shortMeaning: z.string().optional(),
+  shortMeaning: shortMeaningSchema.optional(),
 
-  searchKeywords: z.string().optional()
-})
+  searchKeywords: searchKeywordsSchema.optional(),
+});
 
 // Export inferred type
-export type QuickCreateKanjiData = z.infer<typeof quickCreateKanjiSchema>
+export type QuickCreateKanjiData = z.infer<typeof quickCreateKanjiSchema>;

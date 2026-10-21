@@ -123,9 +123,7 @@ const isSaveDisabled = computed(() => isSubmitting.value)
           name="shortMeaning"
           placeholder="e.g., tree, wood"
         />
-        <p class="shared-quick-create-component-help">
-          Brief meaning for display (optional).
-        </p>
+        <p class="shared-quick-create-component-help">Brief meaning for display (optional).</p>
       </div>
     </form>
 

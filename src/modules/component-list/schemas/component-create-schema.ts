@@ -6,12 +6,12 @@
  * @module modules/component-list
  */
 
-import { z } from 'zod'
+import { z } from 'zod';
 
-import { singleCharacterSchema } from '@/shared/validation'
+import { singleCharacterSchema } from '@/shared/validation';
 
 export const componentCreateSchema = z.object({
-  character: singleCharacterSchema
-})
+  character: singleCharacterSchema,
+});
 
-export type ComponentCreateData = z.infer<typeof componentCreateSchema>
+export type ComponentCreateData = z.infer<typeof componentCreateSchema>;

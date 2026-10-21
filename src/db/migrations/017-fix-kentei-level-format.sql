@@ -2,7 +2,7 @@
 -- Converts full display labels (e.g., '10級') to type-safe keys (e.g., '10')
 -- This ensures consistency between legacy and refactored code
 
-PRAGMA foreign_keys = OFF;
+-- Foreign keys are switched off by runMigrations, not here.
 
 UPDATE kanjis 
 SET kanji_kentei_level = CASE kanji_kentei_level
@@ -22,5 +22,4 @@ SET kanji_kentei_level = CASE kanji_kentei_level
 END
 WHERE kanji_kentei_level IS NOT NULL;
 
-PRAGMA foreign_keys = ON;
 PRAGMA user_version = 17;

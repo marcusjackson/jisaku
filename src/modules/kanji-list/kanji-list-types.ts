@@ -7,53 +7,45 @@
  * @module modules/kanji-list
  */
 
-import type {
-  JlptLevel,
-  JoyoLevel,
-  Kanji,
-  KanjiKenteiLevel
-} from '@/api/kanji/kanji-types'
+import type { JlptLevel, JoyoLevel, Kanji, KanjiKenteiLevel } from '@/api/kanji/kanji-types';
 
 // ============================================================================
 // Re-exports for convenience
 // ============================================================================
 
-export type { JlptLevel, JoyoLevel, Kanji, KanjiKenteiLevel }
+export type { JlptLevel, JoyoLevel, Kanji, KanjiKenteiLevel };
 
 // ============================================================================
 // Stroke Order Filter Types
 // ============================================================================
 
 /** Filter options for stroke order presence */
-export type StrokeOrderFilterValue = 'has' | 'missing' | null
+export type StrokeOrderFilterValue = 'has' | 'missing' | null;
 
 // ============================================================================
 // Analysis Field Filter Types
 // ============================================================================
 
 /** Analysis field length threshold options */
-export type AnalysisLengthThreshold = 'empty' | 'short' | 'medium' | 'long'
+export type AnalysisLengthThreshold = 'empty' | 'short' | 'medium' | 'long';
 
 /** Analysis field names */
 export type AnalysisFieldName =
-  | 'notesEtymology'
-  | 'notesSemantic'
-  | 'notesEducationMnemonics'
-  | 'notesPersonal'
+  'notesEtymology' | 'notesSemantic' | 'notesEducationMnemonics' | 'notesPersonal';
 
 /** Filter configuration for a single analysis field */
 export interface AnalysisFieldFilter {
-  field: AnalysisFieldName
-  threshold: AnalysisLengthThreshold
+  field: AnalysisFieldName;
+  threshold: AnalysisLengthThreshold;
 }
 
-/** Threshold character counts */
-export const ANALYSIS_THRESHOLDS = {
-  empty: 0,
-  short: 50,
-  medium: 200,
-  long: 500
-} as const
+/** Valid analysis length thresholds, in display order */
+export const ANALYSIS_THRESHOLDS = [
+  'empty',
+  'short',
+  'medium',
+  'long',
+] as const satisfies readonly AnalysisLengthThreshold[];
 
 // ============================================================================
 // Extended Filter Types
@@ -66,37 +58,37 @@ export const ANALYSIS_THRESHOLDS = {
  */
 export interface KanjiListFilters {
   /** Search by kanji character */
-  character?: string
+  character?: string;
   /** Search in short meaning and search keywords */
-  searchKeywords?: string
+  searchKeywords?: string;
   /** Search in meanings (meaning_text only) */
-  meanings?: string
+  meanings?: string;
   /** Search by on-yomi reading */
-  onYomi?: string
+  onYomi?: string;
   /** Search by kun-yomi reading */
-  kunYomi?: string
+  kunYomi?: string;
   /** Minimum stroke count */
-  strokeCountMin?: number
+  strokeCountMin?: number;
   /** Maximum stroke count */
-  strokeCountMax?: number
+  strokeCountMax?: number;
   /** Filter by JLPT levels (any of) */
-  jlptLevels?: JlptLevel[]
+  jlptLevels?: JlptLevel[];
   /** Filter by Joyo levels (any of) */
-  joyoLevels?: JoyoLevel[]
+  joyoLevels?: JoyoLevel[];
   /** Filter by Kentei levels (any of) */
-  kenteiLevels?: KanjiKenteiLevel[]
+  kenteiLevels?: KanjiKenteiLevel[];
   /** Filter by radical ID */
-  radicalId?: number
+  radicalId?: number;
   /** Filter by component IDs (ALL must match - AND logic) */
-  componentIds?: number[]
+  componentIds?: number[];
   /** Filter by classification type IDs (ALL must match - AND logic) */
-  classificationTypeIds?: number[]
+  classificationTypeIds?: number[];
   /** Filter by stroke order diagram presence */
-  strokeOrderDiagram?: StrokeOrderFilterValue
+  strokeOrderDiagram?: StrokeOrderFilterValue;
   /** Filter by stroke order animation presence */
-  strokeOrderAnimation?: StrokeOrderFilterValue
+  strokeOrderAnimation?: StrokeOrderFilterValue;
   /** Filter by analysis field content */
-  analysisFilters?: AnalysisFieldFilter[]
+  analysisFilters?: AnalysisFieldFilter[];
 }
 
 // ============================================================================
@@ -122,8 +114,8 @@ export const FILTER_QUERY_KEYS = {
   classificationTypeIds: 'classifications',
   strokeOrderDiagram: 'diagram',
   strokeOrderAnimation: 'animation',
-  analysisFilters: 'analysis'
-} as const satisfies Record<keyof KanjiListFilters, string>
+  analysisFilters: 'analysis',
+} as const satisfies Record<keyof KanjiListFilters, string>;
 
 // ============================================================================
 // Display Labels
@@ -137,8 +129,8 @@ export const JOYO_LABELS: Record<JoyoLevel, string> = {
   elementary4: '小4',
   elementary5: '小5',
   elementary6: '小6',
-  secondary: '中学'
-}
+  secondary: '中学',
+};
 
 /** Kentei level display labels */
 export const KENTEI_LABELS: Record<KanjiKenteiLevel, string> = {
@@ -153,27 +145,24 @@ export const KENTEI_LABELS: Record<KanjiKenteiLevel, string> = {
   pre2: '準2級',
   '2': '2級',
   pre1: '準1級',
-  '1': '1級'
-}
+  '1': '1級',
+};
 
 /** Analysis field display labels */
 export const ANALYSIS_FIELD_LABELS: Record<AnalysisFieldName, string> = {
   notesEtymology: '語源',
   notesSemantic: '意味解析',
   notesEducationMnemonics: '教育',
-  notesPersonal: '個人'
-}
+  notesPersonal: '個人',
+};
 
 /** Analysis threshold display labels */
-export const ANALYSIS_THRESHOLD_LABELS: Record<
-  AnalysisLengthThreshold,
-  string
-> = {
+export const ANALYSIS_THRESHOLD_LABELS: Record<AnalysisLengthThreshold, string> = {
   empty: '空',
   short: '短い (<50字)',
   medium: '中程度 (50-200字)',
-  long: '長い (>200字)'
-}
+  long: '長い (>200字)',
+};
 
 // ============================================================================
 // View State Types
@@ -181,10 +170,10 @@ export const ANALYSIS_THRESHOLD_LABELS: Record<
 
 /** Kanji with its primary classification for list display */
 export interface KanjiWithClassification {
-  kanji: Kanji
+  kanji: Kanji;
   primaryClassification?: {
-    id: number
-    typeName: string
-    nameJapanese: string | null
-  } | null
+    id: number;
+    typeName: string;
+    nameJapanese: string | null;
+  } | null;
 }

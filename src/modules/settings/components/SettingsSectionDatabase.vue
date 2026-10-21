@@ -24,7 +24,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'export-database': []
   'import-database': [file: File]
-  'validate-database': [file: File]
   'clear-database': []
 }>()
 
@@ -33,15 +32,7 @@ const showImportDialog = ref(false)
 const pendingImportFile = ref<File | null>(null)
 const showClearDialog = ref(false)
 
-const exportDisabled = computed(
-  () => props.isExporting || props.isImporting || props.isClearing
-)
-const importDisabled = computed(
-  () => props.isExporting || props.isImporting || props.isClearing
-)
-const clearDisabled = computed(
-  () => props.isExporting || props.isImporting || props.isClearing
-)
+const busy = computed(() => props.isExporting || props.isImporting || props.isClearing)
 
 function handleExportClick(): void {
   emit('export-database')
@@ -106,18 +97,14 @@ function handleClearCancel(): void {
     test-id="settings-database"
     title="Data Management"
   >
-    <p class="description">
-      Export, import, or clear your kanji dictionary data.
-    </p>
+    <p class="description">Export, import, or clear your kanji dictionary data.</p>
 
     <div class="database-actions">
       <div class="action">
         <h3 class="action-title">Export Database</h3>
-        <p class="action-description">
-          Download your database as a file for backup.
-        </p>
+        <p class="action-description">Download your database as a file for backup.</p>
         <BaseButton
-          :disabled="exportDisabled"
+          :disabled="busy"
           :loading="isExporting"
           variant="secondary"
           @click="handleExportClick"
@@ -128,11 +115,9 @@ function handleClearCancel(): void {
 
       <div class="action">
         <h3 class="action-title">Import Database</h3>
-        <p class="action-description">
-          Replace your data with an exported database file.
-        </p>
+        <p class="action-description">Replace your data with an exported database file.</p>
         <BaseButton
-          :disabled="importDisabled"
+          :disabled="busy"
           :loading="isImporting"
           variant="secondary"
           @click="handleImportClick"
@@ -151,11 +136,9 @@ function handleClearCancel(): void {
 
       <div class="action">
         <h3 class="action-title">Clear All Data</h3>
-        <p class="action-description">
-          Remove all kanji data. This cannot be undone.
-        </p>
+        <p class="action-description">Remove all kanji data. This cannot be undone.</p>
         <BaseButton
-          :disabled="clearDisabled"
+          :disabled="busy"
           :loading="isClearing"
           variant="danger"
           @click="handleClearClick"

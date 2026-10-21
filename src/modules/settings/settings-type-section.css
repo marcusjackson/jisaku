@@ -1,6 +1,6 @@
 /**
  * Shared layout styles for Position Types and Classification Types sections.
- * Imported via @import in each section's <style scoped> block.
+ * Imported via @import in each section's scoped style block.
  */
 
 .settings-type-section__description {

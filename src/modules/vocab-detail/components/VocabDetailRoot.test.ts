@@ -2,22 +2,22 @@
  * VocabDetailRoot Tests
  */
 
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-import { flushPromises, mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import VocabDetailRoot from './VocabDetailRoot.vue'
+import VocabDetailRoot from './VocabDetailRoot.vue';
 
 // Mock dependencies
 vi.mock('vue-router', () => ({
   useRoute: () => ({
-    params: { id: '1' }
+    params: { id: '1' },
   }),
   useRouter: () => ({
-    push: vi.fn()
-  })
-}))
+    push: vi.fn(),
+  }),
+}));
 
 const mockVocab = {
   id: 1,
@@ -29,46 +29,47 @@ const mockVocab = {
   isCommon: true,
   description: 'The Japanese language',
   createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
-}
+  updatedAt: new Date().toISOString(),
+};
 
-const mockGetById = vi.fn()
-const mockUpdate = vi.fn()
-const mockRemove = vi.fn()
+const mockGetById = vi.fn();
+const mockUpdate = vi.fn();
+const mockRemove = vi.fn();
 
 vi.mock('@/api/vocabulary', () => ({
   useVocabularyRepository: () => ({
     getById: mockGetById,
     update: mockUpdate,
-    remove: mockRemove
+    remove: mockRemove,
   }),
   useVocabKanjiRepository: () => ({
-    getByVocabIdWithKanji: vi.fn().mockReturnValue([])
-  })
-}))
+    getByVocabIdWithKanji: vi.fn().mockReturnValue([]),
+  }),
+}));
 
 vi.mock('@/api/kanji', () => ({
   useKanjiRepository: () => ({
-    getAll: vi.fn().mockReturnValue([])
-  })
-}))
+    getAll: vi.fn().mockReturnValue([]),
+  }),
+}));
 
-const mockSuccess = vi.fn()
-const mockError = vi.fn()
+const mockSuccess = vi.fn();
+const mockError = vi.fn();
 
 vi.mock('@/shared/composables', () => ({
+  useDatabase: () => ({ transaction: <T>(fn: () => T): T => fn() }),
   useToast: () => ({
     success: mockSuccess,
     error: mockError,
-    toasts: ref([])
-  })
-}))
+    toasts: ref([]),
+  }),
+}));
 
 describe('VocabDetailRoot', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockGetById.mockReturnValue(mockVocab)
-  })
+    vi.clearAllMocks();
+    mockGetById.mockReturnValue(mockVocab);
+  });
 
   it('renders loading initially then vocab data', async () => {
     const wrapper = mount(VocabDetailRoot, {
@@ -77,21 +78,19 @@ describe('VocabDetailRoot', () => {
           VocabDetailSectionHeadline: true,
           VocabDetailSectionBasicInfo: true,
           VocabDetailSectionKanjiBreakdown: true,
-          VocabDetailSectionActions: true
-        }
-      }
-    })
+          VocabDetailSectionActions: true,
+        },
+      },
+    });
 
-    await flushPromises()
+    await flushPromises();
 
-    expect(mockGetById).toHaveBeenCalledWith(1)
-    expect(wrapper.find('vocab-detail-section-headline-stub').exists()).toBe(
-      true
-    )
-  })
+    expect(mockGetById).toHaveBeenCalledWith(1);
+    expect(wrapper.find('vocab-detail-section-headline-stub').exists()).toBe(true);
+  });
 
   it('displays error when vocabulary not found', async () => {
-    mockGetById.mockReturnValue(null)
+    mockGetById.mockReturnValue(null);
 
     const wrapper = mount(VocabDetailRoot, {
       global: {
@@ -99,13 +98,14 @@ describe('VocabDetailRoot', () => {
           VocabDetailSectionHeadline: true,
           VocabDetailSectionBasicInfo: true,
           VocabDetailSectionKanjiBreakdown: true,
-          VocabDetailSectionActions: true
-        }
-      }
-    })
+          VocabDetailSectionActions: true,
+        },
+      },
+    });
 
-    await flushPromises()
+    await flushPromises();
 
-    expect(wrapper.text()).toContain('Vocabulary with ID 1 not found')
-  })
-})
+    expect(wrapper.text()).toContain('Vocabulary with ID 1 not found');
+    expect(wrapper.find('[role="alert"]').text()).toContain('not found');
+  });
+});

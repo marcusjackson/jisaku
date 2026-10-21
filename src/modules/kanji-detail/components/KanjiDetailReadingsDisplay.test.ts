@@ -2,12 +2,12 @@
  * Tests for KanjiDetailReadingsDisplay component.
  */
 
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import KanjiDetailReadingsDisplay from './KanjiDetailReadingsDisplay.vue'
+import KanjiDetailReadingsDisplay from './KanjiDetailReadingsDisplay.vue';
 
-import type { KunReading, OnReading } from '@/api/kanji'
+import type { KunReading, OnReading } from '@/api/kanji';
 
 function mockOnReading(overrides: Partial<OnReading> = {}): OnReading {
   return {
@@ -18,8 +18,8 @@ function mockOnReading(overrides: Partial<OnReading> = {}): OnReading {
     displayOrder: 0,
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 function mockKunReading(overrides: Partial<KunReading> = {}): KunReading {
@@ -32,8 +32,8 @@ function mockKunReading(overrides: Partial<KunReading> = {}): KunReading {
     displayOrder: 0,
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 describe('KanjiDetailReadingsDisplay', () => {
@@ -44,44 +44,61 @@ describe('KanjiDetailReadingsDisplay', () => {
           onReadings: [
             mockOnReading({ id: 1, reading: 'メイ', readingLevel: '小' }),
             mockOnReading({ id: 2, reading: 'ミョウ', readingLevel: '小' }),
-            mockOnReading({ id: 3, reading: 'アイ', readingLevel: '中' })
+            mockOnReading({ id: 3, reading: 'アイ', readingLevel: '中' }),
           ],
-          kunReadings: []
-        }
-      })
+          kunReadings: [],
+        },
+      });
 
-      const display = screen.getByRole('group', { name: /on readings/i })
-      expect(display).toHaveTextContent('メイ・ミョウ')
-      expect(display).toHaveTextContent('[中]')
-      expect(display).toHaveTextContent('アイ')
-    })
+      const display = screen.getByRole('group', { name: /on readings/i });
+      expect(display).toHaveTextContent('メイ・ミョウ');
+      expect(display).toHaveTextContent('[中]');
+      expect(display).toHaveTextContent('アイ');
+    });
+
+    it('orders level groups 中 before 外 whatever the input order, joining readings in input order', () => {
+      render(KanjiDetailReadingsDisplay, {
+        props: {
+          onReadings: [
+            mockOnReading({ id: 1, reading: 'ガイ', readingLevel: '外' }),
+            mockOnReading({ id: 2, reading: 'ミョウ', readingLevel: '小' }),
+            mockOnReading({ id: 3, reading: 'メイ', readingLevel: '小' }),
+            mockOnReading({ id: 4, reading: 'チュウ', readingLevel: '中' }),
+          ],
+          kunReadings: [],
+        },
+      });
+
+      const text = screen.getByRole('group', { name: /on readings/i }).textContent;
+      expect(text.indexOf('ミョウ・メイ')).toBeGreaterThan(-1);
+      expect(text.indexOf('[中]')).toBeGreaterThan(text.indexOf('ミョウ・メイ'));
+      expect(text.indexOf('[外]')).toBeGreaterThan(text.indexOf('[中]'));
+    });
 
     it('shows dash when no on-readings', () => {
       render(KanjiDetailReadingsDisplay, {
         props: {
           onReadings: [],
-          kunReadings: []
-        }
-      })
+          kunReadings: [],
+        },
+      });
 
-      expect(
-        screen.getByRole('group', { name: /on readings/i })
-      ).toHaveTextContent('—')
-    })
+      expect(screen.getByRole('group', { name: /on readings/i })).toHaveTextContent('—');
+    });
 
     it('does not show level marker for 小 level', () => {
       render(KanjiDetailReadingsDisplay, {
         props: {
           onReadings: [mockOnReading({ reading: 'メイ', readingLevel: '小' })],
-          kunReadings: []
-        }
-      })
+          kunReadings: [],
+        },
+      });
 
-      const display = screen.getByRole('group', { name: /on readings/i })
-      expect(display).not.toHaveTextContent('[小]')
-      expect(display).toHaveTextContent('メイ')
-    })
-  })
+      const display = screen.getByRole('group', { name: /on readings/i });
+      expect(display).not.toHaveTextContent('[小]');
+      expect(display).toHaveTextContent('メイ');
+    });
+  });
 
   describe('kun-yomi display', () => {
     it('displays kun-readings with okurigana', () => {
@@ -90,28 +107,26 @@ describe('KanjiDetailReadingsDisplay', () => {
           onReadings: [],
           kunReadings: [
             mockKunReading({ reading: 'あか', okurigana: 'り' }),
-            mockKunReading({ id: 2, reading: 'かげ', okurigana: null })
-          ]
-        }
-      })
+            mockKunReading({ id: 2, reading: 'かげ', okurigana: null }),
+          ],
+        },
+      });
 
-      const display = screen.getByRole('group', { name: /kun readings/i })
-      expect(display).toHaveTextContent('あか.り')
-      expect(display).toHaveTextContent('かげ')
-    })
+      const display = screen.getByRole('group', { name: /kun readings/i });
+      expect(display).toHaveTextContent('あか.り');
+      expect(display).toHaveTextContent('かげ');
+    });
 
     it('shows dash when no kun-readings', () => {
       render(KanjiDetailReadingsDisplay, {
         props: {
           onReadings: [],
-          kunReadings: []
-        }
-      })
+          kunReadings: [],
+        },
+      });
 
-      expect(
-        screen.getByRole('group', { name: /kun readings/i })
-      ).toHaveTextContent('—')
-    })
+      expect(screen.getByRole('group', { name: /kun readings/i })).toHaveTextContent('—');
+    });
 
     it('groups kun-readings by level', () => {
       render(KanjiDetailReadingsDisplay, {
@@ -119,39 +134,39 @@ describe('KanjiDetailReadingsDisplay', () => {
           onReadings: [],
           kunReadings: [
             mockKunReading({ id: 1, reading: 'あか', readingLevel: '小' }),
-            mockKunReading({ id: 2, reading: 'かげ', readingLevel: '高' })
-          ]
-        }
-      })
+            mockKunReading({ id: 2, reading: 'かげ', readingLevel: '高' }),
+          ],
+        },
+      });
 
-      const display = screen.getByRole('group', { name: /kun readings/i })
-      expect(display).toHaveTextContent('あか')
-      expect(display).toHaveTextContent('[高]')
-      expect(display).toHaveTextContent('かげ')
-    })
-  })
+      const display = screen.getByRole('group', { name: /kun readings/i });
+      expect(display).toHaveTextContent('あか');
+      expect(display).toHaveTextContent('[高]');
+      expect(display).toHaveTextContent('かげ');
+    });
+  });
 
   describe('type badges', () => {
     it('displays 音 badge for on-yomi', () => {
       render(KanjiDetailReadingsDisplay, {
         props: {
           onReadings: [mockOnReading()],
-          kunReadings: []
-        }
-      })
+          kunReadings: [],
+        },
+      });
 
-      expect(screen.getByText('音')).toBeInTheDocument()
-    })
+      expect(screen.getByText('音')).toBeInTheDocument();
+    });
 
     it('displays 訓 badge for kun-yomi', () => {
       render(KanjiDetailReadingsDisplay, {
         props: {
           onReadings: [],
-          kunReadings: [mockKunReading()]
-        }
-      })
+          kunReadings: [mockKunReading()],
+        },
+      });
 
-      expect(screen.getByText('訓')).toBeInTheDocument()
-    })
-  })
-})
+      expect(screen.getByText('訓')).toBeInTheDocument();
+    });
+  });
+});

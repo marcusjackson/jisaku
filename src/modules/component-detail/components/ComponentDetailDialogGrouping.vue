@@ -66,7 +66,6 @@ function handleSubmit(): void {
   }
 
   emit('submit', data)
-  emit('update:open', false)
 }
 
 function handleCancel(): void {
@@ -75,20 +74,9 @@ function handleCancel(): void {
 </script>
 
 <template>
-  <BaseDialog
-    :open="open"
-    :title="dialogTitle"
-    @update:open="emit('update:open', $event)"
-  >
-    <form
-      class="dialog-form"
-      @submit.prevent="handleSubmit"
-    >
-      <BaseInput
-        v-model="name"
-        label="Name"
-        placeholder="Enter grouping name"
-      />
+  <BaseDialog :open="open" :title="dialogTitle" @update:open="emit('update:open', $event)">
+    <form class="dialog-form" @submit.prevent="handleSubmit">
+      <BaseInput v-model="name" label="Name" placeholder="Enter grouping name" />
 
       <BaseTextarea
         v-model="description"
@@ -98,19 +86,8 @@ function handleCancel(): void {
       />
 
       <div class="dialog-form-actions">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="handleCancel"
-        >
-          Cancel
-        </BaseButton>
-        <BaseButton
-          :disabled="isSubmitDisabled"
-          type="submit"
-        >
-          Save
-        </BaseButton>
+        <BaseButton type="button" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
+        <BaseButton :disabled="isSubmitDisabled" type="submit"> Save </BaseButton>
       </div>
     </form>
   </BaseDialog>

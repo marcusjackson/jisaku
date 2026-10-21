@@ -86,7 +86,7 @@ const emit = defineEmits<{
   gap: var(--spacing-sm);
   padding: var(--spacing-sm);
   border-radius: var(--radius-sm);
-  background: var(--color-background-secondary);
+  background: var(--color-surface-secondary);
 }
 
 .meaning-item-number {

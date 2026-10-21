@@ -2,16 +2,12 @@
  * Tests for KanjiDetailMeaningsDisplay component.
  */
 
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import KanjiDetailMeaningsDisplay from './KanjiDetailMeaningsDisplay.vue'
+import KanjiDetailMeaningsDisplay from './KanjiDetailMeaningsDisplay.vue';
 
-import type {
-  KanjiMeaning,
-  KanjiMeaningGroupMember,
-  KanjiMeaningReadingGroup
-} from '@/api/kanji'
+import type { KanjiMeaning, KanjiMeaningGroupMember, KanjiMeaningReadingGroup } from '@/api/kanji';
 
 function mockMeaning(overrides: Partial<KanjiMeaning> = {}): KanjiMeaning {
   return {
@@ -22,13 +18,11 @@ function mockMeaning(overrides: Partial<KanjiMeaning> = {}): KanjiMeaning {
     kanjiId: 1,
     meaningText: 'bright',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
-function mockGroup(
-  overrides: Partial<KanjiMeaningReadingGroup> = {}
-): KanjiMeaningReadingGroup {
+function mockGroup(overrides: Partial<KanjiMeaningReadingGroup> = {}): KanjiMeaningReadingGroup {
   return {
     createdAt: '',
     displayOrder: 0,
@@ -36,13 +30,11 @@ function mockGroup(
     kanjiId: 1,
     readingText: 'メイ',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
-function mockMember(
-  overrides: Partial<KanjiMeaningGroupMember> = {}
-): KanjiMeaningGroupMember {
+function mockMember(overrides: Partial<KanjiMeaningGroupMember> = {}): KanjiMeaningGroupMember {
   return {
     createdAt: '',
     displayOrder: 0,
@@ -50,17 +42,17 @@ function mockMember(
     meaningId: 1,
     readingGroupId: 1,
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 describe('KanjiDetailMeaningsDisplay', () => {
   it('shows empty state when no meanings', () => {
     render(KanjiDetailMeaningsDisplay, {
-      props: { groupMembers: [], meanings: [], readingGroups: [] }
-    })
-    expect(screen.getByText('No meanings defined')).toBeInTheDocument()
-  })
+      props: { groupMembers: [], meanings: [], readingGroups: [] },
+    });
+    expect(screen.getByText('No meanings defined')).toBeInTheDocument();
+  });
 
   it('shows simple list without grouping', () => {
     render(KanjiDetailMeaningsDisplay, {
@@ -68,43 +60,41 @@ describe('KanjiDetailMeaningsDisplay', () => {
         groupMembers: [],
         meanings: [
           mockMeaning({ meaningText: 'bright' }),
-          mockMeaning({ id: 2, meaningText: 'light' })
+          mockMeaning({ id: 2, meaningText: 'light' }),
         ],
-        readingGroups: []
-      }
-    })
+        readingGroups: [],
+      },
+    });
     // Meanings are now shown as list items, not joined text
-    expect(screen.getByText('bright')).toBeInTheDocument()
-    expect(screen.getByText('light')).toBeInTheDocument()
+    expect(screen.getByText('bright')).toBeInTheDocument();
+    expect(screen.getByText('light')).toBeInTheDocument();
     // Verify they are in an ordered list
-    const listItems = screen.getAllByRole('listitem')
-    expect(listItems).toHaveLength(2)
-  })
+    const listItems = screen.getAllByRole('listitem');
+    expect(listItems).toHaveLength(2);
+  });
 
   it('shows additional info in parentheses', () => {
     render(KanjiDetailMeaningsDisplay, {
       props: {
         groupMembers: [],
-        meanings: [
-          mockMeaning({ additionalInfo: 'of the sun', meaningText: 'bright' })
-        ],
-        readingGroups: []
-      }
-    })
-    expect(screen.getByText('bright (of the sun)')).toBeInTheDocument()
-  })
+        meanings: [mockMeaning({ additionalInfo: 'of the sun', meaningText: 'bright' })],
+        readingGroups: [],
+      },
+    });
+    expect(screen.getByText('bright (of the sun)')).toBeInTheDocument();
+  });
 
   it('shows grouped meanings with reading labels', () => {
     render(KanjiDetailMeaningsDisplay, {
       props: {
         groupMembers: [mockMember({ meaningId: 1, readingGroupId: 1 })],
         meanings: [mockMeaning({ meaningText: 'bright' })],
-        readingGroups: [mockGroup({ readingText: 'メイ' })]
-      }
-    })
-    expect(screen.getByText('メイ')).toBeInTheDocument()
-    expect(screen.getByText('bright')).toBeInTheDocument()
-  })
+        readingGroups: [mockGroup({ readingText: 'メイ' })],
+      },
+    });
+    expect(screen.getByText('メイ')).toBeInTheDocument();
+    expect(screen.getByText('bright')).toBeInTheDocument();
+  });
 
   it('shows ungrouped meanings separately', () => {
     render(KanjiDetailMeaningsDisplay, {
@@ -112,34 +102,55 @@ describe('KanjiDetailMeaningsDisplay', () => {
         groupMembers: [mockMember({ meaningId: 1, readingGroupId: 1 })],
         meanings: [
           mockMeaning({ id: 1, meaningText: 'bright' }),
-          mockMeaning({ id: 2, meaningText: 'light' })
+          mockMeaning({ id: 2, meaningText: 'light' }),
         ],
-        readingGroups: [mockGroup({ readingText: 'メイ' })]
-      }
-    })
-    expect(screen.getByText('メイ')).toBeInTheDocument()
-    expect(screen.getByText('bright')).toBeInTheDocument()
-    expect(screen.getByText('light')).toBeInTheDocument()
-  })
+        readingGroups: [mockGroup({ readingText: 'メイ' })],
+      },
+    });
+    expect(screen.getByText('メイ')).toBeInTheDocument();
+    expect(screen.getByText('bright')).toBeInTheDocument();
+    expect(screen.getByText('light')).toBeInTheDocument();
+  });
 
   it('shows multiple groups', () => {
     render(KanjiDetailMeaningsDisplay, {
       props: {
         groupMembers: [
           mockMember({ meaningId: 1, readingGroupId: 1 }),
-          mockMember({ meaningId: 2, readingGroupId: 2 })
+          mockMember({ meaningId: 2, readingGroupId: 2 }),
         ],
         meanings: [
           mockMeaning({ id: 1, meaningText: 'bright' }),
-          mockMeaning({ id: 2, meaningText: 'next' })
+          mockMeaning({ id: 2, meaningText: 'next' }),
         ],
         readingGroups: [
           mockGroup({ id: 1, readingText: 'メイ' }),
-          mockGroup({ id: 2, readingText: 'ミョウ' })
-        ]
-      }
-    })
-    expect(screen.getByText('メイ')).toBeInTheDocument()
-    expect(screen.getByText('ミョウ')).toBeInTheDocument()
-  })
-})
+          mockGroup({ id: 2, readingText: 'ミョウ' }),
+        ],
+      },
+    });
+    expect(screen.getByText('メイ')).toBeInTheDocument();
+    expect(screen.getByText('ミョウ')).toBeInTheDocument();
+  });
+
+  it('lists meanings in member order and numbers ungrouped ones on', () => {
+    render(KanjiDetailMeaningsDisplay, {
+      props: {
+        groupMembers: [
+          mockMember({ displayOrder: 0, id: 1, meaningId: 2 }),
+          mockMember({ displayOrder: 1, id: 2, meaningId: 1 }),
+        ],
+        meanings: [
+          mockMeaning({ displayOrder: 0, id: 1, meaningText: 'bright' }),
+          mockMeaning({ displayOrder: 1, id: 2, meaningText: 'light' }),
+          mockMeaning({ displayOrder: 2, id: 3, meaningText: 'ungrouped' }),
+        ],
+        readingGroups: [mockGroup()],
+      },
+    });
+
+    const items = screen.getAllByRole('listitem').map((li) => li.textContent);
+    expect(items).toEqual(['light', 'bright', 'ungrouped']);
+    expect(screen.getAllByRole('list')[1]).toHaveAttribute('start', '3');
+  });
+});

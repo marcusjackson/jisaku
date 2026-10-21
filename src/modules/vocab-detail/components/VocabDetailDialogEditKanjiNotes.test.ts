@@ -5,13 +5,13 @@
  * Tests use stubs to avoid portal issues.
  */
 
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { mount } from '@vue/test-utils';
+import { describe, expect, it } from 'vitest';
 
-import VocabDetailDialogEditKanjiNotes from './VocabDetailDialogEditKanjiNotes.vue'
+import VocabDetailDialogEditKanjiNotes from './VocabDetailDialogEditKanjiNotes.vue';
 
-import type { Kanji } from '@/api/kanji'
-import type { VocabKanjiWithKanji } from '@/api/vocabulary'
+import type { Kanji } from '@/api/kanji';
+import type { VocabKanjiWithKanji } from '@/api/vocabulary';
 
 function createTestKanji(overrides: Partial<Kanji> = {}): Kanji {
   return {
@@ -34,8 +34,8 @@ function createTestKanji(overrides: Partial<Kanji> = {}): Kanji {
     radicalStrokeCount: null,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 function createTestVocabKanjiWithKanji(
@@ -50,23 +50,20 @@ function createTestVocabKanjiWithKanji(
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     kanji: createTestKanji(),
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 describe('VocabDetailDialogEditKanjiNotes', () => {
-  function mountDialog(
-    props: { vocabKanji?: VocabKanjiWithKanji | null } = {},
-    modelValue = true
-  ) {
+  function mountDialog(props: { vocabKanji?: VocabKanjiWithKanji | null } = {}, modelValue = true) {
     return mount(VocabDetailDialogEditKanjiNotes, {
       props: {
         open: modelValue,
-        'onUpdate:open': (...args: unknown[]) => {
-          void args
+        'onUpdate:open': () => {
+          // no-op: the dialog's open state is controlled by the test
         },
         vocabKanji: createTestVocabKanjiWithKanji(),
-        ...props
+        ...props,
       },
       global: {
         stubs: {
@@ -78,7 +75,7 @@ describe('VocabDetailDialogEditKanjiNotes', () => {
                 <slot />
                 <slot name="footer" />
               </div>
-            `
+            `,
           },
           BaseTextarea: {
             props: ['modelValue', 'label', 'placeholder', 'name', 'rows'],
@@ -89,67 +86,63 @@ describe('VocabDetailDialogEditKanjiNotes', () => {
                 :value="modelValue"
                 @input="$emit('update:modelValue', $event.target.value)"
               />
-            `
+            `,
           },
           BaseButton: {
             props: ['variant', 'type', 'disabled'],
-            template: `<button :type="type" :data-variant="variant"><slot /></button>`
-          }
-        }
-      }
-    })
+            template: `<button :type="type" :data-variant="variant"><slot /></button>`,
+          },
+        },
+      },
+    });
   }
 
   it('renders dialog with correct title', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.find('h2').text()).toBe('Edit Analysis Notes')
-  })
+    const wrapper = mountDialog();
+    expect(wrapper.find('h2').text()).toBe('Edit Analysis Notes');
+  });
 
   it('displays kanji character and meaning as context', () => {
-    const wrapper = mountDialog()
-    expect(wrapper.text()).toContain('明')
-    expect(wrapper.text()).toContain('bright')
-  })
+    const wrapper = mountDialog();
+    expect(wrapper.text()).toContain('明');
+    expect(wrapper.text()).toContain('bright');
+  });
 
   it('pre-populates textarea with existing analysisNotes', () => {
-    const wrapper = mountDialog()
-    const textarea = wrapper.find('[data-testid="notes-textarea"]')
-    expect((textarea.element as HTMLTextAreaElement).value).toBe(
-      'existing notes'
-    )
-  })
+    const wrapper = mountDialog();
+    const textarea = wrapper.find('[data-testid="notes-textarea"]');
+    expect((textarea.element as HTMLTextAreaElement).value).toBe('existing notes');
+  });
 
   it('emits submit with correct payload on form submission', async () => {
-    const wrapper = mountDialog()
-    const textarea = wrapper.find('[data-testid="notes-textarea"]')
-    await textarea.setValue('updated notes')
+    const wrapper = mountDialog();
+    const textarea = wrapper.find('[data-testid="notes-textarea"]');
+    await textarea.setValue('updated notes');
 
-    const form = wrapper.find('form')
-    await form.trigger('submit.prevent')
+    const form = wrapper.find('form');
+    await form.trigger('submit.prevent');
 
-    expect(wrapper.emitted('submit')).toBeTruthy()
-    expect(wrapper.emitted('submit')?.[0]).toEqual([
-      { id: 10, notes: 'updated notes' }
-    ])
-  })
+    expect(wrapper.emitted('submit')).toBeTruthy();
+    expect(wrapper.emitted('submit')?.[0]).toEqual([{ id: 10, notes: 'updated notes' }]);
+  });
 
   it('emits null for empty textarea on submit', async () => {
-    const wrapper = mountDialog()
-    const textarea = wrapper.find('[data-testid="notes-textarea"]')
-    await textarea.setValue('   ')
+    const wrapper = mountDialog();
+    const textarea = wrapper.find('[data-testid="notes-textarea"]');
+    await textarea.setValue('   ');
 
-    const form = wrapper.find('form')
-    await form.trigger('submit.prevent')
+    const form = wrapper.find('form');
+    await form.trigger('submit.prevent');
 
-    expect(wrapper.emitted('submit')?.[0]).toEqual([{ id: 10, notes: null }])
-  })
+    expect(wrapper.emitted('submit')?.[0]).toEqual([{ id: 10, notes: null }]);
+  });
 
   it('emits cancel and closes without submitting', async () => {
-    const wrapper = mountDialog()
-    const cancelButton = wrapper.find('[data-variant="secondary"]')
-    await cancelButton.trigger('click')
+    const wrapper = mountDialog();
+    const cancelButton = wrapper.find('[data-variant="secondary"]');
+    await cancelButton.trigger('click');
 
-    expect(wrapper.emitted('cancel')).toBeTruthy()
-    expect(wrapper.emitted('submit')).toBeFalsy()
-  })
-})
+    expect(wrapper.emitted('cancel')).toBeTruthy();
+    expect(wrapper.emitted('submit')).toBeFalsy();
+  });
+});

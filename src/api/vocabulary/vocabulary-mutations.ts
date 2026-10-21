@@ -6,33 +6,30 @@
  * @module api/vocabulary
  */
 
-import { useDatabase } from '@/shared/composables/use-database'
+import { useDatabase } from '@/shared/composables/use-database';
 
-import { schedulePersist } from '@/db/indexeddb'
-import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
+import { schedulePersist } from '@/db/indexeddb';
+import { inTransaction } from '@/db/transaction';
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types';
 
-import type { UpdatableField } from '../api-types'
-import type { VocabularyQueries } from './vocabulary-queries'
-import type {
-  CreateVocabularyInput,
-  UpdateVocabularyInput,
-  Vocabulary
-} from './vocabulary-types'
+import type { UpdatableField } from '../api-types';
+import type { VocabularyQueries } from './vocabulary-queries';
+import type { CreateVocabularyInput, UpdateVocabularyInput, Vocabulary } from './vocabulary-types';
 
 // ============================================================================
 // Mutation Operations
 // ============================================================================
 
 export class VocabularyMutations {
-  private readonly run: ReturnType<typeof useDatabase>['run']
-  private readonly exec: ReturnType<typeof useDatabase>['exec']
-  private readonly queries: VocabularyQueries
+  private readonly run: ReturnType<typeof useDatabase>['run'];
+  private readonly exec: ReturnType<typeof useDatabase>['exec'];
+  private readonly queries: VocabularyQueries;
 
   constructor(queries: VocabularyQueries) {
-    const db = useDatabase()
-    this.run = db.run
-    this.exec = db.exec
-    this.queries = queries
+    const db = useDatabase();
+    this.run = db.run;
+    this.exec = db.exec;
+    this.queries = queries;
   }
 
   /**
@@ -55,29 +52,29 @@ export class VocabularyMutations {
         input.searchKeywords ?? null,
         input.jlptLevel ?? null,
         input.isCommon ? 1 : 0,
-        input.description ?? null
+        input.description ?? null,
       ]
-    )
+    );
 
-    const idResult = this.exec('SELECT last_insert_rowid() as id')
-    const newId = idResult[0]?.values[0]?.[0] as number
+    const idResult = this.exec('SELECT last_insert_rowid() as id');
+    const newId = idResult[0]?.values[0]?.[0] as number;
 
-    const created = this.queries.getById(newId)
+    const created = this.queries.getById(newId);
     if (!created) {
-      throw new CreateError('Vocabulary')
+      throw new CreateError('Vocabulary');
     }
 
-    schedulePersist()
-    return created
+    schedulePersist();
+    return created;
   }
 
   /** Build SQL SET clauses from input object */
   private buildUpdateSets(input: UpdateVocabularyInput): {
-    sets: string[]
-    values: unknown[]
+    sets: string[];
+    values: unknown[];
   } {
-    const sets: string[] = []
-    const values: unknown[] = []
+    const sets: string[] = [];
+    const values: unknown[] = [];
 
     const fieldMap = {
       word: 'word',
@@ -85,23 +82,23 @@ export class VocabularyMutations {
       shortMeaning: 'short_meaning',
       searchKeywords: 'search_keywords',
       jlptLevel: 'jlpt_level',
-      description: 'description'
-    } satisfies Partial<Record<UpdatableField<Vocabulary>, string>>
+      description: 'description',
+    } satisfies Partial<Record<UpdatableField<Vocabulary>, string>>;
 
     for (const [key, column] of Object.entries(fieldMap)) {
-      const value = input[key as keyof UpdateVocabularyInput]
+      const value = input[key as keyof UpdateVocabularyInput];
       if (value !== undefined) {
-        sets.push(`${column} = ?`)
-        values.push(value)
+        sets.push(`${column} = ?`);
+        values.push(value);
       }
     }
 
     if (input.isCommon !== undefined) {
-      sets.push('is_common = ?')
-      values.push(input.isCommon ? 1 : 0)
+      sets.push('is_common = ?');
+      values.push(input.isCommon ? 1 : 0);
     }
 
-    return { sets, values }
+    return { sets, values };
   }
 
   /**
@@ -114,28 +111,28 @@ export class VocabularyMutations {
    * @throws {UpdateError} If the update fails to return
    */
   update(id: number, input: UpdateVocabularyInput): Vocabulary {
-    const existing = this.queries.getById(id)
+    const existing = this.queries.getById(id);
     if (!existing) {
-      throw new EntityNotFoundError('Vocabulary', id)
+      throw new EntityNotFoundError('Vocabulary', id);
     }
 
-    const { sets, values } = this.buildUpdateSets(input)
+    const { sets, values } = this.buildUpdateSets(input);
     if (sets.length === 0) {
-      return existing
+      return existing;
     }
 
-    sets.push("updated_at = datetime('now')")
-    values.push(id)
+    sets.push("updated_at = datetime('now')");
+    values.push(id);
 
-    this.run(`UPDATE vocabulary SET ${sets.join(', ')} WHERE id = ?`, values)
+    this.run(`UPDATE vocabulary SET ${sets.join(', ')} WHERE id = ?`, values);
 
-    const updated = this.queries.getById(id)
+    const updated = this.queries.getById(id);
     if (!updated) {
-      throw new UpdateError('Vocabulary', id)
+      throw new UpdateError('Vocabulary', id);
     }
 
-    schedulePersist()
-    return updated
+    schedulePersist();
+    return updated;
   }
 
   /**
@@ -153,7 +150,7 @@ export class VocabularyMutations {
     field: K,
     value: Vocabulary[K]
   ): Vocabulary {
-    return this.update(id, { [field]: value })
+    return this.update(id, { [field]: value });
   }
 
   /**
@@ -162,15 +159,10 @@ export class VocabularyMutations {
    * @param id - Vocabulary id
    */
   remove(id: number): void {
-    try {
-      this.run('BEGIN TRANSACTION')
-      this.run('DELETE FROM vocab_kanji WHERE vocab_id = ?', [id])
-      this.run('DELETE FROM vocabulary WHERE id = ?', [id])
-      this.run('COMMIT')
-    } catch (e) {
-      this.run('ROLLBACK')
-      throw e
-    }
-    schedulePersist()
+    inTransaction(this.run, () => {
+      this.run('DELETE FROM vocab_kanji WHERE vocab_id = ?', [id]);
+      this.run('DELETE FROM vocabulary WHERE id = ?', [id]);
+    });
+    schedulePersist();
   }
 }

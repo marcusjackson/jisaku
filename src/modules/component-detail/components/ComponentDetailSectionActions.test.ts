@@ -1,95 +1,111 @@
 /**
  * ComponentDetailSectionActions Tests
  *
- * Tests for the actions section component.
+ * Tests for the actions section component. The button, switch and confirm
+ * dialog are real, so the delete flow is exercised through accessible names.
  */
 
-import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, within } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import ComponentDetailSectionActions from './ComponentDetailSectionActions.vue'
+import ComponentDetailSectionActions from './ComponentDetailSectionActions.vue';
 
 // Mock vue-router
 vi.mock('vue-router', () => ({
   RouterLink: {
     name: 'RouterLink',
     template: '<a><slot /></a>',
-    props: ['to']
-  }
-}))
+    props: ['to'],
+  },
+}));
+
+function renderActions(props = {}) {
+  return render(ComponentDetailSectionActions, {
+    props: {
+      destructiveMode: false,
+      isDeleting: false,
+      ...props,
+    },
+    global: {
+      stubs: { SharedBackButton: true },
+    },
+  });
+}
 
 describe('ComponentDetailSectionActions', () => {
-  const createWrapper = (props = {}) => {
-    return mount(ComponentDetailSectionActions, {
-      props: {
-        destructiveMode: false,
-        isDeleting: false,
-        ...props
-      },
-      global: {
-        stubs: {
-          SharedBackButton: true,
-          SharedConfirmDialog: true,
-          BaseButton: {
-            name: 'BaseButton',
-            template: '<button :disabled="disabled"><slot /></button>',
-            props: ['disabled', 'variant']
-          },
-          BaseSwitch: {
-            name: 'BaseSwitch',
-            template:
-              '<input type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" />',
-            props: ['modelValue']
-          }
-        }
-      }
-    })
-  }
-
   it('renders destructive mode toggle', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.text()).toContain('Destructive Mode')
-  })
+    renderActions();
+    expect(screen.getByText('Destructive Mode')).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Destructive mode' })).toBeInTheDocument();
+  });
 
   it('renders delete button', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.html()).toContain('Delete Component')
-  })
-
-  it('renders back button', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.findComponent({ name: 'SharedBackButton' }).exists()).toBe(
-      true
-    )
-  })
+    renderActions();
+    expect(screen.getByRole('button', { name: 'Delete component' })).toBeInTheDocument();
+  });
 
   it('disables delete button when destructive mode is off', () => {
-    const wrapper = createWrapper({ destructiveMode: false })
-    const deleteButton = wrapper.find('button')
-    expect(deleteButton.attributes('disabled')).toBeDefined()
-  })
+    renderActions({ destructiveMode: false });
+    expect(screen.getByRole('button', { name: 'Delete component' })).toBeDisabled();
+  });
 
   it('enables delete button when destructive mode is on', () => {
-    const wrapper = createWrapper({ destructiveMode: true })
-    const deleteButton = wrapper.find('button')
-    expect(deleteButton.attributes('disabled')).toBeUndefined()
-  })
+    renderActions({ destructiveMode: true });
+    expect(screen.getByRole('button', { name: 'Delete component' })).toBeEnabled();
+  });
 
-  it('disables delete button when deleting', () => {
-    const wrapper = createWrapper({ destructiveMode: true, isDeleting: true })
-    const deleteButton = wrapper.find('button')
-    expect(deleteButton.attributes('disabled')).toBeDefined()
-  })
-
-  it('shows deleting text when deleting', () => {
-    const wrapper = createWrapper({ isDeleting: true })
-    expect(wrapper.html()).toContain('Deleting...')
-  })
+  it('disables delete button and shows deleting text when deleting', () => {
+    renderActions({ destructiveMode: true, isDeleting: true });
+    const button = screen.getByRole('button', { name: 'Delete component' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent('Deleting...');
+  });
 
   it('emits update:destructiveMode when switch is toggled', async () => {
-    const wrapper = createWrapper()
-    const switchInput = wrapper.find('input[type="checkbox"]')
-    await switchInput.setValue(true)
-    expect(wrapper.emitted('update:destructiveMode')).toBeTruthy()
-  })
-})
+    const user = userEvent.setup();
+    const { emitted } = renderActions();
+    await user.click(screen.getByRole('switch', { name: 'Destructive mode' }));
+    expect(emitted('update:destructiveMode')).toEqual([[true]]);
+  });
+
+  describe('delete confirmation', () => {
+    it('does not emit delete before the confirmation', async () => {
+      const user = userEvent.setup();
+      const { emitted } = renderActions({ destructiveMode: true });
+
+      await user.click(screen.getByRole('button', { name: 'Delete component' }));
+
+      expect(await screen.findByRole('dialog')).toBeInTheDocument();
+      expect(emitted('delete')).toBeUndefined();
+    });
+
+    it('emits delete and closes the dialog on confirm', async () => {
+      const user = userEvent.setup();
+      const { emitted } = renderActions({ destructiveMode: true });
+
+      await user.click(screen.getByRole('button', { name: 'Delete component' }));
+      const dialog = await screen.findByRole('dialog');
+      await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+      expect(emitted('delete')).toHaveLength(1);
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
+    });
+
+    it('emits nothing and closes the dialog on cancel', async () => {
+      const user = userEvent.setup();
+      const { emitted } = renderActions({ destructiveMode: true });
+
+      await user.click(screen.getByRole('button', { name: 'Delete component' }));
+      const dialog = await screen.findByRole('dialog');
+      await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+      expect(emitted('delete')).toBeUndefined();
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
+    });
+  });
+});

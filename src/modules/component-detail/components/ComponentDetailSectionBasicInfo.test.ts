@@ -4,14 +4,14 @@
  * @module modules/component-detail
  */
 
-import userEvent from '@testing-library/user-event'
-import { render, screen, within } from '@testing-library/vue'
-import { describe, expect, it, vi } from 'vitest'
+import userEvent from '@testing-library/user-event';
+import { render, screen, within } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import ComponentDetailSectionBasicInfo from './ComponentDetailSectionBasicInfo.vue'
+import ComponentDetailSectionBasicInfo from './ComponentDetailSectionBasicInfo.vue';
 
-import type { Component } from '@/api/component/component-types'
-import type { Kanji } from '@/api/kanji'
+import type { Component } from '@/api/component/component-types';
+import type { Kanji } from '@/api/kanji';
 
 function mockComponent(overrides: Partial<Component> = {}): Component {
   return {
@@ -28,8 +28,8 @@ function mockComponent(overrides: Partial<Component> = {}): Component {
     radicalNameJapanese: 'さんずい',
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 function mockKanji(overrides: Partial<Kanji> = {}): Kanji {
@@ -53,48 +53,50 @@ function mockKanji(overrides: Partial<Kanji> = {}): Kanji {
     radicalStrokeCount: null,
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 const defaultProps = {
+  save: () => true,
   component: mockComponent(),
   sourceKanji: mockKanji(),
-  kanjiOptions: [mockKanji()]
-}
+  kanjiOptions: [mockKanji()],
+};
 
 // Stub child components
 vi.mock('./ComponentDetailDialogBasicInfo.vue', () => ({
   default: {
     name: 'ComponentDetailDialogBasicInfo',
-    template: '<div data-testid="dialog-stub" v-if="open">Dialog</div>',
+    template:
+      '<div data-testid="dialog-stub" v-if="open">Dialog<button type="button" @click="$emit(\'save\', { strokeCount: 5 })">Save dialog</button></div>',
     props: ['open', 'component', 'sourceKanji', 'kanjiOptions'],
-    emits: ['update:open', 'save']
-  }
-}))
+    emits: ['update:open', 'save'],
+  },
+}));
 
 describe('ComponentDetailSectionBasicInfo', () => {
   describe('display values', () => {
     it('displays stroke count value', () => {
       render(ComponentDetailSectionBasicInfo, {
         props: defaultProps,
-        global: { stubs: { RouterLink: true } }
-      })
-      const region = screen.getByRole('region', { name: /basic information/i })
-      expect(within(region).getByText('3')).toBeInTheDocument()
-    })
+        global: { stubs: { RouterLink: true } },
+      });
+      const region = screen.getByRole('region', { name: /basic information/i });
+      expect(within(region).getByText('3')).toBeInTheDocument();
+    });
 
     it('displays dash when stroke count is null', () => {
       render(ComponentDetailSectionBasicInfo, {
         props: {
           ...defaultProps,
-          component: mockComponent({ strokeCount: null })
+          component: mockComponent({ strokeCount: null }),
         },
-        global: { stubs: { RouterLink: true } }
-      })
-      const region = screen.getByRole('region', { name: /basic information/i })
-      expect(within(region).getAllByText('—')[0]).toBeInTheDocument()
-    })
+        global: { stubs: { RouterLink: true } },
+      });
+      const region = screen.getByRole('region', { name: /basic information/i });
+      expect(within(region).getAllByText('—')[0]).toBeInTheDocument();
+    });
 
     it('displays source kanji with meaning', () => {
       render(ComponentDetailSectionBasicInfo, {
@@ -103,85 +105,65 @@ describe('ComponentDetailSectionBasicInfo', () => {
           stubs: {
             RouterLink: {
               template: '<a :href="to"><slot /></a>',
-              props: ['to']
-            }
-          }
-        }
-      })
-      expect(screen.getByTestId('basic-info-source-kanji')).toHaveTextContent(
-        '水 (water)'
-      )
-    })
+              props: ['to'],
+            },
+          },
+        },
+      });
+      expect(screen.getByTestId('basic-info-source-kanji')).toHaveTextContent('水 (water)');
+    });
 
     it('displays dash when no source kanji', () => {
       render(ComponentDetailSectionBasicInfo, {
         props: { ...defaultProps, sourceKanji: null },
-        global: { stubs: { RouterLink: true } }
-      })
-      expect(screen.getByTestId('basic-info-source-kanji')).toHaveTextContent(
-        '—'
-      )
-    })
+        global: { stubs: { RouterLink: true } },
+      });
+      expect(screen.getByTestId('basic-info-source-kanji')).toHaveTextContent('—');
+    });
 
     it('displays can-be-radical as Yes when true', () => {
       render(ComponentDetailSectionBasicInfo, {
         props: defaultProps,
-        global: { stubs: { RouterLink: true } }
-      })
-      expect(screen.getByTestId('basic-info-can-be-radical')).toHaveTextContent(
-        'Yes'
-      )
-    })
+        global: { stubs: { RouterLink: true } },
+      });
+      expect(screen.getByTestId('basic-info-can-be-radical')).toHaveTextContent('Yes');
+    });
 
     it('displays can-be-radical as No when false', () => {
       render(ComponentDetailSectionBasicInfo, {
         props: {
           ...defaultProps,
-          component: mockComponent({ canBeRadical: false })
+          component: mockComponent({ canBeRadical: false }),
         },
-        global: { stubs: { RouterLink: true } }
-      })
-      expect(screen.getByTestId('basic-info-can-be-radical')).toHaveTextContent(
-        'No'
-      )
-    })
-  })
+        global: { stubs: { RouterLink: true } },
+      });
+      expect(screen.getByTestId('basic-info-can-be-radical')).toHaveTextContent('No');
+    });
+  });
 
   describe('radical attributes display', () => {
     it('shows radical attributes when canBeRadical is true', () => {
       render(ComponentDetailSectionBasicInfo, {
         props: defaultProps,
-        global: { stubs: { RouterLink: true } }
-      })
-      expect(screen.getByTestId('basic-info-kangxi-number')).toHaveTextContent(
-        '85'
-      )
-      expect(screen.getByTestId('basic-info-kangxi-meaning')).toHaveTextContent(
-        'water'
-      )
-      expect(screen.getByTestId('basic-info-radical-name')).toHaveTextContent(
-        'さんずい'
-      )
-    })
+        global: { stubs: { RouterLink: true } },
+      });
+      expect(screen.getByTestId('basic-info-kangxi-number')).toHaveTextContent('85');
+      expect(screen.getByTestId('basic-info-kangxi-meaning')).toHaveTextContent('water');
+      expect(screen.getByTestId('basic-info-radical-name')).toHaveTextContent('さんずい');
+    });
 
     it('hides radical attributes when canBeRadical is false', () => {
       render(ComponentDetailSectionBasicInfo, {
         props: {
           ...defaultProps,
-          component: mockComponent({ canBeRadical: false })
+          component: mockComponent({ canBeRadical: false }),
         },
-        global: { stubs: { RouterLink: true } }
-      })
-      expect(
-        screen.queryByTestId('basic-info-kangxi-number')
-      ).not.toBeInTheDocument()
-      expect(
-        screen.queryByTestId('basic-info-kangxi-meaning')
-      ).not.toBeInTheDocument()
-      expect(
-        screen.queryByTestId('basic-info-radical-name')
-      ).not.toBeInTheDocument()
-    })
+        global: { stubs: { RouterLink: true } },
+      });
+      expect(screen.queryByTestId('basic-info-kangxi-number')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('basic-info-kangxi-meaning')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('basic-info-radical-name')).not.toBeInTheDocument();
+    });
 
     it('displays dashes for null radical attribute values', () => {
       render(ComponentDetailSectionBasicInfo, {
@@ -191,22 +173,16 @@ describe('ComponentDetailSectionBasicInfo', () => {
             canBeRadical: true,
             kangxiNumber: null,
             kangxiMeaning: null,
-            radicalNameJapanese: null
-          })
+            radicalNameJapanese: null,
+          }),
         },
-        global: { stubs: { RouterLink: true } }
-      })
-      expect(screen.getByTestId('basic-info-kangxi-number')).toHaveTextContent(
-        '—'
-      )
-      expect(screen.getByTestId('basic-info-kangxi-meaning')).toHaveTextContent(
-        '—'
-      )
-      expect(screen.getByTestId('basic-info-radical-name')).toHaveTextContent(
-        '—'
-      )
-    })
-  })
+        global: { stubs: { RouterLink: true } },
+      });
+      expect(screen.getByTestId('basic-info-kangxi-number')).toHaveTextContent('—');
+      expect(screen.getByTestId('basic-info-kangxi-meaning')).toHaveTextContent('—');
+      expect(screen.getByTestId('basic-info-radical-name')).toHaveTextContent('—');
+    });
+  });
 
   describe('source kanji link', () => {
     it('renders source kanji as a link', () => {
@@ -216,58 +192,59 @@ describe('ComponentDetailSectionBasicInfo', () => {
           stubs: {
             RouterLink: {
               template: '<a :href="to"><slot /></a>',
-              props: ['to']
-            }
-          }
-        }
-      })
-      const link = screen.getByRole('link')
-      expect(link).toHaveAttribute('href', '/kanji/10')
-    })
-  })
+              props: ['to'],
+            },
+          },
+        },
+      });
+      const link = screen.getByRole('link');
+      expect(link).toHaveAttribute('href', '/kanji/10');
+    });
+  });
 
   describe('edit dialog integration', () => {
     it('opens dialog when edit button is clicked', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
       render(ComponentDetailSectionBasicInfo, {
         props: defaultProps,
-        global: { stubs: { RouterLink: true } }
-      })
-      await user.click(screen.getByRole('button', { name: /edit basic info/i }))
-      expect(screen.getByTestId('dialog-stub')).toBeInTheDocument()
-    })
+        global: { stubs: { RouterLink: true } },
+      });
+      await user.click(screen.getByRole('button', { name: /edit basic info/i }));
+      expect(screen.getByTestId('dialog-stub')).toBeInTheDocument();
+    });
 
-    it('dialog receives correct props when opened', async () => {
-      const user = userEvent.setup()
+    it.each([
+      [true, true],
+      [false, false],
+    ])('with save returning %s, dialog closed is %s', async (saved, closed) => {
+      const user = userEvent.setup();
+      const save = vi.fn(() => saved);
       render(ComponentDetailSectionBasicInfo, {
-        props: defaultProps,
-        global: { stubs: { RouterLink: true } }
-      })
-      await user.click(screen.getByRole('button', { name: /edit basic info/i }))
-      // The stub dialog is now visible - we've tested the integration structure
-      expect(screen.getByTestId('dialog-stub')).toBeInTheDocument()
-    })
-  })
+        props: { ...defaultProps, save },
+        global: { stubs: { RouterLink: true } },
+      });
+      await user.click(screen.getByRole('button', { name: /edit basic info/i }));
+      await user.click(screen.getByRole('button', { name: 'Save dialog' }));
+      expect(save).toHaveBeenCalledWith({ strokeCount: 5 });
+      expect(screen.queryByTestId('dialog-stub') === null).toBe(closed);
+    });
+  });
 
   describe('section structure', () => {
     it('has region landmark with title name', () => {
       render(ComponentDetailSectionBasicInfo, {
         props: defaultProps,
-        global: { stubs: { RouterLink: true } }
-      })
-      expect(
-        screen.getByRole('region', { name: /basic information/i })
-      ).toBeInTheDocument()
-    })
+        global: { stubs: { RouterLink: true } },
+      });
+      expect(screen.getByRole('region', { name: /basic information/i })).toBeInTheDocument();
+    });
 
     it('displays section title', () => {
       render(ComponentDetailSectionBasicInfo, {
         props: defaultProps,
-        global: { stubs: { RouterLink: true } }
-      })
-      expect(
-        screen.getByRole('heading', { name: /basic information/i })
-      ).toBeInTheDocument()
-    })
-  })
-})
+        global: { stubs: { RouterLink: true } },
+      });
+      expect(screen.getByRole('heading', { name: /basic information/i })).toBeInTheDocument();
+    });
+  });
+});

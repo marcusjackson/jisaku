@@ -38,12 +38,7 @@ const selectedValue = computed({
 
 <template>
   <div class="vocab-list-filter-description">
-    <BaseSelect
-      v-model="selectedValue"
-      label="Description"
-      :options="options"
-      placeholder="Any"
-    />
+    <BaseSelect v-model="selectedValue" label="Description" :options="options" placeholder="Any" />
   </div>
 </template>
 

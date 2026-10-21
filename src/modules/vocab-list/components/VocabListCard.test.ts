@@ -2,14 +2,14 @@
  * VocabListCard Tests
  */
 
-import { createMemoryHistory, createRouter } from 'vue-router'
+import { createMemoryHistory, createRouter } from 'vue-router';
 
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import VocabListCard from './VocabListCard.vue'
+import VocabListCard from './VocabListCard.vue';
 
-import type { Vocabulary } from '@/api/vocabulary'
+import type { Vocabulary } from '@/api/vocabulary';
 
 const createTestRouter = () =>
   createRouter({
@@ -19,10 +19,10 @@ const createTestRouter = () =>
       {
         path: '/vocabulary/:id',
         component: { template: '<div>Detail</div>' },
-        name: 'vocabulary-detail'
-      }
-    ]
-  })
+        name: 'vocabulary-detail',
+      },
+    ],
+  });
 
 const mockVocabulary: Vocabulary = {
   id: 1,
@@ -35,68 +35,79 @@ const mockVocabulary: Vocabulary = {
   searchKeywords: null,
   description: null,
   createdAt: '2024-01-01',
-  updatedAt: '2024-01-01'
-}
+  updatedAt: '2024-01-01',
+};
 
 describe('VocabListCard', () => {
   it('renders vocabulary word', () => {
-    const router = createTestRouter()
+    const router = createTestRouter();
     render(VocabListCard, {
       props: { vocabulary: mockVocabulary },
-      global: { plugins: [router] }
-    })
+      global: { plugins: [router] },
+    });
 
-    expect(screen.getByText('日本')).toBeInTheDocument()
-  })
+    expect(screen.getByText('日本')).toBeInTheDocument();
+  });
 
   it('renders kana', () => {
-    const router = createTestRouter()
+    const router = createTestRouter();
     render(VocabListCard, {
       props: { vocabulary: mockVocabulary },
-      global: { plugins: [router] }
-    })
+      global: { plugins: [router] },
+    });
 
-    expect(screen.getByText('にほん')).toBeInTheDocument()
-  })
+    expect(screen.getByText('にほん')).toBeInTheDocument();
+  });
+
+  it('marks word and kana as Japanese text', () => {
+    const router = createTestRouter();
+    render(VocabListCard, {
+      props: { vocabulary: mockVocabulary },
+      global: { plugins: [router] },
+    });
+
+    expect(screen.getByText('日本')).toHaveAttribute('lang', 'ja');
+    expect(screen.getByText('にほん')).toHaveAttribute('lang', 'ja');
+  });
 
   it('renders short meaning', () => {
-    const router = createTestRouter()
+    const router = createTestRouter();
     render(VocabListCard, {
       props: { vocabulary: mockVocabulary },
-      global: { plugins: [router] }
-    })
+      global: { plugins: [router] },
+    });
 
-    expect(screen.getByText('Japan')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Japan')).toBeInTheDocument();
+  });
 
   it('renders JLPT level badge', () => {
-    const router = createTestRouter()
+    const router = createTestRouter();
     render(VocabListCard, {
       props: { vocabulary: mockVocabulary },
-      global: { plugins: [router] }
-    })
+      global: { plugins: [router] },
+    });
 
-    expect(screen.getByText('N5')).toBeInTheDocument()
-  })
+    expect(screen.getByText('N5')).toBeInTheDocument();
+  });
 
   it('renders common badge when isCommon is true', () => {
-    const router = createTestRouter()
+    const router = createTestRouter();
     render(VocabListCard, {
       props: { vocabulary: mockVocabulary },
-      global: { plugins: [router] }
-    })
+      global: { plugins: [router] },
+    });
 
-    expect(screen.getByText('常用')).toBeInTheDocument()
-  })
+    expect(screen.getByText('常用')).toBeInTheDocument();
+  });
 
   it('links to vocabulary detail page', () => {
-    const router = createTestRouter()
+    const router = createTestRouter();
     render(VocabListCard, {
       props: { vocabulary: mockVocabulary },
-      global: { plugins: [router] }
-    })
+      global: { plugins: [router] },
+    });
 
-    const link = screen.getByRole('link')
-    expect(link).toHaveAttribute('href', '/vocabulary/1')
-  })
-})
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/vocabulary/1');
+  });
+});

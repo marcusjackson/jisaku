@@ -5,6 +5,8 @@
  * Chip toggle filter for Joyo grade levels.
  */
 
+import { useId } from 'vue'
+
 import { JOYO_LABELS, type JoyoLevel } from '../kanji-list-types'
 
 const props = defineProps<{
@@ -39,13 +41,15 @@ function toggleLevel(level: JoyoLevel): void {
 function isSelected(level: JoyoLevel): boolean {
   return props.modelValue.includes(level)
 }
+
+const labelId = useId()
 </script>
 
 <template>
   <div class="kanji-list-filter-joyo">
-    <span class="kanji-list-filter-joyo-label">Joyo Level</span>
-    <div class="kanji-list-filter-joyo-chips">
-      <!-- Raw <button>: chip/toggle needs full style override incompatible with BaseButton -->
+    <span :id="labelId" class="kanji-list-filter-joyo-label">Joyo Level</span>
+    <div :aria-labelledby="labelId" class="kanji-list-filter-joyo-chips" role="group">
+      <!-- Raw <button>: chip toggle, bare layout incompatible with BaseButton -->
       <button
         v-for="level in levels"
         :key="level"

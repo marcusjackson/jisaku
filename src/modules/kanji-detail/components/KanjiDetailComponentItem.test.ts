@@ -2,13 +2,13 @@
  * Tests for KanjiDetailComponentItem component
  */
 
-import { renderWithProviders as render } from '@test/helpers/render'
-import { screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { renderWithProviders as render } from '@test/helpers/render';
+import { screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import KanjiDetailComponentItem from './KanjiDetailComponentItem.vue'
+import KanjiDetailComponentItem from './KanjiDetailComponentItem.vue';
 
-import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types'
+import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types';
 
 describe('KanjiDetailComponentItem', () => {
   const mockOccurrence: ComponentOccurrenceWithDetails = {
@@ -22,64 +22,64 @@ describe('KanjiDetailComponentItem', () => {
     displayOrder: 1,
     component: {
       id: 10,
-      character: 'δΊΊ',
-      shortMeaning: 'person'
+      character: '人',
+      shortMeaning: 'person',
     },
     position: null,
     form: null,
     createdAt: '',
-    updatedAt: ''
-  }
+    updatedAt: '',
+  };
 
   it('renders component character', () => {
     render(KanjiDetailComponentItem, {
-      props: { occurrence: mockOccurrence }
-    })
+      props: { occurrence: mockOccurrence },
+    });
 
-    expect(screen.getByText('δΊΊ')).toBeInTheDocument()
-  })
+    expect(screen.getByText('人')).toBeInTheDocument();
+  });
 
   it('renders component short meaning', () => {
     render(KanjiDetailComponentItem, {
-      props: { occurrence: mockOccurrence }
-    })
+      props: { occurrence: mockOccurrence },
+    });
 
-    expect(screen.getByText('person')).toBeInTheDocument()
-  })
+    expect(screen.getByText('person')).toBeInTheDocument();
+  });
 
   it('does not render short meaning when null', () => {
     const occurrenceWithoutMeaning: ComponentOccurrenceWithDetails = {
       ...mockOccurrence,
       component: {
         ...mockOccurrence.component,
-        shortMeaning: null
-      }
-    }
+        shortMeaning: null,
+      },
+    };
 
     render(KanjiDetailComponentItem, {
-      props: { occurrence: occurrenceWithoutMeaning }
-    })
+      props: { occurrence: occurrenceWithoutMeaning },
+    });
 
-    expect(screen.queryByText('person')).not.toBeInTheDocument()
-  })
+    expect(screen.queryByText('person')).not.toBeInTheDocument();
+  });
 
   it('renders as a link to component detail page', () => {
     render(KanjiDetailComponentItem, {
-      props: { occurrence: mockOccurrence }
-    })
+      props: { occurrence: mockOccurrence },
+    });
 
-    const link = screen.getByRole('link')
-    expect(link).toHaveAttribute('href', '/components/10')
-  })
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/components/10');
+  });
 
   it('does not render position badge when position is null', () => {
     render(KanjiDetailComponentItem, {
-      props: { occurrence: mockOccurrence }
-    })
+      props: { occurrence: mockOccurrence },
+    });
 
     // SharedPositionBadge should not be rendered
-    expect(screen.queryByText(/Position/i)).not.toBeInTheDocument()
-  })
+    expect(screen.queryByText(/Position/i)).not.toBeInTheDocument();
+  });
 
   it('renders position badge when position exists', () => {
     const occurrenceWithPosition: ComponentOccurrenceWithDetails = {
@@ -88,42 +88,42 @@ describe('KanjiDetailComponentItem', () => {
       position: {
         id: 1,
         positionName: 'Left',
-        nameJapanese: 'ε',
+        nameJapanese: '左',
         nameEnglish: 'Left',
         description: 'Left side of kanji',
         displayOrder: 1,
         createdAt: '2024-01-01T00:00:00',
-        updatedAt: '2024-01-01T00:00:00'
-      }
-    }
+        updatedAt: '2024-01-01T00:00:00',
+      },
+    };
 
     render(KanjiDetailComponentItem, {
-      props: { occurrence: occurrenceWithPosition }
-    })
+      props: { occurrence: occurrenceWithPosition },
+    });
 
-    expect(screen.getByText('ε')).toBeInTheDocument()
-  })
+    expect(screen.getByText('左')).toBeInTheDocument();
+  });
 
   it('does not render radical badge when isRadical is false', () => {
     render(KanjiDetailComponentItem, {
-      props: { occurrence: mockOccurrence }
-    })
+      props: { occurrence: mockOccurrence },
+    });
 
-    expect(screen.queryByText('部首')).not.toBeInTheDocument()
-  })
+    expect(screen.queryByText('部首')).not.toBeInTheDocument();
+  });
 
   it('renders radical badge when isRadical is true', () => {
     const radicalOccurrence: ComponentOccurrenceWithDetails = {
       ...mockOccurrence,
-      isRadical: true
-    }
+      isRadical: true,
+    };
 
     render(KanjiDetailComponentItem, {
-      props: { occurrence: radicalOccurrence }
-    })
+      props: { occurrence: radicalOccurrence },
+    });
 
-    expect(screen.getByText('部首')).toBeInTheDocument()
-  })
+    expect(screen.getByText('部首')).toBeInTheDocument();
+  });
 
   it('renders both position and radical badge when both exist', () => {
     const occurrenceWithBoth: ComponentOccurrenceWithDetails = {
@@ -133,29 +133,29 @@ describe('KanjiDetailComponentItem', () => {
       position: {
         id: 1,
         positionName: 'Left',
-        nameJapanese: 'ε',
+        nameJapanese: '左',
         nameEnglish: 'Left',
         description: 'Left side of kanji',
         displayOrder: 1,
         createdAt: '2024-01-01T00:00:00',
-        updatedAt: '2024-01-01T00:00:00'
-      }
-    }
+        updatedAt: '2024-01-01T00:00:00',
+      },
+    };
 
     render(KanjiDetailComponentItem, {
-      props: { occurrence: occurrenceWithBoth }
-    })
+      props: { occurrence: occurrenceWithBoth },
+    });
 
-    expect(screen.getByText('ε')).toBeInTheDocument()
-    expect(screen.getByText('部首')).toBeInTheDocument()
-  })
+    expect(screen.getByText('左')).toBeInTheDocument();
+    expect(screen.getByText('部首')).toBeInTheDocument();
+  });
 
   it('renders with minimum touch target size', () => {
     const { container } = render(KanjiDetailComponentItem, {
-      props: { occurrence: mockOccurrence }
-    })
+      props: { occurrence: mockOccurrence },
+    });
 
-    const card = container.querySelector('.kanji-detail-component-item')
-    expect(card).toBeInTheDocument()
-  })
-})
+    const card = container.querySelector('.kanji-detail-component-item');
+    expect(card).toBeInTheDocument();
+  });
+});

@@ -1,57 +1,52 @@
 /** use-vocab-detail-data - Composable for loading and managing vocab detail data. */
-import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
-import { useKanjiRepository } from '@/api/kanji'
-import {
-  useVocabKanjiRepository,
-  useVocabularyRepository
-} from '@/api/vocabulary'
+import { useKanjiRepository } from '@/api/kanji';
+import { useVocabKanjiRepository, useVocabularyRepository } from '@/api/vocabulary';
 
-import type { Kanji } from '@/api/kanji'
-import type { VocabKanjiWithKanji, Vocabulary } from '@/api/vocabulary'
-import type { ComputedRef, Ref } from 'vue'
+import type { Kanji } from '@/api/kanji';
+import type { VocabKanjiWithKanji, Vocabulary } from '@/api/vocabulary';
+import type { ComputedRef, Ref } from 'vue';
 
 interface VocabDetailDataReturn {
-  vocab: Ref<Vocabulary | null>
-  kanjiBreakdown: Ref<VocabKanjiWithKanji[]>
-  allKanji: Ref<Kanji[]>
-  isLoading: Ref<boolean>
-  loadError: Ref<string | null>
-  vocabId: ComputedRef<number>
+  vocab: Ref<Vocabulary | null>;
+  kanjiBreakdown: Ref<VocabKanjiWithKanji[]>;
+  allKanji: Ref<Kanji[]>;
+  isLoading: Ref<boolean>;
+  loadError: Ref<string | null>;
+  vocabId: ComputedRef<number>;
 }
 
 function loadVocabData(
   vocabId: number,
   state: {
-    vocab: Ref<Vocabulary | null>
-    kanjiBreakdown: Ref<VocabKanjiWithKanji[]>
-    allKanji: Ref<Kanji[]>
-    isLoading: Ref<boolean>
-    loadError: Ref<string | null>
+    vocab: Ref<Vocabulary | null>;
+    kanjiBreakdown: Ref<VocabKanjiWithKanji[]>;
+    allKanji: Ref<Kanji[]>;
+    isLoading: Ref<boolean>;
+    loadError: Ref<string | null>;
   },
   repos: {
-    vocabRepo: ReturnType<typeof useVocabularyRepository>
-    vocabKanjiRepo: ReturnType<typeof useVocabKanjiRepository>
-    kanjiRepo: ReturnType<typeof useKanjiRepository>
+    vocabRepo: ReturnType<typeof useVocabularyRepository>;
+    vocabKanjiRepo: ReturnType<typeof useVocabKanjiRepository>;
+    kanjiRepo: ReturnType<typeof useKanjiRepository>;
   }
 ): void {
-  state.isLoading.value = true
-  state.loadError.value = null
+  state.isLoading.value = true;
+  state.loadError.value = null;
   try {
-    state.vocab.value = repos.vocabRepo.getById(vocabId)
+    state.vocab.value = repos.vocabRepo.getById(vocabId);
     if (!state.vocab.value) {
-      state.loadError.value = `Vocabulary with ID ${String(vocabId)} not found`
-      return
+      state.loadError.value = `Vocabulary with ID ${String(vocabId)} not found`;
+      return;
     }
-    state.kanjiBreakdown.value =
-      repos.vocabKanjiRepo.getByVocabIdWithKanji(vocabId)
-    state.allKanji.value = repos.kanjiRepo.getAll()
+    state.kanjiBreakdown.value = repos.vocabKanjiRepo.getByVocabIdWithKanji(vocabId);
+    state.allKanji.value = repos.kanjiRepo.getAll();
   } catch (err) {
-    state.loadError.value =
-      err instanceof Error ? err.message : 'Failed to load vocabulary'
+    state.loadError.value = err instanceof Error ? err.message : 'Failed to load vocabulary';
   } finally {
-    state.isLoading.value = false
+    state.isLoading.value = false;
   }
 }
 
@@ -61,30 +56,32 @@ function loadVocabData(
  * @returns Reactive state for the vocab detail page (does not include repositories)
  */
 export function useVocabDetailData(): VocabDetailDataReturn {
-  const route = useRoute()
-  const vocabRepo = useVocabularyRepository()
-  const vocabKanjiRepo = useVocabKanjiRepository()
-  const kanjiRepo = useKanjiRepository()
+  const route = useRoute();
+  const vocabRepo = useVocabularyRepository();
+  const vocabKanjiRepo = useVocabKanjiRepository();
+  const kanjiRepo = useKanjiRepository();
 
-  const vocab = ref<Vocabulary | null>(null)
-  const kanjiBreakdown = ref<VocabKanjiWithKanji[]>([])
-  const allKanji = ref<Kanji[]>([])
-  const isLoading = ref(true)
-  const loadError = ref<string | null>(null)
+  const vocab = ref<Vocabulary | null>(null);
+  const kanjiBreakdown = ref<VocabKanjiWithKanji[]>([]);
+  const allKanji = ref<Kanji[]>([]);
+  const isLoading = ref(true);
+  const loadError = ref<string | null>(null);
 
-  const vocabId = computed(() => Number(route.params['id']))
+  const vocabId = computed(() => Number(route.params['id']));
 
   watch(
     vocabId,
-    () => {
+    (_id, oldId) => {
+      // Off the detail route the id is NaN; keep the loaded entry instead of reloading.
+      if (oldId !== undefined && !Number.isInteger(vocabId.value)) return;
       loadVocabData(
         vocabId.value,
         { vocab, kanjiBreakdown, allKanji, isLoading, loadError },
         { vocabRepo, vocabKanjiRepo, kanjiRepo }
-      )
+      );
     },
     { immediate: true }
-  )
+  );
 
-  return { vocab, kanjiBreakdown, allKanji, isLoading, loadError, vocabId }
+  return { vocab, kanjiBreakdown, allKanji, isLoading, loadError, vocabId };
 }

@@ -7,6 +7,8 @@
  * When disabled, shows a simple list of meanings.
  */
 
+import { computed } from 'vue'
+
 import type {
   KanjiMeaning,
   KanjiMeaningGroupMember,
@@ -20,17 +22,17 @@ const props = defineProps<{
 }>()
 
 // Helper functions
+/** A group's meanings in member order, which the edit dialog's ↑ and ↓ set */
 function getMeaningsForGroup(
   groupId: number,
   members: KanjiMeaningGroupMember[],
   meanings: KanjiMeaning[]
 ): KanjiMeaning[] {
-  const memberMeaningIds = members
+  const byId = new Map(meanings.map((m) => [m.id, m]))
+  return members
     .filter((m) => m.readingGroupId === groupId)
-    .map((m) => m.meaningId)
-  return meanings
-    .filter((m) => memberMeaningIds.includes(m.id))
     .sort((a, b) => a.displayOrder - b.displayOrder)
+    .flatMap((m) => byId.get(m.meaningId) ?? [])
 }
 
 function getUngroupedMeanings(
@@ -48,101 +50,57 @@ function formatMeaning(meaning: KanjiMeaning): string {
   return meaning.meaningText
 }
 
-function getMeaningStartNumber(groupId: number): number {
-  // Calculate the 1-based start number for this group
-  let count = 1
-  for (const group of props.readingGroups) {
-    if (group.id === groupId) break
-    count += getMeaningsForGroup(
+// Each group's meanings with the 1-based number its list starts at, built once
+const groupSections = computed(() => {
+  let start = 1
+  return props.readingGroups.map((group) => {
+    const meanings = getMeaningsForGroup(
       group.id,
       props.groupMembers,
       props.meanings
-    ).length
-  }
-  return count
-}
+    )
+    const section = { group, meanings, start }
+    start += meanings.length
+    return section
+  })
+})
 
-function getUngroupedStartNumber(): number {
-  // Start number after all grouped meanings
-  let count = 1
-  for (const group of props.readingGroups) {
-    count += getMeaningsForGroup(
-      group.id,
-      props.groupMembers,
-      props.meanings
-    ).length
-  }
-  return count
-}
+const ungrouped = computed(() => ({
+  meanings: getUngroupedMeanings(props.meanings, props.groupMembers),
+  // Numbered after all grouped meanings
+  start: groupSections.value.reduce((n, s) => n + s.meanings.length, 1)
+}))
 </script>
 
 <template>
-  <div
-    v-if="meanings.length === 0"
-    class="meanings-empty"
-  >
-    No meanings defined
-  </div>
+  <div v-if="meanings.length === 0" class="meanings-empty">No meanings defined</div>
 
-  <div
-    v-else-if="readingGroups.length > 0"
-    class="meanings-grouped"
-  >
+  <div v-else-if="readingGroups.length > 0" class="meanings-grouped">
     <!-- Grouped meanings -->
-    <div
-      v-for="group in readingGroups"
-      :key="group.id"
-      class="meaning-group"
-    >
-      <div class="group-reading">{{ group.readingText }}</div>
-      <ol
-        class="group-meanings-list"
-        :start="getMeaningStartNumber(group.id)"
-      >
-        <li
-          v-for="meaning in getMeaningsForGroup(
-            group.id,
-            groupMembers,
-            meanings
-          )"
-          :key="meaning.id"
-          class="group-meaning-item"
-        >
+    <div v-for="section in groupSections" :key="section.group.id" class="meaning-group">
+      <div class="group-reading" lang="ja">
+        {{ section.group.readingText }}
+      </div>
+      <ol class="group-meanings-list" :start="section.start">
+        <li v-for="meaning in section.meanings" :key="meaning.id" class="group-meaning-item">
           {{ formatMeaning(meaning) }}
         </li>
       </ol>
     </div>
 
     <!-- Ungrouped meanings -->
-    <div
-      v-if="getUngroupedMeanings(meanings, groupMembers).length > 0"
-      class="meaning-group meaning-group--ungrouped"
-    >
+    <div v-if="ungrouped.meanings.length > 0" class="meaning-group meaning-group--ungrouped">
       <div class="group-reading group-reading--ungrouped">(Ungrouped)</div>
-      <ol
-        class="group-meanings-list"
-        :start="getUngroupedStartNumber()"
-      >
-        <li
-          v-for="meaning in getUngroupedMeanings(meanings, groupMembers)"
-          :key="meaning.id"
-          class="group-meaning-item"
-        >
+      <ol class="group-meanings-list" :start="ungrouped.start">
+        <li v-for="meaning in ungrouped.meanings" :key="meaning.id" class="group-meaning-item">
           {{ formatMeaning(meaning) }}
         </li>
       </ol>
     </div>
   </div>
 
-  <ol
-    v-else
-    class="meanings-simple-list"
-  >
-    <li
-      v-for="meaning in meanings"
-      :key="meaning.id"
-      class="meaning-simple-item"
-    >
+  <ol v-else class="meanings-simple-list">
+    <li v-for="meaning in meanings" :key="meaning.id" class="meaning-simple-item">
       {{ formatMeaning(meaning) }}
     </li>
   </ol>
@@ -174,6 +132,7 @@ function getUngroupedStartNumber(): number {
 
 .group-reading {
   color: var(--color-text-secondary);
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
 }

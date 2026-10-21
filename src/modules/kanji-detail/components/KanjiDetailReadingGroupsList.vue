@@ -23,7 +23,6 @@ const emit = defineEmits<{
   'assign-meaning': [groupId: number, meaningId: number]
   'remove-from-group': [groupId: number, meaningId: number]
   'move-in-group': [groupId: number, index: number, direction: -1 | 1]
-  'get-meanings-in-group': [groupId: number]
 }>()
 
 function getMeaningLabel(meaning: EditMeaning): string {
@@ -37,31 +36,15 @@ function getMeaningLabel(meaning: EditMeaning): string {
   <div class="reading-groups-section">
     <div class="reading-groups-header">
       <h4 class="reading-groups-title">Reading Groups</h4>
-      <BaseButton
-        size="sm"
-        variant="ghost"
-        @click="emit('add')"
-      >
-        + Add Group
-      </BaseButton>
+      <BaseButton size="sm" variant="ghost" @click="emit('add')"> + Add Group </BaseButton>
     </div>
 
-    <div
-      v-if="groups.length === 0"
-      class="reading-groups-empty"
-    >
+    <div v-if="groups.length === 0" class="reading-groups-empty">
       No reading groups. Click "+ Add Group" to create one.
     </div>
 
-    <div
-      v-else
-      class="reading-groups-list"
-    >
-      <div
-        v-for="(group, groupIndex) in groups"
-        :key="group.id"
-        class="reading-group"
-      >
+    <div v-else class="reading-groups-list">
+      <div v-for="(group, groupIndex) in groups" :key="group.id" class="reading-group">
         <div class="reading-group-header">
           <BaseInput
             class="reading-group-input"
@@ -104,16 +87,10 @@ function getMeaningLabel(meaning: EditMeaning): string {
         </div>
 
         <div class="reading-group-content">
-          <slot
-            :group-id="group.id"
-            name="group-meanings"
-          />
+          <slot :group-id="group.id" name="group-meanings" />
 
           <!-- Assign meaning dropdown -->
-          <div
-            v-if="unassignedMeanings.length > 0"
-            class="assign-meaning"
-          >
+          <div v-if="unassignedMeanings.length > 0" class="assign-meaning">
             <BaseSelect
               label="Assign meaning to group"
               model-value=""

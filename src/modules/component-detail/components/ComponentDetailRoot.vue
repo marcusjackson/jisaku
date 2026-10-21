@@ -55,24 +55,6 @@ const componentIdForHandlers = computed(() =>
 // Extracted Handler Composables
 // ============================================================================
 
-const { handleFormAdd, handleFormRemove, handleFormReorder, handleFormUpdate } =
-  useComponentDetailFormHandlers({
-    componentId: componentIdForHandlers,
-    forms
-  })
-
-const {
-  handleOccurrenceAdd,
-  handleOccurrenceCreate,
-  handleOccurrenceRemove,
-  handleOccurrenceReorder,
-  handleOccurrenceUpdate
-} = useComponentDetailOccurrenceHandlers({
-  componentId: componentIdForHandlers,
-  occurrences,
-  kanjiOptions
-})
-
 const {
   handleGroupingAdd,
   handleGroupingRemove,
@@ -81,7 +63,8 @@ const {
   handleManageMembersOpen,
   handleMemberAdd,
   handleMemberRemove,
-  handleMemberReorder
+  handleMemberReorder,
+  reloadGroupings
 } = useComponentDetailGroupingHandlers({
   componentId: componentIdForHandlers,
   groupings,
@@ -89,6 +72,27 @@ const {
   managingGroupingId,
   managingGroupingMembers
 })
+
+const {
+  handleOccurrenceAdd,
+  handleOccurrenceCreate,
+  handleOccurrenceRemove,
+  handleOccurrenceReorder,
+  handleOccurrenceUpdate,
+  reloadOccurrences
+} = useComponentDetailOccurrenceHandlers({
+  componentId: componentIdForHandlers,
+  occurrences,
+  kanjiOptions,
+  reloadGroupings
+})
+
+const { handleFormAdd, handleFormRemove, handleFormReorder, handleFormUpdate } =
+  useComponentDetailFormHandlers({
+    componentId: componentIdForHandlers,
+    forms,
+    reloadOccurrences
+  })
 
 const {
   handleBasicInfoSave,
@@ -106,31 +110,22 @@ const {
 <template>
   <div class="component-detail-root">
     <div class="component-detail-root-container">
-      <div
-        v-if="isLoading"
-        class="component-detail-root-loading"
-      >
+      <div v-if="isLoading" class="component-detail-root-loading">
         <BaseSpinner size="lg" />
       </div>
 
-      <div
-        v-else-if="loadError"
-        class="component-detail-root-error"
-      >
+      <div v-else-if="loadError" class="component-detail-root-error" role="alert">
         <p>{{ loadError }}</p>
       </div>
 
       <template v-else-if="component">
-        <ComponentDetailSectionHeadline
-          :component="component"
-          @save="handleHeadlineSave"
-        />
+        <ComponentDetailSectionHeadline :component="component" :save="handleHeadlineSave" />
 
         <ComponentDetailSectionBasicInfo
           :component="component"
           :kanji-options="kanjiOptions"
+          :save="handleBasicInfoSave"
           :source-kanji="sourceKanji"
-          @save="handleBasicInfoSave"
         />
 
         <ComponentDetailSectionDescription
@@ -139,44 +134,44 @@ const {
         />
 
         <ComponentDetailSectionForms
+          :add-form="handleFormAdd"
           :component-id="component.id"
           :forms="forms"
           :is-destructive-mode="isDestructiveMode"
-          @add="handleFormAdd"
+          :update-form="handleFormUpdate"
           @remove="handleFormRemove"
           @reorder="handleFormReorder"
-          @update="handleFormUpdate"
         />
 
         <ComponentDetailSectionOccurrences
+          :add="handleOccurrenceAdd"
           :all-kanji="kanjiOptions"
           :component-id="component.id"
+          :create="handleOccurrenceCreate"
           :forms="forms"
           :is-destructive-mode="isDestructiveMode"
           :occurrences="occurrences"
           :position-types="positionTypes"
-          @add="handleOccurrenceAdd"
-          @create="handleOccurrenceCreate"
+          :update="handleOccurrenceUpdate"
           @remove="handleOccurrenceRemove"
           @reorder="handleOccurrenceReorder"
-          @update="handleOccurrenceUpdate"
         />
 
         <ComponentDetailSectionGroupings
+          :add-grouping="handleGroupingAdd"
           :all-grouping-members="allGroupingMembers"
           :component-id="component.id"
           :groupings="groupings"
           :is-destructive-mode="isDestructiveMode"
           :managing-grouping-members="managingGroupingMembers"
           :occurrences="occurrences"
-          @add="handleGroupingAdd"
+          :update-grouping="handleGroupingUpdate"
           @add-member="handleMemberAdd"
           @manage-members="handleManageMembersOpen"
           @remove="handleGroupingRemove"
           @remove-member="handleMemberRemove"
           @reorder="handleGroupingReorder"
           @reorder-members="handleMemberReorder"
-          @update="handleGroupingUpdate"
         />
 
         <ComponentDetailSectionActions
@@ -210,5 +205,6 @@ const {
   justify-content: center;
   align-items: center;
   min-height: var(--content-min-height);
+  color: var(--color-danger);
 }
 </style>

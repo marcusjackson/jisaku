@@ -5,32 +5,35 @@
  * Uses localStorage to persist user preference, falls back to system preference.
  */
 
-import { ref, watch } from 'vue'
+import { ref, watch } from 'vue';
 
-import type { Ref } from 'vue'
+import type { Ref } from 'vue';
 
-export type Theme = 'light' | 'dark'
+export type Theme = 'light' | 'dark';
 
-const STORAGE_KEY = 'jisaku-theme'
+// index.html reads this key too, to apply the theme before first paint
+const STORAGE_KEY = 'jisaku-theme';
 
 /**
  * Gets the system's preferred color scheme
  */
 function getSystemTheme(): Theme {
-  return globalThis.window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light'
+  return globalThis.window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 /**
  * Gets the initial theme: user's saved preference or system preference
  */
 function getInitialTheme(): Theme {
-  const storedTheme = localStorage.getItem(STORAGE_KEY) as Theme | null
-  if (storedTheme) {
-    return storedTheme
+  try {
+    const storedTheme = localStorage.getItem(STORAGE_KEY);
+    if (storedTheme === 'light' || storedTheme === 'dark') {
+      return storedTheme;
+    }
+  } catch {
+    // Storage unavailable (blocked, private mode): use the system preference
   }
-  return getSystemTheme()
+  return getSystemTheme();
 }
 
 /**
@@ -38,32 +41,36 @@ function getInitialTheme(): Theme {
  */
 function applyTheme(theme: Theme): void {
   if (theme === 'dark') {
-    document.documentElement.dataset['theme'] = 'dark'
+    document.documentElement.dataset['theme'] = 'dark';
   } else {
-    delete document.documentElement.dataset['theme']
+    delete document.documentElement.dataset['theme'];
   }
 }
 
 // Shared reactive state (singleton pattern)
-const theme = ref<Theme>(getInitialTheme())
+const theme = ref<Theme>(getInitialTheme());
 
 // Initialize theme on module load
-applyTheme(theme.value)
+applyTheme(theme.value);
 
 // Watch for changes and persist
 watch(theme, (newTheme) => {
-  applyTheme(newTheme)
-  localStorage.setItem(STORAGE_KEY, newTheme)
-})
+  applyTheme(newTheme);
+  try {
+    localStorage.setItem(STORAGE_KEY, newTheme);
+  } catch {
+    // Storage unavailable or full: the theme still applies for this session
+  }
+});
 
 /** Return type for useTheme composable */
-export interface UseTheme {
+export interface UseThemeReturn {
   /** Current active theme */
-  theme: Ref<Theme>
+  theme: Ref<Theme>;
   /** Toggle between light and dark themes */
-  toggleTheme: () => void
+  toggleTheme: () => void;
   /** Set the theme explicitly */
-  setTheme: (newTheme: Theme) => void
+  setTheme: (newTheme: Theme) => void;
 }
 
 /**
@@ -75,24 +82,24 @@ export interface UseTheme {
  * @example
  * const { theme, toggleTheme } = useTheme()
  */
-export function useTheme(): UseTheme {
+export function useTheme(): UseThemeReturn {
   /**
    * Toggles between light and dark themes
    */
   function toggleTheme(): void {
-    theme.value = theme.value === 'light' ? 'dark' : 'light'
+    theme.value = theme.value === 'light' ? 'dark' : 'light';
   }
 
   /**
    * Sets the theme explicitly
    */
   function setTheme(newTheme: Theme): void {
-    theme.value = newTheme
+    theme.value = newTheme;
   }
 
   return {
     setTheme,
     theme,
-    toggleTheme
-  }
+    toggleTheme,
+  };
 }

@@ -6,26 +6,26 @@
  * so we test the component logic rather than the full rendering.
  */
 
-import { render } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import KanjiListSectionDialog from './KanjiListSectionDialog.vue'
+import KanjiListSectionDialog from './KanjiListSectionDialog.vue';
 
 describe('KanjiListSectionDialog', () => {
   it('renders without crashing when closed', () => {
     const { container } = render(KanjiListSectionDialog, {
-      props: { open: false }
-    })
+      props: { open: false },
+    });
 
     // Component should render (dialog content may not be visible when closed)
-    expect(container).toBeTruthy()
-  })
+    expect(container).toBeTruthy();
+  });
 
   it('renders without crashing when open', () => {
     const { container } = render(KanjiListSectionDialog, {
-      props: { open: true }
-    })
+      props: { open: true },
+    });
 
-    expect(container).toBeTruthy()
-  })
-})
+    expect(container).toBeTruthy();
+  });
+});

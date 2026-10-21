@@ -74,6 +74,11 @@ watch(
   { immediate: true }
 )
 
+const unassignedMeanings = computed(() => getUnassignedMeanings())
+const meaningsByGroup = computed(
+  () => new Map(editGroups.value.map((g) => [g.id, getMeaningsInGroup(g.id)]))
+)
+
 const hasGroups = computed(() => editGroups.value.length > 0)
 const hasUnassignedMeanings = computed(() => {
   const assignedIds = new Set(editMembers.value.map((m) => m.meaningId))
@@ -122,31 +127,19 @@ const {
 function handleSave(): void {
   emit('save', {
     groupingDisabled: !groupingEnabled.value,
-    groupingEnabled: groupingEnabled.value,
     groupMembers: groupingEnabled.value ? editMembers.value : [],
     meanings: editMeanings.value,
     readingGroups: groupingEnabled.value ? editGroups.value : []
   })
-  emit('update:open', false)
 }
 </script>
 
 <template>
-  <BaseDialog
-    :open="props.open"
-    title="Edit Meanings"
-    @update:open="emit('update:open', $event)"
-  >
+  <BaseDialog :open="props.open" title="Edit Meanings" @update:open="emit('update:open', $event)">
     <div class="meanings-dialog-content">
       <!-- Grouping toggle -->
-      <div
-        class="grouping-toggle"
-        data-testid="grouping-toggle"
-      >
-        <BaseSwitch
-          v-model="groupingToggle"
-          label="Group meanings by readings"
-        />
+      <div class="grouping-toggle" data-testid="grouping-toggle">
+        <BaseSwitch v-model="groupingToggle" label="Group meanings by readings" />
       </div>
 
       <!-- Meanings list -->
@@ -161,14 +154,11 @@ function handleSave(): void {
       />
 
       <!-- Grouping section -->
-      <div
-        v-if="groupingEnabled"
-        class="grouping-section"
-      >
+      <div v-if="groupingEnabled" class="grouping-section">
         <KanjiDetailReadingGroupsList
           :destructive-mode="props.destructiveMode ?? false"
           :groups="editGroups"
-          :unassigned-meanings="getUnassignedMeanings()"
+          :unassigned-meanings="unassignedMeanings"
           @add="addReadingGroup"
           @assign-meaning="assignMeaningToGroup"
           @delete="removeReadingGroup"
@@ -179,7 +169,7 @@ function handleSave(): void {
             <KanjiDetailReadingGroupMeaningsList
               :destructive-mode="props.destructiveMode ?? false"
               :group-id="groupId"
-              :meanings="getMeaningsInGroup(groupId)"
+              :meanings="meaningsByGroup.get(groupId) ?? []"
               @move-down="moveMeaningInGroup(groupId, $event, 1)"
               @move-up="moveMeaningInGroup(groupId, $event, -1)"
               @remove="removeMeaningFromGroup(groupId, $event)"
@@ -189,18 +179,13 @@ function handleSave(): void {
 
         <KanjiDetailUnassignedMeanings
           v-if="hasUnassignedMeanings && hasGroups"
-          :meanings="getUnassignedMeanings()"
+          :meanings="unassignedMeanings"
         />
       </div>
 
       <!-- Actions -->
       <div class="meanings-dialog-actions">
-        <BaseButton
-          variant="secondary"
-          @click="emit('update:open', false)"
-        >
-          Cancel
-        </BaseButton>
+        <BaseButton variant="secondary" @click="emit('update:open', false)"> Cancel </BaseButton>
         <BaseButton @click="handleSave">Save</BaseButton>
       </div>
     </div>
@@ -227,7 +212,7 @@ function handleSave(): void {
   gap: var(--spacing-md);
   padding: var(--spacing-md);
   border-radius: var(--radius-sm);
-  background: var(--color-background-secondary);
+  background: var(--color-surface-secondary);
 }
 
 .meanings-dialog-actions {

@@ -7,32 +7,32 @@
  * @module api/position
  */
 
-import { useDatabase } from '@/shared/composables/use-database'
+import { useDatabase } from '@/shared/composables/use-database';
 
-import { schedulePersist } from '@/db/indexeddb'
-import { CreateError, EntityNotFoundError, UpdateError } from '../api-types'
-import { BaseRepository } from '../base-repository'
+import { schedulePersist } from '@/db/indexeddb';
+import { CreateError, EntityNotFoundError, UpdateError } from '../api-types';
+import { BaseRepository } from '../base-repository';
 
-import type { Orderable, Repository } from '../api-types'
+import type { Orderable, Repository } from '../api-types';
 import type {
   CreatePositionTypeInput,
   PositionType,
-  UpdatePositionTypeInput
-} from './position-types'
+  UpdatePositionTypeInput,
+} from './position-types';
 
 // ============================================================================
 // Row Type
 // ============================================================================
 
 interface PositionTypeRow {
-  id: number
-  position_name: string
-  name_japanese: string | null
-  name_english: string | null
-  description: string | null
-  display_order: number
-  created_at: string
-  updated_at: string
+  id: number;
+  position_name: string;
+  name_japanese: string | null;
+  name_english: string | null;
+  description: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // ============================================================================
@@ -41,24 +41,22 @@ interface PositionTypeRow {
 
 class PositionTypeRepositoryImpl
   extends BaseRepository<PositionType>
-  implements
-    Repository<PositionType, CreatePositionTypeInput, UpdatePositionTypeInput>,
-    Orderable
+  implements Repository<PositionType, CreatePositionTypeInput, UpdatePositionTypeInput>, Orderable
 {
-  protected tableName = 'position_types'
+  protected tableName = 'position_types';
 
-  private readonly exec: ReturnType<typeof useDatabase>['exec']
-  private readonly run: ReturnType<typeof useDatabase>['run']
+  private readonly exec: ReturnType<typeof useDatabase>['exec'];
+  private readonly run: ReturnType<typeof useDatabase>['run'];
 
   constructor() {
-    super()
-    const db = useDatabase()
-    this.exec = db.exec
-    this.run = db.run
+    super();
+    const db = useDatabase();
+    this.exec = db.exec;
+    this.run = db.run;
   }
 
   protected mapRow(row: Record<string, unknown>): PositionType {
-    const r = row as unknown as PositionTypeRow
+    const r = row as unknown as PositionTypeRow;
     return {
       id: r.id,
       positionName: r.position_name,
@@ -67,8 +65,8 @@ class PositionTypeRepositoryImpl
       description: r.description,
       displayOrder: r.display_order,
       createdAt: r.created_at,
-      updatedAt: r.updated_at
-    }
+      updatedAt: r.updated_at,
+    };
   }
 
   // ==========================================================================
@@ -76,24 +74,13 @@ class PositionTypeRepositoryImpl
   // ==========================================================================
 
   getById(id: number): PositionType | null {
-    const result = this.exec('SELECT * FROM position_types WHERE id = ?', [id])
-    return this.resultToEntity(result)
+    const result = this.exec('SELECT * FROM position_types WHERE id = ?', [id]);
+    return this.resultToEntity(result);
   }
 
   getAll(): PositionType[] {
-    const result = this.exec(
-      'SELECT * FROM position_types ORDER BY display_order ASC'
-    )
-    return this.resultToList(result)
-  }
-
-  /** Look up a position type by its unique short code (e.g. `'pre'`). */
-  getByPositionName(positionName: string): PositionType | null {
-    const result = this.exec(
-      'SELECT * FROM position_types WHERE position_name = ?',
-      [positionName]
-    )
-    return this.resultToEntity(result)
+    const result = this.exec('SELECT * FROM position_types ORDER BY display_order ASC');
+    return this.resultToList(result);
   }
 
   // ==========================================================================
@@ -101,8 +88,8 @@ class PositionTypeRepositoryImpl
   // ==========================================================================
 
   create(input: CreatePositionTypeInput): PositionType {
-    const maxOrder = this.getMaxDisplayOrder('position_types')
-    const displayOrder = input.displayOrder ?? maxOrder + 1
+    const maxOrder = this.getMaxDisplayOrder('position_types');
+    const displayOrder = input.displayOrder ?? maxOrder + 1;
 
     this.run(
       `INSERT INTO position_types 
@@ -113,71 +100,68 @@ class PositionTypeRepositoryImpl
         input.nameJapanese ?? null,
         input.nameEnglish ?? null,
         input.description ?? null,
-        displayOrder
+        displayOrder,
       ]
-    )
+    );
 
-    const idResult = this.exec('SELECT last_insert_rowid() as id')
-    const newId = idResult[0]?.values[0]?.[0] as number
+    const idResult = this.exec('SELECT last_insert_rowid() as id');
+    const newId = idResult[0]?.values[0]?.[0] as number;
 
-    const created = this.getById(newId)
+    const created = this.getById(newId);
     if (!created) {
-      throw new CreateError('PositionType')
+      throw new CreateError('PositionType');
     }
 
-    schedulePersist()
-    return created
+    schedulePersist();
+    return created;
   }
 
   update(id: number, input: UpdatePositionTypeInput): PositionType {
-    const existing = this.getById(id)
+    const existing = this.getById(id);
     if (!existing) {
-      throw new EntityNotFoundError('PositionType', id)
+      throw new EntityNotFoundError('PositionType', id);
     }
 
-    const sets: string[] = []
-    const values: unknown[] = []
+    const sets: string[] = [];
+    const values: unknown[] = [];
 
     if (input.positionName !== undefined) {
-      sets.push('position_name = ?')
-      values.push(input.positionName)
+      sets.push('position_name = ?');
+      values.push(input.positionName);
     }
     if (input.nameJapanese !== undefined) {
-      sets.push('name_japanese = ?')
-      values.push(input.nameJapanese)
+      sets.push('name_japanese = ?');
+      values.push(input.nameJapanese);
     }
     if (input.nameEnglish !== undefined) {
-      sets.push('name_english = ?')
-      values.push(input.nameEnglish)
+      sets.push('name_english = ?');
+      values.push(input.nameEnglish);
     }
     if (input.description !== undefined) {
-      sets.push('description = ?')
-      values.push(input.description)
+      sets.push('description = ?');
+      values.push(input.description);
     }
 
     if (sets.length === 0) {
-      return existing
+      return existing;
     }
 
-    sets.push("updated_at = datetime('now')")
-    values.push(id)
-    this.run(
-      `UPDATE position_types SET ${sets.join(', ')} WHERE id = ?`,
-      values
-    )
+    sets.push("updated_at = datetime('now')");
+    values.push(id);
+    this.run(`UPDATE position_types SET ${sets.join(', ')} WHERE id = ?`, values);
 
-    const updated = this.getById(id)
+    const updated = this.getById(id);
     if (!updated) {
-      throw new UpdateError('PositionType', id)
+      throw new UpdateError('PositionType', id);
     }
 
-    schedulePersist()
-    return updated
+    schedulePersist();
+    return updated;
   }
 
   remove(id: number): void {
-    this.run('DELETE FROM position_types WHERE id = ?', [id])
-    schedulePersist()
+    this.run('DELETE FROM position_types WHERE id = ?', [id]);
+    schedulePersist();
   }
 
   // ==========================================================================
@@ -189,8 +173,8 @@ class PositionTypeRepositoryImpl
     const result = this.exec(
       'SELECT COUNT(*) as count FROM component_occurrences WHERE position_type_id = ?',
       [id]
-    )
-    return (result[0]?.values[0]?.[0] as number | null) ?? 0
+    );
+    return (result[0]?.values[0]?.[0] as number | null) ?? 0;
   }
 
   // ==========================================================================
@@ -201,13 +185,10 @@ class PositionTypeRepositoryImpl
   reorder(ids: number[]): void {
     this.withTransaction(() => {
       ids.forEach((id, index) => {
-        this.run('UPDATE position_types SET display_order = ? WHERE id = ?', [
-          index,
-          id
-        ])
-      })
-    })
-    schedulePersist()
+        this.run('UPDATE position_types SET display_order = ? WHERE id = ?', [index, id]);
+      });
+    });
+    schedulePersist();
   }
 }
 
@@ -221,5 +202,5 @@ class PositionTypeRepositoryImpl
  * @example const repo = usePositionTypeRepository(); repo.getAll()
  */
 export function usePositionTypeRepository(): PositionTypeRepositoryImpl {
-  return new PositionTypeRepositoryImpl()
+  return new PositionTypeRepositoryImpl();
 }

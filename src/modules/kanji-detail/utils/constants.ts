@@ -1,12 +1,12 @@
 /**
  * Kanji Detail Basic Info Constants
  *
- * Constants for the basic info form fields.
+ * Select options for the basic info form fields (JLPT, Jōyō, Kentei) and the reading-level order.
  *
  * @module modules/kanji-detail
  */
 
-export const NONE = '__none__'
+export const NONE = '__none__';
 
 export const JLPT_OPTIONS = [
   { label: 'None', value: NONE },
@@ -14,8 +14,8 @@ export const JLPT_OPTIONS = [
   { label: 'N4', value: 'N4' },
   { label: 'N3', value: 'N3' },
   { label: 'N2', value: 'N2' },
-  { label: 'N1', value: 'N1' }
-]
+  { label: 'N1', value: 'N1' },
+];
 
 export const JOYO_OPTIONS = [
   { label: 'None', value: NONE },
@@ -25,8 +25,8 @@ export const JOYO_OPTIONS = [
   { label: '小4', value: 'elementary4' },
   { label: '小5', value: 'elementary5' },
   { label: '小6', value: 'elementary6' },
-  { label: '中学', value: 'secondary' }
-]
+  { label: '中学', value: 'secondary' },
+];
 
 export const KENTEI_OPTIONS = [
   { label: 'None', value: NONE },
@@ -41,5 +41,8 @@ export const KENTEI_OPTIONS = [
   { label: '準2級', value: 'pre2' },
   { label: '2級', value: '2' },
   { label: '準1級', value: 'pre1' },
-  { label: '1級', value: '1' }
-]
+  { label: '1級', value: '1' },
+];
+
+/** Reading levels in display order. Not imported by the components, which keep their own lists. */
+export const readingLevels = ['小', '中', '高', '外'] as const;

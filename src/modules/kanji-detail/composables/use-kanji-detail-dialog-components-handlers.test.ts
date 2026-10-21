@@ -2,14 +2,14 @@
  * Tests for use-kanji-detail-dialog-components-handlers
  */
 
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest';
 
-import { useKanjiDetailDialogComponentsHandlers } from './use-kanji-detail-dialog-components-handlers'
+import { useKanjiDetailDialogComponentsHandlers } from './use-kanji-detail-dialog-components-handlers';
 
-import type { EditOccurrence } from '../utils/edit-occurrence-types'
-import type { Component } from '@/api/component/component-types'
+import type { EditOccurrence } from '../utils/edit-occurrence-types';
+import type { Component } from '@/api/component/component-types';
 
 describe('use-kanji-detail-dialog-components-handlers', () => {
   const mockComponents: Component[] = [
@@ -26,47 +26,28 @@ describe('use-kanji-detail-dialog-components-handlers', () => {
       kangxiMeaning: null,
       radicalNameJapanese: null,
       createdAt: '',
-      updatedAt: ''
-    }
-  ]
-
-  it('returns handler functions', () => {
-    const editOccurrences = ref<EditOccurrence[]>([])
-    const pendingRemoveOccurrenceId = ref<number | null>(null)
-    const showConfirmDialog = ref(false)
-
-    const handlers = useKanjiDetailDialogComponentsHandlers(
-      editOccurrences,
-      mockComponents,
-      pendingRemoveOccurrenceId,
-      showConfirmDialog
-    )
-
-    expect(handlers.handleComponentSelect).toBeDefined()
-    expect(handlers.handleOccurrenceUpdate).toBeDefined()
-    expect(handlers.handleUnlinkRequest).toBeDefined()
-    expect(handlers.handleUnlinkConfirm).toBeDefined()
-    expect(handlers.getVisibleOccurrences).toBeDefined()
-  })
+      updatedAt: '',
+    },
+  ];
 
   it('handleComponentSelect adds new occurrence', () => {
-    const editOccurrences = ref<EditOccurrence[]>([])
-    const pendingRemoveOccurrenceId = ref<number | null>(null)
-    const showConfirmDialog = ref(false)
+    const editOccurrences = ref<EditOccurrence[]>([]);
+    const pendingRemoveOccurrenceId = ref<number | null>(null);
+    const showConfirmDialog = ref(false);
 
     const handlers = useKanjiDetailDialogComponentsHandlers(
       editOccurrences,
       mockComponents,
       pendingRemoveOccurrenceId,
       showConfirmDialog
-    )
+    );
 
-    handlers.handleComponentSelect(1)
+    handlers.handleComponentSelect(1);
 
-    expect(editOccurrences.value).toHaveLength(1)
-    expect(editOccurrences.value[0]?.componentId).toBe(1)
-    expect(editOccurrences.value[0]?.id).toBeNull()
-  })
+    expect(editOccurrences.value).toHaveLength(1);
+    expect(editOccurrences.value[0]?.componentId).toBe(1);
+    expect(editOccurrences.value[0]?.id).toBeNull();
+  });
 
   it('handleOccurrenceUpdate updates occurrence fields', () => {
     const editOccurrences = ref<EditOccurrence[]>([
@@ -78,23 +59,23 @@ describe('use-kanji-detail-dialog-components-handlers', () => {
         isRadical: false,
         component: { id: 1, character: '日', shortMeaning: 'sun' },
         position: null,
-        form: null
-      }
-    ])
-    const pendingRemoveOccurrenceId = ref<number | null>(null)
-    const showConfirmDialog = ref(false)
+        form: null,
+      },
+    ]);
+    const pendingRemoveOccurrenceId = ref<number | null>(null);
+    const showConfirmDialog = ref(false);
 
     const handlers = useKanjiDetailDialogComponentsHandlers(
       editOccurrences,
       mockComponents,
       pendingRemoveOccurrenceId,
       showConfirmDialog
-    )
+    );
 
-    handlers.handleOccurrenceUpdate(1, 1, 'isRadical', true)
+    handlers.handleOccurrenceUpdate(1, 1, 'isRadical', true);
 
-    expect(editOccurrences.value[0]?.isRadical).toBe(true)
-  })
+    expect(editOccurrences.value[0]?.isRadical).toBe(true);
+  });
 
   it('handleUnlinkRequest removes new occurrence immediately', () => {
     const editOccurrences = ref<EditOccurrence[]>([
@@ -106,23 +87,23 @@ describe('use-kanji-detail-dialog-components-handlers', () => {
         isRadical: false,
         component: { id: 1, character: '日', shortMeaning: 'sun' },
         position: null,
-        form: null
-      }
-    ])
-    const pendingRemoveOccurrenceId = ref<number | null>(null)
-    const showConfirmDialog = ref(false)
+        form: null,
+      },
+    ]);
+    const pendingRemoveOccurrenceId = ref<number | null>(null);
+    const showConfirmDialog = ref(false);
 
     const handlers = useKanjiDetailDialogComponentsHandlers(
       editOccurrences,
       mockComponents,
       pendingRemoveOccurrenceId,
       showConfirmDialog
-    )
+    );
 
-    handlers.handleUnlinkRequest(null, 1)
+    handlers.handleUnlinkRequest(null, 1);
 
-    expect(editOccurrences.value).toHaveLength(0)
-  })
+    expect(editOccurrences.value).toHaveLength(0);
+  });
 
   it('handleUnlinkRequest shows confirmation for existing occurrence', () => {
     const editOccurrences = ref<EditOccurrence[]>([
@@ -134,24 +115,24 @@ describe('use-kanji-detail-dialog-components-handlers', () => {
         isRadical: false,
         component: { id: 1, character: '日', shortMeaning: 'sun' },
         position: null,
-        form: null
-      }
-    ])
-    const pendingRemoveOccurrenceId = ref<number | null>(null)
-    const showConfirmDialog = ref(false)
+        form: null,
+      },
+    ]);
+    const pendingRemoveOccurrenceId = ref<number | null>(null);
+    const showConfirmDialog = ref(false);
 
     const handlers = useKanjiDetailDialogComponentsHandlers(
       editOccurrences,
       mockComponents,
       pendingRemoveOccurrenceId,
       showConfirmDialog
-    )
+    );
 
-    handlers.handleUnlinkRequest(1, 1)
+    handlers.handleUnlinkRequest(1, 1);
 
-    expect(showConfirmDialog.value).toBe(true)
-    expect(pendingRemoveOccurrenceId.value).toBe(1)
-  })
+    expect(showConfirmDialog.value).toBe(true);
+    expect(pendingRemoveOccurrenceId.value).toBe(1);
+  });
 
   it('getVisibleOccurrences filters out marked for deletion', () => {
     const editOccurrences = ref<EditOccurrence[]>([
@@ -164,7 +145,7 @@ describe('use-kanji-detail-dialog-components-handlers', () => {
         markedForDeletion: true,
         component: { id: 1, character: '日', shortMeaning: 'sun' },
         position: null,
-        form: null
+        form: null,
       },
       {
         id: 2,
@@ -174,22 +155,81 @@ describe('use-kanji-detail-dialog-components-handlers', () => {
         isRadical: false,
         component: { id: 2, character: '月', shortMeaning: 'moon' },
         position: null,
-        form: null
-      }
-    ])
-    const pendingRemoveOccurrenceId = ref<number | null>(null)
-    const showConfirmDialog = ref(false)
+        form: null,
+      },
+    ]);
+    const pendingRemoveOccurrenceId = ref<number | null>(null);
+    const showConfirmDialog = ref(false);
 
     const handlers = useKanjiDetailDialogComponentsHandlers(
       editOccurrences,
       mockComponents,
       pendingRemoveOccurrenceId,
       showConfirmDialog
-    )
+    );
 
-    const visible = handlers.getVisibleOccurrences()
+    const visible = handlers.getVisibleOccurrences();
 
-    expect(visible).toHaveLength(1)
-    expect(visible[0]?.id).toBe(2)
-  })
-})
+    expect(visible).toHaveLength(1);
+    expect(visible[0]?.id).toBe(2);
+  });
+
+  it('handleComponentSelect ignores a component that is already pending', () => {
+    const editOccurrences = ref<EditOccurrence[]>([]);
+    const handlers = useKanjiDetailDialogComponentsHandlers(
+      editOccurrences,
+      mockComponents,
+      ref<number | null>(null),
+      ref(false)
+    );
+
+    handlers.handleComponentSelect(1);
+    handlers.handleComponentSelect(1);
+
+    expect(editOccurrences.value).toHaveLength(1);
+  });
+
+  it('handleComponentSelect ignores a component whose unlink is not yet saved', () => {
+    const editOccurrences = ref<EditOccurrence[]>([
+      {
+        id: 4,
+        componentId: 1,
+        positionTypeId: null,
+        componentFormId: null,
+        isRadical: false,
+        markedForDeletion: true,
+        component: { id: 1, character: '日', shortMeaning: 'sun' },
+        position: null,
+        form: null,
+      },
+    ]);
+    const handlers = useKanjiDetailDialogComponentsHandlers(
+      editOccurrences,
+      mockComponents,
+      ref<number | null>(null),
+      ref(false)
+    );
+
+    handlers.handleComponentSelect(1);
+
+    expect(editOccurrences.value).toHaveLength(1);
+  });
+
+  it('handleComponentSelect reads the component list when called, not when created', () => {
+    const editOccurrences = ref<EditOccurrence[]>([]);
+    const components = ref<Component[]>([]);
+    const handlers = useKanjiDetailDialogComponentsHandlers(
+      editOccurrences,
+      components,
+      ref<number | null>(null),
+      ref(false)
+    );
+
+    handlers.handleComponentSelect(1);
+    expect(editOccurrences.value).toHaveLength(0);
+
+    components.value = mockComponents;
+    handlers.handleComponentSelect(1);
+    expect(editOccurrences.value).toHaveLength(1);
+  });
+});

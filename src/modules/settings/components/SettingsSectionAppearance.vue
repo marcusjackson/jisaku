@@ -31,10 +31,7 @@ function handleThemeToggle(isDark: boolean): void {
 </script>
 
 <template>
-  <SharedSection
-    test-id="settings-appearance"
-    title="Appearance"
-  >
+  <SharedSection test-id="settings-appearance" title="Appearance">
     <div class="appearance-section">
       <div class="option">
         <div class="option-info">
