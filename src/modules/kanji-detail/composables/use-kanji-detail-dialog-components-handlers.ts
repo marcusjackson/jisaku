@@ -6,28 +6,27 @@
  * @module modules/kanji-detail
  */
 
-import type { EditOccurrence } from '../utils/edit-occurrence-types'
-import type { Component } from '@/api/component/component-types'
-import type { Ref } from 'vue'
+import { toValue } from 'vue';
+
+import type { EditOccurrence } from '../utils/edit-occurrence-types';
+import type { Component } from '@/api/component/component-types';
+import type { MaybeRefOrGetter, Ref } from 'vue';
 
 // ============================================================================
 // Return type
 // ============================================================================
 
 interface UseKanjiDetailDialogComponentsHandlersReturn {
-  handleComponentSelect: (componentId: number) => void
+  handleComponentSelect: (componentId: number) => void;
   handleOccurrenceUpdate: (
     occurrenceId: number | null,
     componentId: number,
     field: string,
     value: unknown
-  ) => void
-  handleUnlinkRequest: (
-    occurrenceId: number | null,
-    componentId: number
-  ) => void
-  handleUnlinkConfirm: () => void
-  getVisibleOccurrences: () => EditOccurrence[]
+  ) => void;
+  handleUnlinkRequest: (occurrenceId: number | null, componentId: number) => void;
+  handleUnlinkConfirm: () => void;
+  getVisibleOccurrences: () => EditOccurrence[];
 }
 
 // ============================================================================
@@ -39,8 +38,10 @@ function selectComponent(
   allComponents: Component[],
   editOccurrences: Ref<EditOccurrence[]>
 ): void {
-  const component = allComponents.find((c) => c.id === componentId)
-  if (!component) return
+  // A component already in the edit list (picked twice, or unlinked but not yet saved) is ignored
+  if (editOccurrences.value.some((occ) => occ.componentId === componentId)) return;
+  const component = allComponents.find((c) => c.id === componentId);
+  if (!component) return;
 
   editOccurrences.value.push({
     id: null, // null indicates new occurrence
@@ -51,11 +52,11 @@ function selectComponent(
     component: {
       id: component.id,
       character: component.character,
-      shortMeaning: component.shortMeaning
+      shortMeaning: component.shortMeaning,
     },
     position: null,
-    form: null
-  })
+    form: null,
+  });
 }
 
 function updateOccurrenceField(
@@ -68,21 +69,19 @@ function updateOccurrenceField(
   const index = editOccurrences.value.findIndex(
     (occ) =>
       (occurrenceId !== null && occ.id === occurrenceId) ||
-      (occurrenceId === null &&
-        occ.componentId === componentId &&
-        occ.id === null)
-  )
-  if (index === -1) return
+      (occurrenceId === null && occ.componentId === componentId && occ.id === null)
+  );
+  if (index === -1) return;
 
-  const occurrence = editOccurrences.value[index]
-  if (!occurrence) return
+  const occurrence = editOccurrences.value[index];
+  if (!occurrence) return;
 
   if (field === 'positionTypeId') {
-    occurrence.positionTypeId = value as number | null
+    occurrence.positionTypeId = value as number | null;
   } else if (field === 'componentFormId') {
-    occurrence.componentFormId = value as number | null
+    occurrence.componentFormId = value as number | null;
   } else if (field === 'isRadical') {
-    occurrence.isRadical = value as boolean
+    occurrence.isRadical = value as boolean;
   }
 }
 
@@ -97,13 +96,13 @@ function requestUnlink(
   if (occurrenceId === null) {
     editOccurrences.value = editOccurrences.value.filter(
       (occ) => !(occ.id === null && occ.componentId === componentId)
-    )
-    return
+    );
+    return;
   }
 
   // For existing occurrences, show confirmation
-  pendingRemoveOccurrenceId.value = occurrenceId
-  showConfirmDialog.value = true
+  pendingRemoveOccurrenceId.value = occurrenceId;
+  showConfirmDialog.value = true;
 }
 
 function confirmUnlink(
@@ -111,15 +110,15 @@ function confirmUnlink(
   showConfirmDialog: Ref<boolean>,
   editOccurrences: Ref<EditOccurrence[]>
 ): void {
-  if (pendingRemoveOccurrenceId.value === null) return
+  if (pendingRemoveOccurrenceId.value === null) return;
 
-  const occurrenceId = pendingRemoveOccurrenceId.value
+  const occurrenceId = pendingRemoveOccurrenceId.value;
   editOccurrences.value = editOccurrences.value.map((occ) =>
     occ.id === occurrenceId ? { ...occ, markedForDeletion: true } : occ
-  )
+  );
 
-  showConfirmDialog.value = false
-  pendingRemoveOccurrenceId.value = null
+  showConfirmDialog.value = false;
+  pendingRemoveOccurrenceId.value = null;
 }
 
 // ============================================================================
@@ -130,20 +129,20 @@ function confirmUnlink(
  * Provides handlers for the KanjiDetailDialogComponents dialog.
  *
  * @param editOccurrences - Ref to the list of occurrences being edited
- * @param allComponents - All available components for search/link
+ * @param allComponents - All available components for search/link; a ref or getter is read at select time
  * @param pendingRemoveOccurrenceId - Ref tracking which occurrence is pending removal
  * @param showConfirmDialog - Ref controlling confirm dialog visibility
  * @returns Handlers for component selection, field updates, and unlinking
  */
 export function useKanjiDetailDialogComponentsHandlers(
   editOccurrences: Ref<EditOccurrence[]>,
-  allComponents: Component[],
+  allComponents: MaybeRefOrGetter<Component[]>,
   pendingRemoveOccurrenceId: Ref<number | null>,
   showConfirmDialog: Ref<boolean>
 ): UseKanjiDetailDialogComponentsHandlersReturn {
   return {
     handleComponentSelect: (componentId: number) => {
-      selectComponent(componentId, allComponents, editOccurrences)
+      selectComponent(componentId, toValue(allComponents), editOccurrences);
     },
     handleOccurrenceUpdate: (
       occurrenceId: number | null,
@@ -151,13 +150,7 @@ export function useKanjiDetailDialogComponentsHandlers(
       field: string,
       value: unknown
     ) => {
-      updateOccurrenceField(
-        occurrenceId,
-        componentId,
-        field,
-        value,
-        editOccurrences
-      )
+      updateOccurrenceField(occurrenceId, componentId, field, value, editOccurrences);
     },
     handleUnlinkRequest: (occurrenceId: number | null, componentId: number) => {
       requestUnlink(
@@ -166,16 +159,11 @@ export function useKanjiDetailDialogComponentsHandlers(
         editOccurrences,
         pendingRemoveOccurrenceId,
         showConfirmDialog
-      )
+      );
     },
     handleUnlinkConfirm: () => {
-      confirmUnlink(
-        pendingRemoveOccurrenceId,
-        showConfirmDialog,
-        editOccurrences
-      )
+      confirmUnlink(pendingRemoveOccurrenceId, showConfirmDialog, editOccurrences);
     },
-    getVisibleOccurrences: () =>
-      editOccurrences.value.filter((occ) => !occ.markedForDeletion)
-  }
+    getVisibleOccurrences: () => editOccurrences.value.filter((occ) => !occ.markedForDeletion),
+  };
 }

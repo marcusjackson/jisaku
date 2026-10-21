@@ -1,9 +1,9 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { mount } from '@vue/test-utils';
+import { describe, expect, it } from 'vitest';
 
-import KanjiDetailRadicalInput from './KanjiDetailRadicalInput.vue'
+import KanjiDetailRadicalInput from './KanjiDetailRadicalInput.vue';
 
-import type { Component as RadicalComponent } from '@/api/component/component-types'
+import type { Component as RadicalComponent } from '@/api/component/component-types';
 
 describe('KanjiDetailRadicalInput', () => {
   const mockComponents: RadicalComponent[] = [
@@ -20,7 +20,7 @@ describe('KanjiDetailRadicalInput', () => {
       radicalNameJapanese: null,
       canBeRadical: true,
       createdAt: '2025-01-01T00:00:00.000Z',
-      updatedAt: '2025-01-01T00:00:00.000Z'
+      updatedAt: '2025-01-01T00:00:00.000Z',
     },
     {
       id: 2,
@@ -35,43 +35,75 @@ describe('KanjiDetailRadicalInput', () => {
       radicalNameJapanese: null,
       canBeRadical: true,
       createdAt: '2025-01-01T00:00:00.000Z',
-      updatedAt: '2025-01-01T00:00:00.000Z'
-    }
-  ]
+      updatedAt: '2025-01-01T00:00:00.000Z',
+    },
+  ];
 
   it('renders combobox with label', () => {
     const wrapper = mount(KanjiDetailRadicalInput, {
       props: {
         allComponents: mockComponents,
-        radicalValue: null
-      }
-    })
+        radicalValue: null,
+      },
+    });
 
-    expect(wrapper.text()).toContain('Radical')
-  })
+    expect(wrapper.text()).toContain('Radical');
+  });
 
   it('displays notice when newRadicalCharacter is set', () => {
     const wrapper = mount(KanjiDetailRadicalInput, {
       props: {
         allComponents: mockComponents,
         radicalValue: null,
-        newRadicalCharacter: '斤'
-      }
-    })
+        newRadicalCharacter: '斤',
+      },
+    });
 
-    expect(wrapper.text()).toContain('New:')
-    expect(wrapper.text()).toContain('斤')
-  })
+    expect(wrapper.text()).toContain('New:');
+    expect(wrapper.text()).toContain('斤');
+  });
 
   it('hides notice when newRadicalCharacter is undefined', () => {
     const wrapper = mount(KanjiDetailRadicalInput, {
       props: {
         allComponents: mockComponents,
         radicalValue: null,
-        newRadicalCharacter: undefined
-      }
-    })
+        newRadicalCharacter: undefined,
+      },
+    });
 
-    expect(wrapper.text()).not.toContain('New:')
-  })
-})
+    expect(wrapper.text()).not.toContain('New:');
+  });
+
+  it('hides the clear button when no radical is chosen', () => {
+    const wrapper = mount(KanjiDetailRadicalInput, {
+      props: { allComponents: mockComponents, radicalValue: null },
+    });
+
+    expect(wrapper.find('[data-testid="radical-clear-button"]').exists()).toBe(false);
+  });
+
+  it('clears a chosen radical', async () => {
+    const wrapper = mount(KanjiDetailRadicalInput, {
+      props: { allComponents: mockComponents, radicalValue: '1' },
+    });
+
+    await wrapper.find('[data-testid="radical-clear-button"]').trigger('click');
+
+    expect(wrapper.emitted('update:radicalValue')?.[0]).toEqual([null]);
+  });
+
+  it('clears a radical that is about to be created', async () => {
+    const wrapper = mount(KanjiDetailRadicalInput, {
+      props: {
+        allComponents: mockComponents,
+        radicalValue: null,
+        newRadicalCharacter: '斤',
+      },
+    });
+
+    await wrapper.find('[data-testid="radical-clear-button"]').trigger('click');
+
+    expect(wrapper.emitted('update:newRadicalCharacter')?.[0]).toEqual([undefined]);
+  });
+});

@@ -8,7 +8,7 @@
  * @module modules/vocab-detail
  */
 
-export const NONE = '__none__'
+export const NONE = '__none__';
 
 export const VOCAB_JLPT_OPTIONS = [
   { label: 'None', value: NONE },
@@ -17,5 +17,5 @@ export const VOCAB_JLPT_OPTIONS = [
   { label: 'N3', value: 'N3' },
   { label: 'N2', value: 'N2' },
   { label: 'N1', value: 'N1' },
-  { label: 'Non-JLPT', value: 'non-jlpt' }
-]
+  { label: 'Non-JLPT', value: 'non-jlpt' },
+];

@@ -2,13 +2,13 @@
  * Tests for KanjiDetailSectionReadings component.
  */
 
-import userEvent from '@testing-library/user-event'
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import KanjiDetailSectionReadings from './KanjiDetailSectionReadings.vue'
+import KanjiDetailSectionReadings from './KanjiDetailSectionReadings.vue';
 
-import type { KunReading, OnReading } from '@/api/kanji'
+import type { KunReading, OnReading } from '@/api/kanji';
 
 function mockOnReading(overrides: Partial<OnReading> = {}): OnReading {
   return {
@@ -19,8 +19,8 @@ function mockOnReading(overrides: Partial<OnReading> = {}): OnReading {
     displayOrder: 0,
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 function mockKunReading(overrides: Partial<KunReading> = {}): KunReading {
@@ -33,56 +33,68 @@ function mockKunReading(overrides: Partial<KunReading> = {}): KunReading {
     displayOrder: 0,
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 describe('KanjiDetailSectionReadings', () => {
   const defaultProps = {
     onReadings: [mockOnReading()],
-    kunReadings: [mockKunReading()]
-  }
+    kunReadings: [mockKunReading()],
+    save: () => true,
+  };
 
   it('renders section with title', () => {
-    render(KanjiDetailSectionReadings, { props: defaultProps })
-    expect(screen.getByText('Readings')).toBeInTheDocument()
-  })
+    render(KanjiDetailSectionReadings, { props: defaultProps });
+    expect(screen.getByText('Readings')).toBeInTheDocument();
+  });
 
   it('displays readings in compact format', () => {
-    render(KanjiDetailSectionReadings, { props: defaultProps })
-    expect(screen.getByText('音')).toBeInTheDocument()
-    expect(screen.getByText('訓')).toBeInTheDocument()
-  })
+    render(KanjiDetailSectionReadings, { props: defaultProps });
+    expect(screen.getByText('音')).toBeInTheDocument();
+    expect(screen.getByText('訓')).toBeInTheDocument();
+  });
 
   it('opens dialog when Edit button clicked', async () => {
-    const user = userEvent.setup()
-    render(KanjiDetailSectionReadings, { props: defaultProps })
+    const user = userEvent.setup();
+    render(KanjiDetailSectionReadings, { props: defaultProps });
 
-    await user.click(screen.getByRole('button', { name: /edit/i }))
+    await user.click(screen.getByRole('button', { name: 'Edit readings' }));
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText('Edit Readings')).toBeInTheDocument()
-  })
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Edit Readings')).toBeInTheDocument();
+  });
 
-  it('emits save event when dialog saves', async () => {
-    const user = userEvent.setup()
-    const { emitted } = render(KanjiDetailSectionReadings, {
-      props: defaultProps
-    })
+  it('passes the dialog data to save', async () => {
+    const user = userEvent.setup();
+    const save = vi.fn(() => true);
+    render(KanjiDetailSectionReadings, { props: { ...defaultProps, save } });
 
-    await user.click(screen.getByRole('button', { name: /edit/i }))
-    await user.click(screen.getByRole('button', { name: 'Save' }))
+    await user.click(screen.getByRole('button', { name: 'Edit readings' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(emitted()['save']).toBeTruthy()
-  })
+    expect(save).toHaveBeenCalledTimes(1);
+  });
 
-  it('closes dialog after save', async () => {
-    const user = userEvent.setup()
-    render(KanjiDetailSectionReadings, { props: defaultProps })
+  it('closes dialog after a successful save', async () => {
+    const user = userEvent.setup();
+    render(KanjiDetailSectionReadings, { props: defaultProps });
 
-    await user.click(screen.getByRole('button', { name: /edit/i }))
-    await user.click(screen.getByRole('button', { name: 'Save' }))
+    await user.click(screen.getByRole('button', { name: 'Edit readings' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-  })
-})
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('keeps the dialog open when the save fails', async () => {
+    const user = userEvent.setup();
+    render(KanjiDetailSectionReadings, {
+      props: { ...defaultProps, save: () => false },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Edit readings' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+});

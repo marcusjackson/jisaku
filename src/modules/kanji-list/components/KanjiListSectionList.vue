@@ -54,44 +54,21 @@ function getSeedingState(): boolean {
 </script>
 
 <template>
-  <div
-    class="kanji-list-section-list"
-    data-testid="kanji-list-section-list"
-  >
+  <div class="kanji-list-section-list" data-testid="kanji-list-section-list">
     <header class="kanji-list-section-list-header">
       <h1 class="kanji-list-section-list-title">Kanji List</h1>
-      <BaseButton
-        data-testid="kanji-add-button"
-        @click="emit('addKanji')"
-      >
-        Add New
-      </BaseButton>
+      <BaseButton data-testid="kanji-add-button" @click="emit('addKanji')"> Add New </BaseButton>
     </header>
 
     <!-- Empty: no results from filter -->
-    <div
-      v-if="kanjiList.length === 0 && hasActiveFilters"
-      class="kanji-list-section-list-empty"
-    >
-      <p class="kanji-list-section-list-empty-text">
-        No kanji match your filters.
-      </p>
+    <div v-if="kanjiList.length === 0 && hasActiveFilters" class="kanji-list-section-list-empty">
+      <p class="kanji-list-section-list-empty-text">No kanji match your filters.</p>
     </div>
 
     <!-- Empty: no kanji at all -->
-    <div
-      v-else-if="kanjiList.length === 0"
-      class="kanji-list-section-list-empty"
-    >
-      <p class="kanji-list-section-list-empty-text">
-        No kanji yet. Add your first one!
-      </p>
-      <BaseButton
-        size="lg"
-        @click="emit('addKanji')"
-      >
-        Add First Kanji
-      </BaseButton>
+    <div v-else-if="kanjiList.length === 0" class="kanji-list-section-list-empty">
+      <p class="kanji-list-section-list-empty-text">No kanji yet. Add your first one!</p>
+      <BaseButton size="lg" @click="emit('addKanji')"> Add First Kanji </BaseButton>
 
       <template v-if="isDevelopment">
         <BaseButton
@@ -102,18 +79,12 @@ function getSeedingState(): boolean {
         >
           {{ getSeedingState() ? 'Seeding...' : 'Seed Data' }}
         </BaseButton>
-        <p class="kanji-list-section-list-seed-hint">
-          Load example data for testing
-        </p>
+        <p class="kanji-list-section-list-seed-hint">Load example data for testing</p>
       </template>
     </div>
 
     <!-- Kanji grid -->
-    <div
-      v-else
-      class="kanji-list-section-list-grid"
-      data-testid="kanji-list-grid"
-    >
+    <div v-else class="kanji-list-section-list-grid" data-testid="kanji-list-grid">
       <KanjiListCard
         v-for="kanji in kanjiList"
         :key="kanji.id"

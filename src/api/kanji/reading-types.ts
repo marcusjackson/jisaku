@@ -9,10 +9,10 @@
 // ============================================================================
 
 /** Reading proficiency levels (school grade when learned) */
-export type ReadingLevel = '小' | '中' | '高' | '外'
+export type ReadingLevel = '小' | '中' | '高' | '外';
 
 /** Valid reading level values — used for runtime DB row validation */
-export const READING_LEVELS: readonly ReadingLevel[] = ['小', '中', '高', '外']
+export const READING_LEVELS: readonly ReadingLevel[] = ['小', '中', '高', '外'];
 
 // ============================================================================
 // Entity Interfaces
@@ -22,27 +22,27 @@ export const READING_LEVELS: readonly ReadingLevel[] = ['小', '中', '高', '�
  * On-yomi (Chinese) reading entity
  */
 export interface OnReading {
-  id: number
-  kanjiId: number
-  reading: string
-  readingLevel: ReadingLevel
-  displayOrder: number
-  createdAt: string
-  updatedAt: string
+  id: number;
+  kanjiId: number;
+  reading: string;
+  readingLevel: ReadingLevel;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
  * Kun-yomi (Japanese) reading entity
  */
 export interface KunReading {
-  id: number
-  kanjiId: number
-  reading: string
-  okurigana: string | null
-  readingLevel: ReadingLevel
-  displayOrder: number
-  createdAt: string
-  updatedAt: string
+  id: number;
+  kanjiId: number;
+  reading: string;
+  okurigana: string | null;
+  readingLevel: ReadingLevel;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============================================================================
@@ -53,36 +53,36 @@ export interface KunReading {
  * Input for creating an on-yomi reading
  */
 export interface CreateOnReadingInput {
-  kanjiId: number
-  reading: string
-  readingLevel?: ReadingLevel
-  displayOrder?: number
+  kanjiId: number;
+  reading: string;
+  readingLevel?: ReadingLevel;
+  displayOrder?: number;
 }
 
 /**
  * Input for updating an on-yomi reading
  */
 export interface UpdateOnReadingInput {
-  reading?: string
-  readingLevel?: ReadingLevel
+  reading?: string;
+  readingLevel?: ReadingLevel;
 }
 
 /**
  * Input for creating a kun-yomi reading
  */
 export interface CreateKunReadingInput {
-  kanjiId: number
-  reading: string
-  okurigana?: string | null
-  readingLevel?: ReadingLevel
-  displayOrder?: number
+  kanjiId: number;
+  reading: string;
+  okurigana?: string | null;
+  readingLevel?: ReadingLevel;
+  displayOrder?: number;
 }
 
 /**
  * Input for updating a kun-yomi reading
  */
 export interface UpdateKunReadingInput {
-  reading?: string
-  okurigana?: string | null
-  readingLevel?: ReadingLevel
+  reading?: string;
+  okurigana?: string | null;
+  readingLevel?: ReadingLevel;
 }

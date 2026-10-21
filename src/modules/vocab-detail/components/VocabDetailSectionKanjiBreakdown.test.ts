@@ -4,13 +4,13 @@
  * Uses stubs for child components to test orchestration logic.
  */
 
-import { flushPromises, mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils';
+import { describe, expect, it, vi } from 'vitest';
 
-import VocabDetailSectionKanjiBreakdown from './VocabDetailSectionKanjiBreakdown.vue'
+import VocabDetailSectionKanjiBreakdown from './VocabDetailSectionKanjiBreakdown.vue';
 
-import type { Kanji } from '@/api/kanji'
-import type { VocabKanjiWithKanji } from '@/api/vocabulary'
+import type { Kanji } from '@/api/kanji';
+import type { VocabKanjiWithKanji } from '@/api/vocabulary';
 
 // =============================================================================
 // Test data factories
@@ -37,13 +37,11 @@ function createTestKanji(overrides: Partial<Kanji> = {}): Kanji {
     radicalStrokeCount: null,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
-function createTestVocabKanji(
-  overrides: Partial<VocabKanjiWithKanji> = {}
-): VocabKanjiWithKanji {
+function createTestVocabKanji(overrides: Partial<VocabKanjiWithKanji> = {}): VocabKanjiWithKanji {
   return {
     id: 10,
     vocabId: 1,
@@ -53,8 +51,8 @@ function createTestVocabKanji(
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     kanji: createTestKanji(),
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 // =============================================================================
@@ -68,8 +66,8 @@ const SharedSectionStub = {
     <div class="actions"><slot name="actions" :isOpen="defaultOpen" /></div>
     <div v-if="defaultOpen" class="content"><slot /></div>
   </section>`,
-  props: ['title', 'collapsible', 'defaultOpen', 'testId']
-}
+  props: ['title', 'collapsible', 'defaultOpen', 'testId'],
+};
 
 const VocabDetailKanjiBreakdownItemStub = {
   name: 'VocabDetailKanjiBreakdownItem',
@@ -80,8 +78,8 @@ const VocabDetailKanjiBreakdownItemStub = {
     <button @click="$emit('move-up')">Up</button>
     <button @click="$emit('move-down')">Down</button>
   </div>`,
-  props: ['vocabKanji', 'index', 'total', 'isDestructiveMode']
-}
+  props: ['vocabKanji', 'index', 'total', 'isDestructiveMode'],
+};
 
 const VocabDetailDialogAddKanjiStub = {
   name: 'VocabDetailDialogAddKanji',
@@ -89,8 +87,8 @@ const VocabDetailDialogAddKanjiStub = {
     <button @click="$emit('select', 999)">Select</button>
     <button @click="$emit('create', { character: '新', shortMeaning: 'new' })">Create</button>
   </div>`,
-  props: ['open', 'allKanji', 'excludedKanjiIds']
-}
+  props: ['open', 'allKanji', 'excludedKanjiIds'],
+};
 
 const VocabDetailDialogEditKanjiNotesStub = {
   name: 'VocabDetailDialogEditKanjiNotes',
@@ -98,8 +96,8 @@ const VocabDetailDialogEditKanjiNotesStub = {
     <button @click="$emit('submit', { id: vocabKanji?.id, notes: 'updated' })">Save</button>
     <button @click="$emit('cancel')">Cancel</button>
   </div>`,
-  props: ['open', 'vocabKanji']
-}
+  props: ['open', 'vocabKanji'],
+};
 
 const SharedConfirmDialogStub = {
   name: 'SharedConfirmDialog',
@@ -107,8 +105,8 @@ const SharedConfirmDialogStub = {
     <button @click="$emit('confirm')">Confirm</button>
     <button @click="$emit('cancel')">Cancel Delete</button>
   </div>`,
-  props: ['open', 'title', 'description', 'confirmLabel', 'variant']
-}
+  props: ['open', 'title', 'description', 'confirmLabel', 'variant'],
+};
 
 // =============================================================================
 // Test setup
@@ -121,7 +119,10 @@ describe('VocabDetailSectionKanjiBreakdown', () => {
         kanjiBreakdown: [],
         allKanji: [],
         isDestructiveMode: false,
-        ...props
+        add: vi.fn(() => true),
+        create: vi.fn(() => true),
+        updateNotes: vi.fn(() => true),
+        ...props,
       },
       global: {
         stubs: {
@@ -129,52 +130,46 @@ describe('VocabDetailSectionKanjiBreakdown', () => {
           VocabDetailKanjiBreakdownItem: VocabDetailKanjiBreakdownItemStub,
           VocabDetailDialogAddKanji: VocabDetailDialogAddKanjiStub,
           VocabDetailDialogEditKanjiNotes: VocabDetailDialogEditKanjiNotesStub,
-          SharedConfirmDialog: SharedConfirmDialogStub
-        }
-      }
-    })
-  }
+          SharedConfirmDialog: SharedConfirmDialogStub,
+        },
+      },
+    });
+  };
 
   describe('section structure', () => {
     it('renders with Kanji Breakdown title', () => {
-      const wrapper = createWrapper()
-      expect(wrapper.find('h2').text()).toBe('Kanji Breakdown')
-    })
+      const wrapper = createWrapper();
+      expect(wrapper.find('h2').text()).toBe('Kanji Breakdown');
+    });
 
     it('renders with correct test id', () => {
-      const wrapper = createWrapper()
-      expect(
-        wrapper.find('[data-testid="vocab-detail-kanji-breakdown"]').exists()
-      ).toBe(true)
-    })
-  })
+      const wrapper = createWrapper();
+      expect(wrapper.find('[data-testid="vocab-detail-kanji-breakdown"]').exists()).toBe(true);
+    });
+  });
 
   describe('collapsible behavior', () => {
     it('defaults to open when items exist', () => {
       const wrapper = createWrapper({
-        kanjiBreakdown: [createTestVocabKanji()]
-      })
-      const section = wrapper.find(
-        '[data-testid="vocab-detail-kanji-breakdown"]'
-      )
-      expect(section.attributes('data-state')).toBe('open')
-    })
+        kanjiBreakdown: [createTestVocabKanji()],
+      });
+      const section = wrapper.find('[data-testid="vocab-detail-kanji-breakdown"]');
+      expect(section.attributes('data-state')).toBe('open');
+    });
 
     it('defaults to closed when items are empty', () => {
-      const wrapper = createWrapper({ kanjiBreakdown: [] })
-      const section = wrapper.find(
-        '[data-testid="vocab-detail-kanji-breakdown"]'
-      )
-      expect(section.attributes('data-state')).toBe('closed')
-    })
-  })
+      const wrapper = createWrapper({ kanjiBreakdown: [] });
+      const section = wrapper.find('[data-testid="vocab-detail-kanji-breakdown"]');
+      expect(section.attributes('data-state')).toBe('closed');
+    });
+  });
 
   describe('empty state', () => {
     it('has no breakdown items when list is empty', () => {
-      const wrapper = createWrapper({ kanjiBreakdown: [] })
-      expect(wrapper.findAll('.breakdown-item-stub').length).toBe(0)
-    })
-  })
+      const wrapper = createWrapper({ kanjiBreakdown: [] });
+      expect(wrapper.findAll('.breakdown-item-stub').length).toBe(0);
+    });
+  });
 
   describe('breakdown list', () => {
     it('renders item for each entry', () => {
@@ -184,94 +179,139 @@ describe('VocabDetailSectionKanjiBreakdown', () => {
           createTestVocabKanji({
             id: 20,
             kanjiId: 2,
-            kanji: createTestKanji({ id: 2, character: '日' })
-          })
-        ]
-      })
-      expect(wrapper.findAll('.breakdown-item-stub').length).toBe(2)
-    })
-  })
+            kanji: createTestKanji({ id: 2, character: '日' }),
+          }),
+        ],
+      });
+      expect(wrapper.findAll('.breakdown-item-stub').length).toBe(2);
+    });
+  });
 
   describe('add button', () => {
     it('shows add button in actions slot when section open', () => {
       const wrapper = createWrapper({
-        kanjiBreakdown: [createTestVocabKanji()]
-      })
-      const actionsSlot = wrapper.find('.actions')
-      expect(actionsSlot.text()).toContain('Add Kanji')
-    })
-  })
+        kanjiBreakdown: [createTestVocabKanji()],
+      });
+      const actionsSlot = wrapper.find('.actions');
+      expect(actionsSlot.text()).toContain('Add Kanji');
+    });
+  });
 
   describe('add kanji flow', () => {
     it('opens add dialog when add button is clicked', async () => {
       const wrapper = createWrapper({
-        kanjiBreakdown: [createTestVocabKanji()]
-      })
+        kanjiBreakdown: [createTestVocabKanji()],
+      });
 
-      await wrapper.find('.actions button').trigger('click')
-      await flushPromises()
+      await wrapper.find('.actions button').trigger('click');
+      await flushPromises();
 
-      expect(wrapper.find('[data-testid="dialog-add-kanji"]').exists()).toBe(
-        true
-      )
-    })
+      expect(wrapper.find('[data-testid="dialog-add-kanji"]').exists()).toBe(true);
+    });
 
-    it('emits add event when kanji is selected from dialog', async () => {
+    it('closes add dialog and calls add when it saves', async () => {
+      const add = vi.fn(() => true);
       const wrapper = createWrapper({
-        kanjiBreakdown: [createTestVocabKanji()]
-      })
-      await wrapper.find('.actions button').trigger('click')
-      await flushPromises()
+        kanjiBreakdown: [createTestVocabKanji()],
+        add,
+      });
+      await wrapper.find('.actions button').trigger('click');
+      await flushPromises();
 
-      await wrapper
-        .find('[data-testid="dialog-add-kanji"] button')
-        .trigger('click')
+      await wrapper.find('[data-testid="dialog-add-kanji"] button').trigger('click');
 
-      expect(wrapper.emitted('add')).toBeTruthy()
-      expect(wrapper.emitted('add')?.[0]).toEqual([999])
-    })
+      expect(add).toHaveBeenCalledWith(999);
+      expect(wrapper.find('[data-testid="dialog-add-kanji"]').exists()).toBe(false);
+    });
 
-    it('emits create event when kanji is quick-created', async () => {
+    it('keeps add dialog open when add fails', async () => {
+      const add = vi.fn(() => false);
       const wrapper = createWrapper({
-        kanjiBreakdown: [createTestVocabKanji()]
-      })
-      await wrapper.find('.actions button').trigger('click')
-      await flushPromises()
+        kanjiBreakdown: [createTestVocabKanji()],
+        add,
+      });
+      await wrapper.find('.actions button').trigger('click');
+      await flushPromises();
 
-      const buttons = wrapper.findAll('[data-testid="dialog-add-kanji"] button')
-      await buttons[1]!.trigger('click')
+      await wrapper.find('[data-testid="dialog-add-kanji"] button').trigger('click');
 
-      expect(wrapper.emitted('create')).toBeTruthy()
-      expect(wrapper.emitted('create')?.[0]).toEqual([
-        { character: '新', shortMeaning: 'new' }
-      ])
-    })
-  })
+      expect(add).toHaveBeenCalledWith(999);
+      expect(wrapper.find('[data-testid="dialog-add-kanji"]').exists()).toBe(true);
+    });
+
+    it('keeps add dialog open when create fails', async () => {
+      const create = vi.fn(() => false);
+      const wrapper = createWrapper({
+        kanjiBreakdown: [createTestVocabKanji()],
+        create,
+      });
+      await wrapper.find('.actions button').trigger('click');
+      await flushPromises();
+
+      const buttons = wrapper.findAll('[data-testid="dialog-add-kanji"] button');
+      await buttons[1]!.trigger('click');
+
+      expect(create).toHaveBeenCalled();
+      expect(wrapper.find('[data-testid="dialog-add-kanji"]').exists()).toBe(true);
+    });
+
+    it('closes add dialog and calls create when it saves', async () => {
+      const create = vi.fn(() => true);
+      const wrapper = createWrapper({
+        kanjiBreakdown: [createTestVocabKanji()],
+        create,
+      });
+      await wrapper.find('.actions button').trigger('click');
+      await flushPromises();
+
+      const buttons = wrapper.findAll('[data-testid="dialog-add-kanji"] button');
+      await buttons[1]!.trigger('click');
+
+      expect(create).toHaveBeenCalledWith({
+        character: '新',
+        shortMeaning: 'new',
+      });
+      expect(wrapper.find('[data-testid="dialog-add-kanji"]').exists()).toBe(false);
+    });
+  });
 
   describe('edit flow', () => {
-    it('opens edit dialog and emits update-notes on submit', async () => {
-      const item = createTestVocabKanji({ id: 10 })
+    it('closes edit dialog and calls updateNotes when it saves', async () => {
+      const updateNotes = vi.fn(() => true);
+      const item = createTestVocabKanji({ id: 10 });
       const wrapper = createWrapper({
-        kanjiBreakdown: [item]
-      })
+        kanjiBreakdown: [item],
+        updateNotes,
+      });
 
       // Click edit on item
-      const editBtn = wrapper.find('[data-testid="breakdown-item-10"] button')
-      await editBtn.trigger('click')
-      await flushPromises()
+      const editBtn = wrapper.find('[data-testid="breakdown-item-10"] button');
+      await editBtn.trigger('click');
+      await flushPromises();
 
       // Find and click save in edit dialog
-      expect(wrapper.find('[data-testid="dialog-edit-notes"]').exists()).toBe(
-        true
-      )
-      await wrapper
-        .find('[data-testid="dialog-edit-notes"] button')
-        .trigger('click')
+      expect(wrapper.find('[data-testid="dialog-edit-notes"]').exists()).toBe(true);
+      await wrapper.find('[data-testid="dialog-edit-notes"] button').trigger('click');
 
-      expect(wrapper.emitted('update-notes')).toBeTruthy()
-      expect(wrapper.emitted('update-notes')?.[0]).toEqual([10, 'updated'])
-    })
-  })
+      expect(updateNotes).toHaveBeenCalledWith(10, 'updated');
+      expect(wrapper.find('[data-testid="dialog-edit-notes"]').exists()).toBe(false);
+    });
+
+    it('keeps edit dialog open when updateNotes fails', async () => {
+      const updateNotes = vi.fn(() => false);
+      const wrapper = createWrapper({
+        kanjiBreakdown: [createTestVocabKanji({ id: 10 })],
+        updateNotes,
+      });
+      await wrapper.find('[data-testid="breakdown-item-10"] button').trigger('click');
+      await flushPromises();
+
+      await wrapper.find('[data-testid="dialog-edit-notes"] button').trigger('click');
+
+      expect(updateNotes).toHaveBeenCalled();
+      expect(wrapper.find('[data-testid="dialog-edit-notes"]').exists()).toBe(true);
+    });
+  });
 
   describe('reorder', () => {
     it('emits reorder with swapped IDs on move-up', async () => {
@@ -281,19 +321,19 @@ describe('VocabDetailSectionKanjiBreakdown', () => {
           createTestVocabKanji({
             id: 20,
             kanjiId: 2,
-            kanji: createTestKanji({ id: 2, character: '日' })
-          })
-        ]
-      })
+            kanji: createTestKanji({ id: 2, character: '日' }),
+          }),
+        ],
+      });
 
       // Click "Up" on second item
-      const secondItem = wrapper.find('[data-testid="breakdown-item-20"]')
-      const upBtn = secondItem.findAll('button').find((b) => b.text() === 'Up')
-      await upBtn!.trigger('click')
+      const secondItem = wrapper.find('[data-testid="breakdown-item-20"]');
+      const upBtn = secondItem.findAll('button').find((b) => b.text() === 'Up');
+      await upBtn!.trigger('click');
 
-      expect(wrapper.emitted('reorder')).toBeTruthy()
-      expect(wrapper.emitted('reorder')?.[0]).toEqual([[20, 10]])
-    })
+      expect(wrapper.emitted('reorder')).toBeTruthy();
+      expect(wrapper.emitted('reorder')?.[0]).toEqual([[20, 10]]);
+    });
 
     it('emits reorder with swapped IDs on move-down', async () => {
       const wrapper = createWrapper({
@@ -302,47 +342,43 @@ describe('VocabDetailSectionKanjiBreakdown', () => {
           createTestVocabKanji({
             id: 20,
             kanjiId: 2,
-            kanji: createTestKanji({ id: 2, character: '日' })
-          })
-        ]
-      })
+            kanji: createTestKanji({ id: 2, character: '日' }),
+          }),
+        ],
+      });
 
       // Click "Down" on first item
-      const firstItem = wrapper.find('[data-testid="breakdown-item-10"]')
-      const downBtn = firstItem
-        .findAll('button')
-        .find((b) => b.text() === 'Down')
-      await downBtn!.trigger('click')
+      const firstItem = wrapper.find('[data-testid="breakdown-item-10"]');
+      const downBtn = firstItem.findAll('button').find((b) => b.text() === 'Down');
+      await downBtn!.trigger('click');
 
-      expect(wrapper.emitted('reorder')).toBeTruthy()
-      expect(wrapper.emitted('reorder')?.[0]).toEqual([[20, 10]])
-    })
-  })
+      expect(wrapper.emitted('reorder')).toBeTruthy();
+      expect(wrapper.emitted('reorder')?.[0]).toEqual([[20, 10]]);
+    });
+  });
 
   describe('delete flow', () => {
     it('opens confirm dialog in destructive mode and emits remove', async () => {
       const wrapper = createWrapper({
         kanjiBreakdown: [createTestVocabKanji({ id: 10 })],
-        isDestructiveMode: true
-      })
+        isDestructiveMode: true,
+      });
 
       // Click delete on item
       const deleteBtn = wrapper
         .find('[data-testid="breakdown-item-10"]')
         .findAll('button')
-        .find((b) => b.text() === 'Delete')
-      await deleteBtn!.trigger('click')
-      await flushPromises()
+        .find((b) => b.text() === 'Delete');
+      await deleteBtn!.trigger('click');
+      await flushPromises();
 
-      expect(wrapper.find('[data-testid="confirm-dialog"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="confirm-dialog"]').exists()).toBe(true);
 
       // Confirm deletion
-      await wrapper
-        .find('[data-testid="confirm-dialog"] button')
-        .trigger('click')
+      await wrapper.find('[data-testid="confirm-dialog"] button').trigger('click');
 
-      expect(wrapper.emitted('remove')).toBeTruthy()
-      expect(wrapper.emitted('remove')?.[0]).toEqual([10])
-    })
-  })
-})
+      expect(wrapper.emitted('remove')).toBeTruthy();
+      expect(wrapper.emitted('remove')?.[0]).toEqual([10]);
+    });
+  });
+});

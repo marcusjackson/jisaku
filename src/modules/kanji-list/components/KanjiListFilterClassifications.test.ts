@@ -4,12 +4,12 @@
  * Tests for classification type multi-select filter component.
  */
 
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import KanjiListFilterClassifications from './KanjiListFilterClassifications.vue'
+import KanjiListFilterClassifications from './KanjiListFilterClassifications.vue';
 
-import type { ClassificationType } from '@/api/classification'
+import type { ClassificationType } from '@/api/classification';
 
 const mockClassificationTypes: ClassificationType[] = [
   {
@@ -21,7 +21,7 @@ const mockClassificationTypes: ClassificationType[] = [
     descriptionShort: null,
     displayOrder: 1,
     createdAt: '2024-01-01T00:00:00',
-    updatedAt: '2024-01-01T00:00:00'
+    updatedAt: '2024-01-01T00:00:00',
   },
   {
     id: 2,
@@ -32,41 +32,41 @@ const mockClassificationTypes: ClassificationType[] = [
     descriptionShort: null,
     displayOrder: 2,
     createdAt: '2024-01-01T00:00:00',
-    updatedAt: '2024-01-01T00:00:00'
-  }
-]
+    updatedAt: '2024-01-01T00:00:00',
+  },
+];
 
 describe('KanjiListFilterClassifications', () => {
   it('renders with label', () => {
     render(KanjiListFilterClassifications, {
       props: {
         modelValue: [],
-        classificationTypes: mockClassificationTypes
-      }
-    })
+        classificationTypes: mockClassificationTypes,
+      },
+    });
 
-    expect(screen.getByText(/classification/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/classification/i)).toBeInTheDocument();
+  });
 
   it('shows combobox input', () => {
     render(KanjiListFilterClassifications, {
       props: {
         modelValue: [],
-        classificationTypes: mockClassificationTypes
-      }
-    })
+        classificationTypes: mockClassificationTypes,
+      },
+    });
 
-    expect(screen.getByRole('combobox')).toBeInTheDocument()
-  })
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
 
   it('renders with selected values', () => {
     render(KanjiListFilterClassifications, {
       props: {
         modelValue: [1],
-        classificationTypes: mockClassificationTypes
-      }
-    })
+        classificationTypes: mockClassificationTypes,
+      },
+    });
 
-    expect(screen.getByRole('combobox')).toBeInTheDocument()
-  })
-})
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+});

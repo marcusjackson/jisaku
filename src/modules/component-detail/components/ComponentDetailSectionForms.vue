@@ -30,13 +30,15 @@ interface Props {
   componentId: number
   /** Whether destructive mode is enabled */
   isDestructiveMode: boolean
+  /** Adds a form; returns whether it saved, so the dialog can close */
+  addForm: (data: FormSubmitData) => boolean
+  /** Updates a form; returns whether it saved, so the dialog can close */
+  updateForm: (id: number, data: FormSubmitData) => boolean
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  add: [data: Omit<FormSubmitData, 'formCharacter'> & { formCharacter: string }]
-  update: [id: number, data: FormSubmitData]
   remove: [id: number]
   reorder: [ids: number[]]
 }>()
@@ -66,11 +68,7 @@ function handleAddClick() {
 }
 
 function handleAddSubmit(data: FormSubmitData) {
-  emit(
-    'add',
-    data as Omit<FormSubmitData, 'formCharacter'> & { formCharacter: string }
-  )
-  showAddDialog.value = false
+  if (props.addForm(data)) showAddDialog.value = false
 }
 
 function handleAddCancel() {
@@ -83,9 +81,9 @@ function handleEditClick(form: ComponentForm) {
 }
 
 function handleEditSubmit(data: FormSubmitData) {
-  if (editingForm.value) {
-    emit('update', editingForm.value.id, data)
-  }
+  if (!editingForm.value) return
+  const saved = props.updateForm(editingForm.value.id, data)
+  if (!saved) return
   showEditDialog.value = false
   editingForm.value = null
 }
@@ -146,30 +144,19 @@ function handleMoveDown(index: number) {
     title="Forms"
   >
     <template #actions="{ isOpen }">
-      <BaseButton
-        v-if="isOpen"
-        size="sm"
-        variant="secondary"
-        @click="handleAddClick"
-      >
+      <BaseButton v-if="isOpen" size="sm" variant="secondary" @click="handleAddClick">
         Add
       </BaseButton>
     </template>
 
     <div class="forms-content">
       <!-- Empty state -->
-      <p
-        v-if="forms.length === 0"
-        class="empty-state"
-      >
+      <p v-if="forms.length === 0" class="empty-state">
         No forms added yet. Forms represent visual variants like 氵 vs 水.
       </p>
 
       <!-- Forms list -->
-      <div
-        v-else
-        class="forms-list"
-      >
+      <div v-else class="forms-list">
         <ComponentDetailFormItem
           v-for="(form, index) in forms"
           :key="form.id"

@@ -1,11 +1,13 @@
+# fleet:begin pnpm-workspace-policy sha=9700a7feab | machine-written; edit the source, not this region
 packages:
   - '.'
+
+# Project Configuration Settings
+minimumReleaseAge: 4320
+saveExact: true
+# fleet:end pnpm-workspace-policy
 
 allowBuilds:
   esbuild: true
   unrs-resolver: true
   vue-demi: true
-
-# Project Configuration Settings
-minimumReleaseAge: 4320
-saveExact: true

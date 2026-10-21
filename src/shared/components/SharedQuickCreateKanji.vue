@@ -124,9 +124,7 @@ const isSaveDisabled = computed(() => isSubmitting.value)
           name="shortMeaning"
           placeholder="e.g., bright, clear"
         />
-        <p class="shared-quick-create-kanji-help">
-          Brief meaning for display (optional).
-        </p>
+        <p class="shared-quick-create-kanji-help">Brief meaning for display (optional).</p>
       </div>
 
       <div class="shared-quick-create-kanji-field">
@@ -137,9 +135,7 @@ const isSaveDisabled = computed(() => isSubmitting.value)
           name="searchKeywords"
           placeholder="e.g., sun, day, light"
         />
-        <p class="shared-quick-create-kanji-help">
-          Additional search terms (optional).
-        </p>
+        <p class="shared-quick-create-kanji-help">Additional search terms (optional).</p>
       </div>
     </form>
 

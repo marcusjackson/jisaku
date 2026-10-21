@@ -73,7 +73,9 @@ watch(
 function handleSubmit(): void {
   if (
     strokeCount.value !== null &&
-    (strokeCount.value < 1 || strokeCount.value > 64)
+    (!Number.isInteger(strokeCount.value) ||
+      strokeCount.value < 1 ||
+      strokeCount.value > 64)
   ) {
     strokeCountError.value = 'Must be 1-64'
     return
@@ -100,7 +102,6 @@ function handleSubmit(): void {
   }
 
   emit('save', saveData)
-  emit('update:open', false)
 }
 
 function handleCreateRadical(character: string): void {
@@ -115,10 +116,7 @@ function handleCreateRadical(character: string): void {
     title="Edit Basic Information"
     @update:open="emit('update:open', $event)"
   >
-    <form
-      class="dialog-form"
-      @submit.prevent="handleSubmit"
-    >
+    <form class="dialog-form" @submit.prevent="handleSubmit">
       <KanjiDetailBasicInfoFormFields
         v-model:jlpt-level="jlptLevel"
         v-model:joyo-level="joyoLevel"
@@ -137,10 +135,7 @@ function handleCreateRadical(character: string): void {
       />
 
       <div class="dialog-actions">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="emit('update:open', false)"
+        <BaseButton type="button" variant="secondary" @click="emit('update:open', false)"
           >Cancel</BaseButton
         >
         <BaseButton type="submit">Save</BaseButton>

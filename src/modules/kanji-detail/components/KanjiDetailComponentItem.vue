@@ -19,39 +19,25 @@ defineProps<{
 </script>
 
 <template>
-  <RouterLink
-    class="kanji-detail-component-item"
-    :to="`/components/${occurrence.componentId}`"
-  >
+  <RouterLink class="kanji-detail-component-item" :to="`/components/${occurrence.componentId}`">
     <div class="kanji-detail-component-item-content">
-      <div class="kanji-detail-component-item-character">
+      <div class="kanji-detail-component-item-character" lang="ja">
         {{ occurrence.component.character }}
       </div>
-      <div
-        v-if="occurrence.component.shortMeaning"
-        class="kanji-detail-component-item-meaning"
-      >
+      <div v-if="occurrence.component.shortMeaning" class="kanji-detail-component-item-meaning">
         {{ occurrence.component.shortMeaning }}
       </div>
     </div>
 
     <div class="kanji-detail-component-item-badges">
-      <SharedPositionBadge
-        v-if="occurrence.position"
-        :position="occurrence.position"
-      />
+      <SharedPositionBadge v-if="occurrence.position" :position="occurrence.position" />
       <span
         v-if="occurrence.isRadical"
         aria-label="Radical"
         class="kanji-detail-component-item-radical-badge"
         title="This component is the radical of the kanji"
       >
-        <svg
-          fill="none"
-          height="12"
-          viewBox="0 0 16 16"
-          width="12"
-        >
+        <svg fill="none" height="12" viewBox="0 0 16 16" width="12">
           <path
             d="M8 1L10 6H15L11 9.5L12.5 15L8 11.5L3.5 15L5 9.5L1 6H6L8 1Z"
             fill="currentColor"

@@ -2,13 +2,13 @@
  * Tests for VocabDetailKanjiBreakdownItem component.
  */
 
-import { renderWithProviders } from '@test/helpers/render'
-import { describe, expect, it } from 'vitest'
+import { renderWithProviders } from '@test/helpers/render';
+import { describe, expect, it } from 'vitest';
 
-import VocabDetailKanjiBreakdownItem from './VocabDetailKanjiBreakdownItem.vue'
+import VocabDetailKanjiBreakdownItem from './VocabDetailKanjiBreakdownItem.vue';
 
-import type { Kanji } from '@/api/kanji'
-import type { VocabKanjiWithKanji } from '@/api/vocabulary'
+import type { Kanji } from '@/api/kanji';
+import type { VocabKanjiWithKanji } from '@/api/vocabulary';
 
 // Factory functions
 function createTestKanji(overrides: Partial<Kanji> = {}): Kanji {
@@ -32,8 +32,8 @@ function createTestKanji(overrides: Partial<Kanji> = {}): Kanji {
     radicalStrokeCount: null,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 function createTestVocabKanjiWithKanji(
@@ -48,100 +48,98 @@ function createTestVocabKanjiWithKanji(
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     kanji: createTestKanji(),
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 const defaultProps = {
   vocabKanji: createTestVocabKanjiWithKanji(),
   index: 1,
   total: 3,
-  isDestructiveMode: false
-}
+  isDestructiveMode: false,
+};
 
 describe('VocabDetailKanjiBreakdownItem', () => {
   it('displays kanji character as a link to kanji detail page', () => {
     const { getByText } = renderWithProviders(VocabDetailKanjiBreakdownItem, {
-      props: defaultProps
-    })
+      props: defaultProps,
+    });
 
-    const link = getByText('明')
-    expect(link.closest('a')).toHaveAttribute('href', '/kanji/1')
-  })
+    const link = getByText('明');
+    expect(link.closest('a')).toHaveAttribute('href', '/kanji/1');
+  });
 
   it('displays shortMeaning when present', () => {
     const { getByText } = renderWithProviders(VocabDetailKanjiBreakdownItem, {
-      props: defaultProps
-    })
+      props: defaultProps,
+    });
 
-    expect(getByText('bright')).toBeInTheDocument()
-  })
+    expect(getByText('bright')).toBeInTheDocument();
+  });
 
   it('does not display shortMeaning when null', () => {
     const vocabKanji = createTestVocabKanjiWithKanji({
-      kanji: createTestKanji({ shortMeaning: null })
-    })
+      kanji: createTestKanji({ shortMeaning: null }),
+    });
 
     const { queryByText } = renderWithProviders(VocabDetailKanjiBreakdownItem, {
-      props: { ...defaultProps, vocabKanji }
-    })
+      props: { ...defaultProps, vocabKanji },
+    });
 
-    expect(queryByText('bright')).not.toBeInTheDocument()
-  })
+    expect(queryByText('bright')).not.toBeInTheDocument();
+  });
 
   it('displays analysisNotes when present', () => {
     const vocabKanji = createTestVocabKanjiWithKanji({
-      analysisNotes: 'Important note about this kanji'
-    })
+      analysisNotes: 'Important note about this kanji',
+    });
 
     const { getByText } = renderWithProviders(VocabDetailKanjiBreakdownItem, {
-      props: { ...defaultProps, vocabKanji }
-    })
+      props: { ...defaultProps, vocabKanji },
+    });
 
-    expect(getByText('Important note about this kanji')).toBeInTheDocument()
-  })
+    expect(getByText('Important note about this kanji')).toBeInTheDocument();
+  });
 
   it('disables Move Up button when index is 0', () => {
-    const { getByLabelText } = renderWithProviders(
-      VocabDetailKanjiBreakdownItem,
-      { props: { ...defaultProps, index: 0 } }
-    )
+    const { getByLabelText } = renderWithProviders(VocabDetailKanjiBreakdownItem, {
+      props: { ...defaultProps, index: 0 },
+    });
 
-    expect(getByLabelText('Move up')).toBeDisabled()
-    expect(getByLabelText('Move down')).not.toBeDisabled()
-  })
+    expect(getByLabelText('Move up')).toBeDisabled();
+    expect(getByLabelText('Move down')).not.toBeDisabled();
+  });
 
   it('disables Move Down button when index is last', () => {
-    const { getByLabelText } = renderWithProviders(
-      VocabDetailKanjiBreakdownItem,
-      { props: { ...defaultProps, index: 2, total: 3 } }
-    )
+    const { getByLabelText } = renderWithProviders(VocabDetailKanjiBreakdownItem, {
+      props: { ...defaultProps, index: 2, total: 3 },
+    });
 
-    expect(getByLabelText('Move up')).not.toBeDisabled()
-    expect(getByLabelText('Move down')).toBeDisabled()
-  })
+    expect(getByLabelText('Move up')).not.toBeDisabled();
+    expect(getByLabelText('Move down')).toBeDisabled();
+  });
 
   it('always renders Edit button', () => {
     const { getByRole } = renderWithProviders(VocabDetailKanjiBreakdownItem, {
-      props: defaultProps
-    })
+      props: defaultProps,
+    });
 
-    expect(getByRole('button', { name: /edit/i })).toBeInTheDocument()
-  })
+    expect(getByRole('button', { name: /edit/i })).toBeInTheDocument();
+  });
 
   it('renders Delete button only in destructive mode', () => {
     const { queryByRole } = renderWithProviders(VocabDetailKanjiBreakdownItem, {
-      props: { ...defaultProps, isDestructiveMode: false }
-    })
+      props: { ...defaultProps, isDestructiveMode: false },
+    });
 
-    expect(queryByRole('button', { name: /delete/i })).not.toBeInTheDocument()
-  })
+    expect(queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  });
 
   it('renders Delete button when destructive mode is enabled', () => {
     const { getByRole } = renderWithProviders(VocabDetailKanjiBreakdownItem, {
-      props: { ...defaultProps, isDestructiveMode: true }
-    })
+      props: { ...defaultProps, isDestructiveMode: true },
+    });
 
-    expect(getByRole('button', { name: /delete/i })).toBeInTheDocument()
-  })
-})
+    expect(getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  });
+});

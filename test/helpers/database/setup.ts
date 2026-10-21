@@ -1,9 +1,9 @@
 /**
  * Database Test Setup - Schema definition and database initialisation.
  */
-import initSqlJs from 'sql.js'
+import initSqlJs from 'sql.js';
 
-import type { Database } from 'sql.js'
+import type { Database } from 'sql.js';
 
 /** Full SQLite schema used by in-memory test databases. */
 export const SCHEMA_SQL = `
@@ -237,14 +237,14 @@ export const SCHEMA_SQL = `
   ('nyou', '繞', 'Enclosure (bottom-left)', 'Component wrapping from bottom-left', 6),
   ('kamae', '構', 'Enclosure (full)', 'Component fully enclosing kanji', 7),
   ('other', 'その他', 'Other', 'Does not fit standard positions', 8);
-`
+`;
 
 /**
  * Create a fresh in-memory test database with schema applied.
  */
 export async function createTestDatabase(): Promise<Database> {
-  const SQL = await initSqlJs()
-  const db = new SQL.Database()
-  db.run(SCHEMA_SQL)
-  return db
+  const SQL = await initSqlJs();
+  const db = new SQL.Database();
+  db.run(SCHEMA_SQL);
+  return db;
 }

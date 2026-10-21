@@ -44,26 +44,14 @@ function handleTypeChange(
   <div class="list">
     <div class="list-header">
       <span class="list-title">Classifications</span>
-      <BaseButton
-        size="sm"
-        type="button"
-        variant="ghost"
-        @click="handleAdd"
-        >+ Add</BaseButton
-      >
+      <BaseButton size="sm" type="button" variant="ghost" @click="handleAdd">+ Add</BaseButton>
     </div>
 
-    <div
-      v-if="classificationsState.items.value.length === 0"
-      class="list-empty"
-    >
+    <div v-if="classificationsState.items.value.length === 0" class="list-empty">
       No classifications
     </div>
 
-    <div
-      v-else
-      class="list-items"
-    >
+    <div v-else class="list-items">
       <div
         v-for="(item, index) in classificationsState.items.value"
         :key="item.id ?? `new-${index}`"
@@ -79,6 +67,7 @@ function handleTypeChange(
         </div>
         <div class="list-buttons">
           <BaseButton
+            aria-label="Move up"
             :disabled="index === 0"
             size="sm"
             type="button"
@@ -87,6 +76,7 @@ function handleTypeChange(
             >↑</BaseButton
           >
           <BaseButton
+            aria-label="Move down"
             :disabled="index === classificationsState.items.value.length - 1"
             size="sm"
             type="button"
@@ -95,6 +85,7 @@ function handleTypeChange(
             >↓</BaseButton
           >
           <BaseButton
+            aria-label="Remove classification"
             size="sm"
             type="button"
             variant="ghost"

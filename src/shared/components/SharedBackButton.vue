@@ -40,15 +40,8 @@ const toWithQuery = computed<RouteLocationRaw>(() => {
 </script>
 
 <template>
-  <RouterLink
-    class="shared-back-button"
-    :to="toWithQuery"
-  >
-    <span
-      aria-hidden="true"
-      class="shared-back-button-icon"
-      >←</span
-    >
+  <RouterLink class="shared-back-button" :to="toWithQuery">
+    <span aria-hidden="true" class="shared-back-button-icon">←</span>
     {{ label }}
   </RouterLink>
 </template>

@@ -14,6 +14,8 @@ import {
   BaseTextarea
 } from '@/base/components'
 
+import { parseStrokeCountText } from '@/shared/validation'
+
 import type { FormSubmitData } from '../component-detail-types'
 import type { ComponentForm } from '@/api/component'
 
@@ -41,6 +43,7 @@ const formName = ref('')
 const strokeCount = ref('')
 const usageNotes = ref('')
 const characterError = ref<string | null>(null)
+const strokeCountError = ref<string | null>(null)
 
 // Computed values
 const isEditMode = computed(() => props.form != null)
@@ -54,6 +57,7 @@ watch(
   (isOpen) => {
     if (!isOpen) return
     characterError.value = null
+    strokeCountError.value = null
     if (props.form) {
       // Edit mode: populate from existing form
       formCharacter.value = props.form.formCharacter
@@ -74,13 +78,21 @@ watch(
 
 function validate(): boolean {
   characterError.value = null
+  strokeCountError.value = null
+  let valid = true
 
   if (!formCharacter.value.trim()) {
     characterError.value = 'Character is required'
-    return false
+    valid = false
   }
 
-  return true
+  const parsed = parseStrokeCountText(strokeCount.value)
+  if (parsed.error !== undefined) {
+    strokeCountError.value = parsed.error
+    valid = false
+  }
+
+  return valid
 }
 
 function handleSubmit(): void {
@@ -89,12 +101,11 @@ function handleSubmit(): void {
   const data: FormSubmitData = {
     formCharacter: formCharacter.value.trim(),
     formName: formName.value.trim() || null,
-    strokeCount: strokeCount.value ? parseInt(strokeCount.value, 10) : null,
+    strokeCount: strokeCount.value.trim() ? Number(strokeCount.value) : null,
     usageNotes: usageNotes.value.trim() || null
   }
 
   emit('submit', data)
-  emit('update:open', false)
 }
 
 function handleCancel(): void {
@@ -104,15 +115,8 @@ function handleCancel(): void {
 </script>
 
 <template>
-  <BaseDialog
-    :open="open"
-    :title="dialogTitle"
-    @update:open="emit('update:open', $event)"
-  >
-    <form
-      class="dialog-form"
-      @submit.prevent="handleSubmit"
-    >
+  <BaseDialog :open="open" :title="dialogTitle" @update:open="emit('update:open', $event)">
+    <form class="dialog-form" @submit.prevent="handleSubmit">
       <BaseInput
         v-model="formCharacter"
         :disabled="isEditMode"
@@ -121,14 +125,11 @@ function handleCancel(): void {
         placeholder="Enter form character"
       />
 
-      <BaseInput
-        v-model="formName"
-        label="Form Name"
-        placeholder="e.g. water radical"
-      />
+      <BaseInput v-model="formName" label="Form Name" placeholder="e.g. water radical" />
 
       <BaseInput
         v-model="strokeCount"
+        :error="strokeCountError ?? undefined"
         inputmode="numeric"
         label="Stroke Count"
         placeholder="e.g. 3"
@@ -143,13 +144,7 @@ function handleCancel(): void {
       />
 
       <div class="dialog-form-actions">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="handleCancel"
-        >
-          Cancel
-        </BaseButton>
+        <BaseButton type="button" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
         <BaseButton type="submit">Save</BaseButton>
       </div>
     </form>

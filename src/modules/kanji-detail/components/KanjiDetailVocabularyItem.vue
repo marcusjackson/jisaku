@@ -11,6 +11,8 @@ import { RouterLink } from 'vue-router'
 
 import { BaseButton } from '@/base/components'
 
+import { buildRoute, ROUTES } from '@/router/routes'
+
 import type { VocabularyListItem } from '../kanji-detail-types'
 
 const props = defineProps<{
@@ -27,22 +29,13 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <li
-    v-if="props.editMode"
-    class="vocabulary-item vocabulary-item-edit"
-  >
+  <li v-if="props.editMode" class="vocabulary-item vocabulary-item-edit">
     <div class="vocabulary-item-content">
-      <span class="vocabulary-word">{{ vocabulary.word }}</span>
-      <span
-        v-if="vocabulary.kana"
-        class="vocabulary-kana"
-      >
+      <span class="vocabulary-word" lang="ja">{{ vocabulary.word }}</span>
+      <span v-if="vocabulary.kana" class="vocabulary-kana" lang="ja">
         ({{ vocabulary.kana }})
       </span>
-      <span
-        v-if="vocabulary.shortMeaning"
-        class="vocabulary-meaning"
-      >
+      <span v-if="vocabulary.shortMeaning" class="vocabulary-meaning">
         - {{ vocabulary.shortMeaning }}
       </span>
     </div>
@@ -57,26 +50,17 @@ const emit = defineEmits<{
     </BaseButton>
   </li>
 
-  <li
-    v-else
-    class="vocabulary-item"
-  >
+  <li v-else class="vocabulary-item">
     <RouterLink
       class="vocabulary-link"
       :data-testid="`vocabulary-item-${vocabulary.vocabularyId}`"
-      :to="`/vocabulary/${vocabulary.vocabularyId}`"
+      :to="buildRoute(ROUTES.VOCABULARY_DETAIL, { id: String(vocabulary.vocabularyId) })"
     >
-      <span class="vocabulary-word">{{ vocabulary.word }}</span>
-      <span
-        v-if="vocabulary.kana"
-        class="vocabulary-kana"
-      >
+      <span class="vocabulary-word" lang="ja">{{ vocabulary.word }}</span>
+      <span v-if="vocabulary.kana" class="vocabulary-kana" lang="ja">
         ({{ vocabulary.kana }})
       </span>
-      <span
-        v-if="vocabulary.shortMeaning"
-        class="vocabulary-meaning"
-      >
+      <span v-if="vocabulary.shortMeaning" class="vocabulary-meaning">
         - {{ vocabulary.shortMeaning }}
       </span>
     </RouterLink>
@@ -115,7 +99,7 @@ const emit = defineEmits<{
 }
 
 .vocabulary-link:hover {
-  background-color: var(--color-bg-hover);
+  background-color: var(--color-surface-hover);
   text-decoration: none;
 }
 
@@ -126,11 +110,13 @@ const emit = defineEmits<{
 
 .vocabulary-word {
   color: var(--color-text-primary);
+  font-family: var(--font-family-kanji);
   font-weight: var(--font-weight-medium);
 }
 
 .vocabulary-kana {
   color: var(--color-text-secondary);
+  font-family: var(--font-family-kanji);
 }
 
 .vocabulary-meaning {

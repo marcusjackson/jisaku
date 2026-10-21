@@ -1,30 +1,30 @@
 /**
  * Database migration runner
  *
- * Reads SQL migration files from this directory and applies them in order.
- * Each migration file should set PRAGMA user_version at the end.
+ * Applies migrations in order: SQL files from this directory, or inline
+ * TypeScript for versions 2, 4, 5, 6 and 13. Each step sets PRAGMA user_version.
  *
  * Migration files use Vite's ?raw import to load SQL as strings.
  */
 
 // Import SQL migration files as strings
 
-import migration001 from './001-initial.sql?raw'
-import migration003 from './003-component-overhaul.sql?raw'
-import migration007 from './007-kanji-search-keywords.sql?raw'
-import migration008 from './008-nullable-stroke-count.sql?raw'
-import migration009 from './009-component-nullable-stroke-count.sql?raw'
-import migration010 from './010-non-jlpt-joyo.sql?raw'
-import migration011 from './011-readings.sql?raw'
-import migration012 from './012-meanings.sql?raw'
-import migration014 from './014-component-forms.sql?raw'
-import migration015 from './015-component-groupings.sql?raw'
-import migration016 from './016-vocabulary-system.sql?raw'
-import migration017 from './017-fix-kentei-level-format.sql?raw'
-import migration018 from './018-fix-updated-at-triggers.sql?raw'
-import migration019 from './019-drop-notes-cultural.sql?raw'
+import migration001 from './001-initial.sql?raw';
+import migration003 from './003-component-overhaul.sql?raw';
+import migration007 from './007-kanji-search-keywords.sql?raw';
+import migration008 from './008-nullable-stroke-count.sql?raw';
+import migration009 from './009-component-nullable-stroke-count.sql?raw';
+import migration010 from './010-non-jlpt-joyo.sql?raw';
+import migration011 from './011-readings.sql?raw';
+import migration012 from './012-meanings.sql?raw';
+import migration014 from './014-component-forms.sql?raw';
+import migration015 from './015-component-groupings.sql?raw';
+import migration016 from './016-vocabulary-system.sql?raw';
+import migration017 from './017-fix-kentei-level-format.sql?raw';
+import migration018 from './018-fix-updated-at-triggers.sql?raw';
+import migration019 from './019-drop-notes-cultural.sql?raw';
 
-import type { Database } from 'sql.js'
+import type { Database } from 'sql.js';
 
 // ============================================================================
 // Transaction Helper
@@ -38,13 +38,13 @@ import type { Database } from 'sql.js'
  * in a partially-applied state.
  */
 function runWithTransaction(db: Database, fn: () => void): void {
-  db.run('BEGIN')
+  db.run('BEGIN');
   try {
-    fn()
-    db.run('COMMIT')
+    fn();
+    db.run('COMMIT');
   } catch (err) {
-    db.run('ROLLBACK')
-    throw err
+    db.run('ROLLBACK');
+    throw err;
   }
 }
 
@@ -52,8 +52,8 @@ function runWithTransaction(db: Database, fn: () => void): void {
  * Helper to get column names from a table
  */
 function getTableColumns(db: Database, tableName: string): string[] {
-  const tableInfo = db.exec(`PRAGMA table_info(${tableName})`)
-  return tableInfo[0]?.values.map((row) => row[1] as string) ?? []
+  const tableInfo = db.exec(`PRAGMA table_info(${tableName})`);
+  return tableInfo[0]?.values.map((row) => row[1] as string) ?? [];
 }
 
 /**
@@ -62,35 +62,34 @@ function getTableColumns(db: Database, tableName: string): string[] {
  */
 function runMigration002(db: Database): void {
   // SQL constants for readability
-  const SQL_ADD_ETYMOLOGY = 'ALTER TABLE kanjis ADD COLUMN notes_etymology TEXT'
-  const SQL_ADD_CULTURAL = 'ALTER TABLE kanjis ADD COLUMN notes_cultural TEXT'
-  const SQL_ADD_PERSONAL = 'ALTER TABLE kanjis ADD COLUMN notes_personal TEXT'
-  const SQL_MIGRATE_NOTES =
-    'UPDATE kanjis SET notes_personal = notes WHERE notes IS NOT NULL'
-  const SQL_DROP_OLD_NOTES = 'ALTER TABLE kanjis DROP COLUMN notes'
+  const SQL_ADD_ETYMOLOGY = 'ALTER TABLE kanjis ADD COLUMN notes_etymology TEXT';
+  const SQL_ADD_CULTURAL = 'ALTER TABLE kanjis ADD COLUMN notes_cultural TEXT';
+  const SQL_ADD_PERSONAL = 'ALTER TABLE kanjis ADD COLUMN notes_personal TEXT';
+  const SQL_MIGRATE_NOTES = 'UPDATE kanjis SET notes_personal = notes WHERE notes IS NOT NULL';
+  const SQL_DROP_OLD_NOTES = 'ALTER TABLE kanjis DROP COLUMN notes';
 
   // Check if old notes column exists (for existing databases)
-  const tableInfo = db.exec('PRAGMA table_info(kanjis)')
-  const columns = tableInfo[0]?.values.map((row) => row[1]) ?? []
-  const hasOldNotesColumn = columns.includes('notes')
-  const hasNewNotesColumns = columns.includes('notes_etymology')
+  const tableInfo = db.exec('PRAGMA table_info(kanjis)');
+  const columns = tableInfo[0]?.values.map((row) => row[1]) ?? [];
+  const hasOldNotesColumn = columns.includes('notes');
+  const hasNewNotesColumns = columns.includes('notes_etymology');
 
   if (hasOldNotesColumn && !hasNewNotesColumns) {
     // Add new columns
-    db.run(SQL_ADD_ETYMOLOGY)
-    db.run(SQL_ADD_CULTURAL)
-    db.run(SQL_ADD_PERSONAL)
+    db.run(SQL_ADD_ETYMOLOGY);
+    db.run(SQL_ADD_CULTURAL);
+    db.run(SQL_ADD_PERSONAL);
     // Migrate existing notes to personal notes
-    db.run(SQL_MIGRATE_NOTES)
+    db.run(SQL_MIGRATE_NOTES);
     // Drop old column - SQLite 3.35.0+ only
     try {
-      db.run(SQL_DROP_OLD_NOTES)
+      db.run(SQL_DROP_OLD_NOTES);
     } catch {
       // If DROP COLUMN fails (older SQLite), keep the old column
       // It won't cause issues, just redundant data
     }
   }
-  db.run('PRAGMA user_version = 2')
+  db.run('PRAGMA user_version = 2');
 }
 
 /**
@@ -101,17 +100,17 @@ function runMigration003(db: Database): void {
   // Check if migration already partially applied
   const tablesResult = db.exec(
     "SELECT name FROM sqlite_master WHERE type='table' AND name='component_occurrences'"
-  )
-  const hasComponentOccurrences = (tablesResult[0]?.values.length ?? 0) > 0
+  );
+  const hasComponentOccurrences = (tablesResult[0]?.values.length ?? 0) > 0;
 
   if (hasComponentOccurrences) {
     // Migration already applied
-    db.run('PRAGMA user_version = 3')
-    return
+    db.run('PRAGMA user_version = 3');
+    return;
   }
 
   // Run the full migration SQL
-  db.run(migration003)
+  db.run(migration003);
 }
 
 /**
@@ -120,20 +119,19 @@ function runMigration003(db: Database): void {
  */
 function runMigration004(db: Database): void {
   // SQL constants for readability
-  const SQL_ADD_KENTEI_LEVEL =
-    'ALTER TABLE kanjis ADD COLUMN kanji_kentei_level TEXT'
+  const SQL_ADD_KENTEI_LEVEL = 'ALTER TABLE kanjis ADD COLUMN kanji_kentei_level TEXT';
   const SQL_CREATE_KENTEI_INDEX =
-    'CREATE INDEX IF NOT EXISTS idx_kanjis_kentei_level ON kanjis(kanji_kentei_level)'
+    'CREATE INDEX IF NOT EXISTS idx_kanjis_kentei_level ON kanjis(kanji_kentei_level)';
 
   // Check if column already exists
-  const columns = getTableColumns(db, 'kanjis')
+  const columns = getTableColumns(db, 'kanjis');
 
   if (!columns.includes('kanji_kentei_level')) {
-    db.run(SQL_ADD_KENTEI_LEVEL)
-    db.run(SQL_CREATE_KENTEI_INDEX)
+    db.run(SQL_ADD_KENTEI_LEVEL);
+    db.run(SQL_CREATE_KENTEI_INDEX);
   }
 
-  db.run('PRAGMA user_version = 4')
+  db.run('PRAGMA user_version = 4');
 }
 
 /**
@@ -142,24 +140,22 @@ function runMigration004(db: Database): void {
  */
 function runMigration005(db: Database): void {
   // SQL constants for readability
-  const SQL_ADD_KANJI_SHORT_MEANING =
-    'ALTER TABLE kanjis ADD COLUMN short_meaning TEXT'
-  const SQL_ADD_COMPONENT_SHORT_MEANING =
-    'ALTER TABLE components ADD COLUMN short_meaning TEXT'
+  const SQL_ADD_KANJI_SHORT_MEANING = 'ALTER TABLE kanjis ADD COLUMN short_meaning TEXT';
+  const SQL_ADD_COMPONENT_SHORT_MEANING = 'ALTER TABLE components ADD COLUMN short_meaning TEXT';
 
   // Check if columns already exist
-  const kanjiColumns = getTableColumns(db, 'kanjis')
-  const componentColumns = getTableColumns(db, 'components')
+  const kanjiColumns = getTableColumns(db, 'kanjis');
+  const componentColumns = getTableColumns(db, 'components');
 
   if (!kanjiColumns.includes('short_meaning')) {
-    db.run(SQL_ADD_KANJI_SHORT_MEANING)
+    db.run(SQL_ADD_KANJI_SHORT_MEANING);
   }
 
   if (!componentColumns.includes('short_meaning')) {
-    db.run(SQL_ADD_COMPONENT_SHORT_MEANING)
+    db.run(SQL_ADD_COMPONENT_SHORT_MEANING);
   }
 
-  db.run('PRAGMA user_version = 5')
+  db.run('PRAGMA user_version = 5');
 }
 
 /**
@@ -168,26 +164,21 @@ function runMigration005(db: Database): void {
  */
 function runMigration006(db: Database): void {
   // SQL constants for readability
-  const SQL_ADD_SEARCH_KEYWORDS =
-    'ALTER TABLE components ADD COLUMN search_keywords TEXT'
+  const SQL_ADD_SEARCH_KEYWORDS = 'ALTER TABLE components ADD COLUMN search_keywords TEXT';
   const SQL_MIGRATE_KEYWORDS =
-    'UPDATE components SET search_keywords = japanese_name WHERE japanese_name IS NOT NULL'
-  const SQL_DROP_JAPANESE_NAME =
-    'ALTER TABLE components DROP COLUMN japanese_name'
+    'UPDATE components SET search_keywords = japanese_name WHERE japanese_name IS NOT NULL';
+  const SQL_DROP_JAPANESE_NAME = 'ALTER TABLE components DROP COLUMN japanese_name';
 
   // Check if migration already applied
-  const componentColumns = getTableColumns(db, 'components')
+  const componentColumns = getTableColumns(db, 'components');
 
   // If japanese_name exists and search_keywords doesn't, do migration
-  if (
-    componentColumns.includes('japanese_name') &&
-    !componentColumns.includes('search_keywords')
-  ) {
-    db.run(SQL_ADD_SEARCH_KEYWORDS)
-    db.run(SQL_MIGRATE_KEYWORDS)
+  if (componentColumns.includes('japanese_name') && !componentColumns.includes('search_keywords')) {
+    db.run(SQL_ADD_SEARCH_KEYWORDS);
+    db.run(SQL_MIGRATE_KEYWORDS);
     // Try to drop old column (SQLite 3.35.0+)
     try {
-      db.run(SQL_DROP_JAPANESE_NAME)
+      db.run(SQL_DROP_JAPANESE_NAME);
     } catch {
       // If DROP COLUMN fails, column remains but won't be used
     }
@@ -196,10 +187,10 @@ function runMigration006(db: Database): void {
     !componentColumns.includes('search_keywords')
   ) {
     // Neither exists, just add search_keywords
-    db.run(SQL_ADD_SEARCH_KEYWORDS)
+    db.run(SQL_ADD_SEARCH_KEYWORDS);
   }
 
-  db.run('PRAGMA user_version = 6')
+  db.run('PRAGMA user_version = 6');
 }
 
 /**
@@ -208,13 +199,13 @@ function runMigration006(db: Database): void {
  */
 function runMigration007(db: Database): void {
   // Check if column already exists
-  const kanjiColumns = getTableColumns(db, 'kanjis')
+  const kanjiColumns = getTableColumns(db, 'kanjis');
 
   if (!kanjiColumns.includes('search_keywords')) {
-    db.run(migration007)
+    db.run(migration007);
   }
 
-  db.run('PRAGMA user_version = 7')
+  db.run('PRAGMA user_version = 7');
 }
 
 /**
@@ -222,7 +213,7 @@ function runMigration007(db: Database): void {
  * Makes stroke_count nullable in kanji table
  */
 function runMigration008(db: Database): void {
-  db.run(migration008)
+  db.run(migration008);
   // Version is now set by the SQL file itself
 }
 
@@ -231,7 +222,7 @@ function runMigration008(db: Database): void {
  * Makes stroke_count nullable in components table
  */
 function runMigration009(db: Database): void {
-  db.run(migration009)
+  db.run(migration009);
   // Version is now set by the SQL file itself
 }
 
@@ -240,7 +231,7 @@ function runMigration009(db: Database): void {
  * Adds non-jlpt and non-joyo values to check constraints
  */
 function runMigration010(db: Database): void {
-  db.run(migration010)
+  db.run(migration010);
   // Version is now set by the SQL file itself
 }
 
@@ -252,14 +243,14 @@ function runMigration011(db: Database): void {
   // Check if tables already exist
   const tablesResult = db.exec(
     "SELECT name FROM sqlite_master WHERE type='table' AND name='on_readings'"
-  )
-  const hasOnReadings = (tablesResult[0]?.values.length ?? 0) > 0
+  );
+  const hasOnReadings = (tablesResult[0]?.values.length ?? 0) > 0;
 
   if (hasOnReadings) {
     // Tables already exist, just set version
-    db.run('PRAGMA user_version = 11')
+    db.run('PRAGMA user_version = 11');
   } else {
-    db.run(migration011)
+    db.run(migration011);
   }
 }
 
@@ -271,14 +262,14 @@ function runMigration012(db: Database): void {
   // Check if tables already exist
   const tablesResult = db.exec(
     "SELECT name FROM sqlite_master WHERE type='table' AND name='kanji_meanings'"
-  )
-  const hasKanjiMeanings = (tablesResult[0]?.values.length ?? 0) > 0
+  );
+  const hasKanjiMeanings = (tablesResult[0]?.values.length ?? 0) > 0;
 
   if (hasKanjiMeanings) {
     // Tables already exist, just set version
-    db.run('PRAGMA user_version = 12')
+    db.run('PRAGMA user_version = 12');
   } else {
-    db.run(migration012)
+    db.run(migration012);
   }
 }
 
@@ -288,16 +279,14 @@ function runMigration012(db: Database): void {
  */
 function runMigration013(db: Database): void {
   // Check if display_order column already exists in kanji_classifications
-  const columns = getTableColumns(db, 'kanji_classifications')
+  const columns = getTableColumns(db, 'kanji_classifications');
 
   if (!columns.includes('display_order')) {
-    db.run(
-      'ALTER TABLE kanji_classifications ADD COLUMN display_order INTEGER DEFAULT 0'
-    )
+    db.run('ALTER TABLE kanji_classifications ADD COLUMN display_order INTEGER DEFAULT 0');
     // Migrate existing is_primary data to display_order
     db.run(
       'UPDATE kanji_classifications SET display_order = CASE WHEN is_primary = 1 THEN 0 ELSE 1 END'
-    )
+    );
   }
 
   // Add phonetic_loan type if not exists
@@ -307,15 +296,15 @@ function runMigration013(db: Database): void {
   // this single-user tool.
   const typeResult = db.exec(
     "SELECT id FROM classification_types WHERE type_name = 'phonetic_loan'"
-  )
+  );
   if ((typeResult[0]?.values.length ?? 0) === 0) {
     db.run(
       `INSERT INTO classification_types (type_name, name_japanese, name_english, description, description_short, display_order) 
        VALUES ('phonetic_loan', '仮借字', 'Phonetic Loan', 'Borrowed character for sound alone, original meaning ignored', 'Borrowed for sound', 5)`
-    )
+    );
   }
 
-  db.run('PRAGMA user_version = 13')
+  db.run('PRAGMA user_version = 13');
 }
 
 /**
@@ -323,8 +312,8 @@ function runMigration013(db: Database): void {
  * Adds component_forms table for visual variants of semantic components
  */
 function runMigration014(db: Database): void {
-  // Always run migration 014 - it handles dropping existing table and recreating with correct schema
-  db.run(migration014)
+  // Runs once, behind the version gate; drops any table 003 created and recreates it
+  db.run(migration014);
 }
 
 /**
@@ -332,8 +321,8 @@ function runMigration014(db: Database): void {
  * Adds component_groupings and component_grouping_members tables
  */
 function runMigration015(db: Database): void {
-  // Always run migration 015 - it handles dropping existing tables and recreating with correct schema
-  db.run(migration015)
+  // Runs once, behind the version gate; drops any tables 003 created and recreates them
+  db.run(migration015);
 }
 
 /**
@@ -344,14 +333,14 @@ function runMigration016(db: Database): void {
   // Check if vocabulary table already exists
   const tablesResult = db.exec(
     "SELECT name FROM sqlite_master WHERE type='table' AND name='vocabulary'"
-  )
-  const hasVocabulary = (tablesResult[0]?.values.length ?? 0) > 0
+  );
+  const hasVocabulary = (tablesResult[0]?.values.length ?? 0) > 0;
 
   if (hasVocabulary) {
     // Table already exists, just set version
-    db.run('PRAGMA user_version = 16')
+    db.run('PRAGMA user_version = 16');
   } else {
-    db.run(migration016)
+    db.run(migration016);
   }
 }
 
@@ -360,7 +349,7 @@ function runMigration016(db: Database): void {
  * Normalizes kanji kentei level format from full labels to type-safe keys
  */
 function runMigration017(db: Database): void {
-  db.run(migration017)
+  db.run(migration017);
 }
 
 /**
@@ -368,7 +357,7 @@ function runMigration017(db: Database): void {
  * Adds missing updated_at triggers for tables created in migrations 014-016
  */
 function runMigration018(db: Database): void {
-  db.run(migration018)
+  db.run(migration018);
 }
 
 /**
@@ -377,17 +366,17 @@ function runMigration018(db: Database): void {
  * but never used in TypeScript types, queries, or mutations.
  */
 function runMigration019(db: Database): void {
-  const columns = getTableColumns(db, 'kanjis')
+  const columns = getTableColumns(db, 'kanjis');
   if (columns.includes('notes_cultural')) {
     // DROP COLUMN requires SQLite 3.35.0+; wrapped in try/catch for safety.
     try {
-      db.run(migration019)
+      db.run(migration019);
     } catch {
       // Older SQLite — skip; the column is harmlessly unused.
-      db.run('PRAGMA user_version = 19')
+      db.run('PRAGMA user_version = 19');
     }
   } else {
-    db.run('PRAGMA user_version = 19')
+    db.run('PRAGMA user_version = 19');
   }
 }
 
@@ -396,42 +385,42 @@ function runMigration019(db: Database): void {
  */
 function applyEarlyMigrations(db: Database, currentVersion: number): void {
   if (currentVersion < 1) {
-    runWithTransaction(db, () => db.run(migration001))
+    runWithTransaction(db, () => db.run(migration001));
   }
   if (currentVersion < 2) {
     runWithTransaction(db, () => {
-      runMigration002(db)
-    })
+      runMigration002(db);
+    });
   }
   if (currentVersion < 3) {
     runWithTransaction(db, () => {
-      runMigration003(db)
-    })
+      runMigration003(db);
+    });
   }
   if (currentVersion < 4) {
     runWithTransaction(db, () => {
-      runMigration004(db)
-    })
+      runMigration004(db);
+    });
   }
   if (currentVersion < 5) {
     runWithTransaction(db, () => {
-      runMigration005(db)
-    })
+      runMigration005(db);
+    });
   }
   if (currentVersion < 6) {
     runWithTransaction(db, () => {
-      runMigration006(db)
-    })
+      runMigration006(db);
+    });
   }
   if (currentVersion < 7) {
     runWithTransaction(db, () => {
-      runMigration007(db)
-    })
+      runMigration007(db);
+    });
   }
   if (currentVersion < 8) {
     runWithTransaction(db, () => {
-      runMigration008(db)
-    })
+      runMigration008(db);
+    });
   }
 }
 
@@ -441,28 +430,28 @@ function applyEarlyMigrations(db: Database, currentVersion: number): void {
 function applyMiddleMigrations(db: Database, currentVersion: number): void {
   if (currentVersion < 9) {
     runWithTransaction(db, () => {
-      runMigration009(db)
-    })
+      runMigration009(db);
+    });
   }
   if (currentVersion < 10) {
     runWithTransaction(db, () => {
-      runMigration010(db)
-    })
+      runMigration010(db);
+    });
   }
   if (currentVersion < 11) {
     runWithTransaction(db, () => {
-      runMigration011(db)
-    })
+      runMigration011(db);
+    });
   }
   if (currentVersion < 12) {
     runWithTransaction(db, () => {
-      runMigration012(db)
-    })
+      runMigration012(db);
+    });
   }
   if (currentVersion < 13) {
     runWithTransaction(db, () => {
-      runMigration013(db)
-    })
+      runMigration013(db);
+    });
   }
 }
 
@@ -472,33 +461,33 @@ function applyMiddleMigrations(db: Database, currentVersion: number): void {
 function applyLateMigrations(db: Database, currentVersion: number): void {
   if (currentVersion < 14) {
     runWithTransaction(db, () => {
-      runMigration014(db)
-    })
+      runMigration014(db);
+    });
   }
   if (currentVersion < 15) {
     runWithTransaction(db, () => {
-      runMigration015(db)
-    })
+      runMigration015(db);
+    });
   }
   if (currentVersion < 16) {
     runWithTransaction(db, () => {
-      runMigration016(db)
-    })
+      runMigration016(db);
+    });
   }
   if (currentVersion < 17) {
     runWithTransaction(db, () => {
-      runMigration017(db)
-    })
+      runMigration017(db);
+    });
   }
   if (currentVersion < 18) {
     runWithTransaction(db, () => {
-      runMigration018(db)
-    })
+      runMigration018(db);
+    });
   }
   if (currentVersion < 19) {
     runWithTransaction(db, () => {
-      runMigration019(db)
-    })
+      runMigration019(db);
+    });
   }
 }
 
@@ -506,28 +495,47 @@ function applyLateMigrations(db: Database, currentVersion: number): void {
  * Execute all pending migrations based on current schema version
  */
 function applyPendingMigrations(db: Database, currentVersion: number): void {
-  applyEarlyMigrations(db, currentVersion)
-  applyMiddleMigrations(db, currentVersion)
-  applyLateMigrations(db, currentVersion)
+  applyEarlyMigrations(db, currentVersion);
+  applyMiddleMigrations(db, currentVersion);
+  applyLateMigrations(db, currentVersion);
 }
+
+/** Newest schema version this build knows; a file past it came from a newer app */
+export const LATEST_VERSION = 19;
 
 /**
  * Run all pending migrations on the database
  */
 export function runMigrations(db: Database): void {
   // Check current schema version
-  const versionResult = db.exec('PRAGMA user_version')
-  const versionValue = versionResult[0]?.values[0]?.[0]
-  const currentVersion = typeof versionValue === 'number' ? versionValue : 0
+  const versionResult = db.exec('PRAGMA user_version');
+  const versionValue = versionResult[0]?.values[0]?.[0];
+  const currentVersion = typeof versionValue === 'number' ? versionValue : 0;
+
+  if (currentVersion > LATEST_VERSION) {
+    throw new Error(
+      `Database version ${String(currentVersion)} is newer than this app supports (${String(LATEST_VERSION)})`
+    );
+  }
+
+  // SQLite ignores PRAGMA foreign_keys inside a transaction, so it is switched
+  // off here, around the per-migration transactions, not inside a migration's
+  // SQL. Otherwise a table rebuild's DROP TABLE fires ON DELETE actions on
+  // the rows it is about to copy. The caller's setting is restored afterwards.
+  const fkResult = db.exec('PRAGMA foreign_keys');
+  const foreignKeysWereOn = fkResult[0]?.values[0]?.[0] === 1;
+  db.run('PRAGMA foreign_keys = OFF');
 
   try {
-    applyPendingMigrations(db, currentVersion)
+    applyPendingMigrations(db, currentVersion);
   } catch (error) {
     // Re-throw with a more descriptive message. The error propagates to
     // App.vue which surfaces it to the user.
     throw new Error(
       `Database migration failed: ${error instanceof Error ? error.message : String(error)}`,
       { cause: error }
-    )
+    );
+  } finally {
+    db.run(`PRAGMA foreign_keys = ${foreignKeysWereOn ? 'ON' : 'OFF'}`);
   }
 }

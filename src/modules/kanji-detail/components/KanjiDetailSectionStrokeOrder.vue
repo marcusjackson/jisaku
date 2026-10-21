@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * KanjiSectionStrokeOrder
+ * KanjiDetailSectionStrokeOrder
  *
  * Section component for stroke order images.
  * Uses SharedSection with collapsible behavior and view/edit mode toggle.
@@ -65,6 +65,8 @@ function handleSave(
     <template #actions="{ isOpen }">
       <BaseButton
         v-if="!isEditMode && isOpen"
+        aria-label="Edit stroke order"
+        data-testid="stroke-order-edit-button"
         size="sm"
         variant="secondary"
         @click="handleEdit"

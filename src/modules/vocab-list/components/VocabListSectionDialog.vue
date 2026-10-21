@@ -32,9 +32,6 @@ function handleCancel(): void {
     description="Enter the word and kana to create a new vocabulary entry."
     title="Add New Vocabulary"
   >
-    <VocabListDialogCreate
-      @cancel="handleCancel"
-      @created="handleCreated"
-    />
+    <VocabListDialogCreate @cancel="handleCancel" @created="handleCreated" />
   </BaseDialog>
 </template>

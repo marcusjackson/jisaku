@@ -2,15 +2,25 @@
  * Tests for use-kanji-detail-readings-handlers composable.
  */
 
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useKanjiDetailReadingsHandlers } from './use-kanji-detail-readings-handlers'
+import { inTransaction } from '@/db/transaction';
 
-import type { ReadingsSaveData } from '../kanji-detail-types'
-import type { KunReading, OnReading } from '@/api/kanji'
-import type { Ref } from 'vue'
+import { useKanjiDetailReadingsHandlers } from './use-kanji-detail-readings-handlers';
+
+import type { ReadingsSaveData } from '../kanji-detail-types';
+import type { KunReading, OnReading } from '@/api/kanji';
+import type { Ref } from 'vue';
+
+const statements: string[] = [];
+
+vi.mock('@/shared/composables/use-database', () => ({
+  useDatabase: () => ({
+    transaction: <T>(fn: () => T): T => inTransaction((sql) => statements.push(sql), fn),
+  }),
+}));
 
 function mockOnReading(overrides: Partial<OnReading> = {}): OnReading {
   return {
@@ -21,8 +31,8 @@ function mockOnReading(overrides: Partial<OnReading> = {}): OnReading {
     displayOrder: 0,
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 function mockKunReading(overrides: Partial<KunReading> = {}): KunReading {
@@ -35,136 +45,177 @@ function mockKunReading(overrides: Partial<KunReading> = {}): KunReading {
     displayOrder: 0,
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 describe('useKanjiDetailReadingsHandlers', () => {
-  let kanjiId: Ref<number>
-  let onReadings: Ref<OnReading[]>
-  let kunReadings: Ref<KunReading[]>
+  let kanjiId: Ref<number>;
+  let onReadings: Ref<OnReading[]>;
+  let kunReadings: Ref<KunReading[]>;
   let mockOnReadingRepo: {
-    create: ReturnType<typeof vi.fn>
-    update: ReturnType<typeof vi.fn>
-    remove: ReturnType<typeof vi.fn>
-    reorder: ReturnType<typeof vi.fn>
-    getByParentId: ReturnType<typeof vi.fn>
-  }
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
+    reorder: ReturnType<typeof vi.fn>;
+    getByParentId: ReturnType<typeof vi.fn>;
+  };
   let mockKunReadingRepo: {
-    create: ReturnType<typeof vi.fn>
-    update: ReturnType<typeof vi.fn>
-    remove: ReturnType<typeof vi.fn>
-    reorder: ReturnType<typeof vi.fn>
-    getByParentId: ReturnType<typeof vi.fn>
-  }
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
+    reorder: ReturnType<typeof vi.fn>;
+    getByParentId: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
-    kanjiId = ref(1)
-    onReadings = ref<OnReading[]>([mockOnReading({ id: 1 })])
-    kunReadings = ref<KunReading[]>([mockKunReading({ id: 1 })])
+    statements.length = 0;
+    kanjiId = ref(1);
+    onReadings = ref<OnReading[]>([mockOnReading({ id: 1 })]);
+    kunReadings = ref<KunReading[]>([mockKunReading({ id: 1 })]);
 
     mockOnReadingRepo = {
       create: vi.fn().mockReturnValue(mockOnReading({ id: 2 })),
       update: vi.fn().mockReturnValue(mockOnReading()),
       remove: vi.fn(),
       reorder: vi.fn(),
-      getByParentId: vi.fn().mockReturnValue([mockOnReading()])
-    }
+      getByParentId: vi.fn().mockReturnValue([mockOnReading()]),
+    };
 
     mockKunReadingRepo = {
       create: vi.fn().mockReturnValue(mockKunReading({ id: 2 })),
       update: vi.fn().mockReturnValue(mockKunReading()),
       remove: vi.fn(),
       reorder: vi.fn(),
-      getByParentId: vi.fn().mockReturnValue([mockKunReading()])
-    }
-  })
+      getByParentId: vi.fn().mockReturnValue([mockKunReading()]),
+    };
+  });
 
   describe('handleSaveReadings', () => {
+    it('rolls back and leaves state untouched when the kun-reading write fails', () => {
+      mockKunReadingRepo.create.mockImplementation(() => {
+        throw new Error('constraint');
+      });
+      const { handleSaveReadings } = useKanjiDetailReadingsHandlers(
+        { kanjiId, onReadings, kunReadings },
+        {
+          onReadingRepo: mockOnReadingRepo as never,
+          kunReadingRepo: mockKunReadingRepo as never,
+        }
+      );
+      const before = onReadings.value;
+
+      expect(() => {
+        handleSaveReadings({
+          onReadings: [{ id: -1, isNew: true, reading: 'ミョウ', readingLevel: '中' }],
+          kunReadings: [{ id: -2, isNew: true, okurigana: '', reading: 'あ', readingLevel: '小' }],
+        });
+      }).toThrow('constraint');
+
+      expect(statements).toEqual(['BEGIN TRANSACTION', 'ROLLBACK']);
+      expect(mockOnReadingRepo.getByParentId).not.toHaveBeenCalled();
+      expect(onReadings.value).toBe(before);
+    });
+
+    it('commits one transaction and skips a blank new row', () => {
+      const { handleSaveReadings } = useKanjiDetailReadingsHandlers(
+        { kanjiId, onReadings, kunReadings },
+        {
+          onReadingRepo: mockOnReadingRepo as never,
+          kunReadingRepo: mockKunReadingRepo as never,
+        }
+      );
+
+      handleSaveReadings({
+        onReadings: [
+          { id: 1, reading: 'メイ', readingLevel: '小' },
+          { id: -1, isNew: true, reading: ' ', readingLevel: '小' },
+        ],
+        kunReadings: [{ id: 1, reading: 'あか', okurigana: '', readingLevel: '小' }],
+      });
+
+      expect(statements).toEqual(['BEGIN TRANSACTION', 'COMMIT']);
+      expect(mockOnReadingRepo.create).not.toHaveBeenCalled();
+    });
+
     it('creates new on-readings', () => {
       const { handleSaveReadings } = useKanjiDetailReadingsHandlers(
         { kanjiId, onReadings, kunReadings },
         {
           onReadingRepo: mockOnReadingRepo as never,
-          kunReadingRepo: mockKunReadingRepo as never
+          kunReadingRepo: mockKunReadingRepo as never,
         }
-      )
+      );
 
       const saveData: ReadingsSaveData = {
         onReadings: [
           { id: 1, reading: 'メイ', readingLevel: '小' },
-          { id: -1, reading: 'ミョウ', readingLevel: '中', isNew: true }
+          { id: -1, reading: 'ミョウ', readingLevel: '中', isNew: true },
         ],
-        kunReadings: [
-          { id: 1, reading: 'あか', okurigana: '', readingLevel: '小' }
-        ]
-      }
+        kunReadings: [{ id: 1, reading: 'あか', okurigana: '', readingLevel: '小' }],
+      };
 
-      handleSaveReadings(saveData)
+      handleSaveReadings(saveData);
 
       expect(mockOnReadingRepo.create).toHaveBeenCalledWith({
         kanjiId: 1,
         reading: 'ミョウ',
         readingLevel: '中',
-        displayOrder: 1
-      })
-    })
+        displayOrder: 1,
+      });
+    });
 
     it('updates existing on-readings', () => {
       const { handleSaveReadings } = useKanjiDetailReadingsHandlers(
         { kanjiId, onReadings, kunReadings },
         {
           onReadingRepo: mockOnReadingRepo as never,
-          kunReadingRepo: mockKunReadingRepo as never
+          kunReadingRepo: mockKunReadingRepo as never,
         }
-      )
+      );
 
       const saveData: ReadingsSaveData = {
         onReadings: [{ id: 1, reading: 'メイ', readingLevel: '中' }],
-        kunReadings: [
-          { id: 1, reading: 'あか', okurigana: '', readingLevel: '小' }
-        ]
-      }
+        kunReadings: [{ id: 1, reading: 'あか', okurigana: '', readingLevel: '小' }],
+      };
 
-      handleSaveReadings(saveData)
+      handleSaveReadings(saveData);
 
       expect(mockOnReadingRepo.update).toHaveBeenCalledWith(1, {
         reading: 'メイ',
-        readingLevel: '中'
-      })
-    })
+        readingLevel: '中',
+      });
+    });
 
     it('removes deleted on-readings', () => {
-      onReadings.value = [mockOnReading({ id: 1 }), mockOnReading({ id: 2 })]
+      onReadings.value = [mockOnReading({ id: 1 }), mockOnReading({ id: 2 })];
 
       const { handleSaveReadings } = useKanjiDetailReadingsHandlers(
         { kanjiId, onReadings, kunReadings },
         {
           onReadingRepo: mockOnReadingRepo as never,
-          kunReadingRepo: mockKunReadingRepo as never
+          kunReadingRepo: mockKunReadingRepo as never,
         }
-      )
+      );
 
       const saveData: ReadingsSaveData = {
         onReadings: [{ id: 1, reading: 'メイ', readingLevel: '小' }],
-        kunReadings: [
-          { id: 1, reading: 'あか', okurigana: '', readingLevel: '小' }
-        ]
-      }
+        kunReadings: [{ id: 1, reading: 'あか', okurigana: '', readingLevel: '小' }],
+      };
 
-      handleSaveReadings(saveData)
+      handleSaveReadings(saveData);
 
-      expect(mockOnReadingRepo.remove).toHaveBeenCalledWith(2)
-    })
+      expect(mockOnReadingRepo.remove).toHaveBeenCalledWith(2);
+    });
 
     it('creates new kun-readings with okurigana', () => {
       const { handleSaveReadings } = useKanjiDetailReadingsHandlers(
         { kanjiId, onReadings, kunReadings },
         {
           onReadingRepo: mockOnReadingRepo as never,
-          kunReadingRepo: mockKunReadingRepo as never
+          kunReadingRepo: mockKunReadingRepo as never,
         }
-      )
+      );
 
       const saveData: ReadingsSaveData = {
         onReadings: [{ id: 1, reading: 'メイ', readingLevel: '小' }],
@@ -175,42 +226,42 @@ describe('useKanjiDetailReadingsHandlers', () => {
             reading: 'あか',
             okurigana: 'り',
             readingLevel: '小',
-            isNew: true
-          }
-        ]
-      }
+            isNew: true,
+          },
+        ],
+      };
 
-      handleSaveReadings(saveData)
+      handleSaveReadings(saveData);
 
       expect(mockKunReadingRepo.create).toHaveBeenCalledWith({
         kanjiId: 1,
         reading: 'あか',
         okurigana: 'り',
         readingLevel: '小',
-        displayOrder: 1
-      })
-    })
-  })
+        displayOrder: 1,
+      });
+    });
+  });
 
   describe('reloadReadings', () => {
     it('reloads readings from repository', () => {
-      const newOnReadings = [mockOnReading({ id: 3, reading: 'NEW' })]
-      const newKunReadings = [mockKunReading({ id: 3, reading: 'new' })]
-      mockOnReadingRepo.getByParentId.mockReturnValue(newOnReadings)
-      mockKunReadingRepo.getByParentId.mockReturnValue(newKunReadings)
+      const newOnReadings = [mockOnReading({ id: 3, reading: 'NEW' })];
+      const newKunReadings = [mockKunReading({ id: 3, reading: 'new' })];
+      mockOnReadingRepo.getByParentId.mockReturnValue(newOnReadings);
+      mockKunReadingRepo.getByParentId.mockReturnValue(newKunReadings);
 
       const { reloadReadings } = useKanjiDetailReadingsHandlers(
         { kanjiId, onReadings, kunReadings },
         {
           onReadingRepo: mockOnReadingRepo as never,
-          kunReadingRepo: mockKunReadingRepo as never
+          kunReadingRepo: mockKunReadingRepo as never,
         }
-      )
+      );
 
-      reloadReadings()
+      reloadReadings();
 
-      expect(onReadings.value).toEqual(newOnReadings)
-      expect(kunReadings.value).toEqual(newKunReadings)
-    })
-  })
-})
+      expect(onReadings.value).toEqual(newOnReadings);
+      expect(kunReadings.value).toEqual(newKunReadings);
+    });
+  });
+});

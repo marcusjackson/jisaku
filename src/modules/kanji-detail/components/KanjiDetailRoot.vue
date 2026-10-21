@@ -86,11 +86,10 @@ const {
   vocabularyList
 } = useKanjiDetailVocabularyHandlers({ kanji, vocabulary })
 const {
-  allComponents: componentsForSearch,
   handleCreate: handleComponentCreate,
   handleSave: handleComponentSave,
   linkedOccurrences
-} = useKanjiDetailComponentsHandlers({ kanji, componentOccurrences })
+} = useKanjiDetailComponentsHandlers({ kanji, componentOccurrences, allComponents })
 const {
   handleBasicInfoSave,
   handleEducationNotesSave,
@@ -112,26 +111,16 @@ const {
 <template>
   <div class="kanji-detail-root">
     <div class="kanji-detail-root-container">
-      <div
-        v-if="isLoading"
-        class="kanji-detail-root-loading"
-      >
+      <div v-if="isLoading" class="kanji-detail-root-loading">
         <BaseSpinner size="lg" />
       </div>
 
-      <div
-        v-else-if="loadError"
-        class="kanji-detail-root-error"
-      >
+      <div v-else-if="loadError" class="kanji-detail-root-error" role="alert">
         <p>{{ loadError }}</p>
       </div>
 
       <template v-else-if="kanji">
-        <KanjiDetailSectionHeadline
-          :kanji="kanji"
-          :radical="radical"
-          @save="handleHeadlineSave"
-        />
+        <KanjiDetailSectionHeadline :kanji="kanji" :radical="radical" :save="handleHeadlineSave" />
 
         <KanjiDetailSectionBasicInfo
           :all-components="allComponents"
@@ -139,13 +128,13 @@ const {
           :classifications="classifications"
           :kanji="kanji"
           :radical="radical"
-          @save="handleBasicInfoSave"
+          :save="handleBasicInfoSave"
         />
         <KanjiDetailSectionReadings
           :destructive-mode="isDestructiveMode"
           :kun-readings="kunReadings"
           :on-readings="onReadings"
-          @save="handleReadingsSave"
+          :save="handleReadingsSave"
         />
         <KanjiDetailSectionMeanings
           :destructive-mode="isDestructiveMode"
@@ -154,21 +143,21 @@ const {
           :meanings="meanings"
           :on-readings="onReadings"
           :reading-groups="readingGroups"
-          @save="handleMeaningsSave"
+          :save="handleMeaningsSave"
         />
         <KanjiDetailSectionComponents
-          :all-components="componentsForSearch"
+          :all-components="allComponents"
+          :create="handleComponentCreate"
           :destructive-mode="isDestructiveMode"
           :linked-occurrences="linkedOccurrences"
-          @create="handleComponentCreate"
-          @save="handleComponentSave"
+          :save="handleComponentSave"
         />
         <KanjiDetailSectionVocabulary
           :all-vocabulary="allVocabulary"
+          :create="handleCreate"
           :destructive-mode="isDestructiveMode"
+          :link="handleLink"
           :vocabulary="vocabularyList"
-          @create="handleCreate"
-          @link="handleLink"
           @unlink="handleUnlink"
         />
         <KanjiDetailSectionSemanticNotes

@@ -5,12 +5,14 @@
  * Dialog for editing component headline fields: character, short meaning, keywords.
  */
 
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 
 import { toTypedSchema } from '@vee-validate/zod'
 import { useField, useForm } from 'vee-validate'
 
 import { BaseButton, BaseDialog, BaseInput } from '@/base/components'
+
+import { useComponentRepository } from '@/api/component'
 
 import { componentHeadlineSchema } from '../schemas/component-detail-headline-schema'
 
@@ -28,7 +30,7 @@ const emit = defineEmits<{
   save: [data: HeadlineSaveData]
 }>()
 
-const { handleSubmit, resetForm } = useForm({
+const { handleSubmit, resetForm, setFieldError } = useForm({
   validationSchema: toTypedSchema(componentHeadlineSchema),
   initialValues: {
     character: props.character,
@@ -44,8 +46,6 @@ const { errorMessage: shortMeaningError, value: shortMeaningValue } =
 const { errorMessage: searchKeywordsError, value: searchKeywordsValue } =
   useField<string>('searchKeywords')
 
-const isSubmitting = ref(false)
-
 watch(
   () => props.open,
   (isOpen) => {
@@ -58,14 +58,20 @@ watch(
 )
 
 const onSubmit = handleSubmit((formValues) => {
-  isSubmitting.value = true
+  const character = formValues.character.trim()
+  // Another component already uses this character (the unchanged one is its own)
+  if (
+    character !== props.character &&
+    useComponentRepository().getByCharacter(character)
+  ) {
+    setFieldError('character', 'This component is already registered')
+    return
+  }
   emit('save', {
-    character: formValues.character,
-    shortMeaning: formValues.shortMeaning || null,
-    searchKeywords: formValues.searchKeywords || null
+    character,
+    shortMeaning: formValues.shortMeaning.trim() || null,
+    searchKeywords: formValues.searchKeywords.trim() || null
   })
-  isSubmitting.value = false
-  emit('update:open', false)
 })
 
 function handleCancel(): void {
@@ -75,22 +81,9 @@ function handleCancel(): void {
 </script>
 
 <template>
-  <BaseDialog
-    :open="props.open"
-    title="Edit Headline"
-    @update:open="emit('update:open', $event)"
-  >
-    <form
-      class="component-detail-dialog-headline-form"
-      @submit.prevent="onSubmit"
-    >
-      <BaseInput
-        v-model="characterValue"
-        :error="characterError"
-        label="Character"
-        maxlength="1"
-        required
-      />
+  <BaseDialog :open="props.open" title="Edit Headline" @update:open="emit('update:open', $event)">
+    <form class="component-detail-dialog-headline-form" @submit.prevent="onSubmit">
+      <BaseInput v-model="characterValue" :error="characterError" label="Character" required />
 
       <BaseInput
         v-model="shortMeaningValue"
@@ -109,20 +102,8 @@ function handleCancel(): void {
       />
 
       <div class="component-detail-dialog-headline-actions">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="handleCancel"
-        >
-          Cancel
-        </BaseButton>
-        <BaseButton
-          :disabled="isSubmitting"
-          :loading="isSubmitting"
-          type="submit"
-        >
-          Save
-        </BaseButton>
+        <BaseButton type="button" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
+        <BaseButton type="submit"> Save </BaseButton>
       </div>
     </form>
   </BaseDialog>

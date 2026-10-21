@@ -6,6 +6,8 @@
  * Shows the Japanese name or English name, with full description on hover.
  */
 
+import { computed } from 'vue'
+
 import type { PositionType } from '@/api/position/position-types'
 
 const props = defineProps<{
@@ -13,21 +15,21 @@ const props = defineProps<{
 }>()
 
 // Use Japanese name if available, fallback to English, fallback to position name
-const displayName: string =
-  props.position.nameJapanese ??
-  props.position.nameEnglish ??
-  props.position.positionName
+const displayName = computed(
+  () =>
+    props.position.nameJapanese ??
+    props.position.nameEnglish ??
+    props.position.positionName
+)
 
 // Use description for tooltip, fallback to position name
-const tooltipText: string =
-  props.position.description ?? props.position.positionName
+const tooltipText = computed(
+  () => props.position.description ?? props.position.positionName
+)
 </script>
 
 <template>
-  <span
-    :aria-label="tooltipText"
-    class="shared-position-badge"
-  >
+  <span :aria-label="tooltipText" class="shared-position-badge">
     {{ displayName }}
   </span>
 </template>

@@ -21,31 +21,27 @@ import type {
   ReadingsSaveData
 } from '../kanji-detail-types'
 
-defineProps<{
+const props = defineProps<{
   onReadings: OnReading[]
   kunReadings: KunReading[]
   destructiveMode?: boolean
-}>()
-
-const emit = defineEmits<{
-  save: [data: ReadingsSaveData]
+  /** Saves readings; returns whether it saved, so the dialog can close */
+  save: (data: ReadingsSaveData) => boolean
 }>()
 
 const isDialogOpen = ref(false)
 
 function handleSave(data: ReadingsSaveData): void {
-  emit('save', data)
-  isDialogOpen.value = false
+  if (props.save(data)) isDialogOpen.value = false
 }
 </script>
 
 <template>
-  <SharedSection
-    test-id="kanji-detail-readings"
-    title="Readings"
-  >
+  <SharedSection test-id="kanji-detail-readings" title="Readings">
     <template #actions>
       <BaseButton
+        aria-label="Edit readings"
+        data-testid="readings-edit-button"
         size="sm"
         variant="secondary"
         @click="isDialogOpen = true"
@@ -54,10 +50,7 @@ function handleSave(data: ReadingsSaveData): void {
       </BaseButton>
     </template>
 
-    <KanjiDetailReadingsDisplay
-      :kun-readings="kunReadings"
-      :on-readings="onReadings"
-    />
+    <KanjiDetailReadingsDisplay :kun-readings="kunReadings" :on-readings="onReadings" />
 
     <KanjiDetailDialogReadings
       v-model:open="isDialogOpen"

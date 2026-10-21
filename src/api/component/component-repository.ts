@@ -7,16 +7,16 @@
  * @module api/component
  */
 
-import { ComponentMutations } from './component-mutations'
-import { ComponentQueries } from './component-queries'
+import { ComponentMutations } from './component-mutations';
+import { ComponentQueries } from './component-queries';
 
-import type { FieldUpdatable, Repository, UpdatableField } from '../api-types'
+import type { FieldUpdatable, Repository, UpdatableField } from '../api-types';
 import type {
   Component,
   ComponentFilters,
   CreateComponentInput,
-  UpdateComponentInput
-} from './component-types'
+  UpdateComponentInput,
+} from './component-types';
 
 // ============================================================================
 // Repository Implementation
@@ -27,12 +27,12 @@ class ComponentRepositoryImpl
     Repository<Component, CreateComponentInput, UpdateComponentInput>,
     FieldUpdatable<Component>
 {
-  private readonly queries: ComponentQueries
-  private readonly mutations: ComponentMutations
+  private readonly queries: ComponentQueries;
+  private readonly mutations: ComponentMutations;
 
   constructor() {
-    this.queries = new ComponentQueries()
-    this.mutations = new ComponentMutations(this.queries)
+    this.queries = new ComponentQueries();
+    this.mutations = new ComponentMutations(this.queries);
   }
 
   // ==========================================================================
@@ -40,39 +40,31 @@ class ComponentRepositoryImpl
   // ==========================================================================
 
   getById(id: number): Component | null {
-    return this.queries.getById(id)
+    return this.queries.getById(id);
   }
 
   getAll(): Component[] {
-    return this.queries.getAll()
+    return this.queries.getAll();
   }
 
   getByCharacter(character: string): Component | null {
-    return this.queries.getByCharacter(character)
-  }
-
-  getByIds(ids: number[]): Component[] {
-    return this.queries.getByIds(ids)
+    return this.queries.getByCharacter(character);
   }
 
   getRadicals(): Component[] {
-    return this.queries.getRadicals()
-  }
-
-  getByKangxiNumber(kangxiNumber: number): Component | null {
-    return this.queries.getByKangxiNumber(kangxiNumber)
+    return this.queries.getRadicals();
   }
 
   search(filters?: ComponentFilters): Component[] {
-    return this.queries.search(filters)
+    return this.queries.search(filters);
   }
 
   getFormsCount(): Map<number, number> {
-    return this.queries.getFormsCount()
+    return this.queries.getFormsCount();
   }
 
   getGroupingsCount(): Map<number, number> {
-    return this.queries.getGroupingsCount()
+    return this.queries.getGroupingsCount();
   }
 
   // ==========================================================================
@@ -80,11 +72,11 @@ class ComponentRepositoryImpl
   // ==========================================================================
 
   create(input: CreateComponentInput): Component {
-    return this.mutations.create(input)
+    return this.mutations.create(input);
   }
 
   update(id: number, input: UpdateComponentInput): Component {
-    return this.mutations.update(id, input)
+    return this.mutations.update(id, input);
   }
 
   updateField<K extends UpdatableField<Component>>(
@@ -92,11 +84,11 @@ class ComponentRepositoryImpl
     field: K,
     value: Component[K]
   ): Component {
-    return this.mutations.updateField(id, field, value)
+    return this.mutations.updateField(id, field, value);
   }
 
   remove(id: number): void {
-    this.mutations.remove(id)
+    this.mutations.remove(id);
   }
 }
 
@@ -110,5 +102,5 @@ class ComponentRepositoryImpl
  * @example const repo = useComponentRepository(); repo.getAll()
  */
 export function useComponentRepository(): ComponentRepositoryImpl {
-  return new ComponentRepositoryImpl()
+  return new ComponentRepositoryImpl();
 }

@@ -19,20 +19,14 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div
-    v-if="error"
-    class="app-error"
-  >
+  <div v-if="error" class="app-error">
     <h1>Database Error</h1>
     <p>{{ error.message }}</p>
   </div>
   <template v-else-if="isReady">
     <RouterView />
   </template>
-  <div
-    v-else
-    class="app-loading"
-  >
+  <div v-else class="app-loading">
     <p>Loading...</p>
   </div>
 </template>
@@ -41,7 +35,9 @@ onMounted(async () => {
 /* Design tokens and base styles */
 @import url('@/styles/tokens.css');
 @import url('@/styles/base.css');
+</style>
 
+<style scoped>
 .app-error {
   display: flex;
   flex-direction: column;

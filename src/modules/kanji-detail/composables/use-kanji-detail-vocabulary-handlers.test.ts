@@ -4,22 +4,22 @@
  * @module modules/kanji-detail
  */
 
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-import { createTestVocabKanjiWithVocabulary } from '@test/helpers/vocabulary-test-helpers'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createTestVocabKanjiWithVocabulary } from '@test/helpers/vocabulary-test-helpers';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useKanjiDetailVocabularyHandlers } from './use-kanji-detail-vocabulary-handlers'
+import { useKanjiDetailVocabularyHandlers } from './use-kanji-detail-vocabulary-handlers';
 
-import type { QuickCreateVocabularyData } from '../kanji-detail-types'
-import type { Kanji } from '@/api/kanji/kanji-types'
+import type { QuickCreateVocabularyData } from '../kanji-detail-types';
+import type { Kanji } from '@/api/kanji/kanji-types';
 import type {
   CreateVocabKanjiInput,
   CreateVocabularyInput,
   VocabKanji,
   VocabKanjiWithVocabulary,
-  Vocabulary
-} from '@/api/vocabulary'
+  Vocabulary,
+} from '@/api/vocabulary';
 
 // Mock Kanji factory
 function createTestKanji(overrides: Partial<Kanji> = {}): Kanji {
@@ -43,9 +43,15 @@ function createTestKanji(overrides: Partial<Kanji> = {}): Kanji {
     radicalStrokeCount: null,
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
+
+const mockTransaction = vi.fn(<T>(fn: () => T): T => fn());
+
+vi.mock('@/shared/composables/use-database', () => ({
+  useDatabase: () => ({ transaction: mockTransaction }),
+}));
 
 // Mock toast
 vi.mock('@/shared/composables/use-toast', () => ({
@@ -56,9 +62,9 @@ vi.mock('@/shared/composables/use-toast', () => ({
     warning: vi.fn(),
     toasts: { value: [] },
     addToast: vi.fn(),
-    removeToast: vi.fn()
-  })
-}))
+    removeToast: vi.fn(),
+  }),
+}));
 
 // Mock repositories
 const mockVocabKanjiRepository = {
@@ -70,12 +76,13 @@ const mockVocabKanjiRepository = {
     analysisNotes: null,
     displayOrder: 0,
     createdAt: '',
-    updatedAt: ''
+    updatedAt: '',
   })),
-  remove: vi.fn()
-}
+  remove: vi.fn(),
+};
 
 const mockVocabularyRepository = {
+  getAll: vi.fn((): Vocabulary[] => []),
   create: vi.fn((input: CreateVocabularyInput): Vocabulary => ({
     id: 999,
     word: input.word,
@@ -86,228 +93,268 @@ const mockVocabularyRepository = {
     isCommon: false,
     description: null,
     createdAt: '',
-    updatedAt: ''
-  }))
-}
+    updatedAt: '',
+  })),
+};
 
 vi.mock('@/api/vocabulary', () => ({
   useVocabKanjiRepository: () => mockVocabKanjiRepository,
-  useVocabularyRepository: () => mockVocabularyRepository
-}))
+  useVocabularyRepository: () => mockVocabularyRepository,
+}));
 
 function createMockState() {
   return {
     kanji: ref<Kanji | null>(createTestKanji()),
-    vocabulary: ref<VocabKanjiWithVocabulary[]>([])
-  }
+    vocabulary: ref<VocabKanjiWithVocabulary[]>([]),
+  };
 }
 
 describe('useKanjiDetailVocabularyHandlers', () => {
-  let state: ReturnType<typeof createMockState>
+  let state: ReturnType<typeof createMockState>;
 
   beforeEach(() => {
-    state = createMockState()
-    vi.clearAllMocks()
-  })
+    state = createMockState();
+    vi.clearAllMocks();
+  });
 
   describe('handleLink', () => {
     it('links vocabulary to kanji', () => {
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleLink(5)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      const saved = handlers.handleLink(5);
 
+      expect(saved).toBe(true);
       expect(mockVocabKanjiRepository.create).toHaveBeenCalledWith({
         vocabId: 5,
-        kanjiId: 1
-      })
-    })
+        kanjiId: 1,
+      });
+    });
 
     it('does not link if vocabulary already linked', () => {
       state.vocabulary.value = [
         createTestVocabKanjiWithVocabulary({
           vocabulary: { id: 5 } as Vocabulary,
-          vocabKanji: { id: 1, vocabId: 5, kanjiId: 1 } as VocabKanji
-        })
-      ]
+          vocabKanji: { id: 1, vocabId: 5, kanjiId: 1 } as VocabKanji,
+        }),
+      ];
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleLink(5)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      const saved = handlers.handleLink(5);
 
-      expect(mockVocabKanjiRepository.create).not.toHaveBeenCalled()
-    })
+      expect(saved).toBe(false);
+      expect(mockVocabKanjiRepository.create).not.toHaveBeenCalled();
+    });
 
     it('does not link if no kanji selected', () => {
-      state.kanji.value = null
+      state.kanji.value = null;
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleLink(5)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      const saved = handlers.handleLink(5);
 
-      expect(mockVocabKanjiRepository.create).not.toHaveBeenCalled()
-    })
+      expect(saved).toBe(false);
+      expect(mockVocabKanjiRepository.create).not.toHaveBeenCalled();
+    });
 
     it('refreshes vocabulary list after linking', () => {
       mockVocabKanjiRepository.getByKanjiIdWithVocabulary.mockReturnValue([
-        createTestVocabKanjiWithVocabulary()
-      ])
+        createTestVocabKanjiWithVocabulary(),
+      ]);
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleLink(5)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      handlers.handleLink(5);
 
-      expect(
-        mockVocabKanjiRepository.getByKanjiIdWithVocabulary
-      ).toHaveBeenCalledWith(1)
-      expect(state.vocabulary.value).toHaveLength(1)
-    })
-  })
+      expect(mockVocabKanjiRepository.getByKanjiIdWithVocabulary).toHaveBeenCalledWith(1);
+      expect(state.vocabulary.value).toHaveLength(1);
+    });
+  });
 
   describe('handleUnlink', () => {
     it('unlinks vocabulary from kanji', () => {
       state.vocabulary.value = [
         createTestVocabKanjiWithVocabulary({
           vocabulary: { id: 5 } as Vocabulary,
-          vocabKanji: { id: 10, vocabId: 5, kanjiId: 1 } as VocabKanji
-        })
-      ]
+          vocabKanji: { id: 10, vocabId: 5, kanjiId: 1 } as VocabKanji,
+        }),
+      ];
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleUnlink(5)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      handlers.handleUnlink(5);
 
-      expect(mockVocabKanjiRepository.remove).toHaveBeenCalledWith(10)
-    })
+      expect(mockVocabKanjiRepository.remove).toHaveBeenCalledWith(10);
+    });
 
     it('does not unlink if vocabulary not linked', () => {
-      state.vocabulary.value = []
+      state.vocabulary.value = [];
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleUnlink(5)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      handlers.handleUnlink(5);
 
-      expect(mockVocabKanjiRepository.remove).not.toHaveBeenCalled()
-    })
+      expect(mockVocabKanjiRepository.remove).not.toHaveBeenCalled();
+    });
 
     it('does not unlink if no kanji selected', () => {
-      state.kanji.value = null
+      state.kanji.value = null;
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleUnlink(5)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      handlers.handleUnlink(5);
 
-      expect(mockVocabKanjiRepository.remove).not.toHaveBeenCalled()
-    })
+      expect(mockVocabKanjiRepository.remove).not.toHaveBeenCalled();
+    });
 
     it('refreshes vocabulary list after unlinking', () => {
       state.vocabulary.value = [
         createTestVocabKanjiWithVocabulary({
           vocabulary: { id: 5 } as Vocabulary,
-          vocabKanji: { id: 10 } as VocabKanji
-        })
-      ]
-      mockVocabKanjiRepository.getByKanjiIdWithVocabulary.mockReturnValue([])
+          vocabKanji: { id: 10 } as VocabKanji,
+        }),
+      ];
+      mockVocabKanjiRepository.getByKanjiIdWithVocabulary.mockReturnValue([]);
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleUnlink(5)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      handlers.handleUnlink(5);
 
-      expect(
-        mockVocabKanjiRepository.getByKanjiIdWithVocabulary
-      ).toHaveBeenCalledWith(1)
-      expect(state.vocabulary.value).toHaveLength(0)
-    })
-  })
+      expect(mockVocabKanjiRepository.getByKanjiIdWithVocabulary).toHaveBeenCalledWith(1);
+      expect(state.vocabulary.value).toHaveLength(0);
+    });
+  });
 
   describe('handleCreate', () => {
     it('creates and links new vocabulary', () => {
       const data: QuickCreateVocabularyData = {
         word: '明日',
         kana: 'あした',
-        shortMeaning: 'tomorrow'
-      }
+        shortMeaning: 'tomorrow',
+      };
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleCreate(data)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      const saved = handlers.handleCreate(data);
 
+      expect(saved).toBe(true);
       expect(mockVocabularyRepository.create).toHaveBeenCalledWith({
         word: '明日',
         kana: 'あした',
-        shortMeaning: 'tomorrow'
-      })
+        shortMeaning: 'tomorrow',
+      });
 
       expect(mockVocabKanjiRepository.create).toHaveBeenCalledWith({
         vocabId: 999,
-        kanjiId: 1
-      })
-    })
+        kanjiId: 1,
+      });
+    });
+
+    it('creates and links in one transaction and leaves the list alone on a failed link', () => {
+      mockVocabKanjiRepository.create.mockImplementationOnce(() => {
+        throw new Error('Link failed');
+      });
+
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      const saved = handlers.handleCreate({ word: '明日', kana: 'あした' });
+
+      expect(saved).toBe(false);
+      expect(mockTransaction).toHaveBeenCalledTimes(1);
+      expect(mockVocabKanjiRepository.getByKanjiIdWithVocabulary).not.toHaveBeenCalled();
+    });
 
     it('creates with null shortMeaning if not provided', () => {
       const data: QuickCreateVocabularyData = {
         word: '水',
-        kana: 'みず'
-      }
+        kana: 'みず',
+      };
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleCreate(data)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      handlers.handleCreate(data);
 
       expect(mockVocabularyRepository.create).toHaveBeenCalledWith({
         word: '水',
         kana: 'みず',
-        shortMeaning: null
-      })
-    })
+        shortMeaning: null,
+      });
+    });
 
     it('does not create if no kanji selected', () => {
-      state.kanji.value = null
+      state.kanji.value = null;
 
       const data: QuickCreateVocabularyData = {
         word: '水',
-        kana: 'みず'
-      }
+        kana: 'みず',
+      };
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleCreate(data)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      handlers.handleCreate(data);
 
-      expect(mockVocabularyRepository.create).not.toHaveBeenCalled()
-    })
+      expect(mockVocabularyRepository.create).not.toHaveBeenCalled();
+    });
 
     it('refreshes vocabulary list after creating', () => {
       mockVocabKanjiRepository.getByKanjiIdWithVocabulary.mockReturnValue([
-        createTestVocabKanjiWithVocabulary()
-      ])
+        createTestVocabKanjiWithVocabulary(),
+      ]);
 
       const data: QuickCreateVocabularyData = {
         word: '明日',
-        kana: 'あした'
-      }
+        kana: 'あした',
+      };
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.handleCreate(data)
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      handlers.handleCreate(data);
 
-      expect(
-        mockVocabKanjiRepository.getByKanjiIdWithVocabulary
-      ).toHaveBeenCalledWith(1)
-      expect(state.vocabulary.value).toHaveLength(1)
-    })
-  })
+      expect(mockVocabKanjiRepository.getByKanjiIdWithVocabulary).toHaveBeenCalledWith(1);
+      expect(state.vocabulary.value).toHaveLength(1);
+    });
+  });
+
+  describe('allVocabulary', () => {
+    const makeVocab = (id: number, word: string): Vocabulary => ({
+      id,
+      word,
+      kana: word,
+      shortMeaning: null,
+      searchKeywords: null,
+      jlptLevel: null,
+      isCommon: false,
+      description: null,
+      createdAt: '',
+      updatedAt: '',
+    });
+
+    it('lists a quick-created word, and one left unlinked, after each change', () => {
+      const existing = makeVocab(1, '山');
+      mockVocabularyRepository.getAll.mockReturnValue([existing]);
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      expect(handlers.allVocabulary.value.map((v) => v.word)).toEqual(['山']);
+
+      const created = makeVocab(999, '明日');
+      mockVocabularyRepository.getAll.mockReturnValue([existing, created]);
+      handlers.handleCreate({ word: '明日', kana: 'あした' });
+      expect(handlers.allVocabulary.value.map((v) => v.word)).toEqual(['山', '明日']);
+
+      const linked = createTestVocabKanjiWithVocabulary();
+      state.vocabulary.value = [linked];
+      mockVocabularyRepository.getAll.mockReturnValue([existing, created, makeVocab(5, '川')]);
+      handlers.handleUnlink(linked.vocabulary.id);
+      expect(handlers.allVocabulary.value.map((v) => v.word)).toContain('川');
+    });
+  });
 
   describe('refreshVocabulary', () => {
     it('loads vocabulary for current kanji', () => {
       mockVocabKanjiRepository.getByKanjiIdWithVocabulary.mockReturnValue([
-        createTestVocabKanjiWithVocabulary()
-      ])
+        createTestVocabKanjiWithVocabulary(),
+      ]);
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.refreshVocabulary()
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      handlers.refreshVocabulary();
 
-      expect(
-        mockVocabKanjiRepository.getByKanjiIdWithVocabulary
-      ).toHaveBeenCalledWith(1)
-      expect(state.vocabulary.value).toHaveLength(1)
-    })
+      expect(mockVocabKanjiRepository.getByKanjiIdWithVocabulary).toHaveBeenCalledWith(1);
+      expect(state.vocabulary.value).toHaveLength(1);
+    });
 
     it('does nothing if no kanji selected', () => {
-      state.kanji.value = null
+      state.kanji.value = null;
 
-      const handlers = useKanjiDetailVocabularyHandlers(state)
-      handlers.refreshVocabulary()
+      const handlers = useKanjiDetailVocabularyHandlers(state);
+      handlers.refreshVocabulary();
 
-      expect(
-        mockVocabKanjiRepository.getByKanjiIdWithVocabulary
-      ).not.toHaveBeenCalled()
-    })
-  })
-})
+      expect(mockVocabKanjiRepository.getByKanjiIdWithVocabulary).not.toHaveBeenCalled();
+    });
+  });
+});

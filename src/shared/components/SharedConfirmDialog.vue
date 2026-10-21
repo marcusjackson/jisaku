@@ -76,11 +76,7 @@ function handleOpenChange(open: boolean) {
 
     <template #footer>
       <div class="shared-confirm-dialog-actions">
-        <BaseButton
-          :disabled="buttonDisabled"
-          variant="secondary"
-          @click="handleCancel"
-        >
+        <BaseButton :disabled="buttonDisabled" variant="secondary" @click="handleCancel">
           {{ props.cancelLabel }}
         </BaseButton>
         <BaseButton

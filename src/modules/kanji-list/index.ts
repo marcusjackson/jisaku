@@ -7,10 +7,10 @@
  */
 
 // Types
-export * from './kanji-list-types'
+export * from './kanji-list-types';
 
 // Composables
-export * from './composables'
+export * from './composables';
 
 // Components
-export { default as KanjiListRoot } from './components/KanjiListRoot.vue'
+export { default as KanjiListRoot } from './components/KanjiListRoot.vue';

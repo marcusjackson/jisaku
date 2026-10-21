@@ -34,6 +34,7 @@ function handleMaxChange(value: string | number | undefined): void {
     <div class="component-list-filter-stroke-range-inputs">
       <BaseInput
         inputmode="numeric"
+        label="Minimum strokes"
         :model-value="min?.toString() ?? ''"
         pattern="[0-9]*"
         placeholder="Min"
@@ -43,6 +44,7 @@ function handleMaxChange(value: string | number | undefined): void {
       <span class="component-list-filter-stroke-range-separator">–</span>
       <BaseInput
         inputmode="numeric"
+        label="Maximum strokes"
         :model-value="max?.toString() ?? ''"
         pattern="[0-9]*"
         placeholder="Max"
@@ -54,6 +56,19 @@ function handleMaxChange(value: string | number | undefined): void {
 </template>
 
 <style scoped>
+/* The visible "Strokes" heading names the pair; each input keeps its own name for assistive tech. */
+.component-list-filter-stroke-range :deep(.base-input-label) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border-width: 0;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
 .component-list-filter-stroke-range {
   display: flex;
   flex-direction: column;

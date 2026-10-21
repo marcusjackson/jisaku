@@ -19,12 +19,10 @@ import type { BasicInfoSaveData } from '../vocab-detail-types'
 import type { Vocabulary } from '@/api/vocabulary'
 import type { VocabJlptLevel } from '@/api/vocabulary/vocabulary-types'
 
-defineProps<{
+const props = defineProps<{
   vocab: Vocabulary
-}>()
-
-const emit = defineEmits<{
-  save: [data: BasicInfoSaveData]
+  /** Saves basic info; returns whether it saved, so the dialog can close */
+  save: (data: BasicInfoSaveData) => boolean
 }>()
 
 const isDialogOpen = ref(false)
@@ -39,18 +37,15 @@ const jlptDisplayMap: Record<VocabJlptLevel, string> = {
 }
 
 function handleSave(data: BasicInfoSaveData): void {
-  emit('save', data)
-  isDialogOpen.value = false
+  if (props.save(data)) isDialogOpen.value = false
 }
 </script>
 
 <template>
-  <SharedSection
-    test-id="vocab-detail-basic-info"
-    title="Basic Information"
-  >
+  <SharedSection test-id="vocab-detail-basic-info" title="Basic Information">
     <template #actions>
       <BaseButton
+        aria-label="Edit basic info"
         data-testid="basic-info-edit-button"
         size="sm"
         variant="secondary"
@@ -64,19 +59,13 @@ function handleSave(data: BasicInfoSaveData): void {
       <div class="vocab-basic-info-grid">
         <div class="vocab-basic-info-item">
           <span class="vocab-basic-info-label">JLPT Level</span>
-          <span
-            class="vocab-basic-info-value"
-            data-testid="basic-info-jlpt"
-          >
+          <span class="vocab-basic-info-value" data-testid="basic-info-jlpt">
             {{ vocab.jlptLevel ? jlptDisplayMap[vocab.jlptLevel] : '—' }}
           </span>
         </div>
         <div class="vocab-basic-info-item">
           <span class="vocab-basic-info-label">Common Word</span>
-          <span
-            class="vocab-basic-info-value"
-            data-testid="basic-info-common"
-          >
+          <span class="vocab-basic-info-value" data-testid="basic-info-common">
             {{ vocab.isCommon ? 'Yes' : 'No' }}
           </span>
         </div>
@@ -93,11 +82,7 @@ function handleSave(data: BasicInfoSaveData): void {
       </div>
     </div>
 
-    <VocabDetailDialogBasicInfo
-      v-model:open="isDialogOpen"
-      :vocab="vocab"
-      @save="handleSave"
-    />
+    <VocabDetailDialogBasicInfo v-model:open="isDialogOpen" :vocab="vocab" @save="handleSave" />
   </SharedSection>
 </template>
 

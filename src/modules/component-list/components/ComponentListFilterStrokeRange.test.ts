@@ -4,64 +4,66 @@
  * Tests for stroke count range filter component.
  */
 
-import userEvent from '@testing-library/user-event'
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it, vi } from 'vitest'
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import ComponentListFilterStrokeRange from './ComponentListFilterStrokeRange.vue'
+import ComponentListFilterStrokeRange from './ComponentListFilterStrokeRange.vue';
 
 describe('ComponentListFilterStrokeRange', () => {
   it('renders label and both inputs', () => {
     render(ComponentListFilterStrokeRange, {
-      props: { min: undefined, max: undefined }
-    })
+      props: { min: undefined, max: undefined },
+    });
 
-    expect(screen.getByText(/strokes/i)).toBeInTheDocument()
-    const inputs = screen.getAllByRole('spinbutton')
-    expect(inputs).toHaveLength(2)
-  })
+    expect(screen.getByText('Strokes')).toBeInTheDocument();
+    expect(screen.getByRole('spinbutton', { name: 'Minimum strokes' })).toBeInTheDocument();
+    expect(screen.getByRole('spinbutton', { name: 'Maximum strokes' })).toBeInTheDocument();
+    const inputs = screen.getAllByRole('spinbutton');
+    expect(inputs).toHaveLength(2);
+  });
 
   it('displays current min and max values', () => {
     render(ComponentListFilterStrokeRange, {
-      props: { min: 5, max: 10 }
-    })
+      props: { min: 5, max: 10 },
+    });
 
-    const inputs = screen.getAllByRole('spinbutton')
-    expect(inputs[0]).toHaveValue(5)
-    expect(inputs[1]).toHaveValue(10)
-  })
+    const inputs = screen.getAllByRole('spinbutton');
+    expect(inputs[0]).toHaveValue(5);
+    expect(inputs[1]).toHaveValue(10);
+  });
 
   it('emits update:min when min input changes', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     const wrapper = render(ComponentListFilterStrokeRange, {
       props: {
         min: undefined,
         max: undefined,
-        'onUpdate:min': vi.fn()
-      }
-    })
+        'onUpdate:min': vi.fn(),
+      },
+    });
 
-    const inputs = screen.getAllByRole('spinbutton')
-    expect(inputs[0]).toBeDefined()
-    await user.type(inputs[0]!, '5')
+    const inputs = screen.getAllByRole('spinbutton');
+    expect(inputs[0]).toBeDefined();
+    await user.type(inputs[0]!, '5');
 
-    expect(wrapper.emitted('update:min')).toBeTruthy()
-  })
+    expect(wrapper.emitted('update:min')).toBeTruthy();
+  });
 
   it('emits update:max when max input changes', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     const wrapper = render(ComponentListFilterStrokeRange, {
       props: {
         min: undefined,
         max: undefined,
-        'onUpdate:max': vi.fn()
-      }
-    })
+        'onUpdate:max': vi.fn(),
+      },
+    });
 
-    const inputs = screen.getAllByRole('spinbutton')
-    expect(inputs[1]).toBeDefined()
-    await user.type(inputs[1]!, '10')
+    const inputs = screen.getAllByRole('spinbutton');
+    expect(inputs[1]).toBeDefined();
+    await user.type(inputs[1]!, '10');
 
-    expect(wrapper.emitted('update:max')).toBeTruthy()
-  })
-})
+    expect(wrapper.emitted('update:max')).toBeTruthy();
+  });
+});

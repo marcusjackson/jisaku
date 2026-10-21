@@ -62,11 +62,7 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <form
-    class="kanji-list-dialog-create"
-    data-testid="kanji-create-form"
-    @submit.prevent="onSubmit"
-  >
+  <form class="kanji-list-dialog-create" data-testid="kanji-create-form" @submit.prevent="onSubmit">
     <div class="kanji-list-dialog-create-field">
       <BaseInput
         v-model="characterValue"
@@ -88,12 +84,7 @@ const onSubmit = handleSubmit((values) => {
       >
         Cancel
       </BaseButton>
-      <BaseButton
-        :disabled="isSubmitting"
-        :loading="isSubmitting"
-        size="sm"
-        type="submit"
-      >
+      <BaseButton :disabled="isSubmitting" :loading="isSubmitting" size="sm" type="submit">
         Add
       </BaseButton>
     </div>

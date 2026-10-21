@@ -5,12 +5,16 @@
  * Dialog for editing vocabulary headline fields: word, kana, short meaning, keywords.
  */
 
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 
 import { toTypedSchema } from '@vee-validate/zod'
 import { useField, useForm } from 'vee-validate'
 
 import { BaseButton, BaseDialog, BaseInput } from '@/base/components'
+
+import { useVocabularyRepository } from '@/api/vocabulary'
+
+import { blankToNull } from '@/shared/utils/text-utils'
 
 import { vocabHeadlineSchema } from '../schemas/vocab-detail-headline-schema'
 
@@ -18,6 +22,8 @@ import type { HeadlineSaveData } from '../vocab-detail-types'
 
 const props = defineProps<{
   open: boolean
+  /** The entry being edited, so its own word isn't flagged as a duplicate */
+  vocabId: number
   word: string
   kana: string
   shortMeaning: string | null
@@ -29,7 +35,7 @@ const emit = defineEmits<{
   save: [data: HeadlineSaveData]
 }>()
 
-const { handleSubmit, resetForm } = useForm({
+const { handleSubmit, resetForm, setFieldError } = useForm({
   validationSchema: toTypedSchema(vocabHeadlineSchema),
   initialValues: {
     word: props.word,
@@ -46,8 +52,6 @@ const { errorMessage: shortMeaningError, value: shortMeaningValue } =
 const { errorMessage: searchKeywordsError, value: searchKeywordsValue } =
   useField<string>('searchKeywords')
 
-const isSubmitting = ref(false)
-
 watch(
   () => props.open,
   (isOpen) => {
@@ -61,15 +65,17 @@ watch(
 )
 
 const onSubmit = handleSubmit((formValues) => {
-  isSubmitting.value = true
+  const existing = useVocabularyRepository().getByWord(formValues.word)
+  if (existing && existing.id !== props.vocabId) {
+    setFieldError('word', 'This word is already registered')
+    return
+  }
   emit('save', {
     word: formValues.word,
     kana: formValues.kana,
-    shortMeaning: formValues.shortMeaning || null,
-    searchKeywords: formValues.searchKeywords || null
+    shortMeaning: blankToNull(formValues.shortMeaning),
+    searchKeywords: blankToNull(formValues.searchKeywords)
   })
-  isSubmitting.value = false
-  emit('update:open', false)
 })
 
 function handleCancel(): void {
@@ -79,22 +85,9 @@ function handleCancel(): void {
 </script>
 
 <template>
-  <BaseDialog
-    :open="props.open"
-    title="Edit Headline"
-    @update:open="emit('update:open', $event)"
-  >
-    <form
-      class="vocab-detail-dialog-headline-form"
-      @submit.prevent="onSubmit"
-    >
-      <BaseInput
-        v-model="wordValue"
-        :error="wordError"
-        label="Word"
-        maxlength="100"
-        required
-      />
+  <BaseDialog :open="props.open" title="Edit Headline" @update:open="emit('update:open', $event)">
+    <form class="vocab-detail-dialog-headline-form" @submit.prevent="onSubmit">
+      <BaseInput v-model="wordValue" :error="wordError" label="Word" maxlength="100" required />
 
       <BaseInput
         v-model="kanaValue"
@@ -121,20 +114,8 @@ function handleCancel(): void {
       />
 
       <div class="vocab-detail-dialog-headline-actions">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="handleCancel"
-        >
-          Cancel
-        </BaseButton>
-        <BaseButton
-          :disabled="isSubmitting"
-          :loading="isSubmitting"
-          type="submit"
-        >
-          Save
-        </BaseButton>
+        <BaseButton type="button" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
+        <BaseButton type="submit"> Save </BaseButton>
       </div>
     </form>
   </BaseDialog>

@@ -54,37 +54,22 @@ function handleReorder(index: number, direction: 'up' | 'down'): void {
     @update:open="emit('update:open', $event)"
   >
     <div class="manage-members">
-      <p
-        v-if="occurrences.length === 0"
-        class="empty-state"
-      >
+      <p v-if="occurrences.length === 0" class="empty-state">
         No kanji occurrences linked to this component.
       </p>
 
       <template v-else>
         <div class="panel">
-          <h3 class="panel-title">
-            Current members ({{ memberOccurrences.length }})
-          </h3>
-          <p
-            v-if="memberOccurrences.length === 0"
-            class="panel-empty"
-          >
-            No members yet.
-          </p>
-          <ul
-            v-else
-            class="member-list"
-          >
+          <h3 class="panel-title">Current members ({{ memberOccurrences.length }})</h3>
+          <p v-if="memberOccurrences.length === 0" class="panel-empty">No members yet.</p>
+          <ul v-else class="member-list">
             <li
               v-for="(entry, index) in memberOccurrences"
               :key="entry.member.id"
               class="member-item"
               data-testid="member-item"
             >
-              <span class="member-kanji">{{
-                entry.occurrence.kanji.character
-              }}</span>
+              <span class="member-kanji" lang="ja">{{ entry.occurrence.kanji.character }}</span>
               <span class="member-meaning">{{
                 entry.occurrence.kanji.shortMeaning
               }}</span>
@@ -118,26 +103,18 @@ function handleReorder(index: number, direction: 'up' | 'down'): void {
         </div>
 
         <div class="panel">
-          <h3 class="panel-title">
-            Add kanji ({{ availableOccurrences.length }})
-          </h3>
-          <p
-            v-if="availableOccurrences.length === 0"
-            class="panel-empty"
-          >
+          <h3 class="panel-title">Add kanji ({{ availableOccurrences.length }})</h3>
+          <p v-if="availableOccurrences.length === 0" class="panel-empty">
             All occurrences are already members.
           </p>
-          <ul
-            v-else
-            class="available-list"
-          >
+          <ul v-else class="available-list">
             <li
               v-for="occ in availableOccurrences"
               :key="occ.id"
               class="available-item"
               data-testid="available-item"
             >
-              <span class="member-kanji">{{ occ.kanji.character }}</span>
+              <span class="member-kanji" lang="ja">{{ occ.kanji.character }}</span>
               <span class="member-meaning">{{ occ.kanji.shortMeaning }}</span>
               <BaseButton
                 :data-testid="`add-member-${occ.id}`"
@@ -190,7 +167,7 @@ function handleReorder(index: number, direction: 'up' | 'down'): void {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-  max-height: 240px;
+  max-height: var(--list-max-height-sm);
   margin: 0;
   padding: 0;
   overflow-y: auto;
@@ -209,6 +186,7 @@ function handleReorder(index: number, direction: 'up' | 'down'): void {
 
 .member-kanji {
   min-width: 2em;
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   text-align: center;

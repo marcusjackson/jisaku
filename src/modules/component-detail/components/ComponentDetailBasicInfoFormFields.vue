@@ -6,7 +6,11 @@
  * Extracted to keep dialog under file size limit.
  */
 
+import { computed } from 'vue'
+
 import { BaseCombobox, BaseInput, BaseSwitch } from '@/base/components'
+
+import { NONE_VALUE } from '../component-detail-types'
 
 import type { Kanji } from '@/api/kanji'
 
@@ -17,13 +21,11 @@ interface KanjiOption {
   [key: string]: unknown
 }
 
-defineProps<{
+const props = defineProps<{
   kanjiOptions: Kanji[]
   strokeCountError?: string | undefined
   kangxiNumberError?: string | undefined
 }>()
-
-const NONE_VALUE = '__none__'
 
 const strokeCount = defineModel<string>('strokeCount', { required: true })
 const sourceKanjiId = defineModel<string>('sourceKanjiId', { required: true })
@@ -46,14 +48,16 @@ function buildKanjiOptions(kanji: Kanji[]): KanjiOption[] {
   return opts
 }
 
-function displayKanji(opt: KanjiOption | undefined): string {
-  if (!opt || opt.value === NONE_VALUE) return ''
+const kanjiComboboxOptions = computed(() =>
+  buildKanjiOptions(props.kanjiOptions)
+)
+
+function kanjiOptionLabel(opt: KanjiOption): string {
   return opt.shortMeaning ? `${opt.label} (${opt.shortMeaning})` : opt.label
 }
 
-function displayKanjiOption(opt: KanjiOption): string {
-  if (opt.value === NONE_VALUE) return 'None'
-  return opt.shortMeaning ? `${opt.label} (${opt.shortMeaning})` : opt.label
+function kanjiOptionValueLabel(opt: KanjiOption | undefined): string {
+  return !opt || opt.value === NONE_VALUE ? '' : kanjiOptionLabel(opt)
 }
 </script>
 
@@ -68,17 +72,14 @@ function displayKanjiOption(opt: KanjiOption): string {
     />
     <BaseCombobox
       v-model="sourceKanjiId"
-      :display-fn="displayKanjiOption"
-      :display-value="displayKanji"
+      :display-fn="kanjiOptionLabel"
+      :display-value="kanjiOptionValueLabel"
       label="Source Kanji"
-      :options="buildKanjiOptions(kanjiOptions)"
+      :options="kanjiComboboxOptions"
       placeholder="Select source kanji..."
       :search-keys="['label', 'shortMeaning']"
     />
-    <BaseSwitch
-      v-model="canBeRadical"
-      label="Can be Radical"
-    />
+    <BaseSwitch v-model="canBeRadical" label="Can be Radical" />
 
     <template v-if="canBeRadical">
       <div class="component-detail-basic-info-form-fields-divider" />
@@ -89,11 +90,7 @@ function displayKanjiOption(opt: KanjiOption): string {
         label="Kangxi Number"
         placeholder="1-214"
       />
-      <BaseInput
-        v-model="kangxiMeaning"
-        label="Kangxi Meaning"
-        placeholder="e.g., water"
-      />
+      <BaseInput v-model="kangxiMeaning" label="Kangxi Meaning" placeholder="e.g., water" />
       <BaseInput
         v-model="radicalNameJapanese"
         label="Radical Name (Japanese)"

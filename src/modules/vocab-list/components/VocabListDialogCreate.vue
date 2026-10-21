@@ -67,11 +67,7 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <form
-    class="vocab-list-dialog-create"
-    data-testid="vocab-create-form"
-    @submit.prevent="onSubmit"
-  >
+  <form class="vocab-list-dialog-create" data-testid="vocab-create-form" @submit.prevent="onSubmit">
     <div class="vocab-list-dialog-create-field">
       <BaseInput
         v-model="wordValue"
@@ -84,12 +80,7 @@ const onSubmit = handleSubmit((values) => {
     </div>
 
     <div class="vocab-list-dialog-create-field">
-      <BaseInput
-        v-model="kanaValue"
-        :error="kanaError"
-        label="Kana"
-        placeholder="にほん"
-      />
+      <BaseInput v-model="kanaValue" :error="kanaError" label="Kana" placeholder="にほん" />
     </div>
 
     <div class="vocab-list-dialog-create-actions">
@@ -102,12 +93,7 @@ const onSubmit = handleSubmit((values) => {
       >
         Cancel
       </BaseButton>
-      <BaseButton
-        :disabled="isSubmitting"
-        :loading="isSubmitting"
-        size="sm"
-        type="submit"
-      >
+      <BaseButton :disabled="isSubmitting" :loading="isSubmitting" size="sm" type="submit">
         Add
       </BaseButton>
     </div>

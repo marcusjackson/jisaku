@@ -4,18 +4,18 @@
  * @module modules/kanji-detail
  */
 
-import userEvent from '@testing-library/user-event'
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it, vi } from 'vitest'
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import KanjiDetailSectionBasicInfo from './KanjiDetailSectionBasicInfo.vue'
+import KanjiDetailSectionBasicInfo from './KanjiDetailSectionBasicInfo.vue';
 
 import type {
   ClassificationType,
-  KanjiClassification
-} from '@/api/classification/classification-types'
-import type { Component as RadicalComponent } from '@/api/component/component-types'
-import type { Kanji } from '@/api/kanji/kanji-types'
+  KanjiClassification,
+} from '@/api/classification/classification-types';
+import type { Component as RadicalComponent } from '@/api/component/component-types';
+import type { Kanji } from '@/api/kanji/kanji-types';
 
 function mockKanji(overrides: Partial<Kanji> = {}): Kanji {
   return {
@@ -38,13 +38,11 @@ function mockKanji(overrides: Partial<Kanji> = {}): Kanji {
     radicalStrokeCount: null,
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
-function mockRadical(
-  overrides: Partial<RadicalComponent> = {}
-): RadicalComponent {
+function mockRadical(overrides: Partial<RadicalComponent> = {}): RadicalComponent {
   return {
     id: 1,
     character: '氵',
@@ -59,13 +57,11 @@ function mockRadical(
     radicalNameJapanese: null,
     createdAt: '',
     updatedAt: '',
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
-function mockClassificationType(
-  overrides: Partial<ClassificationType> = {}
-): ClassificationType {
+function mockClassificationType(overrides: Partial<ClassificationType> = {}): ClassificationType {
   return {
     id: 1,
     typeName: 'pictograph',
@@ -76,74 +72,67 @@ function mockClassificationType(
     updatedAt: '2024-01-01T00:00:00',
     nameJapanese: '象形文字',
     nameEnglish: null,
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
-function mockClassification(
-  overrides: Partial<KanjiClassification> = {}
-): KanjiClassification {
+function mockClassification(overrides: Partial<KanjiClassification> = {}): KanjiClassification {
   return {
     id: 1,
     kanjiId: 1,
     classificationTypeId: 1,
     displayOrder: 0,
     classificationType: mockClassificationType(),
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 const defaultProps = {
+  save: () => true,
   kanji: mockKanji(),
   radical: mockRadical(),
   allComponents: [mockRadical()],
   classifications: [],
-  classificationTypes: [mockClassificationType()]
-}
+  classificationTypes: [mockClassificationType()],
+};
 
 // Stub child components
 vi.mock('./KanjiDetailDialogBasicInfo.vue', () => ({
   default: {
     name: 'KanjiDetailDialogBasicInfo',
-    template: '<div data-testid="dialog-stub" v-if="open">Dialog</div>',
-    props: [
-      'open',
-      'kanji',
-      'radical',
-      'allComponents',
-      'classifications',
-      'classificationTypes'
-    ],
-    emits: ['update:open', 'save']
-  }
-}))
+    template:
+      '<div data-testid="dialog-stub" v-if="open">Dialog<button type="button" @click="$emit(\'save\', {})">Save stub</button></div>',
+    props: ['open', 'kanji', 'radical', 'allComponents', 'classifications', 'classificationTypes'],
+    emits: ['update:open', 'save'],
+  },
+}));
 
 describe('KanjiDetailSectionBasicInfo', () => {
   describe('display values', () => {
     it('displays stroke count', () => {
-      render(KanjiDetailSectionBasicInfo, { props: defaultProps })
-      expect(screen.getByText('4')).toBeInTheDocument()
-    })
+      render(KanjiDetailSectionBasicInfo, { props: defaultProps });
+      expect(screen.getByText('4')).toBeInTheDocument();
+    });
 
     it('displays JLPT level', () => {
-      render(KanjiDetailSectionBasicInfo, { props: defaultProps })
-      expect(screen.getByText('N5')).toBeInTheDocument()
-    })
+      render(KanjiDetailSectionBasicInfo, { props: defaultProps });
+      expect(screen.getByText('N5')).toBeInTheDocument();
+    });
 
     it('displays Jōyō grade with Japanese label', () => {
-      render(KanjiDetailSectionBasicInfo, { props: defaultProps })
-      expect(screen.getByText('小1')).toBeInTheDocument()
-    })
+      render(KanjiDetailSectionBasicInfo, { props: defaultProps });
+      expect(screen.getByText('小1')).toBeInTheDocument();
+    });
 
     it('displays Kentei level with Japanese label', () => {
-      render(KanjiDetailSectionBasicInfo, { props: defaultProps })
-      expect(screen.getByText('10級')).toBeInTheDocument()
-    })
+      render(KanjiDetailSectionBasicInfo, { props: defaultProps });
+      expect(screen.getByText('10級')).toBeInTheDocument();
+    });
 
     it('displays radical with meaning', () => {
-      render(KanjiDetailSectionBasicInfo, { props: defaultProps })
-      expect(screen.getByText('氵 (water)')).toBeInTheDocument()
-    })
+      render(KanjiDetailSectionBasicInfo, { props: defaultProps });
+      expect(screen.getByText('氵 (water)')).toBeInTheDocument();
+    });
 
     it('displays dash when values are null', () => {
       const props = {
@@ -153,22 +142,22 @@ describe('KanjiDetailSectionBasicInfo', () => {
           jlptLevel: null,
           joyoLevel: null,
           kanjiKenteiLevel: null,
-          radicalId: null
+          radicalId: null,
         }),
-        radical: null
-      }
-      render(KanjiDetailSectionBasicInfo, { props })
-      const dashes = screen.getAllByText('—')
-      expect(dashes.length).toBeGreaterThanOrEqual(4)
-    })
-  })
+        radical: null,
+      };
+      render(KanjiDetailSectionBasicInfo, { props });
+      const dashes = screen.getAllByText('—');
+      expect(dashes.length).toBeGreaterThanOrEqual(4);
+    });
+  });
 
   describe('classifications display', () => {
     it('hides classifications section when empty', () => {
-      render(KanjiDetailSectionBasicInfo, { props: defaultProps })
+      render(KanjiDetailSectionBasicInfo, { props: defaultProps });
       // When no classifications, the section doesn't render "Classification" label
-      expect(screen.queryByText('Classification')).not.toBeInTheDocument()
-    })
+      expect(screen.queryByText('Classification')).not.toBeInTheDocument();
+    });
 
     it('displays classification badges when present', () => {
       const props = {
@@ -176,14 +165,14 @@ describe('KanjiDetailSectionBasicInfo', () => {
         classifications: [
           mockClassification({
             classificationType: mockClassificationType({
-              nameJapanese: '象形文字'
-            })
-          })
-        ]
-      }
-      render(KanjiDetailSectionBasicInfo, { props })
-      expect(screen.getByText('象形')).toBeInTheDocument()
-    })
+              nameJapanese: '象形文字',
+            }),
+          }),
+        ],
+      };
+      render(KanjiDetailSectionBasicInfo, { props });
+      expect(screen.getByText('象形')).toBeInTheDocument();
+    });
 
     it('shows primary badge for first classification', () => {
       const props = {
@@ -193,8 +182,8 @@ describe('KanjiDetailSectionBasicInfo', () => {
             displayOrder: 0,
             classificationType: mockClassificationType({
               id: 1,
-              nameJapanese: '象形文字'
-            })
+              nameJapanese: '象形文字',
+            }),
           }),
           mockClassification({
             id: 2,
@@ -202,29 +191,58 @@ describe('KanjiDetailSectionBasicInfo', () => {
             classificationTypeId: 2,
             classificationType: mockClassificationType({
               id: 2,
-              nameJapanese: '会意文字'
-            })
-          })
-        ]
-      }
-      render(KanjiDetailSectionBasicInfo, { props })
+              nameJapanese: '会意文字',
+            }),
+          }),
+        ],
+      };
+      render(KanjiDetailSectionBasicInfo, { props });
 
-      // Just verify both badges render with correct text
-      expect(screen.getByText('象形')).toBeInTheDocument()
-      expect(screen.getByText('会意')).toBeInTheDocument()
-    })
-  })
+      expect(screen.getByText('象形')).toHaveClass('base-badge-primary');
+      expect(screen.getByText('会意')).toHaveClass('base-badge-default');
+    });
+  });
 
   describe('edit dialog', () => {
+    it('labels the edit button', () => {
+      render(KanjiDetailSectionBasicInfo, { props: defaultProps });
+
+      expect(screen.getByRole('button', { name: 'Edit basic info' })).toBeInTheDocument();
+    });
+
     it('opens dialog when edit button is clicked', async () => {
-      const user = userEvent.setup()
-      render(KanjiDetailSectionBasicInfo, { props: defaultProps })
+      const user = userEvent.setup();
+      render(KanjiDetailSectionBasicInfo, { props: defaultProps });
 
-      await user.click(screen.getByRole('button', { name: /edit/i }))
+      await user.click(screen.getByRole('button', { name: 'Edit basic info' }));
 
-      expect(screen.getByTestId('dialog-stub')).toBeInTheDocument()
-    })
-  })
+      expect(screen.getByTestId('dialog-stub')).toBeInTheDocument();
+    });
+
+    it('closes the dialog when the save succeeds', async () => {
+      const user = userEvent.setup();
+      const save = vi.fn(() => true);
+      render(KanjiDetailSectionBasicInfo, { props: { ...defaultProps, save } });
+
+      await user.click(screen.getByRole('button', { name: 'Edit basic info' }));
+      await user.click(screen.getByRole('button', { name: 'Save stub' }));
+
+      expect(save).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId('dialog-stub')).not.toBeInTheDocument();
+    });
+
+    it('keeps the dialog open when the save fails', async () => {
+      const user = userEvent.setup();
+      const save = vi.fn(() => false);
+      render(KanjiDetailSectionBasicInfo, { props: { ...defaultProps, save } });
+
+      await user.click(screen.getByRole('button', { name: 'Edit basic info' }));
+      await user.click(screen.getByRole('button', { name: 'Save stub' }));
+
+      expect(save).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('dialog-stub')).toBeInTheDocument();
+    });
+  });
 
   describe('Jōyō grade labels', () => {
     const testCases = [
@@ -234,18 +252,18 @@ describe('KanjiDetailSectionBasicInfo', () => {
       ['elementary4', '小4'],
       ['elementary5', '小5'],
       ['elementary6', '小6'],
-      ['secondary', '中学']
-    ]
+      ['secondary', '中学'],
+    ];
 
     it.each(testCases)('displays %s as %s', (value, label) => {
       const props = {
         ...defaultProps,
-        kanji: mockKanji({ joyoLevel: value as Kanji['joyoLevel'] })
-      }
-      render(KanjiDetailSectionBasicInfo, { props })
-      expect(screen.getByText(label)).toBeInTheDocument()
-    })
-  })
+        kanji: mockKanji({ joyoLevel: value as Kanji['joyoLevel'] }),
+      };
+      render(KanjiDetailSectionBasicInfo, { props });
+      expect(screen.getByText(label)).toBeInTheDocument();
+    });
+  });
 
   describe('Kentei level labels', () => {
     const testCases = [
@@ -255,18 +273,18 @@ describe('KanjiDetailSectionBasicInfo', () => {
       ['pre2', '準2級'],
       ['2', '2級'],
       ['pre1', '準1級'],
-      ['1', '1級']
-    ]
+      ['1', '1級'],
+    ];
 
     it.each(testCases)('displays %s as %s', (value, label) => {
       const props = {
         ...defaultProps,
         kanji: mockKanji({
-          kanjiKenteiLevel: value as Kanji['kanjiKenteiLevel']
-        })
-      }
-      render(KanjiDetailSectionBasicInfo, { props })
-      expect(screen.getByText(label)).toBeInTheDocument()
-    })
-  })
-})
+          kanjiKenteiLevel: value as Kanji['kanjiKenteiLevel'],
+        }),
+      };
+      render(KanjiDetailSectionBasicInfo, { props });
+      expect(screen.getByText(label)).toBeInTheDocument();
+    });
+  });
+});

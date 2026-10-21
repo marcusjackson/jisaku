@@ -7,7 +7,7 @@
  */
 
 import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 
 import { JLPT_LABELS } from '../vocab-list-types'
 
@@ -33,43 +33,32 @@ const showKana = computed(() => {
     props.vocabulary.kana && props.vocabulary.kana !== props.vocabulary.word
   )
 })
+// Carry the list's filters to the detail page so its back link can restore them
+const route = useRoute()
 </script>
 
 <template>
   <RouterLink
     class="vocab-list-card"
     data-testid="vocab-list-card"
-    :to="`/vocabulary/${vocabulary.id}`"
+    :to="{ path: `/vocabulary/${vocabulary.id}`, query: route.query }"
   >
-    <span class="vocab-list-card-word">{{ vocabulary.word }}</span>
+    <span class="vocab-list-card-word" lang="ja">{{ vocabulary.word }}</span>
 
     <div class="vocab-list-card-info">
-      <span
-        v-if="showKana"
-        class="vocab-list-card-kana"
-      >
+      <span v-if="showKana" class="vocab-list-card-kana" lang="ja">
         {{ vocabulary.kana }}
       </span>
 
-      <span
-        v-if="vocabulary.shortMeaning"
-        class="vocab-list-card-meaning"
-      >
+      <span v-if="vocabulary.shortMeaning" class="vocab-list-card-meaning">
         {{ vocabulary.shortMeaning }}
       </span>
 
       <div class="vocab-list-card-badges">
-        <span
-          v-if="jlptLabel"
-          class="vocab-list-card-badge"
-          :class="jlptBadgeClass"
-        >
+        <span v-if="jlptLabel" class="vocab-list-card-badge" :class="jlptBadgeClass">
           {{ jlptLabel }}
         </span>
-        <span
-          v-if="vocabulary.isCommon"
-          class="vocab-list-card-badge vocab-list-card-badge-common"
-        >
+        <span v-if="vocabulary.isCommon" class="vocab-list-card-badge vocab-list-card-badge-common">
           常用
         </span>
       </div>
@@ -83,7 +72,7 @@ const showKana = computed(() => {
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-2);
-  padding: var(--spacing-md);
+  padding: var(--card-padding);
   border: var(--card-border);
   border-radius: var(--card-radius);
   background-color: var(--card-bg);
@@ -120,6 +109,7 @@ const showKana = computed(() => {
 
 .vocab-list-card-kana {
   color: var(--color-text-secondary);
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-sm);
 }
 
@@ -166,7 +156,7 @@ const showKana = computed(() => {
 
 .vocab-list-card-badge-jlpt-n2 {
   background-color: var(--color-error-bg);
-  color: var(--color-primary);
+  color: var(--color-error);
 }
 
 .vocab-list-card-badge-jlpt-n1 {

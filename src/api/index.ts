@@ -1,8 +1,8 @@
 /**
  * API Layer - Public Exports
  *
- * Re-exports all public API types and utilities.
- * Repositories will be added here as they're implemented.
+ * Re-exports all public API types, error classes, base classes and the
+ * repository modules.
  */
 
 // Types and interfaces
@@ -12,30 +12,24 @@ export type {
   Orderable,
   QueryResult,
   Repository,
-  UpdatableField
-} from './api-types'
+  UpdatableField,
+} from './api-types';
 
 // Error classes
-export {
-  CreateError,
-  DeleteError,
-  EntityNotFoundError,
-  RepositoryError,
-  UpdateError
-} from './api-types'
+export { CreateError, EntityNotFoundError, RepositoryError, UpdateError } from './api-types';
 
 // Base classes and utilities
-export { BaseRepository } from './base-repository'
+export { BaseRepository } from './base-repository';
 
 // ============================================================================
-// Module re-exports (add as repositories are implemented)
+// Module re-exports
 // ============================================================================
 
 // Domain modules
-export * from './component' // Components + forms + occurrences + groupings
-export * from './kanji' // Kanji + readings + meanings
-export * from './vocabulary' // Vocabulary + vocab-kanji links
+export * from './component'; // Components + forms + occurrences + groupings
+export * from './kanji'; // Kanji + readings + meanings
+export * from './vocabulary'; // Vocabulary + vocab-kanji links
 
 // Reference data modules
-export * from './classification' // Classification types (kanji etymology) + junction
-export * from './position' // Position types (component placement)
+export * from './classification'; // Classification types (kanji etymology) + junction
+export * from './position'; // Position types (component placement)

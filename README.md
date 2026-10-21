@@ -172,7 +172,8 @@ pnpm dev              # Start dev server (hot reload)
 pnpm build            # Build for production
 pnpm preview          # Preview production build
 pnpm test             # Run unit tests
-pnpm test:e2e         # Run E2E tests
+pnpm test:e2e         # Run E2E tests (matches CI)
+pnpm test:e2e:local   # Run E2E tests locally at lower concurrency
 pnpm lint             # Lint code (ESLint + Prettier + Stylelint)
 pnpm format           # Format code with Prettier
 pnpm type-check       # TypeScript type checking

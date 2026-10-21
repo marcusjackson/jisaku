@@ -17,12 +17,12 @@
  * Example: For 明 (bright), separate groups for あか (akari) and めい (mei) readings
  */
 export interface KanjiMeaningReadingGroup {
-  id: number
-  kanjiId: number
-  readingText: string
-  displayOrder: number
-  createdAt: string
-  updatedAt: string
+  id: number;
+  kanjiId: number;
+  readingText: string;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============================================================================
@@ -33,14 +33,14 @@ export interface KanjiMeaningReadingGroup {
  * Input for creating a new reading group
  */
 export interface CreateReadingGroupInput {
-  kanjiId: number
-  readingText: string
-  displayOrder?: number
+  kanjiId: number;
+  readingText: string;
+  displayOrder?: number;
 }
 
 /**
  * Input for updating a reading group
  */
 export interface UpdateReadingGroupInput {
-  readingText?: string
+  readingText?: string;
 }

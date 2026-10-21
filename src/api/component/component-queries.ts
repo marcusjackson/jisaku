@@ -6,35 +6,36 @@
  * @module api/component
  */
 
-import { useDatabase } from '@/shared/composables/use-database'
+import { useDatabase } from '@/shared/composables/use-database';
 
-import { BaseRepository } from '../base-repository'
+import { BaseRepository } from '../base-repository';
+import { escapeLike } from '../like-utils';
 
-import type { Component, ComponentFilters } from './component-types'
+import type { Component, ComponentFilters } from './component-types';
 
 // ============================================================================
 // Row Type
 // ============================================================================
 
 interface ComponentRow {
-  id: number
-  character: string
-  stroke_count: number | null
-  short_meaning: string | null
-  search_keywords: string | null
-  source_kanji_id: number | null
-  description: string | null
-  can_be_radical: number
-  kangxi_number: number | null
-  kangxi_meaning: string | null
-  radical_name_japanese: string | null
-  created_at: string
-  updated_at: string
+  id: number;
+  character: string;
+  stroke_count: number | null;
+  short_meaning: string | null;
+  search_keywords: string | null;
+  source_kanji_id: number | null;
+  description: string | null;
+  can_be_radical: number;
+  kangxi_number: number | null;
+  kangxi_meaning: string | null;
+  radical_name_japanese: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface CountRow {
-  component_id: number
-  count: number
+  component_id: number;
+  count: number;
 }
 
 // ============================================================================
@@ -42,18 +43,18 @@ interface CountRow {
 // ============================================================================
 
 export class ComponentQueries extends BaseRepository<Component> {
-  protected tableName = 'components'
+  protected tableName = 'components';
 
-  private readonly exec: ReturnType<typeof useDatabase>['exec']
+  private readonly exec: ReturnType<typeof useDatabase>['exec'];
 
   constructor() {
-    super()
-    const db = useDatabase()
-    this.exec = db.exec
+    super();
+    const db = useDatabase();
+    this.exec = db.exec;
   }
 
   protected mapRow(row: Record<string, unknown>): Component {
-    const r = row as unknown as ComponentRow
+    const r = row as unknown as ComponentRow;
     return {
       id: r.id,
       character: r.character,
@@ -67,111 +68,84 @@ export class ComponentQueries extends BaseRepository<Component> {
       kangxiMeaning: r.kangxi_meaning,
       radicalNameJapanese: r.radical_name_japanese,
       createdAt: r.created_at,
-      updatedAt: r.updated_at
-    }
+      updatedAt: r.updated_at,
+    };
   }
 
   getById(id: number): Component | null {
-    const result = this.exec('SELECT * FROM components WHERE id = ?', [id])
-    return this.resultToEntity(result)
+    const result = this.exec('SELECT * FROM components WHERE id = ?', [id]);
+    return this.resultToEntity(result);
   }
 
   getAll(): Component[] {
-    const result = this.exec('SELECT * FROM components ORDER BY id DESC')
-    return this.resultToList(result)
+    const result = this.exec('SELECT * FROM components ORDER BY id DESC');
+    return this.resultToList(result);
   }
 
   getByCharacter(character: string): Component | null {
-    const result = this.exec('SELECT * FROM components WHERE character = ?', [
-      character
-    ])
-    return this.resultToEntity(result)
-  }
-
-  getByIds(ids: number[]): Component[] {
-    if (ids.length === 0) return []
-    const placeholders = ids.map(() => '?').join(', ')
-    const result = this.exec(
-      `SELECT * FROM components WHERE id IN (${placeholders}) ORDER BY id`,
-      ids
-    )
-    return this.resultToList(result)
+    const result = this.exec('SELECT * FROM components WHERE character = ?', [character]);
+    return this.resultToEntity(result);
   }
 
   /** Get all components that can function as radicals */
   getRadicals(): Component[] {
     const result = this.exec(
       'SELECT * FROM components WHERE can_be_radical = 1 ORDER BY kangxi_number'
-    )
-    return this.resultToList(result)
-  }
-
-  /** Get component by Kangxi radical number */
-  getByKangxiNumber(kangxiNumber: number): Component | null {
-    const result = this.exec(
-      'SELECT * FROM components WHERE kangxi_number = ?',
-      [kangxiNumber]
-    )
-    return this.resultToEntity(result)
+    );
+    return this.resultToList(result);
   }
 
   /** Search components with filters */
   search(filters?: ComponentFilters): Component[] {
     if (!filters || Object.keys(filters).length === 0) {
-      return this.getAll()
+      return this.getAll();
     }
 
-    const conditions: string[] = []
-    const params: unknown[] = []
+    const conditions: string[] = [];
+    const params: unknown[] = [];
 
     if (filters.search) {
       conditions.push(
-        '(character LIKE ? OR short_meaning LIKE ? OR search_keywords LIKE ?)'
-      )
-      const pattern = `%${filters.search}%`
-      params.push(pattern, pattern, pattern)
+        "(character LIKE ? ESCAPE '\\' OR short_meaning LIKE ? ESCAPE '\\' OR search_keywords LIKE ? ESCAPE '\\')"
+      );
+      const pattern = `%${escapeLike(filters.search)}%`;
+      params.push(pattern, pattern, pattern);
     }
 
     if (filters.kangxiSearch) {
-      const searchLower = filters.kangxiSearch.toLowerCase().trim()
-      const num = Number.parseInt(searchLower, 10)
+      const searchLower = filters.kangxiSearch.toLowerCase().trim();
+      const num = Number.parseInt(searchLower, 10);
       if (Number.isNaN(num)) {
         // If it's not a number, just search kangxi_meaning
-        conditions.push('kangxi_meaning LIKE ?')
-        params.push(`%${searchLower}%`)
+        conditions.push("kangxi_meaning LIKE ? ESCAPE '\\'");
+        params.push(`%${escapeLike(searchLower)}%`);
       } else {
         // If it's a number, search both kangxi_number and kangxi_meaning
-        conditions.push('(kangxi_number = ? OR kangxi_meaning LIKE ?)')
-        params.push(num, `%${searchLower}%`)
+        conditions.push("(kangxi_number = ? OR kangxi_meaning LIKE ? ESCAPE '\\')");
+        params.push(num, `%${escapeLike(searchLower)}%`);
       }
     }
 
     if (filters.canBeRadical !== undefined) {
-      conditions.push('can_be_radical = ?')
-      params.push(filters.canBeRadical ? 1 : 0)
-    }
-
-    if (filters.kangxiNumber !== undefined) {
-      conditions.push('kangxi_number = ?')
-      params.push(filters.kangxiNumber)
+      conditions.push('can_be_radical = ?');
+      params.push(filters.canBeRadical ? 1 : 0);
     }
 
     if (filters.strokeCountMin !== undefined) {
-      conditions.push('stroke_count >= ?')
-      params.push(filters.strokeCountMin)
+      conditions.push('stroke_count >= ?');
+      params.push(filters.strokeCountMin);
     }
 
     if (filters.strokeCountMax !== undefined) {
-      conditions.push('stroke_count <= ?')
-      params.push(filters.strokeCountMax)
+      conditions.push('stroke_count <= ?');
+      params.push(filters.strokeCountMax);
     }
 
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    const sql = `SELECT * FROM components ${whereClause} ORDER BY id DESC`
-    const result = this.exec(sql, params)
-    return this.resultToList(result)
+    const sql = `SELECT * FROM components ${whereClause} ORDER BY id DESC`;
+    const result = this.exec(sql, params);
+    return this.resultToList(result);
   }
 
   /** Get count of forms per component */
@@ -180,20 +154,20 @@ export class ComponentQueries extends BaseRepository<Component> {
       SELECT component_id, COUNT(*) as count 
       FROM component_forms 
       GROUP BY component_id
-    `
-    const result = this.exec(sql, [])
-    const map = new Map<number, number>()
-    const firstResult = result[0]
+    `;
+    const result = this.exec(sql, []);
+    const map = new Map<number, number>();
+    const firstResult = result[0];
     if (firstResult?.values) {
       for (const row of firstResult.values) {
         const obj = this.rowToObject({
           columns: firstResult.columns,
-          values: [row]
-        }) as unknown as CountRow
-        map.set(obj.component_id, obj.count)
+          values: [row],
+        }) as unknown as CountRow;
+        map.set(obj.component_id, obj.count);
       }
     }
-    return map
+    return map;
   }
 
   /** Get count of groupings per component */
@@ -202,19 +176,19 @@ export class ComponentQueries extends BaseRepository<Component> {
       SELECT component_id, COUNT(*) as count 
       FROM component_groupings 
       GROUP BY component_id
-    `
-    const result = this.exec(sql, [])
-    const map = new Map<number, number>()
-    const firstResult = result[0]
+    `;
+    const result = this.exec(sql, []);
+    const map = new Map<number, number>();
+    const firstResult = result[0];
     if (firstResult?.values) {
       for (const row of firstResult.values) {
         const obj = this.rowToObject({
           columns: firstResult.columns,
-          values: [row]
-        }) as unknown as CountRow
-        map.set(obj.component_id, obj.count)
+          values: [row],
+        }) as unknown as CountRow;
+        map.set(obj.component_id, obj.count);
       }
     }
-    return map
+    return map;
   }
 }

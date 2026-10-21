@@ -14,28 +14,10 @@ import SharedHeaderSettingsIcon from './SharedHeaderSettingsIcon.vue'
 </script>
 
 <template>
-  <nav
-    aria-label="Main navigation"
-    class="shared-header-nav"
-  >
-    <RouterLink
-      class="shared-header-link"
-      :to="ROUTES.KANJI_LIST"
-    >
-      Kanji
-    </RouterLink>
-    <RouterLink
-      class="shared-header-link"
-      :to="ROUTES.COMPONENT_LIST"
-    >
-      Components
-    </RouterLink>
-    <RouterLink
-      class="shared-header-link"
-      :to="ROUTES.VOCABULARY_LIST"
-    >
-      Vocab
-    </RouterLink>
+  <nav aria-label="Main navigation" class="shared-header-nav">
+    <RouterLink class="shared-header-link" :to="ROUTES.KANJI_LIST"> Kanji </RouterLink>
+    <RouterLink class="shared-header-link" :to="ROUTES.COMPONENT_LIST"> Components </RouterLink>
+    <RouterLink class="shared-header-link" :to="ROUTES.VOCABULARY_LIST"> Vocab </RouterLink>
     <RouterLink
       aria-label="Settings"
       class="shared-header-link shared-header-link--icon"

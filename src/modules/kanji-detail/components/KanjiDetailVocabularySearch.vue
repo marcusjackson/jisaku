@@ -70,7 +70,7 @@ function handleCreate(): void {
       class="vocabulary-search-results"
       data-testid="vocabulary-search-results"
     >
-      <!-- Raw <button>: search result item needs full custom styling incompatible with BaseButton -->
+      <!-- Raw <button>: search-result row, bare layout incompatible with BaseButton -->
       <button
         v-for="vocab in filteredVocabulary"
         :key="vocab.vocabularyId"
@@ -79,32 +79,19 @@ function handleCreate(): void {
         type="button"
         @click="handleSelect(vocab.vocabularyId)"
       >
-        <span class="vocabulary-search-result-word">{{ vocab.word }}</span>
-        <span
-          v-if="vocab.kana"
-          class="vocabulary-search-result-kana"
-        >
+        <span class="vocabulary-search-result-word" lang="ja">{{ vocab.word }}</span>
+        <span v-if="vocab.kana" class="vocabulary-search-result-kana" lang="ja">
           {{ vocab.kana }}
         </span>
-        <span
-          v-if="vocab.shortMeaning"
-          class="vocabulary-search-result-meaning"
-        >
+        <span v-if="vocab.shortMeaning" class="vocabulary-search-result-meaning">
           {{ vocab.shortMeaning }}
         </span>
       </button>
     </div>
 
-    <div
-      v-if="!hasResults && showCreateButton"
-      class="vocabulary-search-no-results"
-    >
+    <div v-if="!hasResults && showCreateButton" class="vocabulary-search-no-results">
       <p class="vocabulary-search-no-results-text">No vocabulary found</p>
-      <BaseButton
-        size="sm"
-        variant="secondary"
-        @click="handleCreate"
-      >
+      <BaseButton size="sm" variant="secondary" @click="handleCreate">
         Create "{{ searchTerm }}"
       </BaseButton>
     </div>
@@ -146,7 +133,7 @@ function handleCreate(): void {
 }
 
 .vocabulary-search-result-item:hover {
-  background-color: var(--color-background-hover);
+  background-color: var(--color-surface-hover);
 }
 
 .vocabulary-search-result-item:focus-visible {
@@ -156,17 +143,19 @@ function handleCreate(): void {
 
 .vocabulary-search-result-word {
   color: var(--color-text-primary);
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
 }
 
 .vocabulary-search-result-kana {
   color: var(--color-text-secondary);
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-sm);
 }
 
 .vocabulary-search-result-meaning {
-  color: var(--color-text-tertiary);
+  color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
 
@@ -178,7 +167,7 @@ function handleCreate(): void {
   padding: var(--spacing-md);
   border: var(--border-width-sm) solid var(--color-border);
   border-radius: var(--radius-md);
-  background-color: var(--color-background-secondary);
+  background-color: var(--color-surface-secondary);
 }
 
 .vocabulary-search-no-results-text {

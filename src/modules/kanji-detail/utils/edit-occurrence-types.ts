@@ -5,36 +5,37 @@
 /**
  * Local edit state for component occurrence
  *
- * Used in KanjiDetailDialogComponents to manage changes before saving.
+ * Used by KanjiDetailDialogComponents and its edit-state, handler and save composables
+ * to hold changes until the dialog is saved.
  * Combines occurrence data with component details for display.
  */
 export interface EditOccurrence {
   /** Occurrence ID, null for newly added */
-  id: number | null
+  id: number | null;
   /** Component ID */
-  componentId: number
+  componentId: number;
   /** Position type ID */
-  positionTypeId: number | null
+  positionTypeId: number | null;
   /** Component form ID */
-  componentFormId: number | null
+  componentFormId: number | null;
   /** Whether this is a radical component */
-  isRadical: boolean
+  isRadical: boolean;
   /** Whether marked for deletion */
-  markedForDeletion?: boolean
+  markedForDeletion?: boolean;
 
   // Populated fields for display
   /** Component details */
   component: {
-    id: number
-    character: string
-    shortMeaning: string | null
-  }
+    id: number;
+    character: string;
+    shortMeaning: string | null;
+  };
   /** Position type name */
-  position: string | null
+  position: string | null;
   /** Component form details */
   form: {
-    id: number
-    formCharacter: string
-    formName: string | null
-  } | null
+    id: number;
+    formCharacter: string;
+    formName: string | null;
+  } | null;
 }

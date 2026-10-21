@@ -5,6 +5,8 @@
  * Chip toggle filter for JLPT levels (N5-N1).
  */
 
+import { useId } from 'vue'
+
 import type { JlptLevel } from '@/api/kanji'
 
 const props = defineProps<{
@@ -31,13 +33,15 @@ function toggleLevel(level: JlptLevel): void {
 function isSelected(level: JlptLevel): boolean {
   return props.modelValue.includes(level)
 }
+
+const labelId = useId()
 </script>
 
 <template>
   <div class="kanji-list-filter-jlpt">
-    <span class="kanji-list-filter-jlpt-label">JLPT Level</span>
-    <div class="kanji-list-filter-jlpt-chips">
-      <!-- Raw <button>: chip/toggle needs full style override incompatible with BaseButton -->
+    <span :id="labelId" class="kanji-list-filter-jlpt-label">JLPT Level</span>
+    <div :aria-labelledby="labelId" class="kanji-list-filter-jlpt-chips" role="group">
+      <!-- Raw <button>: chip toggle, bare layout incompatible with BaseButton -->
       <button
         v-for="level in levels"
         :key="level"

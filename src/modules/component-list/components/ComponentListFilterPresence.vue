@@ -40,8 +40,8 @@ function getCurrentValue(modelValue: PresenceFilterValue): string {
 
 <template>
   <div class="component-list-filter-presence">
-    <span class="component-list-filter-presence-label">{{ label }}</span>
     <BaseSelect
+      :label="label"
       :model-value="getCurrentValue(modelValue)"
       :options="options"
       @update:model-value="handleChange"
@@ -55,11 +55,5 @@ function getCurrentValue(modelValue: PresenceFilterValue): string {
   flex-direction: column;
   gap: var(--spacing-1);
   min-width: 120px;
-}
-
-.component-list-filter-presence-label {
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
 }
 </style>

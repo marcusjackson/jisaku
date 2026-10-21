@@ -6,7 +6,7 @@
  * @internal
  */
 
-import type { OccurrenceWithKanji } from './component-types'
+import type { OccurrenceWithKanji } from './component-types';
 
 // ============================================================================
 // Row Types
@@ -14,32 +14,32 @@ import type { OccurrenceWithKanji } from './component-types'
 
 /** Row type for component_occurrences table */
 export interface ComponentOccurrenceRow {
-  id: number
-  kanji_id: number
-  component_id: number
-  component_form_id: number | null
-  position_type_id: number | null
-  is_radical: number
-  analysis_notes: string | null
-  display_order: number
-  created_at: string
-  updated_at: string
+  id: number;
+  kanji_id: number;
+  component_id: number;
+  component_form_id: number | null;
+  position_type_id: number | null;
+  is_radical: number;
+  analysis_notes: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 /** Typed row for the joined occurrence+kanji+position query */
 export interface OccurrenceWithKanjiRow extends ComponentOccurrenceRow {
-  k_id: number
-  k_character: string
-  k_short_meaning: string | null
-  k_stroke_count: number | null
-  pt_id: number | null
-  position_name: string | null
-  name_japanese: string | null
-  name_english: string | null
-  pt_description: string | null
-  pt_display_order: number | null
-  pt_created_at: string | null
-  pt_updated_at: string | null
+  k_id: number;
+  k_character: string;
+  k_short_meaning: string | null;
+  k_stroke_count: number | null;
+  pt_id: number | null;
+  position_name: string | null;
+  name_japanese: string | null;
+  name_english: string | null;
+  pt_description: string | null;
+  pt_display_order: number | null;
+  pt_created_at: string | null;
+  pt_updated_at: string | null;
 }
 
 // ============================================================================
@@ -47,9 +47,7 @@ export interface OccurrenceWithKanjiRow extends ComponentOccurrenceRow {
 // ============================================================================
 
 /** Map a typed joined row to OccurrenceWithKanji */
-export function mapOccurrenceWithKanjiRow(
-  r: OccurrenceWithKanjiRow
-): OccurrenceWithKanji {
+export function mapOccurrenceWithKanjiRow(r: OccurrenceWithKanjiRow): OccurrenceWithKanji {
   return {
     id: r.id,
     kanjiId: r.kanji_id,
@@ -65,7 +63,7 @@ export function mapOccurrenceWithKanjiRow(
       id: r.k_id,
       character: r.k_character,
       shortMeaning: r.k_short_meaning,
-      strokeCount: r.k_stroke_count
+      strokeCount: r.k_stroke_count,
     },
     position:
       r.pt_id === null
@@ -78,7 +76,7 @@ export function mapOccurrenceWithKanjiRow(
             description: r.pt_description,
             displayOrder: r.pt_display_order ?? 0,
             createdAt: r.pt_created_at ?? '',
-            updatedAt: r.pt_updated_at ?? ''
-          }
-  }
+            updatedAt: r.pt_updated_at ?? '',
+          },
+  };
 }

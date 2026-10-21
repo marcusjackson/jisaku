@@ -74,11 +74,8 @@ function handleCreate(): void {
       type="text"
     />
 
-    <div
-      v-if="filteredComponents.length > 0"
-      class="kanji-detail-component-search-results"
-    >
-      <!-- Raw <button>: search result item needs full custom styling incompatible with BaseButton -->
+    <div v-if="filteredComponents.length > 0" class="kanji-detail-component-search-results">
+      <!-- Raw <button>: search-result row, bare layout incompatible with BaseButton -->
       <button
         v-for="component in filteredComponents"
         :key="component.id"
@@ -86,34 +83,17 @@ function handleCreate(): void {
         type="button"
         @click="handleSelect(component.id)"
       >
-        <span class="kanji-detail-component-search-result-character">
+        <span class="kanji-detail-component-search-result-character" lang="ja">
           {{ component.character }}
         </span>
-        <span
-          v-if="component.shortMeaning"
-          class="kanji-detail-component-search-result-meaning"
-        >
+        <span v-if="component.shortMeaning" class="kanji-detail-component-search-result-meaning">
           {{ component.shortMeaning }}
         </span>
       </button>
     </div>
 
-    <div
-      v-else-if="!showCreateButton && searchTerm.trim()"
-      class="kanji-detail-component-search-no-results"
-    >
-      <p>No components found.</p>
-    </div>
-
-    <div
-      v-if="showCreateButton"
-      class="kanji-detail-component-search-create"
-    >
-      <BaseButton
-        type="button"
-        variant="primary"
-        @click="handleCreate"
-      >
+    <div v-if="showCreateButton" class="kanji-detail-component-search-create">
+      <BaseButton type="button" variant="primary" @click="handleCreate">
         Create New Component: "{{ searchTerm.trim() }}"
       </BaseButton>
     </div>
@@ -143,7 +123,7 @@ function handleCreate(): void {
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
   border: none;
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-surface);
   color: var(--color-text-primary);
   font-size: var(--font-size-base);
   text-align: left;
@@ -175,13 +155,6 @@ function handleCreate(): void {
   font-size: var(--font-size-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.kanji-detail-component-search-no-results {
-  padding: var(--spacing-md);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  text-align: center;
 }
 
 .kanji-detail-component-search-create {

@@ -6,18 +6,20 @@
  * @module modules/vocab-list
  */
 
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const vocabCreateSchema = z.object({
   word: z
     .string()
+    .trim()
     .min(1, 'Word is required')
     .max(100, 'Word must be 100 characters or less'),
   kana: z
     .string()
+    .trim()
     .max(100, 'Kana must be 100 characters or less')
     .optional()
-    .transform((val) => val ?? '')
-})
+    .transform((val) => val ?? ''),
+});
 
-export type VocabCreateData = z.infer<typeof vocabCreateSchema>
+export type VocabCreateData = z.infer<typeof vocabCreateSchema>;

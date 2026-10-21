@@ -2,7 +2,7 @@
 /**
  * VocabListFilterCommon
  *
- * Checkbox filter for common words only.
+ * Switch filter for common words only.
  */
 
 import { BaseSwitch } from '@/base/components'

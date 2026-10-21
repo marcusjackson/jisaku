@@ -43,10 +43,7 @@ const canMoveDown = computed(() => props.index < props.total - 1)
 </script>
 
 <template>
-  <div
-    class="grouping-item"
-    :data-testid="`grouping-item-${grouping.id}`"
-  >
+  <div class="grouping-item" :data-testid="`grouping-item-${grouping.id}`">
     <div class="grouping-item-reorder">
       <BaseButton
         aria-label="Move up"
@@ -71,14 +68,9 @@ const canMoveDown = computed(() => props.index < props.total - 1)
     <div class="grouping-item-content">
       <div class="grouping-item-header">
         <span class="grouping-item-name">{{ grouping.name }}</span>
-        <span class="grouping-item-count"
-          >{{ grouping.occurrenceCount }} kanji</span
-        >
+        <span class="grouping-item-count">{{ grouping.occurrenceCount }} kanji</span>
       </div>
-      <p
-        v-if="grouping.description"
-        class="grouping-item-description"
-      >
+      <p v-if="grouping.description" class="grouping-item-description">
         {{ grouping.description }}
       </p>
 
@@ -86,12 +78,7 @@ const canMoveDown = computed(() => props.index < props.total - 1)
     </div>
 
     <div class="grouping-item-actions">
-      <BaseButton
-        aria-label="Edit"
-        size="sm"
-        variant="secondary"
-        @click="emit('edit')"
-      >
+      <BaseButton aria-label="Edit" size="sm" variant="secondary" @click="emit('edit')">
         Edit
       </BaseButton>
       <BaseButton

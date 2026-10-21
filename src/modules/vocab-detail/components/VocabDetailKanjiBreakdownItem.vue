@@ -70,25 +70,16 @@ const kanjiDetailRoute = computed(
 
     <div class="kanji-breakdown-item-content">
       <div class="kanji-breakdown-item-header">
-        <RouterLink
-          class="kanji-breakdown-item-character"
-          :to="kanjiDetailRoute"
-        >
+        <RouterLink class="kanji-breakdown-item-character" lang="ja" :to="kanjiDetailRoute">
           {{ vocabKanji.kanji.character }}
         </RouterLink>
 
-        <span
-          v-if="vocabKanji.kanji.shortMeaning"
-          class="kanji-breakdown-item-meaning"
-        >
+        <span v-if="vocabKanji.kanji.shortMeaning" class="kanji-breakdown-item-meaning">
           {{ vocabKanji.kanji.shortMeaning }}
         </span>
       </div>
 
-      <p
-        v-if="vocabKanji.analysisNotes"
-        class="kanji-breakdown-item-notes"
-      >
+      <p v-if="vocabKanji.analysisNotes" class="kanji-breakdown-item-notes">
         {{ vocabKanji.analysisNotes }}
       </p>
     </div>

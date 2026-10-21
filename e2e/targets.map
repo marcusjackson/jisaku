@@ -1,0 +1,29 @@
+# Which e2e specs and VRT files a change under src/ can break. Read by scripts/e2e-related.mjs
+# (make e2e-related); `make check-e2e-map` fails if a spec is named by no rule. Longest prefix wins.
+#   <path prefix> -> <target>, <target>     a target is a file under e2e/, a * glob, or file#grep (VRT groups)
+#   `*` runs the whole suite; `-` means no e2e test covers the path. An unmatched src/ path runs the whole suite.
+
+src/modules/component-detail/ -> component-detail-*.test.ts, visual/component-detail.vrt.ts
+src/modules/component-list/ -> component-list.test.ts, visual/component-list.vrt.ts
+src/modules/kanji-detail/ -> kanji-detail-*.test.ts, visual/kanji-detail.vrt.ts
+src/modules/kanji-list/ -> kanji-list.test.ts, visual/kanji-list.vrt.ts
+src/modules/vocab-detail/ -> vocab-detail.test.ts, visual/vocab-detail.vrt.ts
+src/modules/vocab-list/ -> vocab-list.test.ts, visual/vocab-list.vrt.ts
+src/modules/settings/ -> settings.test.ts, visual/settings.vrt.ts
+
+# Base form components, by the modules that use them. The generic ones (BaseButton, BaseDialog and the
+# rest) are used everywhere, so they stay unmatched and run the whole suite.
+src/base/components/BaseSelect -> component-detail-*.test.ts, visual/component-detail.vrt.ts, component-list.test.ts, visual/component-list.vrt.ts, kanji-detail-*.test.ts, visual/kanji-detail.vrt.ts, kanji-list.test.ts, visual/kanji-list.vrt.ts, vocab-detail.test.ts, visual/vocab-detail.vrt.ts, vocab-list.test.ts, visual/vocab-list.vrt.ts
+src/base/components/BaseCombobox -> component-detail-*.test.ts, visual/component-detail.vrt.ts, kanji-detail-*.test.ts, visual/kanji-detail.vrt.ts
+src/base/composables/use-combobox -> component-detail-*.test.ts, visual/component-detail.vrt.ts, kanji-detail-*.test.ts, visual/kanji-detail.vrt.ts
+src/base/components/BaseComboboxMulti -> kanji-list.test.ts, visual/kanji-list.vrt.ts, vocab-list.test.ts, visual/vocab-list.vrt.ts
+src/base/composables/use-combobox-multi -> kanji-list.test.ts, visual/kanji-list.vrt.ts, vocab-list.test.ts, visual/vocab-list.vrt.ts
+
+src/pages/ComponentDetailPage -> component-detail-*.test.ts, visual/component-detail.vrt.ts
+src/pages/ComponentListPage -> component-list.test.ts, visual/component-list.vrt.ts
+src/pages/KanjiDetailPage -> kanji-detail-*.test.ts, visual/kanji-detail.vrt.ts
+src/pages/KanjiListPage -> kanji-list.test.ts, visual/kanji-list.vrt.ts
+src/pages/NotFoundPage -> not-found.test.ts, visual/not-found.vrt.ts
+src/pages/SettingsPage -> settings.test.ts, visual/settings.vrt.ts
+src/pages/VocabularyDetailPage -> vocab-detail.test.ts, visual/vocab-detail.vrt.ts
+src/pages/VocabularyListPage -> vocab-list.test.ts, visual/vocab-list.vrt.ts

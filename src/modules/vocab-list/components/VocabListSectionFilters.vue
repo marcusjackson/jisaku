@@ -60,7 +60,7 @@ function toggleCollapsed(): void {
     data-testid="vocab-list-filters"
   >
     <!-- Collapsible Header -->
-    <!-- Raw <button>: collapsible header needs full custom styling incompatible with BaseButton -->
+    <!-- Raw <button>: collapsible header, bare layout incompatible with BaseButton -->
     <button
       :aria-expanded="!isCollapsed"
       class="vocab-list-filters-header"
@@ -70,10 +70,7 @@ function toggleCollapsed(): void {
     >
       <span class="vocab-list-filters-header-text">
         Filters
-        <span
-          v-if="activeFilterCount > 0"
-          class="vocab-list-filters-badge"
-        >
+        <span v-if="activeFilterCount > 0" class="vocab-list-filters-badge">
           {{ activeFilterCount }}
         </span>
       </span>
@@ -98,10 +95,7 @@ function toggleCollapsed(): void {
     </button>
 
     <!-- Collapsible Content -->
-    <div
-      v-show="!isCollapsed"
-      class="vocab-list-filters-expanded-content"
-    >
+    <div v-show="!isCollapsed" class="vocab-list-filters-expanded-content">
       <div class="vocab-list-filters-scrollable-content">
         <VocabListFiltersContent
           :all-kanji="allKanji"

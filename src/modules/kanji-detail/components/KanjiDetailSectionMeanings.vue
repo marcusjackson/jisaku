@@ -22,30 +22,24 @@ import type {
   MeaningsSaveData
 } from '../kanji-detail-types'
 
-defineProps<{
+const props = defineProps<{
   meanings: KanjiMeaning[]
   readingGroups: KanjiMeaningReadingGroup[]
   groupMembers: KanjiMeaningGroupMember[]
   destructiveMode?: boolean
-}>()
-
-const emit = defineEmits<{
-  save: [data: MeaningsSaveData]
+  /** Saves meanings; returns whether it saved, so the dialog can close */
+  save: (data: MeaningsSaveData) => boolean
 }>()
 
 const isDialogOpen = ref(false)
 
 function handleSave(data: MeaningsSaveData): void {
-  emit('save', data)
-  isDialogOpen.value = false
+  if (props.save(data)) isDialogOpen.value = false
 }
 </script>
 
 <template>
-  <SharedSection
-    test-id="kanji-detail-meanings"
-    title="Meanings"
-  >
+  <SharedSection test-id="kanji-detail-meanings" title="Meanings">
     <template #actions>
       <BaseButton
         aria-label="Edit meanings"

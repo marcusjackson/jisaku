@@ -2,14 +2,14 @@
  * Tests for KanjiDetailComponentOccurrenceEditor
  */
 
-import userEvent from '@testing-library/user-event'
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import KanjiDetailComponentOccurrenceEditor from './KanjiDetailComponentOccurrenceEditor.vue'
+import KanjiDetailComponentOccurrenceEditor from './KanjiDetailComponentOccurrenceEditor.vue';
 
-import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types'
-import type { PositionType } from '@/api/position/position-types'
+import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types';
+import type { PositionType } from '@/api/position/position-types';
 
 const mockOccurrence: ComponentOccurrenceWithDetails = {
   id: 1,
@@ -25,11 +25,11 @@ const mockOccurrence: ComponentOccurrenceWithDetails = {
   component: {
     id: 2,
     character: '山',
-    shortMeaning: 'mountain'
+    shortMeaning: 'mountain',
   },
   position: null,
-  form: null
-}
+  form: null,
+};
 
 const mockPositionTypes: PositionType[] = [
   {
@@ -40,13 +40,11 @@ const mockPositionTypes: PositionType[] = [
     description: 'Left side',
     displayOrder: 1,
     createdAt: '2024-01-01T00:00:00',
-    updatedAt: '2024-01-01T00:00:00'
-  }
-]
+    updatedAt: '2024-01-01T00:00:00',
+  },
+];
 
-const mockComponentForms = [
-  { id: 1, formCharacter: '山', formName: 'Standard' }
-]
+const mockComponentForms = [{ id: 1, formCharacter: '山', formName: 'Standard' }];
 
 describe('KanjiDetailComponentOccurrenceEditor', () => {
   it('renders component character and meaning', () => {
@@ -55,13 +53,13 @@ describe('KanjiDetailComponentOccurrenceEditor', () => {
         occurrence: mockOccurrence,
         positionTypes: mockPositionTypes,
         componentForms: mockComponentForms,
-        destructiveMode: false
-      }
-    })
+        destructiveMode: false,
+      },
+    });
 
-    expect(screen.getByText('山')).toBeInTheDocument()
-    expect(screen.getByText('mountain')).toBeInTheDocument()
-  })
+    expect(screen.getByText('山')).toBeInTheDocument();
+    expect(screen.getByText('mountain')).toBeInTheDocument();
+  });
 
   it('renders position select', () => {
     render(KanjiDetailComponentOccurrenceEditor, {
@@ -69,12 +67,12 @@ describe('KanjiDetailComponentOccurrenceEditor', () => {
         occurrence: mockOccurrence,
         positionTypes: mockPositionTypes,
         componentForms: mockComponentForms,
-        destructiveMode: false
-      }
-    })
+        destructiveMode: false,
+      },
+    });
 
-    expect(screen.getByLabelText('Position')).toBeInTheDocument()
-  })
+    expect(screen.getByLabelText('Position')).toBeInTheDocument();
+  });
 
   it('renders form select', () => {
     render(KanjiDetailComponentOccurrenceEditor, {
@@ -82,12 +80,12 @@ describe('KanjiDetailComponentOccurrenceEditor', () => {
         occurrence: mockOccurrence,
         positionTypes: mockPositionTypes,
         componentForms: mockComponentForms,
-        destructiveMode: false
-      }
-    })
+        destructiveMode: false,
+      },
+    });
 
-    expect(screen.getByLabelText('Form')).toBeInTheDocument()
-  })
+    expect(screen.getByLabelText('Form')).toBeInTheDocument();
+  });
 
   it('renders radical switch', () => {
     render(KanjiDetailComponentOccurrenceEditor, {
@@ -95,12 +93,12 @@ describe('KanjiDetailComponentOccurrenceEditor', () => {
         occurrence: mockOccurrence,
         positionTypes: mockPositionTypes,
         componentForms: mockComponentForms,
-        destructiveMode: false
-      }
-    })
+        destructiveMode: false,
+      },
+    });
 
-    expect(screen.getByText('Is Radical')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Is Radical')).toBeInTheDocument();
+  });
 
   it('does not render unlink button when destructiveMode is false', () => {
     render(KanjiDetailComponentOccurrenceEditor, {
@@ -108,12 +106,12 @@ describe('KanjiDetailComponentOccurrenceEditor', () => {
         occurrence: mockOccurrence,
         positionTypes: mockPositionTypes,
         componentForms: mockComponentForms,
-        destructiveMode: false
-      }
-    })
+        destructiveMode: false,
+      },
+    });
 
-    expect(screen.queryByText('Unlink')).not.toBeInTheDocument()
-  })
+    expect(screen.queryByText('Unlink')).not.toBeInTheDocument();
+  });
 
   it('renders unlink button when destructiveMode is true', () => {
     render(KanjiDetailComponentOccurrenceEditor, {
@@ -121,12 +119,12 @@ describe('KanjiDetailComponentOccurrenceEditor', () => {
         occurrence: mockOccurrence,
         positionTypes: mockPositionTypes,
         componentForms: mockComponentForms,
-        destructiveMode: true
-      }
-    })
+        destructiveMode: true,
+      },
+    });
 
-    expect(screen.getByText('Unlink')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Unlink')).toBeInTheDocument();
+  });
 
   it('emits unlink when unlink button clicked', async () => {
     const { emitted } = render(KanjiDetailComponentOccurrenceEditor, {
@@ -134,13 +132,13 @@ describe('KanjiDetailComponentOccurrenceEditor', () => {
         occurrence: mockOccurrence,
         positionTypes: mockPositionTypes,
         componentForms: mockComponentForms,
-        destructiveMode: true
-      }
-    })
+        destructiveMode: true,
+      },
+    });
 
-    const user = userEvent.setup()
-    await user.click(screen.getByText('Unlink'))
+    const user = userEvent.setup();
+    await user.click(screen.getByText('Unlink'));
 
-    expect(emitted()['unlink']).toBeTruthy()
-  })
-})
+    expect(emitted()['unlink']).toBeTruthy();
+  });
+});

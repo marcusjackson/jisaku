@@ -6,9 +6,13 @@
  * @module modules/kanji-detail
  */
 
-import type { ComponentOccurrenceWithDetails } from '../kanji-detail-types'
-import type { EditOccurrence } from '../utils/edit-occurrence-types'
-import type { Ref } from 'vue'
+import type { ComponentOccurrenceWithDetails, DialogComponentChanges } from '../kanji-detail-types';
+import type { EditOccurrence } from '../utils/edit-occurrence-types';
+import type { Ref } from 'vue';
+
+export interface UseKanjiDetailDialogComponentsSaveReturn {
+  calculateSaveData: () => DialogComponentChanges;
+}
 
 /**
  * Manages save logic for the components dialog — computes the diff between
@@ -21,13 +25,13 @@ import type { Ref } from 'vue'
 export function useKanjiDetailDialogComponentsSave(
   editOccurrences: Ref<EditOccurrence[]>,
   originalOccurrences: Ref<ComponentOccurrenceWithDetails[]>
-) {
+): UseKanjiDetailDialogComponentsSaveReturn {
   /**
    * Calculate changes and return save data
    */
   function calculateSaveData() {
-    const original = originalOccurrences.value
-    const edited = editOccurrences.value.filter((occ) => !occ.markedForDeletion)
+    const original = originalOccurrences.value;
+    const edited = editOccurrences.value.filter((occ) => !occ.markedForDeletion);
 
     // Newly linked components
     const toLink = edited
@@ -36,27 +40,27 @@ export function useKanjiDetailDialogComponentsSave(
         componentId: occ.componentId,
         positionTypeId: occ.positionTypeId,
         componentFormId: occ.componentFormId,
-        isRadical: occ.isRadical
-      }))
+        isRadical: occ.isRadical,
+      }));
 
     // Updated occurrences
     const toUpdate = edited
       .filter((occ): occ is EditOccurrence & { id: number } => occ.id !== null)
       .filter((occ) => {
-        const orig = original.find((o) => o.id === occ.id)
-        if (!orig) return false
+        const orig = original.find((o) => o.id === occ.id);
+        if (!orig) return false;
         return (
           orig.positionTypeId !== occ.positionTypeId ||
           orig.componentFormId !== occ.componentFormId ||
           orig.isRadical !== occ.isRadical
-        )
+        );
       })
       .map((occ) => ({
         id: occ.id,
         positionTypeId: occ.positionTypeId,
         componentFormId: occ.componentFormId,
-        isRadical: occ.isRadical
-      }))
+        isRadical: occ.isRadical,
+      }));
 
     // Deleted occurrences
     const toDelete = editOccurrences.value
@@ -64,12 +68,12 @@ export function useKanjiDetailDialogComponentsSave(
         (occ): occ is EditOccurrence & { id: number } =>
           occ.markedForDeletion === true && occ.id !== null
       )
-      .map((occ) => occ.id)
+      .map((occ) => occ.id);
 
-    return { toLink, toUpdate, toDelete }
+    return { toLink, toUpdate, toDelete };
   }
 
   return {
-    calculateSaveData
-  }
+    calculateSaveData,
+  };
 }

@@ -30,26 +30,12 @@ const emit = defineEmits<{
   <div class="meanings-list-section">
     <div class="meanings-list-header">
       <h3 class="meanings-list-title">Meanings</h3>
-      <BaseButton
-        size="sm"
-        variant="ghost"
-        @click="emit('add')"
-      >
-        + Add
-      </BaseButton>
+      <BaseButton size="sm" variant="ghost" @click="emit('add')"> + Add </BaseButton>
     </div>
 
-    <div
-      v-if="meanings.length === 0"
-      class="meanings-empty"
-    >
-      No meanings
-    </div>
+    <div v-if="meanings.length === 0" class="meanings-empty">No meanings</div>
 
-    <div
-      v-else
-      class="meanings-list"
-    >
+    <div v-else class="meanings-list">
       <KanjiDetailMeaningItem
         v-for="(meaning, index) in meanings"
         :key="meaning.id"

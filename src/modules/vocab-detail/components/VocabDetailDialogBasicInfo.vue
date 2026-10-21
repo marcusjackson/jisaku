@@ -34,7 +34,6 @@ const emit = defineEmits<{
 const jlptLevel = ref(NONE)
 const isCommon = ref(false)
 const description = ref('')
-const isSubmitting = ref(false)
 
 watch(
   () => props.open,
@@ -48,9 +47,6 @@ watch(
 )
 
 function handleSubmit(): void {
-  if (isSubmitting.value) return
-  isSubmitting.value = true
-
   const data: BasicInfoSaveData = {
     jlptLevel:
       jlptLevel.value !== NONE
@@ -61,8 +57,6 @@ function handleSubmit(): void {
   }
 
   emit('save', data)
-  isSubmitting.value = false
-  emit('update:open', false)
 }
 
 function handleCancel(): void {
@@ -76,20 +70,10 @@ function handleCancel(): void {
     title="Edit Basic Information"
     @update:open="emit('update:open', $event)"
   >
-    <form
-      class="vocab-detail-dialog-basic-info-form"
-      @submit.prevent="handleSubmit"
-    >
-      <BaseSelect
-        v-model="jlptLevel"
-        label="JLPT Level"
-        :options="VOCAB_JLPT_OPTIONS"
-      />
+    <form class="vocab-detail-dialog-basic-info-form" @submit.prevent="handleSubmit">
+      <BaseSelect v-model="jlptLevel" label="JLPT Level" :options="VOCAB_JLPT_OPTIONS" />
 
-      <BaseSwitch
-        v-model="isCommon"
-        label="Common Word"
-      />
+      <BaseSwitch v-model="isCommon" label="Common Word" />
 
       <BaseTextarea
         v-model="description"
@@ -99,20 +83,8 @@ function handleCancel(): void {
       />
 
       <div class="vocab-detail-dialog-basic-info-actions">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="handleCancel"
-        >
-          Cancel
-        </BaseButton>
-        <BaseButton
-          :disabled="isSubmitting"
-          :loading="isSubmitting"
-          type="submit"
-        >
-          Save
-        </BaseButton>
+        <BaseButton type="button" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
+        <BaseButton type="submit"> Save </BaseButton>
       </div>
     </form>
   </BaseDialog>

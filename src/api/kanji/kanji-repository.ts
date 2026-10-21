@@ -7,32 +7,27 @@
  * @module api/kanji
  */
 
-import { useDatabase } from '@/shared/composables/use-database'
+import { useDatabase } from '@/shared/composables/use-database';
 
-import { schedulePersist } from '@/db/indexeddb'
-import {
-  CreateError,
-  EntityNotFoundError,
-  RepositoryError,
-  UpdateError
-} from '../api-types'
-import { BaseRepository } from '../base-repository'
+import { schedulePersist } from '@/db/indexeddb';
+import { CreateError, EntityNotFoundError, RepositoryError, UpdateError } from '../api-types';
+import { BaseRepository } from '../base-repository';
 
 import {
   buildKanjiSearchConditions,
   KANJI_FIELD_COLUMNS,
   mapKanjiInputToValues,
-  mapKanjiRow
-} from './kanji-repository-internals'
+  mapKanjiRow,
+} from './kanji-repository-internals';
 
-import type { FieldUpdatable, Repository, UpdatableField } from '../api-types'
+import type { FieldUpdatable, Repository, UpdatableField } from '../api-types';
 import type {
   CreateKanjiInput,
   Kanji,
   KanjiFilters,
   KanjiSortOptions,
-  UpdateKanjiInput
-} from './kanji-types'
+  UpdateKanjiInput,
+} from './kanji-types';
 
 // ============================================================================
 // Repository Implementation
@@ -40,24 +35,22 @@ import type {
 
 class KanjiRepositoryImpl
   extends BaseRepository<Kanji>
-  implements
-    Repository<Kanji, CreateKanjiInput, UpdateKanjiInput>,
-    FieldUpdatable<Kanji>
+  implements Repository<Kanji, CreateKanjiInput, UpdateKanjiInput>, FieldUpdatable<Kanji>
 {
-  protected tableName = 'kanjis'
+  protected tableName = 'kanjis';
 
-  private readonly exec: ReturnType<typeof useDatabase>['exec']
-  private readonly run: ReturnType<typeof useDatabase>['run']
+  private readonly exec: ReturnType<typeof useDatabase>['exec'];
+  private readonly run: ReturnType<typeof useDatabase>['run'];
 
   constructor() {
-    super()
-    const db = useDatabase()
-    this.exec = db.exec
-    this.run = db.run
+    super();
+    const db = useDatabase();
+    this.exec = db.exec;
+    this.run = db.run;
   }
 
   protected mapRow(row: Record<string, unknown>): Kanji {
-    return mapKanjiRow(row)
+    return mapKanjiRow(row);
   }
 
   // ==========================================================================
@@ -65,67 +58,57 @@ class KanjiRepositoryImpl
   // ==========================================================================
 
   getById(id: number): Kanji | null {
-    const result = this.exec('SELECT * FROM kanjis WHERE id = ?', [id])
-    return this.resultToEntity(result)
+    const result = this.exec('SELECT * FROM kanjis WHERE id = ?', [id]);
+    return this.resultToEntity(result);
   }
 
   getAll(): Kanji[] {
-    const result = this.exec('SELECT * FROM kanjis ORDER BY id DESC')
-    return this.resultToList(result)
+    const result = this.exec('SELECT * FROM kanjis ORDER BY id DESC');
+    return this.resultToList(result);
   }
 
   getByCharacter(character: string): Kanji | null {
-    const result = this.exec('SELECT * FROM kanjis WHERE character = ?', [
-      character
-    ])
-    return this.resultToEntity(result)
+    const result = this.exec('SELECT * FROM kanjis WHERE character = ?', [character]);
+    return this.resultToEntity(result);
   }
 
   getByIds(ids: number[]): Kanji[] {
-    if (ids.length === 0) return []
-    const placeholders = ids.map(() => '?').join(', ')
-    const result = this.exec(
-      `SELECT * FROM kanjis WHERE id IN (${placeholders}) ORDER BY id`,
-      ids
-    )
-    return this.resultToList(result)
+    if (ids.length === 0) return [];
+    const placeholders = ids.map(() => '?').join(', ');
+    const result = this.exec(`SELECT * FROM kanjis WHERE id IN (${placeholders}) ORDER BY id`, ids);
+    return this.resultToList(result);
   }
 
   /**
    * Search kanji with filters
    */
   search(filters?: KanjiFilters, sort?: KanjiSortOptions): Kanji[] {
-    if (!filters || Object.keys(filters).length === 0) {
-      return this.getAll()
+    if (!sort && (!filters || Object.keys(filters).length === 0)) {
+      return this.getAll();
     }
 
-    const { conditions, params } = buildKanjiSearchConditions(filters)
+    const { conditions, params } = buildKanjiSearchConditions(filters ?? {});
 
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    let orderBy = 'ORDER BY created_at DESC'
+    let orderBy = 'ORDER BY created_at DESC, id DESC';
     if (sort) {
       const SORTABLE_COLUMNS: Readonly<Record<string, string>> = {
         character: 'character',
         strokeCount: 'stroke_count',
-        createdAt: 'created_at'
-      }
-      const column = SORTABLE_COLUMNS[sort.field]
+        createdAt: 'created_at',
+      };
+      const column = SORTABLE_COLUMNS[sort.field];
       if (!column) {
-        throw new RepositoryError(
-          `Invalid sort field: '${sort.field}'`,
-          'search',
-          'Kanji'
-        )
+        throw new RepositoryError(`Invalid sort field: '${sort.field}'`, 'search', 'Kanji');
       }
-      const dir = sort.direction === 'desc' ? 'DESC' : 'ASC'
-      orderBy = `ORDER BY ${column} ${dir}`
+      const dir = sort.direction === 'desc' ? 'DESC' : 'ASC';
+      orderBy = `ORDER BY ${column} ${dir}`;
     }
 
-    const sql = `SELECT * FROM kanjis ${whereClause} ${orderBy}`
-    const result = this.exec(sql, params)
-    return this.resultToList(result)
+    const sql = `SELECT * FROM kanjis ${whereClause} ${orderBy}`;
+    const result = this.exec(sql, params);
+    return this.resultToList(result);
   }
 
   // ==========================================================================
@@ -141,109 +124,109 @@ class KanjiRepositoryImpl
         notes_etymology, notes_semantic, notes_education_mnemonics, notes_personal,
         identifier, radical_stroke_count
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-    this.run(sql, mapKanjiInputToValues(input))
+    `;
+    this.run(sql, mapKanjiInputToValues(input));
 
-    const idResult = this.exec('SELECT last_insert_rowid() as id')
-    const newId = idResult[0]?.values[0]?.[0] as number
+    const idResult = this.exec('SELECT last_insert_rowid() as id');
+    const newId = idResult[0]?.values[0]?.[0] as number;
 
-    const created = this.getById(newId)
+    const created = this.getById(newId);
     if (!created) {
-      throw new CreateError('Kanji')
+      throw new CreateError('Kanji');
     }
 
-    schedulePersist()
-    return created
+    schedulePersist();
+    return created;
   }
 
   update(id: number, input: UpdateKanjiInput): Kanji {
-    const existing = this.getById(id)
+    const existing = this.getById(id);
     if (!existing) {
-      throw new EntityNotFoundError('Kanji', id)
+      throw new EntityNotFoundError('Kanji', id);
     }
 
-    const sets: string[] = []
-    const values: unknown[] = []
+    const sets: string[] = [];
+    const values: unknown[] = [];
 
     for (const [key, column] of KANJI_FIELD_COLUMNS) {
       if (input[key] !== undefined) {
-        sets.push(`${column} = ?`)
-        values.push(input[key])
+        sets.push(`${column} = ?`);
+        values.push(input[key]);
       }
     }
 
     if (sets.length === 0) {
-      return existing
+      return existing;
     }
 
-    sets.push("updated_at = datetime('now')")
-    values.push(id)
+    sets.push("updated_at = datetime('now')");
+    values.push(id);
 
-    const sql = `UPDATE kanjis SET ${sets.join(', ')} WHERE id = ?`
-    this.run(sql, values)
+    const sql = `UPDATE kanjis SET ${sets.join(', ')} WHERE id = ?`;
+    this.run(sql, values);
 
-    const updated = this.getById(id)
+    const updated = this.getById(id);
     if (!updated) {
-      throw new UpdateError('Kanji', id)
+      throw new UpdateError('Kanji', id);
     }
 
-    schedulePersist()
-    return updated
+    schedulePersist();
+    return updated;
   }
 
   remove(id: number): void {
     this.withTransaction(() => {
       // Delete related records first (cascade)
-      this.run('DELETE FROM component_occurrences WHERE kanji_id = ?', [id])
-      this.run('DELETE FROM kanji_classifications WHERE kanji_id = ?', [id])
-      this.run('DELETE FROM on_readings WHERE kanji_id = ?', [id])
-      this.run('DELETE FROM kun_readings WHERE kanji_id = ?', [id])
+      this.run(
+        `DELETE FROM component_grouping_members WHERE occurrence_id IN (
+           SELECT id FROM component_occurrences WHERE kanji_id = ?
+         )`,
+        [id]
+      );
+      this.run('DELETE FROM component_occurrences WHERE kanji_id = ?', [id]);
+      this.run('DELETE FROM kanji_classifications WHERE kanji_id = ?', [id]);
+      this.run('DELETE FROM on_readings WHERE kanji_id = ?', [id]);
+      this.run('DELETE FROM kun_readings WHERE kanji_id = ?', [id]);
       this.run(
         `DELETE FROM kanji_meaning_group_members
          WHERE reading_group_id IN (
            SELECT id FROM kanji_meaning_reading_groups WHERE kanji_id = ?
          )`,
         [id]
-      )
-      this.run('DELETE FROM kanji_meaning_reading_groups WHERE kanji_id = ?', [
-        id
-      ])
-      this.run('DELETE FROM kanji_meanings WHERE kanji_id = ?', [id])
-      this.run('DELETE FROM vocab_kanji WHERE kanji_id = ?', [id])
-      this.run('DELETE FROM kanjis WHERE id = ?', [id])
-    })
-    schedulePersist()
+      );
+      this.run('DELETE FROM kanji_meaning_reading_groups WHERE kanji_id = ?', [id]);
+      this.run('DELETE FROM kanji_meanings WHERE kanji_id = ?', [id]);
+      this.run('DELETE FROM vocab_kanji WHERE kanji_id = ?', [id]);
+      this.run('DELETE FROM kanjis WHERE id = ?', [id]);
+    });
+    schedulePersist();
   }
 
   // ==========================================================================
   // Field-Level Updates
   // ==========================================================================
 
-  updateField<K extends UpdatableField<Kanji>>(
-    id: number,
-    field: K,
-    value: Kanji[K]
-  ): Kanji {
-    const existing = this.getById(id)
+  updateField<K extends UpdatableField<Kanji>>(id: number, field: K, value: Kanji[K]): Kanji {
+    const existing = this.getById(id);
     if (!existing) {
-      throw new EntityNotFoundError('Kanji', id)
+      throw new EntityNotFoundError('Kanji', id);
     }
 
-    const entry = KANJI_FIELD_COLUMNS.find(([f]) => f === field)
+    const entry = KANJI_FIELD_COLUMNS.find(([f]) => f === field);
     if (!entry) {
-      throw new Error(`No column mapping for field: ${field}`)
+      throw new Error(`No column mapping for field: ${field}`);
     }
-    const column = entry[1]
-    const sql = `UPDATE kanjis SET ${column} = ?, updated_at = datetime('now') WHERE id = ?`
-    this.run(sql, [value, id])
+    const column = entry[1];
+    const sql = `UPDATE kanjis SET ${column} = ?, updated_at = datetime('now') WHERE id = ?`;
+    this.run(sql, [value, id]);
 
-    const updated = this.getById(id)
+    const updated = this.getById(id);
     if (!updated) {
-      throw new UpdateError('Kanji', id)
+      throw new UpdateError('Kanji', id);
     }
 
-    schedulePersist()
-    return updated
+    schedulePersist();
+    return updated;
   }
 }
 
@@ -260,5 +243,5 @@ class KanjiRepositoryImpl
  * const kanji = kanjiRepo.getByCharacter('日')
  */
 export function useKanjiRepository(): KanjiRepositoryImpl {
-  return new KanjiRepositoryImpl()
+  return new KanjiRepositoryImpl();
 }

@@ -14,7 +14,7 @@ import BaseTextarea from '@/base/components/BaseTextarea.vue'
 import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
 import SharedSection from '@/shared/components/SharedSection.vue'
 
-import { usePositionTypeSection } from '../composables/use-settings-position-type-section'
+import { useSettingsPositionTypeSection } from '../composables/use-settings-position-type-section'
 
 const {
   createForm,
@@ -35,7 +35,7 @@ const {
   showCreateDialog,
   showDeleteDialog,
   showEditDialog
-} = usePositionTypeSection()
+} = useSettingsPositionTypeSection()
 </script>
 
 <template>
@@ -50,27 +50,16 @@ const {
     </p>
 
     <div class="settings-type-section__actions">
-      <BaseButton
-        variant="primary"
-        @click="handleCreateClick"
-      >
-        Add Position Type
-      </BaseButton>
+      <BaseButton variant="primary" @click="handleCreateClick"> Add Position Type </BaseButton>
     </div>
 
-    <div
-      v-if="positionTypes.length === 0"
-      class="settings-type-section__empty-state"
-    >
+    <div v-if="positionTypes.length === 0" class="settings-type-section__empty-state">
       <p class="settings-type-section__empty-text">
         No position types defined. Click "Add Position Type" to create one.
       </p>
     </div>
 
-    <ul
-      v-else
-      class="settings-type-section__list"
-    >
+    <ul v-else class="settings-type-section__list">
       <li
         v-for="(item, index) in positionTypes"
         :key="item.id"
@@ -92,10 +81,7 @@ const {
               >{{ item.nameEnglish }}</span
             >
           </div>
-          <p
-            v-if="item.description"
-            class="settings-type-section__item-description"
-          >
+          <p v-if="item.description" class="settings-type-section__item-description">
             {{ item.description }}
           </p>
         </div>
@@ -115,16 +101,8 @@ const {
             @click="handleMoveDown(index)"
             >↓</BaseButton
           >
-          <BaseButton
-            size="sm"
-            variant="secondary"
-            @click="handleEditClick(item)"
-            >Edit</BaseButton
-          >
-          <BaseButton
-            size="sm"
-            variant="danger"
-            @click="handleDeleteClick(item)"
+          <BaseButton size="sm" variant="secondary" @click="handleEditClick(item)">Edit</BaseButton>
+          <BaseButton size="sm" variant="danger" @click="handleDeleteClick(item)"
             >Delete</BaseButton
           >
         </div>
@@ -132,14 +110,8 @@ const {
     </ul>
 
     <!-- Create Dialog -->
-    <BaseDialog
-      v-model:open="showCreateDialog"
-      title="Add Position Type"
-    >
-      <form
-        class="settings-type-section__form"
-        @submit.prevent="handleCreateSubmit"
-      >
+    <BaseDialog v-model:open="showCreateDialog" title="Add Position Type">
+      <form class="settings-type-section__form" @submit.prevent="handleCreateSubmit">
         <BaseInput
           v-model="createForm.positionName"
           label="Position Name"
@@ -167,46 +139,25 @@ const {
           :rows="3"
         />
         <div class="settings-type-section__form-actions">
-          <BaseButton
-            type="button"
-            variant="secondary"
-            @click="handleCreateCancel"
+          <BaseButton type="button" variant="secondary" @click="handleCreateCancel"
             >Cancel</BaseButton
           >
-          <BaseButton
-            type="submit"
-            variant="primary"
-            >Create</BaseButton
-          >
+          <BaseButton type="submit" variant="primary">Create</BaseButton>
         </div>
       </form>
     </BaseDialog>
 
     <!-- Edit Dialog -->
-    <BaseDialog
-      v-model:open="showEditDialog"
-      title="Edit Position Type"
-    >
-      <form
-        class="settings-type-section__form"
-        @submit.prevent="handleEditSubmit"
-      >
+    <BaseDialog v-model:open="showEditDialog" title="Edit Position Type">
+      <form class="settings-type-section__form" @submit.prevent="handleEditSubmit">
         <BaseInput
           v-model="editForm.positionName"
           label="Position Name"
           name="positionName"
           required
         />
-        <BaseInput
-          v-model="editForm.nameJapanese"
-          label="Japanese Name"
-          name="nameJapanese"
-        />
-        <BaseInput
-          v-model="editForm.nameEnglish"
-          label="English Name"
-          name="nameEnglish"
-        />
+        <BaseInput v-model="editForm.nameJapanese" label="Japanese Name" name="nameJapanese" />
+        <BaseInput v-model="editForm.nameEnglish" label="English Name" name="nameEnglish" />
         <BaseTextarea
           v-model="editForm.description"
           label="Description"
@@ -214,17 +165,10 @@ const {
           :rows="3"
         />
         <div class="settings-type-section__form-actions">
-          <BaseButton
-            type="button"
-            variant="secondary"
-            @click="handleEditCancel"
+          <BaseButton type="button" variant="secondary" @click="handleEditCancel"
             >Cancel</BaseButton
           >
-          <BaseButton
-            type="submit"
-            variant="primary"
-            >Save</BaseButton
-          >
+          <BaseButton type="submit" variant="primary">Save</BaseButton>
         </div>
       </form>
     </BaseDialog>

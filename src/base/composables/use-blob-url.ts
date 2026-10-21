@@ -6,56 +6,57 @@
  * and automatically revokes URLs when data changes or component unmounts.
  */
 
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue';
 
-import type { Ref } from 'vue'
+import type { Ref } from 'vue';
 
 export interface UseBlobUrlReturn {
   /** Reactive blob URL (null if no data) */
-  url: Ref<string | null>
+  url: Ref<string | null>;
 }
 
 /**
  * MIME type signatures for magic byte detection
  * [minLength, bytesToMatch, mimeType]
  */
-type MimeSignature = [number, number[], string]
+/** A -1 byte is a wildcard (e.g. the RIFF chunk size). */
+type MimeSignature = [number, number[], string];
 
-const MIME_SIGNATURES: MimeSignature[] = [
+export const MIME_SIGNATURES: MimeSignature[] = [
   // PNG: 89 50 4E 47
   [4, [0x89, 0x50, 0x4e, 0x47], 'image/png'],
   // GIF: 47 49 46 38
   [4, [0x47, 0x49, 0x46, 0x38], 'image/gif'],
   // JPEG: FF D8 FF
   [3, [0xff, 0xd8, 0xff], 'image/jpeg'],
-  // WebP: RIFF at 0-3, WEBP at 8-11 (check partial)
-  [12, [0x52, 0x49, 0x46, 0x46], 'image/webp']
-]
+  // WebP: RIFF at 0-3, WEBP at 8-11
+  [12, [0x52, 0x49, 0x46, 0x46, -1, -1, -1, -1, 0x57, 0x45, 0x42, 0x50], 'image/webp'],
+];
 
 /**
  * Detect MIME type from magic bytes
  */
-function detectMimeType(data: Uint8Array): string {
+export function detectMimeType(data: Uint8Array): string {
   for (const [minLen, bytes, mime] of MIME_SIGNATURES) {
     if (data.length >= minLen) {
-      const matches = bytes.every((b, i) => data[i] === b)
-      if (matches) return mime
+      const matches = bytes.every((b, i) => b === -1 || data[i] === b);
+      if (matches) return mime;
     }
   }
-  return 'application/octet-stream'
+  return 'application/octet-stream';
 }
 
 /**
  * Create a blob URL from Uint8Array data with MIME type detection
  */
 function createBlobUrl(data: Uint8Array): string {
-  const mimeType = detectMimeType(data)
+  const mimeType = detectMimeType(data);
   // TS narrows Uint8Array's buffer to ArrayBufferLike (which includes
   // SharedArrayBuffer), but BlobPart requires ArrayBuffer specifically.
   // This data is always plain-ArrayBuffer-backed in practice; re-wrapping
   // it produces a Uint8Array<ArrayBuffer> that satisfies the type.
-  const blob = new Blob([new Uint8Array(data)], { type: mimeType })
-  return URL.createObjectURL(blob)
+  const blob = new Blob([new Uint8Array(data)], { type: mimeType });
+  return URL.createObjectURL(blob);
 }
 
 /**
@@ -67,23 +68,23 @@ function createBlobUrl(data: Uint8Array): string {
 export function useBlobUrl(
   data: Ref<Uint8Array | null> | (() => Uint8Array | null)
 ): UseBlobUrlReturn {
-  const url = ref<string | null>(null)
+  const url = ref<string | null>(null);
 
   // Normalize data source to a computed
   const dataSource = computed(() => {
     if (typeof data === 'function') {
-      return data()
+      return data();
     }
-    return data.value
-  })
+    return data.value;
+  });
 
   /**
    * Revoke the current URL if it exists
    */
   function revokeCurrentUrl(): void {
     if (url.value) {
-      URL.revokeObjectURL(url.value)
-      url.value = null
+      URL.revokeObjectURL(url.value);
+      url.value = null;
     }
   }
 
@@ -92,20 +93,20 @@ export function useBlobUrl(
    */
   function updateUrl(): void {
     // Revoke previous URL first
-    revokeCurrentUrl()
+    revokeCurrentUrl();
 
     // Create new URL if we have data
-    const currentData = dataSource.value
+    const currentData = dataSource.value;
     if (currentData) {
-      url.value = createBlobUrl(currentData)
+      url.value = createBlobUrl(currentData);
     }
   }
 
   // Watch for data changes
-  watch(dataSource, updateUrl, { immediate: true })
+  watch(dataSource, updateUrl, { immediate: true });
 
   // Cleanup on unmount
-  onUnmounted(revokeCurrentUrl)
+  onUnmounted(revokeCurrentUrl);
 
-  return { url }
+  return { url };
 }

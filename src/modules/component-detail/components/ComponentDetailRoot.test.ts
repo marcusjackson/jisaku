@@ -4,22 +4,22 @@
  * Tests for the root component of the component detail page.
  */
 
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-import { flushPromises, mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import ComponentDetailRoot from './ComponentDetailRoot.vue'
+import ComponentDetailRoot from './ComponentDetailRoot.vue';
 
 // Mock dependencies
 vi.mock('vue-router', () => ({
   useRoute: () => ({
-    params: { id: '1' }
+    params: { id: '1' },
   }),
   useRouter: () => ({
-    push: vi.fn()
-  })
-}))
+    push: vi.fn(),
+  }),
+}));
 
 const mockComponent = {
   id: 1,
@@ -34,60 +34,60 @@ const mockComponent = {
   kangxiMeaning: 'water',
   radicalNameJapanese: 'さんずい',
   createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
-}
+  updatedAt: new Date().toISOString(),
+};
 
-const mockGetById = vi.fn()
-const mockUpdate = vi.fn()
-const mockRemove = vi.fn()
-const mockUpdateField = vi.fn()
+const mockGetById = vi.fn();
+const mockUpdate = vi.fn();
+const mockRemove = vi.fn();
+const mockUpdateField = vi.fn();
 
 // Forms repository mocks
-const mockFormGetByParentId = vi.fn()
-const mockFormCreate = vi.fn()
-const mockFormUpdate = vi.fn()
-const mockFormRemove = vi.fn()
-const mockFormReorder = vi.fn()
+const mockFormGetByParentId = vi.fn();
+const mockFormCreate = vi.fn();
+const mockFormUpdate = vi.fn();
+const mockFormRemove = vi.fn();
+const mockFormReorder = vi.fn();
 
 // Occurrence repository mocks
-const mockOccurrenceGetByComponentIdWithKanji = vi.fn()
-const mockOccurrenceCreate = vi.fn()
-const mockOccurrenceUpdate = vi.fn()
-const mockOccurrenceRemove = vi.fn()
-const mockOccurrenceReorder = vi.fn()
+const mockOccurrenceGetByComponentIdWithKanji = vi.fn();
+const mockOccurrenceCreate = vi.fn();
+const mockOccurrenceUpdate = vi.fn();
+const mockOccurrenceRemove = vi.fn();
+const mockOccurrenceReorder = vi.fn();
 
 // Grouping repository mocks
-const mockGroupingGetByParentId = vi.fn()
-const mockGroupingCreate = vi.fn()
-const mockGroupingUpdate = vi.fn()
-const mockGroupingRemove = vi.fn()
-const mockGroupingReorder = vi.fn()
-const mockGroupingGetMembers = vi.fn()
-const mockGroupingAddMember = vi.fn()
-const mockGroupingRemoveMember = vi.fn()
-const mockGroupingReorderMembers = vi.fn()
-const mockGroupingGetMembersByComponentId = vi.fn()
+const mockGroupingGetByParentId = vi.fn();
+const mockGroupingCreate = vi.fn();
+const mockGroupingUpdate = vi.fn();
+const mockGroupingRemove = vi.fn();
+const mockGroupingReorder = vi.fn();
+const mockGroupingGetMembers = vi.fn();
+const mockGroupingAddMember = vi.fn();
+const mockGroupingRemoveMember = vi.fn();
+const mockGroupingReorderMembers = vi.fn();
+const mockGroupingGetMembersByComponentId = vi.fn();
 
 vi.mock('@/api/component', () => ({
   useComponentRepository: () => ({
     getById: mockGetById,
     update: mockUpdate,
     remove: mockRemove,
-    updateField: mockUpdateField
+    updateField: mockUpdateField,
   }),
   useComponentFormRepository: () => ({
     getByParentId: mockFormGetByParentId,
     create: mockFormCreate,
     update: mockFormUpdate,
     remove: mockFormRemove,
-    reorder: mockFormReorder
+    reorder: mockFormReorder,
   }),
   useComponentOccurrenceRepository: () => ({
     getByComponentIdWithKanji: mockOccurrenceGetByComponentIdWithKanji,
     create: mockOccurrenceCreate,
     update: mockOccurrenceUpdate,
     remove: mockOccurrenceRemove,
-    reorder: mockOccurrenceReorder
+    reorder: mockOccurrenceReorder,
   }),
   useComponentGroupingRepository: () => ({
     getByParentId: mockGroupingGetByParentId,
@@ -99,53 +99,54 @@ vi.mock('@/api/component', () => ({
     addMember: mockGroupingAddMember,
     removeMember: mockGroupingRemoveMember,
     reorderMembers: mockGroupingReorderMembers,
-    getMembersByComponentId: mockGroupingGetMembersByComponentId
-  })
-}))
+    getMembersByComponentId: mockGroupingGetMembersByComponentId,
+  }),
+}));
 
-const mockKanjiGetById = vi.fn()
-const mockKanjiGetAll = vi.fn()
-const mockKanjiCreate = vi.fn()
+const mockKanjiGetById = vi.fn();
+const mockKanjiGetAll = vi.fn();
+const mockKanjiCreate = vi.fn();
 
 vi.mock('@/api/kanji', () => ({
   useKanjiRepository: () => ({
     getById: mockKanjiGetById,
     getAll: mockKanjiGetAll,
-    create: mockKanjiCreate
-  })
-}))
+    create: mockKanjiCreate,
+  }),
+}));
 
-const mockPositionTypeGetAll = vi.fn()
+const mockPositionTypeGetAll = vi.fn();
 
 vi.mock('@/api/position', () => ({
   usePositionTypeRepository: () => ({
-    getAll: mockPositionTypeGetAll
-  })
-}))
+    getAll: mockPositionTypeGetAll,
+  }),
+}));
 
-const mockSuccess = vi.fn()
-const mockError = vi.fn()
+const mockSuccess = vi.fn();
+const mockError = vi.fn();
 
 vi.mock('@/shared/composables', () => ({
+  useDatabase: () => ({ transaction: <T>(fn: () => T): T => fn() }),
   useToast: () => ({
     success: mockSuccess,
     error: mockError,
-    toasts: ref([])
-  })
-}))
+    toasts: ref([]),
+  }),
+}));
 
 describe('ComponentDetailRoot', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockGetById.mockReturnValue(mockComponent)
-    mockKanjiGetAll.mockReturnValue([])
-    mockKanjiGetById.mockReturnValue(null)
-    mockFormGetByParentId.mockReturnValue([])
-    mockOccurrenceGetByComponentIdWithKanji.mockReturnValue([])
-    mockPositionTypeGetAll.mockReturnValue([])
-    mockGroupingGetByParentId.mockReturnValue([])
-    mockGroupingGetMembersByComponentId.mockReturnValue(new Map())
-  })
+    vi.clearAllMocks();
+    mockGetById.mockReturnValue(mockComponent);
+    mockKanjiGetAll.mockReturnValue([]);
+    mockKanjiGetById.mockReturnValue(null);
+    mockFormGetByParentId.mockReturnValue([]);
+    mockOccurrenceGetByComponentIdWithKanji.mockReturnValue([]);
+    mockPositionTypeGetAll.mockReturnValue([]);
+    mockGroupingGetByParentId.mockReturnValue([]);
+    mockGroupingGetMembersByComponentId.mockReturnValue(new Map());
+  });
 
   it('renders loading state initially then component data', async () => {
     const wrapper = mount(ComponentDetailRoot, {
@@ -158,24 +159,20 @@ describe('ComponentDetailRoot', () => {
           ComponentDetailSectionGroupings: true,
           ComponentDetailSectionOccurrences: true,
           ComponentDetailSectionActions: true,
-          BaseSpinner: true
-        }
-      }
-    })
+          BaseSpinner: true,
+        },
+      },
+    });
 
-    await flushPromises()
+    await flushPromises();
 
-    expect(mockGetById).toHaveBeenCalledWith(1)
-    expect(
-      wrapper.findComponent({ name: 'ComponentDetailSectionHeadline' }).exists()
-    ).toBe(true)
-    expect(
-      wrapper.findComponent({ name: 'ComponentDetailSectionActions' }).exists()
-    ).toBe(true)
-  })
+    expect(mockGetById).toHaveBeenCalledWith(1);
+    expect(wrapper.findComponent({ name: 'ComponentDetailSectionHeadline' }).exists()).toBe(true);
+    expect(wrapper.findComponent({ name: 'ComponentDetailSectionActions' }).exists()).toBe(true);
+  });
 
   it('renders error state when component not found', async () => {
-    mockGetById.mockReturnValue(null)
+    mockGetById.mockReturnValue(null);
 
     const wrapper = mount(ComponentDetailRoot, {
       global: {
@@ -187,15 +184,16 @@ describe('ComponentDetailRoot', () => {
           ComponentDetailSectionGroupings: true,
           ComponentDetailSectionOccurrences: true,
           ComponentDetailSectionActions: true,
-          BaseSpinner: true
-        }
-      }
-    })
+          BaseSpinner: true,
+        },
+      },
+    });
 
-    await flushPromises()
+    await flushPromises();
 
-    expect(wrapper.text()).toContain('not found')
-  })
+    expect(wrapper.text()).toContain('not found');
+    expect(wrapper.find('[role="alert"]').text()).toContain('not found');
+  });
 
   it('fetches component by ID from route params', async () => {
     mount(ComponentDetailRoot, {
@@ -208,15 +206,15 @@ describe('ComponentDetailRoot', () => {
           ComponentDetailSectionGroupings: true,
           ComponentDetailSectionOccurrences: true,
           ComponentDetailSectionActions: true,
-          BaseSpinner: true
-        }
-      }
-    })
+          BaseSpinner: true,
+        },
+      },
+    });
 
-    await flushPromises()
+    await flushPromises();
 
-    expect(mockGetById).toHaveBeenCalledWith(1)
-  })
+    expect(mockGetById).toHaveBeenCalledWith(1);
+  });
 
   it('renders groupings section in component tree', async () => {
     const wrapper = mount(ComponentDetailRoot, {
@@ -229,18 +227,14 @@ describe('ComponentDetailRoot', () => {
           ComponentDetailSectionGroupings: true,
           ComponentDetailSectionOccurrences: true,
           ComponentDetailSectionActions: true,
-          BaseSpinner: true
-        }
-      }
-    })
+          BaseSpinner: true,
+        },
+      },
+    });
 
-    await flushPromises()
+    await flushPromises();
 
-    expect(
-      wrapper
-        .findComponent({ name: 'ComponentDetailSectionGroupings' })
-        .exists()
-    ).toBe(true)
-    expect(mockGroupingGetByParentId).toHaveBeenCalledWith(1)
-  })
-})
+    expect(wrapper.findComponent({ name: 'ComponentDetailSectionGroupings' }).exists()).toBe(true);
+    expect(mockGroupingGetByParentId).toHaveBeenCalledWith(1);
+  });
+});

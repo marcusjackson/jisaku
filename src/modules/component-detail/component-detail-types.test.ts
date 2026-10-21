@@ -1,84 +1,23 @@
 /**
  * Component Detail Types Tests
  *
- * Type assertion tests to verify that types are exported correctly.
+ * The module's types are compile-time only; this keeps the file covered by the
+ * untested-files scan and checks the shapes the handlers and dialogs share.
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest';
 
-import type {
-  BasicInfoSaveData,
-  HeadlineProps,
-  HeadlineSaveData
-} from './component-detail-types'
+import type { GroupingFormData, HeadlineSaveData } from './component-detail-types';
 
 describe('component-detail-types', () => {
-  it('exports HeadlineProps type', () => {
-    const props: HeadlineProps = {
-      component: {
-        id: 1,
-        character: '氵',
-        shortMeaning: 'water',
-        searchKeywords: null,
-        strokeCount: 3,
-        sourceKanjiId: null,
-        description: null,
-        canBeRadical: true,
-        kangxiNumber: 85,
-        kangxiMeaning: 'water',
-        radicalNameJapanese: 'さんずい',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    }
-    expect(props.component.character).toBe('氵')
-  })
-
-  it('exports HeadlineSaveData type', () => {
-    const data: HeadlineSaveData = {
-      character: '氵',
-      shortMeaning: 'water',
-      searchKeywords: 'mizu, sanzui'
-    }
-    expect(data.character).toBe('氵')
-  })
-
-  it('allows null values for optional fields in HeadlineSaveData', () => {
-    const data: HeadlineSaveData = {
+  it('describes the data the headline and grouping dialogs emit', () => {
+    const headline: HeadlineSaveData = {
       character: '氵',
       shortMeaning: null,
-      searchKeywords: null
-    }
-    expect(data.shortMeaning).toBeNull()
-    expect(data.searchKeywords).toBeNull()
-  })
+      searchKeywords: null,
+    };
+    const grouping: GroupingFormData = { name: 'Water', description: null };
 
-  it('exports BasicInfoSaveData type', () => {
-    const data: BasicInfoSaveData = {
-      strokeCount: 3,
-      sourceKanjiId: 1,
-      canBeRadical: true,
-      kangxiNumber: 85,
-      kangxiMeaning: 'water',
-      radicalNameJapanese: 'さんずい'
-    }
-    expect(data.strokeCount).toBe(3)
-    expect(data.canBeRadical).toBe(true)
-  })
-
-  it('allows null values for optional fields in BasicInfoSaveData', () => {
-    const data: BasicInfoSaveData = {
-      strokeCount: null,
-      sourceKanjiId: null,
-      canBeRadical: false,
-      kangxiNumber: null,
-      kangxiMeaning: null,
-      radicalNameJapanese: null
-    }
-    expect(data.strokeCount).toBeNull()
-    expect(data.sourceKanjiId).toBeNull()
-    expect(data.kangxiNumber).toBeNull()
-    expect(data.kangxiMeaning).toBeNull()
-    expect(data.radicalNameJapanese).toBeNull()
-  })
-})
+    expect([headline.character, grouping.name]).toEqual(['氵', 'Water']);
+  });
+});

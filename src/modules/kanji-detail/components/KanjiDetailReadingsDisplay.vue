@@ -3,7 +3,8 @@
  * KanjiDetailReadingsDisplay
  *
  * Compact display of kanji readings grouped by level.
- * Format: 「音」エイ・オウ  [中] アイ  [外] アオ
+ * Format: a type badge (音/訓), then one group per level that has readings:
+ * the readings joined with ・, preceded by a `[level]` marker for every level except 小.
  */
 
 import { computed } from 'vue'
@@ -63,71 +64,33 @@ const hasKunReadings = computed(() => props.kunReadings.length > 0)
 <template>
   <div class="readings-display">
     <!-- On-yomi line -->
-    <fieldset
-      v-if="hasOnReadings"
-      class="readings-line"
-      data-testid="on-readings-display"
-    >
-      <legend class="readings-legend">On readings</legend>
+    <fieldset v-if="hasOnReadings" class="readings-line" data-testid="on-readings-display">
+      <legend class="sr-only">On readings</legend>
       <span class="readings-type-badge">音</span>
-      <span
-        v-for="(group, idx) in groupedOnReadings"
-        :key="group.level"
-        class="readings-group"
-      >
-        <span
-          v-if="group.level !== '小'"
-          class="readings-level-marker"
-          >[{{ group.level }}]</span
-        >
-        <span class="readings-text">{{ group.readings.join('・') }}</span>
-        <span
-          v-if="idx < groupedOnReadings.length - 1"
-          class="readings-separator"
-        />
+      <span v-for="(group, idx) in groupedOnReadings" :key="group.level" class="readings-group">
+        <span v-if="group.level !== '小'" class="readings-level-marker">[{{ group.level }}]</span>
+        <span class="readings-text" lang="ja">{{ group.readings.join('・') }}</span>
+        <span v-if="idx < groupedOnReadings.length - 1" class="readings-separator" />
       </span>
     </fieldset>
-    <fieldset
-      v-else
-      class="readings-line readings-empty"
-      data-testid="on-readings-empty"
-    >
-      <legend class="readings-legend">On readings</legend>
+    <fieldset v-else class="readings-line readings-empty" data-testid="on-readings-empty">
+      <legend class="sr-only">On readings</legend>
       <span class="readings-type-badge">音</span>
       <span class="readings-none">—</span>
     </fieldset>
 
     <!-- Kun-yomi line -->
-    <fieldset
-      v-if="hasKunReadings"
-      class="readings-line"
-      data-testid="kun-readings-display"
-    >
-      <legend class="readings-legend">Kun readings</legend>
+    <fieldset v-if="hasKunReadings" class="readings-line" data-testid="kun-readings-display">
+      <legend class="sr-only">Kun readings</legend>
       <span class="readings-type-badge">訓</span>
-      <span
-        v-for="(group, idx) in groupedKunReadings"
-        :key="group.level"
-        class="readings-group"
-      >
-        <span
-          v-if="group.level !== '小'"
-          class="readings-level-marker"
-          >[{{ group.level }}]</span
-        >
-        <span class="readings-text">{{ group.readings.join('・') }}</span>
-        <span
-          v-if="idx < groupedKunReadings.length - 1"
-          class="readings-separator"
-        />
+      <span v-for="(group, idx) in groupedKunReadings" :key="group.level" class="readings-group">
+        <span v-if="group.level !== '小'" class="readings-level-marker">[{{ group.level }}]</span>
+        <span class="readings-text" lang="ja">{{ group.readings.join('・') }}</span>
+        <span v-if="idx < groupedKunReadings.length - 1" class="readings-separator" />
       </span>
     </fieldset>
-    <fieldset
-      v-else
-      class="readings-line readings-empty"
-      data-testid="kun-readings-empty"
-    >
-      <legend class="readings-legend">Kun readings</legend>
+    <fieldset v-else class="readings-line readings-empty" data-testid="kun-readings-empty">
+      <legend class="sr-only">Kun readings</legend>
       <span class="readings-type-badge">訓</span>
       <span class="readings-none">—</span>
     </fieldset>
@@ -150,10 +113,6 @@ const hasKunReadings = computed(() => props.kunReadings.length > 0)
   padding: 0;
   border: none;
   line-height: var(--line-height-reading);
-}
-
-.readings-legend {
-  display: none;
 }
 
 .readings-type-badge {
@@ -185,6 +144,7 @@ const hasKunReadings = computed(() => props.kunReadings.length > 0)
 }
 
 .readings-text {
+  font-family: var(--font-family-kanji);
   font-size: var(--font-size-lg);
 }
 

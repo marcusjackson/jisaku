@@ -14,6 +14,8 @@ import { BaseButton } from '@/base/components'
 
 import { SharedSection } from '@/shared/components'
 
+import { buildRoute, ROUTES } from '@/router/routes'
+
 import ComponentDetailDialogBasicInfo from './ComponentDetailDialogBasicInfo.vue'
 
 import type { BasicInfoSaveData } from '../component-detail-types'
@@ -26,10 +28,8 @@ const props = defineProps<{
   sourceKanji: Kanji | null
   /** All kanji for source kanji selection in dialog */
   kanjiOptions: Kanji[]
-}>()
-
-const emit = defineEmits<{
-  save: [data: BasicInfoSaveData]
+  /** Saves basic info; returns whether it saved, so the dialog can close */
+  save: (data: BasicInfoSaveData) => boolean
 }>()
 
 const isDialogOpen = ref(false)
@@ -52,16 +52,12 @@ const canBeRadicalDisplay = computed(() => {
 })
 
 function handleSave(data: BasicInfoSaveData): void {
-  emit('save', data)
-  isDialogOpen.value = false
+  if (props.save(data)) isDialogOpen.value = false
 }
 </script>
 
 <template>
-  <SharedSection
-    test-id="component-detail-basic-info"
-    title="Basic Information"
-  >
+  <SharedSection test-id="component-detail-basic-info" title="Basic Information">
     <template #actions>
       <BaseButton
         aria-label="Edit basic info"
@@ -78,22 +74,16 @@ function handleSave(data: BasicInfoSaveData): void {
       <div class="component-basic-info-grid">
         <div class="component-basic-info-item">
           <span class="component-basic-info-label">Strokes</span>
-          <span
-            class="component-basic-info-value"
-            data-testid="basic-info-stroke-count"
-          >
+          <span class="component-basic-info-value" data-testid="basic-info-stroke-count">
             {{ strokeCountDisplay }}
           </span>
         </div>
         <div class="component-basic-info-item">
           <span class="component-basic-info-label">Source Kanji</span>
-          <span
-            class="component-basic-info-value"
-            data-testid="basic-info-source-kanji"
-          >
+          <span class="component-basic-info-value" data-testid="basic-info-source-kanji">
             <RouterLink
               v-if="sourceKanji"
-              :to="`/kanji/${sourceKanji.id}`"
+              :to="buildRoute(ROUTES.KANJI_DETAIL, { id: String(sourceKanji.id) })"
             >
               {{ sourceKanjiDisplay }}
             </RouterLink>
@@ -102,10 +92,7 @@ function handleSave(data: BasicInfoSaveData): void {
         </div>
         <div class="component-basic-info-item">
           <span class="component-basic-info-label">Can be Radical</span>
-          <span
-            class="component-basic-info-value"
-            data-testid="basic-info-can-be-radical"
-          >
+          <span class="component-basic-info-value" data-testid="basic-info-can-be-radical">
             {{ canBeRadicalDisplay }}
           </span>
         </div>
@@ -117,19 +104,13 @@ function handleSave(data: BasicInfoSaveData): void {
         <div class="component-basic-info-grid">
           <div class="component-basic-info-item">
             <span class="component-basic-info-label">Kangxi Number</span>
-            <span
-              class="component-basic-info-value"
-              data-testid="basic-info-kangxi-number"
-            >
+            <span class="component-basic-info-value" data-testid="basic-info-kangxi-number">
               {{ component.kangxiNumber ?? '—' }}
             </span>
           </div>
           <div class="component-basic-info-item">
             <span class="component-basic-info-label">Kangxi Meaning</span>
-            <span
-              class="component-basic-info-value"
-              data-testid="basic-info-kangxi-meaning"
-            >
+            <span class="component-basic-info-value" data-testid="basic-info-kangxi-meaning">
               {{ component.kangxiMeaning ?? '—' }}
             </span>
           </div>
@@ -138,6 +119,7 @@ function handleSave(data: BasicInfoSaveData): void {
             <span
               class="component-basic-info-value"
               data-testid="basic-info-radical-name"
+              lang="ja"
             >
               {{ component.radicalNameJapanese ?? '—' }}
             </span>

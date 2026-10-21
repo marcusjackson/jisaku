@@ -7,7 +7,7 @@
  */
 
 import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 
 import { KENTEI_LABELS } from '../kanji-list-types'
 
@@ -36,21 +36,20 @@ const classificationLabel = computed(() => {
   }
   return abbreviations[name] ?? name
 })
+// Carry the list's filters to the detail page so its back link can restore them
+const route = useRoute()
 </script>
 
 <template>
   <RouterLink
     class="kanji-list-card"
     data-testid="kanji-list-card"
-    :to="`/kanji/${kanji.id}`"
+    :to="{ path: `/kanji/${kanji.id}`, query: route.query }"
   >
-    <span class="kanji-list-card-character">{{ kanji.character }}</span>
+    <span class="kanji-list-card-character" lang="ja">{{ kanji.character }}</span>
 
     <div class="kanji-list-card-info">
-      <span
-        v-if="kanji.shortMeaning"
-        class="kanji-list-card-meaning"
-      >
+      <span v-if="kanji.shortMeaning" class="kanji-list-card-meaning">
         {{ kanji.shortMeaning }}
       </span>
 
@@ -61,10 +60,7 @@ const classificationLabel = computed(() => {
         >
           {{ classificationLabel }}
         </span>
-        <span
-          v-if="kenteiLabel"
-          class="kanji-list-card-badge kanji-list-card-badge-kentei"
-        >
+        <span v-if="kenteiLabel" class="kanji-list-card-badge kanji-list-card-badge-kentei">
           {{ kenteiLabel }}
         </span>
       </div>
@@ -78,7 +74,7 @@ const classificationLabel = computed(() => {
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-2);
-  padding: var(--spacing-md);
+  padding: var(--card-padding);
   border: var(--card-border);
   border-radius: var(--card-radius);
   background-color: var(--card-bg);

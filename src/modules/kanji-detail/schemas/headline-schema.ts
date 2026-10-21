@@ -2,14 +2,18 @@
  * Validation schema for kanji headline edit form
  */
 
-import { z } from 'zod'
+import { z } from 'zod';
 
-import { optionalString, singleCharacterSchema } from '@/shared/validation'
+import {
+  searchKeywordsSchema,
+  shortMeaningSchema,
+  singleCharacterSchema,
+} from '@/shared/validation';
 
 export const kanjiHeadlineSchema = z.object({
   character: singleCharacterSchema,
-  shortMeaning: optionalString(100),
-  searchKeywords: optionalString(500)
-})
+  shortMeaning: shortMeaningSchema,
+  searchKeywords: searchKeywordsSchema,
+});
 
-export type KanjiHeadlineFormData = z.infer<typeof kanjiHeadlineSchema>
+export type KanjiHeadlineFormData = z.infer<typeof kanjiHeadlineSchema>;

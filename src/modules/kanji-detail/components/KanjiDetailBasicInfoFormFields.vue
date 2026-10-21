@@ -51,21 +51,9 @@ const handleStrokeInput = (val: string | number | undefined) => {
       type="number"
       @update:model-value="handleStrokeInput"
     />
-    <BaseSelect
-      v-model="jlptLevel"
-      label="JLPT Level"
-      :options="JLPT_OPTIONS"
-    />
-    <BaseSelect
-      v-model="joyoLevel"
-      label="Jōyō Grade"
-      :options="JOYO_OPTIONS"
-    />
-    <BaseSelect
-      v-model="kenteiLevel"
-      label="Kentei Level"
-      :options="KENTEI_OPTIONS"
-    />
+    <BaseSelect v-model="jlptLevel" label="JLPT Level" :options="JLPT_OPTIONS" />
+    <BaseSelect v-model="joyoLevel" label="Jōyō Grade" :options="JOYO_OPTIONS" />
+    <BaseSelect v-model="kenteiLevel" label="Kentei Level" :options="KENTEI_OPTIONS" />
     <KanjiDetailRadicalInput
       v-bind="{
         ...(radicalValue !== undefined ? { radicalValue } : {}),

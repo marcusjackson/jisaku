@@ -48,18 +48,9 @@ function handlePersonalSave(value: string | null): void {
 
 <template>
   <div class="notes-group">
-    <KanjiDetailSectionEtymologyNotes
-      :notes="notesEtymology"
-      @save="handleEtymologySave"
-    />
-    <KanjiDetailSectionEducationNotes
-      :notes="notesEducation"
-      @save="handleEducationSave"
-    />
-    <KanjiDetailSectionPersonalNotes
-      :notes="notesPersonal"
-      @save="handlePersonalSave"
-    />
+    <KanjiDetailSectionEtymologyNotes :notes="notesEtymology" @save="handleEtymologySave" />
+    <KanjiDetailSectionEducationNotes :notes="notesEducation" @save="handleEducationSave" />
+    <KanjiDetailSectionPersonalNotes :notes="notesPersonal" @save="handlePersonalSave" />
   </div>
 </template>
 

@@ -6,7 +6,7 @@
  * @internal
  */
 
-import type { ComponentGroupingMember } from './component-types'
+import type { ComponentGroupingMember } from './component-types';
 
 // ============================================================================
 // Row Type
@@ -14,10 +14,10 @@ import type { ComponentGroupingMember } from './component-types'
 
 /** Row type for component_grouping_members table */
 export interface ComponentGroupingMemberRow {
-  id: number
-  grouping_id: number
-  occurrence_id: number
-  display_order: number
+  id: number;
+  grouping_id: number;
+  occurrence_id: number;
+  display_order: number;
 }
 
 // ============================================================================
@@ -25,14 +25,12 @@ export interface ComponentGroupingMemberRow {
 // ============================================================================
 
 /** Map a database row to a ComponentGroupingMember entity */
-export function mapGroupingMemberRow(
-  row: Record<string, unknown>
-): ComponentGroupingMember {
-  const r = row as unknown as ComponentGroupingMemberRow
+export function mapGroupingMemberRow(row: Record<string, unknown>): ComponentGroupingMember {
+  const r = row as unknown as ComponentGroupingMemberRow;
   return {
     id: r.id,
     groupingId: r.grouping_id,
     occurrenceId: r.occurrence_id,
-    displayOrder: r.display_order
-  }
+    displayOrder: r.display_order,
+  };
 }

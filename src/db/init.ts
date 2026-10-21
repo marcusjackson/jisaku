@@ -8,16 +8,12 @@
  * - Attaching lifecycle listeners for persistence
  */
 
-import {
-  loadFromIndexedDB,
-  saveToIndexedDB,
-  setDatabaseRef,
-  setOnPersistError
-} from './indexeddb'
-import { attachLifecycleListeners } from './lifecycle'
-import { runMigrations } from './migrations'
+import { exportDatabase } from './export-database';
+import { loadFromIndexedDB, saveToIndexedDB, setDatabaseRef, setOnPersistError } from './indexeddb';
+import { attachLifecycleListeners } from './lifecycle';
+import { runMigrations } from './migrations';
 
-import type { Database } from 'sql.js'
+import type { Database } from 'sql.js';
 
 /**
  * Initialize the database
@@ -27,88 +23,85 @@ import type { Database } from 'sql.js'
  *   user-visible notification without the db layer depending on Vue.
  * @returns Initialized sql.js Database instance
  */
-export async function initializeDatabase(
-  onPersistError?: (err: Error) => void
-): Promise<Database> {
+export async function initializeDatabase(onPersistError?: (err: Error) => void): Promise<Database> {
   // Dynamic import for sql.js to ensure proper ESM loading
-  const { default: initSqlJs } = await import('sql.js')
+  const { default: initSqlJs } = await import('sql.js');
 
   // Initialize sql.js
   const SQL = await initSqlJs({
     // Load WASM from public directory (self-hosted for reliability)
     // Use BASE_URL to ensure correct path on GitHub Pages with /jisaku/ base
-    locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`
-  })
+    locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`,
+  });
 
   // Try to load existing database from IndexedDB
-  const existingData = await loadFromIndexedDB()
+  const existingData = await loadFromIndexedDB();
 
-  let db: Database
+  let db: Database;
   if (existingData) {
     // Load existing database
-    db = new SQL.Database(existingData)
+    db = new SQL.Database(existingData);
   } else {
     // Create new database
-    db = new SQL.Database()
+    db = new SQL.Database();
   }
 
   // Enable foreign key enforcement (disabled by default in SQLite per-connection)
-  db.run('PRAGMA foreign_keys = ON')
+  db.run('PRAGMA foreign_keys = ON');
 
   // Run any pending migrations
-  runMigrations(db)
+  runMigrations(db);
 
   // Set database reference for persistence operations
-  setDatabaseRef(db)
+  setDatabaseRef(db);
 
   // Register error callback for debounced persist operations
   if (onPersistError) {
-    setOnPersistError(onPersistError)
+    setOnPersistError(onPersistError);
   }
 
   // Persist after migrations
-  await saveToIndexedDB(db.export())
+  await saveToIndexedDB(exportDatabase(db));
 
   // Attach lifecycle listeners for automatic persistence
-  attachLifecycleListeners(onPersistError)
+  attachLifecycleListeners(onPersistError);
 
-  return db
+  return db;
 }
 
 /**
- * Replace database with imported data
+ * Open and migrate imported data without touching the live database.
  *
- * Used for database import functionality.
+ * The caller owns the swap: this neither sets the persistence reference nor
+ * writes to IndexedDB, so a file that fails to open or migrate leaves the
+ * running app exactly as it was.
  *
  * @param data - Binary database data to import
- * @returns New database instance
+ * @returns New, migrated database instance
  */
-export async function replaceDatabaseWithImported(
-  data: Uint8Array
-): Promise<Database> {
+export async function replaceDatabaseWithImported(data: Uint8Array): Promise<Database> {
   // Dynamic import for sql.js to ensure proper ESM loading
-  const { default: initSqlJs } = await import('sql.js')
+  const { default: initSqlJs } = await import('sql.js');
 
   // Initialize sql.js
   const SQL = await initSqlJs({
     // Use BASE_URL to ensure correct path on GitHub Pages with /jisaku/ base
-    locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`
-  })
+    locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`,
+  });
 
   // Create new database from imported data
-  const newDb = new SQL.Database(data)
+  const newDb = new SQL.Database(data);
 
-  // Enable foreign key enforcement (disabled by default in SQLite per-connection)
-  newDb.run('PRAGMA foreign_keys = ON')
+  try {
+    // Enable foreign key enforcement (disabled by default in SQLite per-connection)
+    newDb.run('PRAGMA foreign_keys = ON');
 
-  // Run migrations to ensure schema is up to date
-  runMigrations(newDb)
+    // Run migrations to ensure schema is up to date
+    runMigrations(newDb);
+  } catch (err) {
+    newDb.close();
+    throw err;
+  }
 
-  // Update database reference for persistence
-  setDatabaseRef(newDb)
-
-  // Persist to IndexedDB
-  await saveToIndexedDB(newDb.export())
-
-  return newDb
+  return newDb;
 }

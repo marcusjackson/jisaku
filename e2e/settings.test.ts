@@ -4,485 +4,410 @@
  * Tests for the settings page functionality.
  */
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from '@playwright/test';
 
-import { VIEWPORTS } from './helpers/test-constants'
+import { VIEWPORTS } from './helpers/test-constants';
+
+import type { Locator, Page } from '@playwright/test';
+
+/** Visible names of the section's list items that contain `marker`, in display order. */
+async function orderedNames(section: Locator, marker: string): Promise<string[]> {
+  const texts = await section.getByRole('listitem').allTextContents();
+  return texts.map((text) => new RegExp(`${marker}\\w*`).exec(text)?.[0] ?? '').filter(Boolean);
+}
+
+/** Reloads /settings and expands the section whose toggle matches `toggleName`. */
+async function reloadAndExpand(page: Page, testId: string, toggleName: RegExp): Promise<Locator> {
+  await page.reload({ waitUntil: 'networkidle' });
+  const section = page.getByTestId(testId);
+  await section.getByRole('button', { name: toggleName }).click();
+  await expect(section.getByRole('listitem').first()).toBeVisible();
+  return section;
+}
 
 test.describe('Settings Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-    await page.getByRole('link', { name: /settings/i }).click()
-    await expect(page).toHaveURL('/settings')
-  })
+    await page.goto('/');
+    await page.getByRole('link', { name: /settings/i }).click();
+    await expect(page).toHaveURL('/settings');
+  });
 
   test('displays page title and sections', async ({ page }) => {
-    await expect(
-      page.getByRole('heading', { level: 1, name: /settings/i })
-    ).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: /settings/i })).toBeVisible();
 
-    await expect(
-      page.getByRole('heading', { level: 2, name: /appearance/i })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: /position types/i })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: /classification types/i })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: /data management/i })
-    ).toBeVisible()
-  })
+    await expect(page.getByRole('heading', { level: 2, name: /appearance/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /position types/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /classification types/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /data management/i })).toBeVisible();
+  });
 
   test('toggles theme between light and dark', async ({ page }) => {
-    const htmlElement = page.locator('html')
+    const htmlElement = page.locator('html');
 
-    const initialTheme = await htmlElement.getAttribute('data-theme')
+    const initialTheme = await htmlElement.getAttribute('data-theme');
 
-    const themeSwitch = page
-      .getByTestId('settings-appearance')
-      .getByRole('switch')
-    await themeSwitch.click()
+    const themeSwitch = page.getByTestId('settings-appearance').getByRole('switch');
+    await themeSwitch.click();
 
-    const newTheme = await htmlElement.getAttribute('data-theme')
+    const newTheme = await htmlElement.getAttribute('data-theme');
 
     if (initialTheme === 'dark') {
-      expect(newTheme).toBeNull()
+      expect(newTheme).toBeNull();
     } else {
-      expect(newTheme).toBe('dark')
+      expect(newTheme).toBe('dark');
     }
-  })
+  });
 
   test('displays app version', async ({ page }) => {
-    await expect(page.getByText('App Version')).toBeVisible()
-    await expect(page.getByText(/\d+\.\d+\.\d+/)).toBeVisible()
-  })
+    await expect(page.getByText('App Version')).toBeVisible();
+    await expect(page.getByText(/\d+\.\d+\.\d+/)).toBeVisible();
+  });
 
   test('expands and collapses collapsible sections', async ({ page }) => {
-    const databaseSection = page.getByTestId('settings-database')
+    const databaseSection = page.getByTestId('settings-database');
 
-    await expect(databaseSection.getByText('Export Database')).not.toBeVisible()
+    await expect(databaseSection.getByText('Export Database')).not.toBeVisible();
 
-    await databaseSection
-      .getByRole('button', { name: /data management/i })
-      .click()
+    await databaseSection.getByRole('button', { name: /data management/i }).click();
 
-    await expect(databaseSection.getByText('Export Database')).toBeVisible()
+    await expect(databaseSection.getByText('Export Database')).toBeVisible();
 
-    await databaseSection.getByRole('button', { name: /collapse/i }).click()
+    await databaseSection.getByRole('button', { name: /collapse/i }).click();
 
-    await expect(databaseSection.getByText('Export Database')).not.toBeVisible()
-  })
+    await expect(databaseSection.getByText('Export Database')).not.toBeVisible();
+  });
 
-  test('shows position types add button after expanding section', async ({
-    page
-  }) => {
-    const positionSection = page.getByTestId('settings-position-types')
+  test('shows position types add button after expanding section', async ({ page }) => {
+    const positionSection = page.getByTestId('settings-position-types');
 
-    await positionSection
-      .getByRole('button', { name: /position types/i })
-      .click()
+    await positionSection.getByRole('button', { name: /position types/i }).click();
 
-    await expect(
-      positionSection.getByRole('button', { name: /add position type/i })
-    ).toBeVisible()
-  })
+    await expect(positionSection.getByRole('button', { name: /add position type/i })).toBeVisible();
+  });
 
-  test('shows classification types add button after expanding section', async ({
-    page
-  }) => {
-    const classificationSection = page.getByTestId(
-      'settings-classification-types'
-    )
+  test('shows classification types add button after expanding section', async ({ page }) => {
+    const classificationSection = page.getByTestId('settings-classification-types');
 
-    await classificationSection
-      .getByRole('button', { name: /classification types/i })
-      .click()
+    await classificationSection.getByRole('button', { name: /classification types/i }).click();
 
     await expect(
       classificationSection.getByRole('button', {
-        name: /add classification type/i
+        name: /add classification type/i,
       })
-    ).toBeVisible()
-  })
+    ).toBeVisible();
+  });
 
   test('database section has export/import/clear buttons', async ({ page }) => {
-    const databaseSection = page.getByTestId('settings-database')
+    const databaseSection = page.getByTestId('settings-database');
 
-    await databaseSection
-      .getByRole('button', { name: /data management/i })
-      .click()
+    await databaseSection.getByRole('button', { name: /data management/i }).click();
 
-    await expect(
-      databaseSection.getByRole('button', { name: /^export$/i })
-    ).toBeVisible()
-    await expect(
-      databaseSection.getByRole('button', { name: /^import$/i })
-    ).toBeVisible()
-    await expect(
-      databaseSection.getByRole('button', { name: /clear all data/i })
-    ).toBeVisible()
-  })
-})
+    await expect(databaseSection.getByRole('button', { name: /^export$/i })).toBeVisible();
+    await expect(databaseSection.getByRole('button', { name: /^import$/i })).toBeVisible();
+    await expect(databaseSection.getByRole('button', { name: /clear all data/i })).toBeVisible();
+  });
+});
 
 test.describe('Classification Types', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/settings')
-    await expect(
-      page.getByRole('heading', { level: 1, name: /settings/i })
-    ).toBeVisible()
+    await page.goto('/settings');
+    await expect(page.getByRole('heading', { level: 1, name: /settings/i })).toBeVisible();
 
     // Expand the Classification Types section
     await page
       .getByTestId('settings-classification-types')
       .getByRole('button', { name: /classification types/i })
-      .click()
+      .click();
 
     await expect(
       page
         .getByTestId('settings-classification-types')
         .getByRole('button', { name: /add classification type/i })
-    ).toBeVisible()
-  })
+    ).toBeVisible();
+  });
 
   test('creates a new classification type', async ({ page }) => {
-    const section = page.getByTestId('settings-classification-types')
+    const section = page.getByTestId('settings-classification-types');
 
-    await section
-      .getByRole('button', { name: /add classification type/i })
-      .click()
+    await section.getByRole('button', { name: /add classification type/i }).click();
 
-    const dialog = page.getByRole('dialog')
-    await expect(dialog).toBeVisible()
-    await expect(
-      dialog.getByRole('heading', { name: /add classification type/i })
-    ).toBeVisible()
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: /add classification type/i })).toBeVisible();
 
-    await dialog
-      .getByRole('textbox', { name: /type name/i })
-      .fill('e2e_test_type')
-    await dialog.getByRole('textbox', { name: /japanese name/i }).fill('テスト')
-    await dialog.getByRole('button', { name: /^create$/i }).click()
+    await dialog.getByRole('textbox', { name: /type name/i }).fill('e2e_test_type');
+    await dialog.getByRole('textbox', { name: /japanese name/i }).fill('テスト');
+    await dialog.getByRole('button', { name: /^create$/i }).click();
 
-    await expect(dialog).not.toBeVisible()
-    await expect(section.getByText('e2e_test_type')).toBeVisible()
-  })
+    await expect(dialog).not.toBeVisible();
+    await expect(section.getByText('e2e_test_type')).toBeVisible();
+  });
 
   test('edits an existing classification type', async ({ page }) => {
-    const section = page.getByTestId('settings-classification-types')
+    const section = page.getByTestId('settings-classification-types');
 
     // Create a type to edit
-    await section
-      .getByRole('button', { name: /add classification type/i })
-      .click()
-    const createDialog = page.getByRole('dialog')
-    await createDialog
-      .getByRole('textbox', { name: /type name/i })
-      .fill('e2e_edit_before')
-    await createDialog.getByRole('button', { name: /^create$/i }).click()
-    await expect(createDialog).not.toBeVisible()
+    await section.getByRole('button', { name: /add classification type/i }).click();
+    const createDialog = page.getByRole('dialog');
+    await createDialog.getByRole('textbox', { name: /type name/i }).fill('e2e_edit_before');
+    await createDialog.getByRole('button', { name: /^create$/i }).click();
+    await expect(createDialog).not.toBeVisible();
 
     // Edit the created type
-    const item = section
-      .getByRole('listitem')
-      .filter({ hasText: 'e2e_edit_before' })
-    await item.getByRole('button', { name: /^edit$/i }).click()
+    const item = section.getByRole('listitem').filter({ hasText: 'e2e_edit_before' });
+    await item.getByRole('button', { name: /^edit$/i }).click();
 
-    const editDialog = page.getByRole('dialog')
+    const editDialog = page.getByRole('dialog');
     await expect(
       editDialog.getByRole('heading', { name: /edit classification type/i })
-    ).toBeVisible()
+    ).toBeVisible();
 
-    const nameInput = editDialog.getByRole('textbox', { name: /type name/i })
-    await nameInput.clear()
-    await nameInput.fill('e2e_edit_after')
-    await editDialog.getByRole('button', { name: /^save$/i }).click()
+    const nameInput = editDialog.getByRole('textbox', { name: /type name/i });
+    await nameInput.clear();
+    await nameInput.fill('e2e_edit_after');
+    await editDialog.getByRole('button', { name: /^save$/i }).click();
 
-    await expect(editDialog).not.toBeVisible()
-    await expect(section.getByText('e2e_edit_after')).toBeVisible()
-    await expect(section.getByText('e2e_edit_before')).not.toBeVisible()
-  })
+    await expect(editDialog).not.toBeVisible();
+    await expect(section.getByText('e2e_edit_after')).toBeVisible();
+    await expect(section.getByText('e2e_edit_before')).not.toBeVisible();
+  });
 
-  test('shows standard confirmation when deleting unused type', async ({
-    page
-  }) => {
-    const section = page.getByTestId('settings-classification-types')
+  test('shows standard confirmation when deleting unused type', async ({ page }) => {
+    const section = page.getByTestId('settings-classification-types');
 
     // Create a type to delete
-    await section
-      .getByRole('button', { name: /add classification type/i })
-      .click()
-    const createDialog = page.getByRole('dialog')
-    await createDialog
-      .getByRole('textbox', { name: /type name/i })
-      .fill('e2e_delete_type')
-    await createDialog.getByRole('button', { name: /^create$/i }).click()
-    await expect(createDialog).not.toBeVisible()
+    await section.getByRole('button', { name: /add classification type/i }).click();
+    const createDialog = page.getByRole('dialog');
+    await createDialog.getByRole('textbox', { name: /type name/i }).fill('e2e_delete_type');
+    await createDialog.getByRole('button', { name: /^create$/i }).click();
+    await expect(createDialog).not.toBeVisible();
 
     // Click delete on the created type
-    const item = section
-      .getByRole('listitem')
-      .filter({ hasText: 'e2e_delete_type' })
-    await item.getByRole('button', { name: /^delete$/i }).click()
+    const item = section.getByRole('listitem').filter({ hasText: 'e2e_delete_type' });
+    await item.getByRole('button', { name: /^delete$/i }).click();
 
-    const confirmDialog = page.getByRole('dialog')
-    await expect(confirmDialog).toBeVisible()
+    const confirmDialog = page.getByRole('dialog');
+    await expect(confirmDialog).toBeVisible();
     await expect(
       confirmDialog.getByRole('heading', {
-        name: /delete classification type/i
+        name: /delete classification type/i,
       })
-    ).toBeVisible()
-    await expect(
-      confirmDialog.getByText(/are you sure you want to delete/i)
-    ).toBeVisible()
-  })
+    ).toBeVisible();
+    await expect(confirmDialog.getByText(/are you sure you want to delete/i)).toBeVisible();
+  });
 
   test('deletes an unused classification type', async ({ page }) => {
-    const section = page.getByTestId('settings-classification-types')
+    const section = page.getByTestId('settings-classification-types');
 
     // Create a type to delete
-    await section
-      .getByRole('button', { name: /add classification type/i })
-      .click()
-    const createDialog = page.getByRole('dialog')
-    await createDialog
-      .getByRole('textbox', { name: /type name/i })
-      .fill('e2e_to_delete')
-    await createDialog.getByRole('button', { name: /^create$/i }).click()
-    await expect(createDialog).not.toBeVisible()
-    await expect(section.getByText('e2e_to_delete')).toBeVisible()
+    await section.getByRole('button', { name: /add classification type/i }).click();
+    const createDialog = page.getByRole('dialog');
+    await createDialog.getByRole('textbox', { name: /type name/i }).fill('e2e_to_delete');
+    await createDialog.getByRole('button', { name: /^create$/i }).click();
+    await expect(createDialog).not.toBeVisible();
+    await expect(section.getByText('e2e_to_delete')).toBeVisible();
 
     // Delete the type
-    const item = section
-      .getByRole('listitem')
-      .filter({ hasText: 'e2e_to_delete' })
-    await item.getByRole('button', { name: /^delete$/i }).click()
+    const item = section.getByRole('listitem').filter({ hasText: 'e2e_to_delete' });
+    await item.getByRole('button', { name: /^delete$/i }).click();
 
-    const confirmDialog = page.getByRole('dialog')
-    await confirmDialog.getByRole('button', { name: /^delete$/i }).click()
+    const confirmDialog = page.getByRole('dialog');
+    await confirmDialog.getByRole('button', { name: /^delete$/i }).click();
 
-    await expect(confirmDialog).not.toBeVisible()
-    await expect(section.getByText('e2e_to_delete')).not.toBeVisible()
-  })
+    await expect(confirmDialog).not.toBeVisible();
+    await expect(section.getByText('e2e_to_delete')).not.toBeVisible();
+  });
 
   test('reorders types with move-up and move-down', async ({ page }) => {
-    const section = page.getByTestId('settings-classification-types')
+    const section = page.getByTestId('settings-classification-types');
 
     // Create two types
     for (const name of ['e2e_reorder_first', 'e2e_reorder_second']) {
-      await section
-        .getByRole('button', { name: /add classification type/i })
-        .click()
-      const dialog = page.getByRole('dialog')
-      await dialog.getByRole('textbox', { name: /type name/i }).fill(name)
-      await dialog.getByRole('button', { name: /^create$/i }).click()
-      await expect(dialog).not.toBeVisible()
+      await section.getByRole('button', { name: /add classification type/i }).click();
+      const dialog = page.getByRole('dialog');
+      await dialog.getByRole('textbox', { name: /type name/i }).fill(name);
+      await dialog.getByRole('button', { name: /^create$/i }).click();
+      await expect(dialog).not.toBeVisible();
     }
 
-    // Verify initial order: first, then second
-    const items = section.getByRole('listitem')
-    const secondItem = items.filter({ hasText: 'e2e_reorder_second' })
+    const names = ['e2e_reorder_first', 'e2e_reorder_second'];
+    const secondItem = section.getByRole('listitem').filter({ hasText: 'e2e_reorder_second' });
+
+    // New types are appended in creation order
+    await expect.poll(() => orderedNames(section, 'e2e_reorder')).toEqual(names);
 
     // Move second item up
-    await secondItem.getByRole('button', { name: '↑' }).click()
+    await secondItem.getByRole('button', { name: '↑' }).click();
+    await expect.poll(() => orderedNames(section, 'e2e_reorder')).toEqual([...names].reverse());
 
-    // Items should still both be visible (order changed in the list)
-    await expect(section.getByText('e2e_reorder_first')).toBeVisible()
-    await expect(section.getByText('e2e_reorder_second')).toBeVisible()
+    // Move it back down
+    await secondItem.getByRole('button', { name: '↓' }).click();
+    await expect.poll(() => orderedNames(section, 'e2e_reorder')).toEqual(names);
 
-    // Move second item (now at position 0) back down to test move-down
-    await secondItem.getByRole('button', { name: '↓' }).click()
-
-    await expect(section.getByText('e2e_reorder_first')).toBeVisible()
-    await expect(section.getByText('e2e_reorder_second')).toBeVisible()
-  })
-})
+    // The order survives a reload
+    await secondItem.getByRole('button', { name: '↑' }).click();
+    await expect.poll(() => orderedNames(section, 'e2e_reorder')).toEqual([...names].reverse());
+    const reloaded = await reloadAndExpand(
+      page,
+      'settings-classification-types',
+      /classification types/i
+    );
+    expect(await orderedNames(reloaded, 'e2e_reorder')).toEqual([...names].reverse());
+  });
+});
 
 test.describe('Position Types', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/settings')
-    await expect(
-      page.getByRole('heading', { level: 1, name: /settings/i })
-    ).toBeVisible()
+    await page.goto('/settings');
+    await expect(page.getByRole('heading', { level: 1, name: /settings/i })).toBeVisible();
 
     // Expand the Position Types section
     await page
       .getByTestId('settings-position-types')
       .getByRole('button', { name: /position types/i })
-      .click()
+      .click();
 
     await expect(
       page
         .getByTestId('settings-position-types')
         .getByRole('button', { name: /add position type/i })
-    ).toBeVisible()
-  })
+    ).toBeVisible();
+  });
 
   test('creates a new position type', async ({ page }) => {
-    const section = page.getByTestId('settings-position-types')
+    const section = page.getByTestId('settings-position-types');
 
-    await section.getByRole('button', { name: /add position type/i }).click()
+    await section.getByRole('button', { name: /add position type/i }).click();
 
-    const dialog = page.getByRole('dialog')
-    await expect(dialog).toBeVisible()
-    await expect(
-      dialog.getByRole('heading', { name: /add position type/i })
-    ).toBeVisible()
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: /add position type/i })).toBeVisible();
 
-    await dialog
-      .getByRole('textbox', { name: /position name/i })
-      .fill('e2e_pos_type')
-    await dialog.getByRole('button', { name: /^create$/i }).click()
+    await dialog.getByRole('textbox', { name: /position name/i }).fill('e2e_pos_type');
+    await dialog.getByRole('button', { name: /^create$/i }).click();
 
-    await expect(dialog).not.toBeVisible()
-    await expect(section.getByText('e2e_pos_type')).toBeVisible()
-  })
+    await expect(dialog).not.toBeVisible();
+    await expect(section.getByText('e2e_pos_type')).toBeVisible();
+  });
 
   test('edits an existing position type', async ({ page }) => {
-    const section = page.getByTestId('settings-position-types')
+    const section = page.getByTestId('settings-position-types');
 
     // Create a type to edit
-    await section.getByRole('button', { name: /add position type/i }).click()
-    const createDialog = page.getByRole('dialog')
-    await createDialog
-      .getByRole('textbox', { name: /position name/i })
-      .fill('e2e_pos_edit_before')
-    await createDialog.getByRole('button', { name: /^create$/i }).click()
-    await expect(createDialog).not.toBeVisible()
+    await section.getByRole('button', { name: /add position type/i }).click();
+    const createDialog = page.getByRole('dialog');
+    await createDialog.getByRole('textbox', { name: /position name/i }).fill('e2e_pos_edit_before');
+    await createDialog.getByRole('button', { name: /^create$/i }).click();
+    await expect(createDialog).not.toBeVisible();
 
     // Edit the created type
-    const item = section
-      .getByRole('listitem')
-      .filter({ hasText: 'e2e_pos_edit_before' })
-    await item.getByRole('button', { name: /^edit$/i }).click()
+    const item = section.getByRole('listitem').filter({ hasText: 'e2e_pos_edit_before' });
+    await item.getByRole('button', { name: /^edit$/i }).click();
 
-    const editDialog = page.getByRole('dialog')
-    await expect(
-      editDialog.getByRole('heading', { name: /edit position type/i })
-    ).toBeVisible()
+    const editDialog = page.getByRole('dialog');
+    await expect(editDialog.getByRole('heading', { name: /edit position type/i })).toBeVisible();
 
     const nameInput = editDialog.getByRole('textbox', {
-      name: /position name/i
-    })
-    await nameInput.clear()
-    await nameInput.fill('e2e_pos_edit_after')
-    await editDialog.getByRole('button', { name: /^save$/i }).click()
+      name: /position name/i,
+    });
+    await nameInput.clear();
+    await nameInput.fill('e2e_pos_edit_after');
+    await editDialog.getByRole('button', { name: /^save$/i }).click();
 
-    await expect(editDialog).not.toBeVisible()
-    await expect(section.getByText('e2e_pos_edit_after')).toBeVisible()
-    await expect(section.getByText('e2e_pos_edit_before')).not.toBeVisible()
-  })
+    await expect(editDialog).not.toBeVisible();
+    await expect(section.getByText('e2e_pos_edit_after')).toBeVisible();
+    await expect(section.getByText('e2e_pos_edit_before')).not.toBeVisible();
+  });
 
   test('deletes an unused position type', async ({ page }) => {
-    const section = page.getByTestId('settings-position-types')
+    const section = page.getByTestId('settings-position-types');
 
     // Create a type to delete
-    await section.getByRole('button', { name: /add position type/i }).click()
-    const createDialog = page.getByRole('dialog')
-    await createDialog
-      .getByRole('textbox', { name: /position name/i })
-      .fill('e2e_pos_to_delete')
-    await createDialog.getByRole('button', { name: /^create$/i }).click()
-    await expect(createDialog).not.toBeVisible()
-    await expect(section.getByText('e2e_pos_to_delete')).toBeVisible()
+    await section.getByRole('button', { name: /add position type/i }).click();
+    const createDialog = page.getByRole('dialog');
+    await createDialog.getByRole('textbox', { name: /position name/i }).fill('e2e_pos_to_delete');
+    await createDialog.getByRole('button', { name: /^create$/i }).click();
+    await expect(createDialog).not.toBeVisible();
+    await expect(section.getByText('e2e_pos_to_delete')).toBeVisible();
 
     // Delete the type
-    const item = section
-      .getByRole('listitem')
-      .filter({ hasText: 'e2e_pos_to_delete' })
-    await item.getByRole('button', { name: /^delete$/i }).click()
+    const item = section.getByRole('listitem').filter({ hasText: 'e2e_pos_to_delete' });
+    await item.getByRole('button', { name: /^delete$/i }).click();
 
-    const confirmDialog = page.getByRole('dialog')
-    await confirmDialog.getByRole('button', { name: /^delete$/i }).click()
+    const confirmDialog = page.getByRole('dialog');
+    await confirmDialog.getByRole('button', { name: /^delete$/i }).click();
 
-    await expect(confirmDialog).not.toBeVisible()
-    await expect(section.getByText('e2e_pos_to_delete')).not.toBeVisible()
-  })
+    await expect(confirmDialog).not.toBeVisible();
+    await expect(section.getByText('e2e_pos_to_delete')).not.toBeVisible();
+  });
 
   test('reorders types with move-up and move-down', async ({ page }) => {
-    const section = page.getByTestId('settings-position-types')
+    const section = page.getByTestId('settings-position-types');
 
     // Create two types
     for (const name of ['e2e_pos_reorder_a', 'e2e_pos_reorder_b']) {
-      await section.getByRole('button', { name: /add position type/i }).click()
-      const dialog = page.getByRole('dialog')
-      await dialog.getByRole('textbox', { name: /position name/i }).fill(name)
-      await dialog.getByRole('button', { name: /^create$/i }).click()
-      await expect(dialog).not.toBeVisible()
+      await section.getByRole('button', { name: /add position type/i }).click();
+      const dialog = page.getByRole('dialog');
+      await dialog.getByRole('textbox', { name: /position name/i }).fill(name);
+      await dialog.getByRole('button', { name: /^create$/i }).click();
+      await expect(dialog).not.toBeVisible();
     }
 
-    // Both items should be visible
-    await expect(section.getByText('e2e_pos_reorder_a')).toBeVisible()
-    await expect(section.getByText('e2e_pos_reorder_b')).toBeVisible()
+    const names = ['e2e_pos_reorder_a', 'e2e_pos_reorder_b'];
+    const secondItem = section.getByRole('listitem').filter({ hasText: 'e2e_pos_reorder_b' });
+
+    await expect.poll(() => orderedNames(section, 'e2e_pos_reorder')).toEqual(names);
 
     // Move second item up
-    const secondItem = section
-      .getByRole('listitem')
-      .filter({ hasText: 'e2e_pos_reorder_b' })
-    await secondItem.getByRole('button', { name: '↑' }).click()
+    await secondItem.getByRole('button', { name: '↑' }).click();
+    await expect.poll(() => orderedNames(section, 'e2e_pos_reorder')).toEqual([...names].reverse());
 
-    // Both items should still be visible after reorder
-    await expect(section.getByText('e2e_pos_reorder_a')).toBeVisible()
-    await expect(section.getByText('e2e_pos_reorder_b')).toBeVisible()
-  })
-})
+    // The order survives a reload
+    const reloaded = await reloadAndExpand(page, 'settings-position-types', /position types/i);
+    expect(await orderedNames(reloaded, 'e2e_pos_reorder')).toEqual([...names].reverse());
+  });
+});
 
 test.describe('Settings Page Mobile', () => {
   test.beforeEach(async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.mobile)
-    await page.goto('/settings')
-    await expect(
-      page.getByRole('heading', { level: 1, name: /settings/i })
-    ).toBeVisible()
-  })
+    await page.setViewportSize(VIEWPORTS.mobile);
+    await page.goto('/settings');
+    await expect(page.getByRole('heading', { level: 1, name: /settings/i })).toBeVisible();
+  });
 
-  test('displays page title and sections at mobile viewport', async ({
-    page
-  }) => {
-    await expect(
-      page.getByRole('heading', { level: 1, name: /settings/i })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: /position types/i })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: /classification types/i })
-    ).toBeVisible()
-  })
+  test('displays page title and sections at mobile viewport', async ({ page }) => {
+    await expect(page.getByRole('heading', { level: 1, name: /settings/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /position types/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /classification types/i })).toBeVisible();
+  });
 
   test('toggles theme at mobile viewport', async ({ page }) => {
-    const htmlElement = page.locator('html')
-    const initialTheme = await htmlElement.getAttribute('data-theme')
+    const htmlElement = page.locator('html');
+    const initialTheme = await htmlElement.getAttribute('data-theme');
 
-    const themeSwitch = page
-      .getByTestId('settings-appearance')
-      .getByRole('switch')
-    await themeSwitch.click()
+    const themeSwitch = page.getByTestId('settings-appearance').getByRole('switch');
+    await themeSwitch.click();
 
-    const newTheme = await htmlElement.getAttribute('data-theme')
+    const newTheme = await htmlElement.getAttribute('data-theme');
 
     if (initialTheme === 'dark') {
-      expect(newTheme).toBeNull()
+      expect(newTheme).toBeNull();
     } else {
-      expect(newTheme).toBe('dark')
+      expect(newTheme).toBe('dark');
     }
-  })
+  });
 
-  test('expands and collapses collapsible sections at mobile viewport', async ({
-    page
-  }) => {
-    const databaseSection = page.getByTestId('settings-database')
+  test('expands and collapses collapsible sections at mobile viewport', async ({ page }) => {
+    const databaseSection = page.getByTestId('settings-database');
 
-    await expect(databaseSection.getByText('Export Database')).not.toBeVisible()
+    await expect(databaseSection.getByText('Export Database')).not.toBeVisible();
 
-    await databaseSection
-      .getByRole('button', { name: /data management/i })
-      .click()
+    await databaseSection.getByRole('button', { name: /data management/i }).click();
 
-    await expect(databaseSection.getByText('Export Database')).toBeVisible()
+    await expect(databaseSection.getByText('Export Database')).toBeVisible();
 
-    await databaseSection.getByRole('button', { name: /collapse/i }).click()
+    await databaseSection.getByRole('button', { name: /collapse/i }).click();
 
-    await expect(databaseSection.getByText('Export Database')).not.toBeVisible()
-  })
-})
+    await expect(databaseSection.getByText('Export Database')).not.toBeVisible();
+  });
+});

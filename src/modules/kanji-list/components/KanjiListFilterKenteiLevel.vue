@@ -5,6 +5,8 @@
  * Chip toggle filter for Kanji Kentei levels.
  */
 
+import { useId } from 'vue'
+
 import { type KanjiKenteiLevel, KENTEI_LABELS } from '../kanji-list-types'
 
 const props = defineProps<{
@@ -44,13 +46,15 @@ function toggleLevel(level: KanjiKenteiLevel): void {
 function isSelected(level: KanjiKenteiLevel): boolean {
   return props.modelValue.includes(level)
 }
+
+const labelId = useId()
 </script>
 
 <template>
   <div class="kanji-list-filter-kentei">
-    <span class="kanji-list-filter-kentei-label">Kanji Kentei Level</span>
-    <div class="kanji-list-filter-kentei-chips">
-      <!-- Raw <button>: chip/toggle needs full style override incompatible with BaseButton -->
+    <span :id="labelId" class="kanji-list-filter-kentei-label">Kanji Kentei Level</span>
+    <div :aria-labelledby="labelId" class="kanji-list-filter-kentei-chips" role="group">
+      <!-- Raw <button>: chip toggle, bare layout incompatible with BaseButton -->
       <button
         v-for="level in levels"
         :key="level"

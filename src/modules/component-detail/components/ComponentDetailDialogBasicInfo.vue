@@ -10,6 +10,14 @@ import { ref, watch } from 'vue'
 
 import { BaseButton, BaseDialog } from '@/base/components'
 
+import {
+  kangxiNumberTextSchema,
+  parseStrokeCountText,
+  rangedStrokeCountTextSchema
+} from '@/shared/validation'
+
+import { NONE_VALUE } from '../component-detail-types'
+
 import ComponentDetailBasicInfoFormFields from './ComponentDetailBasicInfoFormFields.vue'
 
 import type { BasicInfoSaveData } from '../component-detail-types'
@@ -28,8 +36,6 @@ const emit = defineEmits<{
   save: [data: BasicInfoSaveData]
 }>()
 
-const NONE_VALUE = '__none__'
-
 const strokeCount = ref('')
 const strokeCountError = ref<string | undefined>()
 const sourceKanjiId = ref(NONE_VALUE)
@@ -38,7 +44,6 @@ const kangxiNumber = ref('')
 const kangxiNumberError = ref<string | undefined>()
 const kangxiMeaning = ref('')
 const radicalNameJapanese = ref('')
-const isSubmitting = ref(false)
 
 watch(
   () => props.open,
@@ -59,10 +64,12 @@ watch(
 
 function validateStrokeCount(): boolean {
   strokeCountError.value = undefined
-  if (!strokeCount.value) return true
-  const num = parseInt(strokeCount.value, 10)
-  if (isNaN(num) || num < 1 || num > 64) {
-    strokeCountError.value = 'Stroke count must be between 1 and 64'
+  const parsed = parseStrokeCountText(
+    strokeCount.value,
+    rangedStrokeCountTextSchema
+  )
+  if (parsed.error !== undefined) {
+    strokeCountError.value = parsed.error
     return false
   }
   return true
@@ -71,9 +78,9 @@ function validateStrokeCount(): boolean {
 function validateKangxiNumber(): boolean {
   kangxiNumberError.value = undefined
   if (!canBeRadical.value || !kangxiNumber.value) return true
-  const num = parseInt(kangxiNumber.value, 10)
-  if (isNaN(num) || num < 1 || num > 214) {
-    kangxiNumberError.value = 'Kangxi number must be between 1 and 214'
+  const result = kangxiNumberTextSchema.safeParse(kangxiNumber.value)
+  if (!result.success) {
+    kangxiNumberError.value = result.error.issues[0]?.message
     return false
   }
   return true
@@ -81,17 +88,16 @@ function validateKangxiNumber(): boolean {
 
 function handleSubmit(): void {
   if (!validateStrokeCount() || !validateKangxiNumber()) return
-  isSubmitting.value = true
   const data: BasicInfoSaveData = {
-    strokeCount: strokeCount.value ? parseInt(strokeCount.value, 10) : null,
+    strokeCount: strokeCount.value.trim() ? Number(strokeCount.value) : null,
     sourceKanjiId:
       sourceKanjiId.value !== NONE_VALUE
         ? parseInt(sourceKanjiId.value, 10)
         : null,
     canBeRadical: canBeRadical.value,
     kangxiNumber:
-      canBeRadical.value && kangxiNumber.value
-        ? parseInt(kangxiNumber.value, 10)
+      canBeRadical.value && kangxiNumber.value.trim()
+        ? Number(kangxiNumber.value.trim())
         : null,
     kangxiMeaning:
       canBeRadical.value && kangxiMeaning.value ? kangxiMeaning.value : null,
@@ -101,8 +107,6 @@ function handleSubmit(): void {
         : null
   }
   emit('save', data)
-  isSubmitting.value = false
-  emit('update:open', false)
 }
 
 function handleCancel(): void {
@@ -116,10 +120,7 @@ function handleCancel(): void {
     title="Edit Basic Information"
     @update:open="emit('update:open', $event)"
   >
-    <form
-      class="component-detail-dialog-basic-info-form"
-      @submit.prevent="handleSubmit"
-    >
+    <form class="component-detail-dialog-basic-info-form" @submit.prevent="handleSubmit">
       <ComponentDetailBasicInfoFormFields
         v-model:can-be-radical="canBeRadical"
         v-model:kangxi-meaning="kangxiMeaning"
@@ -133,18 +134,8 @@ function handleCancel(): void {
       />
 
       <div class="component-detail-dialog-basic-info-actions">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="handleCancel"
-          >Cancel</BaseButton
-        >
-        <BaseButton
-          :disabled="isSubmitting"
-          :loading="isSubmitting"
-          type="submit"
-          >Save</BaseButton
-        >
+        <BaseButton type="button" variant="secondary" @click="handleCancel">Cancel</BaseButton>
+        <BaseButton type="submit">Save</BaseButton>
       </div>
     </form>
   </BaseDialog>

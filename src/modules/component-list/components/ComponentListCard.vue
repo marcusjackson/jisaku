@@ -6,28 +6,27 @@
  * Shows: component character, short meaning, stroke count, and radical badge.
  */
 
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 
 import type { Component } from '@/api/component'
 
 defineProps<{
   component: Component
 }>()
+// Carry the list's filters to the detail page so its back link can restore them
+const route = useRoute()
 </script>
 
 <template>
   <RouterLink
     class="component-list-card"
     data-testid="component-list-card"
-    :to="`/components/${component.id}`"
+    :to="{ path: `/components/${component.id}`, query: route.query }"
   >
-    <span class="component-list-card-character">{{ component.character }}</span>
+    <span class="component-list-card-character" lang="ja">{{ component.character }}</span>
 
     <div class="component-list-card-info">
-      <span
-        v-if="component.shortMeaning"
-        class="component-list-card-meaning"
-      >
+      <span v-if="component.shortMeaning" class="component-list-card-meaning">
         {{ component.shortMeaning }}
       </span>
 
@@ -39,12 +38,7 @@ defineProps<{
           class="component-list-card-badge component-list-card-badge-radical"
           title="Can be radical"
         >
-          <svg
-            fill="none"
-            height="12"
-            viewBox="0 0 16 16"
-            width="12"
-          >
+          <svg fill="none" height="12" viewBox="0 0 16 16" width="12">
             <path
               d="M8 1L10 6H15L11 9.5L12.5 15L8 11.5L3.5 15L5 9.5L1 6H6L8 1Z"
               fill="currentColor"
@@ -71,7 +65,7 @@ defineProps<{
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-2);
-  padding: var(--spacing-md);
+  padding: var(--card-padding);
   border: var(--card-border);
   border-radius: var(--card-radius);
   background-color: var(--card-bg);

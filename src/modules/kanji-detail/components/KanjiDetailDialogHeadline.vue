@@ -5,7 +5,7 @@
  * Dialog for editing kanji headline fields: character, display text, keywords.
  */
 
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 
 import { toTypedSchema } from '@vee-validate/zod'
 import { useField, useForm } from 'vee-validate'
@@ -44,8 +44,6 @@ const { errorMessage: shortMeaningError, value: shortMeaningValue } =
 const { errorMessage: searchKeywordsError, value: searchKeywordsValue } =
   useField<string>('searchKeywords')
 
-const isSubmitting = ref(false)
-
 watch(
   () => props.open,
   (isOpen) => {
@@ -58,14 +56,11 @@ watch(
 )
 
 const onSubmit = handleSubmit((formValues) => {
-  isSubmitting.value = true
   emit('save', {
     character: formValues.character,
     shortMeaning: formValues.shortMeaning || null,
     searchKeywords: formValues.searchKeywords || null
   })
-  isSubmitting.value = false
-  emit('update:open', false)
 })
 
 function handleCancel(): void {
@@ -75,22 +70,9 @@ function handleCancel(): void {
 </script>
 
 <template>
-  <BaseDialog
-    :open="props.open"
-    title="Edit Headline"
-    @update:open="emit('update:open', $event)"
-  >
-    <form
-      class="kanji-detail-dialog-headline-form"
-      @submit.prevent="onSubmit"
-    >
-      <BaseInput
-        v-model="characterValue"
-        :error="characterError"
-        label="Character"
-        maxlength="1"
-        required
-      />
+  <BaseDialog :open="props.open" title="Edit Headline" @update:open="emit('update:open', $event)">
+    <form class="kanji-detail-dialog-headline-form" @submit.prevent="onSubmit">
+      <BaseInput v-model="characterValue" :error="characterError" label="Character" required />
 
       <BaseInput
         v-model="shortMeaningValue"
@@ -109,20 +91,8 @@ function handleCancel(): void {
       />
 
       <div class="kanji-detail-dialog-headline-actions">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="handleCancel"
-        >
-          Cancel
-        </BaseButton>
-        <BaseButton
-          :disabled="isSubmitting"
-          :loading="isSubmitting"
-          type="submit"
-        >
-          Save
-        </BaseButton>
+        <BaseButton type="button" variant="secondary" @click="handleCancel"> Cancel </BaseButton>
+        <BaseButton type="submit"> Save </BaseButton>
       </div>
     </form>
   </BaseDialog>

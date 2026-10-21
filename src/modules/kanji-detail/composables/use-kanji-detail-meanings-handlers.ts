@@ -5,39 +5,38 @@
  * Manages meanings, reading groups, and group member assignments.
  */
 
+import { useDatabase } from '@/shared/composables/use-database';
+
 import {
+  dropBlankNewRows,
   processGroupMembers,
   processMeanings,
-  processReadingGroups
-} from '../utils/meaning-processing'
+  processReadingGroups,
+} from '../utils/meaning-processing';
 
-import type { MeaningsSaveData } from '../kanji-detail-types'
-import type {
-  KanjiMeaning,
-  KanjiMeaningGroupMember,
-  KanjiMeaningReadingGroup
-} from '@/api/kanji'
-import type { useGroupMemberRepository } from '@/api/kanji/group-member-repository'
-import type { useKanjiMeaningRepository } from '@/api/kanji/meaning-repository'
-import type { useReadingGroupRepository } from '@/api/kanji/reading-group-repository'
-import type { Ref } from 'vue'
+import type { MeaningsSaveData } from '../kanji-detail-types';
+import type { KanjiMeaning, KanjiMeaningGroupMember, KanjiMeaningReadingGroup } from '@/api/kanji';
+import type { useGroupMemberRepository } from '@/api/kanji/group-member-repository';
+import type { useKanjiMeaningRepository } from '@/api/kanji/meaning-repository';
+import type { useReadingGroupRepository } from '@/api/kanji/reading-group-repository';
+import type { Ref } from 'vue';
 
 interface Repositories {
-  groupMemberRepo: ReturnType<typeof useGroupMemberRepository>
-  meaningRepo: ReturnType<typeof useKanjiMeaningRepository>
-  readingGroupRepo: ReturnType<typeof useReadingGroupRepository>
+  groupMemberRepo: ReturnType<typeof useGroupMemberRepository>;
+  meaningRepo: ReturnType<typeof useKanjiMeaningRepository>;
+  readingGroupRepo: ReturnType<typeof useReadingGroupRepository>;
 }
 
 interface State {
-  groupMembers: Ref<KanjiMeaningGroupMember[]>
-  kanjiId: Ref<number>
-  meanings: Ref<KanjiMeaning[]>
-  readingGroups: Ref<KanjiMeaningReadingGroup[]>
+  groupMembers: Ref<KanjiMeaningGroupMember[]>;
+  kanjiId: Ref<number>;
+  meanings: Ref<KanjiMeaning[]>;
+  readingGroups: Ref<KanjiMeaningReadingGroup[]>;
 }
 
 interface UseKanjiDetailMeaningsHandlersReturn {
-  handleSaveMeanings: (data: MeaningsSaveData) => void
-  reloadMeanings: () => void
+  handleSaveMeanings: (data: MeaningsSaveData) => void;
+  reloadMeanings: () => void;
 }
 
 /**
@@ -51,43 +50,53 @@ export function useKanjiDetailMeaningsHandlers(
   state: State,
   repos: Repositories
 ): UseKanjiDetailMeaningsHandlersReturn {
-  const { groupMembers, kanjiId, meanings, readingGroups } = state
-  const { groupMemberRepo, meaningRepo, readingGroupRepo } = repos
+  const { groupMembers, kanjiId, meanings, readingGroups } = state;
+  const { groupMemberRepo, meaningRepo, readingGroupRepo } = repos;
 
-  function handleSaveMeanings(data: MeaningsSaveData): void {
-    if (data.groupingDisabled) disableGrouping()
-    processMeanings(data.meanings, meanings.value, kanjiId.value, meaningRepo)
+  const { transaction } = useDatabase();
 
-    if (!data.groupingDisabled) {
-      processReadingGroups(
-        data.readingGroups,
-        readingGroups.value,
+  function handleSaveMeanings(payload: MeaningsSaveData): void {
+    const data = dropBlankNewRows(payload);
+    // State is refreshed only after the commit, so a rollback leaves the page as it was.
+    transaction(() => {
+      if (data.groupingDisabled) disableGrouping();
+      const createdMeaningIds = processMeanings(
+        data.meanings,
+        meanings.value,
         kanjiId.value,
-        readingGroupRepo,
-        groupMemberRepo
-      )
-      const freshGroups = readingGroupRepo.getByParentId(kanjiId.value)
-      processGroupMembers(
-        data.groupMembers,
-        data.readingGroups,
-        groupMembers.value,
-        freshGroups,
-        groupMemberRepo
-      )
-    }
-    reloadMeanings()
+        meaningRepo
+      );
+
+      if (!data.groupingDisabled) {
+        const createdGroupIds = processReadingGroups(
+          data.readingGroups,
+          readingGroups.value,
+          kanjiId.value,
+          readingGroupRepo,
+          groupMemberRepo
+        );
+        processGroupMembers(
+          data.groupMembers,
+          groupMembers.value,
+          createdMeaningIds,
+          createdGroupIds,
+          groupMemberRepo
+        );
+      }
+    });
+    reloadMeanings();
   }
 
   function disableGrouping(): void {
-    for (const m of groupMembers.value) groupMemberRepo.remove(m.id)
-    for (const g of readingGroups.value) readingGroupRepo.remove(g.id)
+    for (const m of groupMembers.value) groupMemberRepo.remove(m.id);
+    for (const g of readingGroups.value) readingGroupRepo.remove(g.id);
   }
 
   function reloadMeanings(): void {
-    groupMembers.value = groupMemberRepo.getByKanjiId(kanjiId.value)
-    meanings.value = meaningRepo.getByParentId(kanjiId.value)
-    readingGroups.value = readingGroupRepo.getByParentId(kanjiId.value)
+    groupMembers.value = groupMemberRepo.getByKanjiId(kanjiId.value);
+    meanings.value = meaningRepo.getByParentId(kanjiId.value);
+    readingGroups.value = readingGroupRepo.getByParentId(kanjiId.value);
   }
 
-  return { handleSaveMeanings, reloadMeanings }
+  return { handleSaveMeanings, reloadMeanings };
 }

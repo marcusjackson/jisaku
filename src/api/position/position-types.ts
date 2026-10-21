@@ -16,14 +16,14 @@
  * (e.g., hen/偏 = left, tsukuri/旁 = right)
  */
 export interface PositionType {
-  id: number
-  positionName: string
-  nameJapanese: string | null
-  nameEnglish: string | null
-  description: string | null
-  displayOrder: number
-  createdAt: string
-  updatedAt: string
+  id: number;
+  positionName: string;
+  nameJapanese: string | null;
+  nameEnglish: string | null;
+  description: string | null;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============================================================================
@@ -34,19 +34,19 @@ export interface PositionType {
  * Input for creating a position type
  */
 export interface CreatePositionTypeInput {
-  positionName: string
-  nameJapanese?: string | null
-  nameEnglish?: string | null
-  description?: string | null
-  displayOrder?: number
+  positionName: string;
+  nameJapanese?: string | null;
+  nameEnglish?: string | null;
+  description?: string | null;
+  displayOrder?: number;
 }
 
 /**
  * Input for updating a position type
  */
 export interface UpdatePositionTypeInput {
-  positionName?: string
-  nameJapanese?: string | null
-  nameEnglish?: string | null
-  description?: string | null
+  positionName?: string;
+  nameJapanese?: string | null;
+  nameEnglish?: string | null;
+  description?: string | null;
 }

@@ -4,42 +4,40 @@
  * Tests for keywords search filter component.
  */
 
-import userEvent from '@testing-library/user-event'
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it, vi } from 'vitest'
+import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import KanjiListFilterKeywords from './KanjiListFilterKeywords.vue'
+import KanjiListFilterKeywords from './KanjiListFilterKeywords.vue';
 
 describe('KanjiListFilterKeywords', () => {
   it('renders with label', () => {
     render(KanjiListFilterKeywords, {
-      props: { modelValue: '' }
-    })
+      props: { modelValue: '' },
+    });
 
-    expect(screen.getByLabelText(/display \+ keywords/i)).toBeInTheDocument()
-  })
+    expect(screen.getByLabelText(/display \+ keywords/i)).toBeInTheDocument();
+  });
 
   it('displays current value', () => {
     render(KanjiListFilterKeywords, {
-      props: { modelValue: 'mountain' }
-    })
+      props: { modelValue: 'mountain' },
+    });
 
-    expect(screen.getByLabelText(/display \+ keywords/i)).toHaveValue(
-      'mountain'
-    )
-  })
+    expect(screen.getByLabelText(/display \+ keywords/i)).toHaveValue('mountain');
+  });
 
   it('emits update on input', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     const wrapper = render(KanjiListFilterKeywords, {
       props: {
         modelValue: '',
-        'onUpdate:modelValue': vi.fn()
-      }
-    })
+        'onUpdate:modelValue': vi.fn(),
+      },
+    });
 
-    await user.type(screen.getByLabelText(/display \+ keywords/i), 'test')
+    await user.type(screen.getByLabelText(/display \+ keywords/i), 'test');
 
-    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-  })
-})
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy();
+  });
+});

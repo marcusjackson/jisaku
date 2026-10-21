@@ -44,16 +44,10 @@ function handleDeleteCancel(): void {
 </script>
 
 <template>
-  <section
-    class="vocab-detail-section-actions"
-    data-testid="vocab-detail-actions"
-  >
+  <section class="vocab-detail-section-actions" data-testid="vocab-detail-actions">
     <div class="vocab-detail-section-actions-controls">
       <div class="vocab-detail-section-actions-toggle">
-        <label
-          class="vocab-detail-section-actions-label"
-          for="destructive-mode-switch"
-        >
+        <label class="vocab-detail-section-actions-label" for="destructive-mode-switch">
           Destructive Mode
         </label>
         <BaseSwitch
@@ -80,10 +74,7 @@ function handleDeleteCancel(): void {
       </BaseButton>
     </div>
 
-    <SharedBackButton
-      label="Back to Vocabulary List"
-      :to="ROUTES.VOCABULARY_LIST"
-    />
+    <SharedBackButton label="Back to Vocabulary List" :to="ROUTES.VOCABULARY_LIST" />
 
     <SharedConfirmDialog
       v-model:open="showDeleteDialog"

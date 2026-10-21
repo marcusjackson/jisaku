@@ -2,29 +2,25 @@
  * ComponentListFilterKangxi Tests
  */
 
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import ComponentListFilterKangxi from './ComponentListFilterKangxi.vue'
+import ComponentListFilterKangxi from './ComponentListFilterKangxi.vue';
 
 describe('ComponentListFilterKangxi', () => {
   it('renders kangxi input', () => {
     render(ComponentListFilterKangxi, {
-      props: { modelValue: '' }
-    })
+      props: { modelValue: '' },
+    });
 
-    expect(
-      screen.getByRole('textbox', { name: /kangxi #\/meaning/i })
-    ).toBeInTheDocument()
-  })
+    expect(screen.getByRole('textbox', { name: /kangxi #\/meaning/i })).toBeInTheDocument();
+  });
 
   it('displays current value', () => {
     render(ComponentListFilterKangxi, {
-      props: { modelValue: '85' }
-    })
+      props: { modelValue: '85' },
+    });
 
-    expect(
-      screen.getByRole('textbox', { name: /kangxi #\/meaning/i })
-    ).toHaveValue('85')
-  })
-})
+    expect(screen.getByRole('textbox', { name: /kangxi #\/meaning/i })).toHaveValue('85');
+  });
+});

@@ -7,7 +7,7 @@
  * @internal
  */
 
-import { JLPT_LEVELS, JOYO_LEVELS, KANJI_KENTEI_LEVELS } from './kanji-types'
+import { JLPT_LEVELS, JOYO_LEVELS, KANJI_KENTEI_LEVELS } from './kanji-types';
 
 import type {
   AnalysisFieldName,
@@ -16,33 +16,33 @@ import type {
   JoyoLevel,
   Kanji,
   KanjiFilters,
-  KanjiKenteiLevel
-} from './kanji-types'
+  KanjiKenteiLevel,
+} from './kanji-types';
 
 // ============================================================================
 // Row Type (database representation)
 // ============================================================================
 
 interface KanjiRow {
-  id: number
-  character: string
-  stroke_count: number | null
-  short_meaning: string | null
-  search_keywords: string | null
-  radical_id: number | null
-  jlpt_level: string | null
-  joyo_level: string | null
-  kanji_kentei_level: string | null
-  stroke_diagram_image: Uint8Array | null
-  stroke_gif_image: Uint8Array | null
-  notes_etymology: string | null
-  notes_semantic: string | null
-  notes_education_mnemonics: string | null
-  notes_personal: string | null
-  identifier: number | null
-  radical_stroke_count: number | null
-  created_at: string
-  updated_at: string
+  id: number;
+  character: string;
+  stroke_count: number | null;
+  short_meaning: string | null;
+  search_keywords: string | null;
+  radical_id: number | null;
+  jlpt_level: string | null;
+  joyo_level: string | null;
+  kanji_kentei_level: string | null;
+  stroke_diagram_image: Uint8Array | null;
+  stroke_gif_image: Uint8Array | null;
+  notes_etymology: string | null;
+  notes_semantic: string | null;
+  notes_education_mnemonics: string | null;
+  notes_personal: string | null;
+  identifier: number | null;
+  radical_stroke_count: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // ============================================================================
@@ -53,7 +53,7 @@ interface KanjiRow {
  * Convert database row to Kanji entity
  */
 export function mapKanjiRow(row: Record<string, unknown>): Kanji {
-  const r = row as unknown as KanjiRow
+  const r = row as unknown as KanjiRow;
   return {
     id: r.id,
     character: r.character,
@@ -62,13 +62,11 @@ export function mapKanjiRow(row: Record<string, unknown>): Kanji {
     searchKeywords: r.search_keywords,
     radicalId: r.radical_id,
     jlptLevel:
-      r.jlpt_level !== null &&
-      (JLPT_LEVELS as readonly string[]).includes(r.jlpt_level)
+      r.jlpt_level !== null && (JLPT_LEVELS as readonly string[]).includes(r.jlpt_level)
         ? (r.jlpt_level as JlptLevel)
         : null,
     joyoLevel:
-      r.joyo_level !== null &&
-      (JOYO_LEVELS as readonly string[]).includes(r.joyo_level)
+      r.joyo_level !== null && (JOYO_LEVELS as readonly string[]).includes(r.joyo_level)
         ? (r.joyo_level as JoyoLevel)
         : null,
     kanjiKenteiLevel:
@@ -85,8 +83,8 @@ export function mapKanjiRow(row: Record<string, unknown>): Kanji {
     identifier: r.identifier,
     radicalStrokeCount: r.radical_stroke_count,
     createdAt: r.created_at,
-    updatedAt: r.updated_at
-  }
+    updatedAt: r.updated_at,
+  };
 }
 
 // ============================================================================
@@ -98,7 +96,7 @@ export function mapKanjiRow(row: Record<string, unknown>): Kanji {
  */
 export function mapKanjiInputToValues(input: CreateKanjiInput): unknown[] {
   // Helper to coalesce undefined to null for SQL
-  const n = <T>(v: T | undefined): T | null => v ?? null
+  const n = <T>(v: T | undefined): T | null => v ?? null;
 
   return [
     input.character,
@@ -116,8 +114,8 @@ export function mapKanjiInputToValues(input: CreateKanjiInput): unknown[] {
     n(input.notesEducationMnemonics),
     n(input.notesPersonal),
     n(input.identifier),
-    n(input.radicalStrokeCount)
-  ]
+    n(input.radicalStrokeCount),
+  ];
 }
 
 // ============================================================================
@@ -125,45 +123,50 @@ export function mapKanjiInputToValues(input: CreateKanjiInput): unknown[] {
 // ============================================================================
 
 export interface SearchConditions {
-  conditions: string[]
-  params: unknown[]
+  conditions: string[];
+  params: unknown[];
 }
 
-/** Threshold character counts for analysis field filters */
-const ANALYSIS_THRESHOLDS = {
-  empty: 0,
-  short: 50,
-  medium: 200,
-  long: 500
-} as const
+/** Length bands for analysis field filters, matching the list's labels */
+const ANALYSIS_LENGTH_BANDS = {
+  short: 'BETWEEN 1 AND 49',
+  medium: 'BETWEEN 50 AND 200',
+  long: '> 200',
+} as const;
+
+/**
+ * Build a `LIKE` pattern that matches the text anywhere, with `%`, `_` and
+ * the escape character taken literally. Pair it with `ESCAPE '\\'`.
+ */
+function containsPattern(text: string): string {
+  return `%${text.replace(/[\\%_]/g, '\\$&')}%`;
+}
 
 /** Map analysis field names to database columns */
 const ANALYSIS_FIELD_COLUMNS: Record<AnalysisFieldName, string> = {
   notesEtymology: 'notes_etymology',
   notesSemantic: 'notes_semantic',
   notesEducationMnemonics: 'notes_education_mnemonics',
-  notesPersonal: 'notes_personal'
-}
+  notesPersonal: 'notes_personal',
+};
 
 /**
  * Build SQL WHERE conditions from KanjiFilters
  */
-export function buildKanjiSearchConditions(
-  filters: KanjiFilters
-): SearchConditions {
-  const conditions: string[] = []
-  const params: unknown[] = []
+export function buildKanjiSearchConditions(filters: KanjiFilters): SearchConditions {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
 
-  addTextSearchConditions(filters, conditions, params)
-  addReadingSearchConditions(filters, conditions, params)
-  addStrokeCountConditions(filters, conditions, params)
-  addLevelConditions(filters, conditions, params)
-  addComponentConditions(filters, conditions, params)
-  addClassificationConditions(filters, conditions, params)
-  addStrokeDiagramConditions(filters, conditions, params)
-  addAnalysisFieldConditions(filters, conditions, params)
+  addTextSearchConditions(filters, conditions, params);
+  addReadingSearchConditions(filters, conditions, params);
+  addStrokeCountConditions(filters, conditions, params);
+  addLevelConditions(filters, conditions, params);
+  addComponentConditions(filters, conditions, params);
+  addClassificationConditions(filters, conditions, params);
+  addStrokeDiagramConditions(filters, conditions, params);
+  addAnalysisFieldConditions(filters, conditions);
 
-  return { conditions, params }
+  return { conditions, params };
 }
 
 /**
@@ -176,28 +179,28 @@ function addTextSearchConditions(
 ): void {
   if (filters.search) {
     conditions.push(
-      '(character LIKE ? OR short_meaning LIKE ? OR search_keywords LIKE ?)'
-    )
-    const pattern = `%${filters.search}%`
-    params.push(pattern, pattern, pattern)
+      "(character LIKE ? ESCAPE '\\' OR short_meaning LIKE ? ESCAPE '\\' OR search_keywords LIKE ? ESCAPE '\\')"
+    );
+    const pattern = containsPattern(filters.search);
+    params.push(pattern, pattern, pattern);
   }
 
   if (filters.character) {
-    conditions.push('character = ?')
-    params.push(filters.character)
+    conditions.push('character = ?');
+    params.push(filters.character);
   }
 
   if (filters.searchKeywords) {
-    conditions.push('(short_meaning LIKE ? OR search_keywords LIKE ?)')
-    const pattern = `%${filters.searchKeywords}%`
-    params.push(pattern, pattern)
+    conditions.push("(short_meaning LIKE ? ESCAPE '\\' OR search_keywords LIKE ? ESCAPE '\\')");
+    const pattern = containsPattern(filters.searchKeywords);
+    params.push(pattern, pattern);
   }
 
   if (filters.meanings) {
     conditions.push(
-      'id IN (SELECT kanji_id FROM kanji_meanings WHERE meaning_text LIKE ?)'
-    )
-    params.push(`%${filters.meanings}%`)
+      "id IN (SELECT kanji_id FROM kanji_meanings WHERE meaning_text LIKE ? ESCAPE '\\')"
+    );
+    params.push(containsPattern(filters.meanings));
   }
 }
 
@@ -210,17 +213,16 @@ function addReadingSearchConditions(
   params: unknown[]
 ): void {
   if (filters.onYomi) {
-    conditions.push(
-      'id IN (SELECT kanji_id FROM on_readings WHERE reading LIKE ?)'
-    )
-    params.push(`%${filters.onYomi}%`)
+    conditions.push("id IN (SELECT kanji_id FROM on_readings WHERE reading LIKE ? ESCAPE '\\')");
+    params.push(containsPattern(filters.onYomi));
   }
 
   if (filters.kunYomi) {
     conditions.push(
-      `id IN (SELECT kanji_id FROM kun_readings WHERE (reading || COALESCE(okurigana, '')) LIKE ?)`
-    )
-    params.push(`%${filters.kunYomi}%`)
+      `id IN (SELECT kanji_id FROM kun_readings WHERE (reading || COALESCE(okurigana, '')) LIKE ? ESCAPE '\\')`
+    );
+    // Readings are stored without the dot the page shows (よ.む)
+    params.push(containsPattern(filters.kunYomi.replaceAll('.', '')));
   }
 }
 
@@ -233,44 +235,40 @@ function addStrokeCountConditions(
   params: unknown[]
 ): void {
   if (filters.strokeCountMin !== undefined) {
-    conditions.push('stroke_count >= ?')
-    params.push(filters.strokeCountMin)
+    conditions.push('stroke_count >= ?');
+    params.push(filters.strokeCountMin);
   }
   if (filters.strokeCountMax !== undefined) {
-    conditions.push('stroke_count <= ?')
-    params.push(filters.strokeCountMax)
+    conditions.push('stroke_count <= ?');
+    params.push(filters.strokeCountMax);
   }
 }
 
 /**
  * Add JLPT, Joyo, and Kentei level conditions
  */
-function addLevelConditions(
-  filters: KanjiFilters,
-  conditions: string[],
-  params: unknown[]
-): void {
+function addLevelConditions(filters: KanjiFilters, conditions: string[], params: unknown[]): void {
   if (filters.jlptLevels?.length) {
-    const placeholders = filters.jlptLevels.map(() => '?').join(', ')
-    conditions.push(`jlpt_level IN (${placeholders})`)
-    params.push(...filters.jlptLevels)
+    const placeholders = filters.jlptLevels.map(() => '?').join(', ');
+    conditions.push(`jlpt_level IN (${placeholders})`);
+    params.push(...filters.jlptLevels);
   }
 
   if (filters.joyoLevels?.length) {
-    const placeholders = filters.joyoLevels.map(() => '?').join(', ')
-    conditions.push(`joyo_level IN (${placeholders})`)
-    params.push(...filters.joyoLevels)
+    const placeholders = filters.joyoLevels.map(() => '?').join(', ');
+    conditions.push(`joyo_level IN (${placeholders})`);
+    params.push(...filters.joyoLevels);
   }
 
   if (filters.kenteiLevels?.length) {
-    const placeholders = filters.kenteiLevels.map(() => '?').join(', ')
-    conditions.push(`kanji_kentei_level IN (${placeholders})`)
-    params.push(...filters.kenteiLevels)
+    const placeholders = filters.kenteiLevels.map(() => '?').join(', ');
+    conditions.push(`kanji_kentei_level IN (${placeholders})`);
+    params.push(...filters.kenteiLevels);
   }
 
   if (filters.radicalId !== undefined) {
-    conditions.push('radical_id = ?')
-    params.push(filters.radicalId)
+    conditions.push('radical_id = ?');
+    params.push(filters.radicalId);
   }
 }
 
@@ -283,18 +281,14 @@ function addComponentConditions(
   params: unknown[]
 ): void {
   if (filters.componentId !== undefined) {
-    conditions.push(
-      'id IN (SELECT kanji_id FROM component_occurrences WHERE component_id = ?)'
-    )
-    params.push(filters.componentId)
+    conditions.push('id IN (SELECT kanji_id FROM component_occurrences WHERE component_id = ?)');
+    params.push(filters.componentId);
   }
 
   if (filters.componentIds?.length) {
     for (const compId of filters.componentIds) {
-      conditions.push(
-        'id IN (SELECT kanji_id FROM component_occurrences WHERE component_id = ?)'
-      )
-      params.push(compId)
+      conditions.push('id IN (SELECT kanji_id FROM component_occurrences WHERE component_id = ?)');
+      params.push(compId);
     }
   }
 }
@@ -310,16 +304,16 @@ function addClassificationConditions(
   if (filters.classificationTypeId !== undefined) {
     conditions.push(
       'id IN (SELECT kanji_id FROM kanji_classifications WHERE classification_type_id = ?)'
-    )
-    params.push(filters.classificationTypeId)
+    );
+    params.push(filters.classificationTypeId);
   }
 
   if (filters.classificationTypeIds?.length) {
     for (const typeId of filters.classificationTypeIds) {
       conditions.push(
         'id IN (SELECT kanji_id FROM kanji_classifications WHERE classification_type_id = ?)'
-      )
-      params.push(typeId)
+      );
+      params.push(typeId);
     }
   }
 }
@@ -333,36 +327,30 @@ function addStrokeDiagramConditions(
   _params: unknown[]
 ): void {
   if (filters.strokeOrderDiagram === 'has') {
-    conditions.push('stroke_diagram_image IS NOT NULL')
+    conditions.push('stroke_diagram_image IS NOT NULL');
   } else if (filters.strokeOrderDiagram === 'missing') {
-    conditions.push('stroke_diagram_image IS NULL')
+    conditions.push('stroke_diagram_image IS NULL');
   }
 
   if (filters.strokeOrderAnimation === 'has') {
-    conditions.push('stroke_gif_image IS NOT NULL')
+    conditions.push('stroke_gif_image IS NOT NULL');
   } else if (filters.strokeOrderAnimation === 'missing') {
-    conditions.push('stroke_gif_image IS NULL')
+    conditions.push('stroke_gif_image IS NULL');
   }
 }
 
 /**
  * Add analysis field filter conditions (notes fields with length thresholds)
  */
-function addAnalysisFieldConditions(
-  filters: KanjiFilters,
-  conditions: string[],
-  params: unknown[]
-): void {
+function addAnalysisFieldConditions(filters: KanjiFilters, conditions: string[]): void {
   if (filters.analysisFilters?.length) {
     for (const af of filters.analysisFilters) {
-      const column = ANALYSIS_FIELD_COLUMNS[af.field]
+      const column = ANALYSIS_FIELD_COLUMNS[af.field];
 
       if (af.threshold === 'empty') {
-        conditions.push(`(${column} IS NULL OR ${column} = '')`)
+        conditions.push(`(${column} IS NULL OR ${column} = '')`);
       } else {
-        const minLen = ANALYSIS_THRESHOLDS[af.threshold]
-        conditions.push(`LENGTH(${column}) >= ?`)
-        params.push(minLen)
+        conditions.push(`LENGTH(${column}) ${ANALYSIS_LENGTH_BANDS[af.threshold]}`);
       }
     }
   }
@@ -375,10 +363,7 @@ function addAnalysisFieldConditions(
 /**
  * Mapping of camelCase field names to snake_case column names
  */
-export const KANJI_FIELD_COLUMNS: readonly (readonly [
-  keyof CreateKanjiInput,
-  string
-])[] = [
+export const KANJI_FIELD_COLUMNS: readonly (readonly [keyof CreateKanjiInput, string])[] = [
   ['character', 'character'],
   ['strokeCount', 'stroke_count'],
   ['shortMeaning', 'short_meaning'],
@@ -394,5 +379,5 @@ export const KANJI_FIELD_COLUMNS: readonly (readonly [
   ['notesEducationMnemonics', 'notes_education_mnemonics'],
   ['notesPersonal', 'notes_personal'],
   ['identifier', 'identifier'],
-  ['radicalStrokeCount', 'radical_stroke_count']
-] as const
+  ['radicalStrokeCount', 'radical_stroke_count'],
+] as const;

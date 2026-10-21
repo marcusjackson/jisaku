@@ -2,14 +2,14 @@
  * Grouping CRUD handler factories for use-component-detail-grouping-handlers.ts
  */
 
-import type { GroupingFormData } from '../component-detail-types'
-import type { useComponentGroupingRepository } from '@/api/component'
-import type { useToast } from '@/shared/composables'
-import type { Ref } from 'vue'
+import type { GroupingFormData } from '../component-detail-types';
+import type { useComponentGroupingRepository } from '@/api/component';
+import type { useToast } from '@/shared/composables';
+import type { Ref } from 'vue';
 
-export type GroupingRepo = ReturnType<typeof useComponentGroupingRepository>
-export type Toast = ReturnType<typeof useToast>
-export type Reloader = () => void
+export type GroupingRepo = ReturnType<typeof useComponentGroupingRepository>;
+export type Toast = ReturnType<typeof useToast>;
+export type Reloader = () => void;
 
 /**
  * Creates an add-grouping handler.
@@ -25,21 +25,23 @@ export function createGroupingAdd(
   repo: GroupingRepo,
   reload: Reloader,
   toast: Toast
-): (data: GroupingFormData) => void {
-  return (data: GroupingFormData): void => {
-    if (componentId.value === null) return
+): (data: GroupingFormData) => boolean {
+  return (data: GroupingFormData): boolean => {
+    if (componentId.value === null) return false;
     try {
       repo.create({
         componentId: componentId.value,
         name: data.name,
-        description: data.description
-      })
-      reload()
-      toast.success('Grouping added')
+        description: data.description,
+      });
+      reload();
+      toast.success('Grouping added');
+      return true;
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to add grouping')
+      toast.error(err instanceof Error ? err.message : 'Failed to add grouping');
+      return false;
     }
-  }
+  };
 }
 
 /**
@@ -54,18 +56,18 @@ export function createGroupingUpdate(
   repo: GroupingRepo,
   reload: Reloader,
   toast: Toast
-): (id: number, data: GroupingFormData) => void {
-  return (id: number, data: GroupingFormData): void => {
+): (id: number, data: GroupingFormData) => boolean {
+  return (id: number, data: GroupingFormData): boolean => {
     try {
-      repo.update(id, { name: data.name, description: data.description })
-      reload()
-      toast.success('Grouping updated')
+      repo.update(id, { name: data.name, description: data.description });
+      reload();
+      toast.success('Grouping updated');
+      return true;
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'Failed to update grouping'
-      )
+      toast.error(err instanceof Error ? err.message : 'Failed to update grouping');
+      return false;
     }
-  }
+  };
 }
 
 /**
@@ -83,15 +85,13 @@ export function createGroupingRemove(
 ): (id: number) => void {
   return (id: number): void => {
     try {
-      repo.remove(id)
-      reload()
-      toast.success('Grouping deleted')
+      repo.remove(id);
+      reload();
+      toast.success('Grouping deleted');
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'Failed to delete grouping'
-      )
+      toast.error(err instanceof Error ? err.message : 'Failed to delete grouping');
     }
-  }
+  };
 }
 
 /**
@@ -109,12 +109,10 @@ export function createGroupingReorder(
 ): (ids: number[]) => void {
   return (ids: number[]): void => {
     try {
-      repo.reorder(ids)
-      reload()
+      repo.reorder(ids);
+      reload();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'Failed to reorder groupings'
-      )
+      toast.error(err instanceof Error ? err.message : 'Failed to reorder groupings');
     }
-  }
+  };
 }

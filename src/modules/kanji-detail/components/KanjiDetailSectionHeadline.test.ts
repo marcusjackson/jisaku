@@ -4,22 +4,22 @@
  * Tests for the headline section component.
  */
 
-import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { mount } from '@vue/test-utils';
+import { describe, expect, it, vi } from 'vitest';
 
-import KanjiDetailSectionHeadline from './KanjiDetailSectionHeadline.vue'
+import KanjiDetailSectionHeadline from './KanjiDetailSectionHeadline.vue';
 
-import type { Component } from '@/api/component/component-types'
-import type { Kanji } from '@/api/kanji/kanji-types'
+import type { Component } from '@/api/component/component-types';
+import type { Kanji } from '@/api/kanji/kanji-types';
 
 // Mock vue-router
 vi.mock('vue-router', () => ({
   RouterLink: {
     name: 'RouterLink',
     template: '<a><slot /></a>',
-    props: ['to']
-  }
-}))
+    props: ['to'],
+  },
+}));
 
 const mockKanji: Kanji = {
   id: 1,
@@ -40,8 +40,8 @@ const mockKanji: Kanji = {
   identifier: null,
   radicalStrokeCount: null,
   createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
-}
+  updatedAt: new Date().toISOString(),
+};
 
 const mockRadical: Component = {
   id: 1,
@@ -56,8 +56,8 @@ const mockRadical: Component = {
   canBeRadical: true,
   radicalNameJapanese: 'ひ',
   createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
-}
+  updatedAt: new Date().toISOString(),
+};
 
 describe('KanjiDetailSectionHeadline', () => {
   const createWrapper = (props = {}) => {
@@ -65,57 +65,94 @@ describe('KanjiDetailSectionHeadline', () => {
       props: {
         kanji: mockKanji,
         radical: mockRadical,
-        ...props
+        save: vi.fn(() => true),
+        ...props,
       },
       global: {
         stubs: {
           SharedBackButton: true,
           SharedSearchKeywordsIndicator: true,
           KanjiDetailDialogHeadline: true,
-          BaseButton: true
-        }
-      }
-    })
-  }
+          BaseButton: true,
+        },
+      },
+    });
+  };
 
   it('renders kanji character', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.text()).toContain('日')
-  })
+    const wrapper = createWrapper();
+    expect(wrapper.text()).toContain('日');
+  });
+
+  it('marks the kanji character as Japanese text', () => {
+    const wrapper = createWrapper();
+    expect(wrapper.get('[data-testid="kanji-character"]').attributes('lang')).toBe('ja');
+  });
 
   it('renders display text (short meaning)', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.text()).toContain('sun, day')
-  })
+    const wrapper = createWrapper();
+    expect(wrapper.text()).toContain('sun, day');
+  });
 
   it('renders radical information when provided', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.text()).toContain('Radical:')
-    expect(wrapper.text()).toContain('日')
-    expect(wrapper.text()).toContain('(sun)')
-  })
+    const wrapper = createWrapper();
+    expect(wrapper.text()).toContain('Radical:');
+    expect(wrapper.text()).toContain('日');
+    expect(wrapper.text()).toContain('(sun)');
+  });
 
   it('does not render radical when null', () => {
-    const wrapper = createWrapper({ radical: null })
-    expect(wrapper.text()).not.toContain('Radical:')
-  })
+    const wrapper = createWrapper({ radical: null });
+    expect(wrapper.text()).not.toContain('Radical:');
+  });
 
   it('renders edit button', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.findComponent({ name: 'BaseButton' }).exists()).toBe(true)
-  })
+    const wrapper = createWrapper();
+    expect(wrapper.findComponent({ name: 'BaseButton' }).exists()).toBe(true);
+  });
 
   it('renders back button', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.findComponent({ name: 'SharedBackButton' }).exists()).toBe(
-      true
-    )
-  })
+    const wrapper = createWrapper();
+    expect(wrapper.findComponent({ name: 'SharedBackButton' }).exists()).toBe(true);
+  });
 
   it('renders search keywords indicator', () => {
-    const wrapper = createWrapper()
-    expect(
-      wrapper.findComponent({ name: 'SharedSearchKeywordsIndicator' }).exists()
-    ).toBe(true)
-  })
-})
+    const wrapper = createWrapper();
+    expect(wrapper.findComponent({ name: 'SharedSearchKeywordsIndicator' }).exists()).toBe(true);
+  });
+
+  describe('closing the dialog', () => {
+    const data = {
+      character: '日',
+      shortMeaning: 'sun',
+      searchKeywords: null,
+    };
+
+    async function openAndSave(save: () => boolean) {
+      const wrapper = createWrapper({ save });
+      const dialog = wrapper.findComponent({
+        name: 'KanjiDetailDialogHeadline',
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      await dialog.vm.$emit('update:open', true);
+      expect(dialog.props('open')).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      await dialog.vm.$emit('save', data);
+      return dialog;
+    }
+
+    it('closes the dialog after a successful save', async () => {
+      const save = vi.fn(() => true);
+      const dialog = await openAndSave(save);
+      expect(save).toHaveBeenCalledWith(data);
+      expect(dialog.props('open')).toBe(false);
+    });
+
+    it('keeps the dialog open when the save fails', async () => {
+      const save = vi.fn(() => false);
+      const dialog = await openAndSave(save);
+      expect(save).toHaveBeenCalledWith(data);
+      expect(dialog.props('open')).toBe(true);
+    });
+  });
+});

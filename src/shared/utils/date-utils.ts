@@ -8,22 +8,6 @@
  */
 
 /**
- * Format date as ISO date string (YYYY-MM-DD)
- *
- * @param date - Date object to format
- * @returns ISO date string in YYYY-MM-DD format
- *
- * @example
- * formatDateISO(new Date(2026, 1, 26)) // '2026-02-26'
- */
-export function formatDateISO(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${String(year)}-${month}-${day}`
-}
-
-/**
  * Format date as a filename-safe datetime string (YYYY-MM-DD-HHmm)
  *
  * Suitable for use in exported filenames. Contains no special characters
@@ -36,10 +20,10 @@ export function formatDateISO(date: Date): string {
  * formatDateForFilename(new Date(2026, 1, 26, 14, 23)) // '2026-02-26-1423'
  */
 export function formatDateForFilename(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${String(year)}-${month}-${day}-${hours}${minutes}`
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${String(year)}-${month}-${day}-${hours}${minutes}`;
 }

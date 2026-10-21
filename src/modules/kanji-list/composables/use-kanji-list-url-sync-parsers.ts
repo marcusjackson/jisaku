@@ -7,7 +7,7 @@
  * @module modules/kanji-list/composables
  */
 
-import { FILTER_QUERY_KEYS, type KanjiListFilters } from '../kanji-list-types'
+import { FILTER_QUERY_KEYS, type KanjiListFilters } from '../kanji-list-types';
 import {
   parseAnalysisFilters,
   parseJlptLevels,
@@ -15,10 +15,10 @@ import {
   parseKenteiLevels,
   parseNumber,
   parseNumberArray,
-  parseStrokeOrderFilter
-} from '../utils/url-parsers'
+  parseStrokeOrderFilter,
+} from '../utils/url-parsers';
 
-import type { Ref } from 'vue'
+import type { Ref } from 'vue';
 
 /**
  * Parse text filters from debounced refs
@@ -30,13 +30,13 @@ export function parseTextFiltersFromRefs(
   onYomiSearch: Ref<string>,
   kunYomiSearch: Ref<string>
 ): Partial<KanjiListFilters> {
-  const filters: Partial<KanjiListFilters> = {}
-  if (characterSearch.value) filters.character = characterSearch.value
-  if (keywordsSearch.value) filters.searchKeywords = keywordsSearch.value
-  if (meaningsSearch.value) filters.meanings = meaningsSearch.value
-  if (onYomiSearch.value) filters.onYomi = onYomiSearch.value
-  if (kunYomiSearch.value) filters.kunYomi = kunYomiSearch.value
-  return filters
+  const filters: Partial<KanjiListFilters> = {};
+  if (characterSearch.value) filters.character = characterSearch.value;
+  if (keywordsSearch.value) filters.searchKeywords = keywordsSearch.value;
+  if (meaningsSearch.value) filters.meanings = meaningsSearch.value;
+  if (onYomiSearch.value) filters.onYomi = onYomiSearch.value;
+  if (kunYomiSearch.value) filters.kunYomi = kunYomiSearch.value;
+  return filters;
 }
 
 /**
@@ -45,33 +45,31 @@ export function parseTextFiltersFromRefs(
 export function parseNumericFiltersFromQuery(
   q: Record<string, unknown>
 ): Partial<KanjiListFilters> {
-  const filters: Partial<KanjiListFilters> = {}
-  const strokeMin = parseNumber(q[FILTER_QUERY_KEYS.strokeCountMin])
-  if (strokeMin !== undefined) filters.strokeCountMin = strokeMin
+  const filters: Partial<KanjiListFilters> = {};
+  const strokeMin = parseNumber(q[FILTER_QUERY_KEYS.strokeCountMin]);
+  if (strokeMin !== undefined) filters.strokeCountMin = strokeMin;
 
-  const strokeMax = parseNumber(q[FILTER_QUERY_KEYS.strokeCountMax])
-  if (strokeMax !== undefined) filters.strokeCountMax = strokeMax
+  const strokeMax = parseNumber(q[FILTER_QUERY_KEYS.strokeCountMax]);
+  if (strokeMax !== undefined) filters.strokeCountMax = strokeMax;
 
-  return filters
+  return filters;
 }
 
 /**
  * Parse level filters (JLPT, Joyo, Kentei)
  */
-export function parseLevelFiltersFromQuery(
-  q: Record<string, unknown>
-): Partial<KanjiListFilters> {
-  const filters: Partial<KanjiListFilters> = {}
-  const jlpt = parseJlptLevels(q[FILTER_QUERY_KEYS.jlptLevels])
-  if (jlpt) filters.jlptLevels = jlpt
+export function parseLevelFiltersFromQuery(q: Record<string, unknown>): Partial<KanjiListFilters> {
+  const filters: Partial<KanjiListFilters> = {};
+  const jlpt = parseJlptLevels(q[FILTER_QUERY_KEYS.jlptLevels]);
+  if (jlpt) filters.jlptLevels = jlpt;
 
-  const joyo = parseJoyoLevels(q[FILTER_QUERY_KEYS.joyoLevels])
-  if (joyo) filters.joyoLevels = joyo
+  const joyo = parseJoyoLevels(q[FILTER_QUERY_KEYS.joyoLevels]);
+  if (joyo) filters.joyoLevels = joyo;
 
-  const kentei = parseKenteiLevels(q[FILTER_QUERY_KEYS.kenteiLevels])
-  if (kentei) filters.kenteiLevels = kentei
+  const kentei = parseKenteiLevels(q[FILTER_QUERY_KEYS.kenteiLevels]);
+  if (kentei) filters.kenteiLevels = kentei;
 
-  return filters
+  return filters;
 }
 
 /**
@@ -80,39 +78,31 @@ export function parseLevelFiltersFromQuery(
 export function parseRelationalFiltersFromQuery(
   q: Record<string, unknown>
 ): Partial<KanjiListFilters> {
-  const filters: Partial<KanjiListFilters> = {}
-  const radicalId = parseNumber(q[FILTER_QUERY_KEYS.radicalId])
-  if (radicalId !== undefined) filters.radicalId = radicalId
+  const filters: Partial<KanjiListFilters> = {};
+  const radicalId = parseNumber(q[FILTER_QUERY_KEYS.radicalId]);
+  if (radicalId !== undefined) filters.radicalId = radicalId;
 
-  const componentIds = parseNumberArray(q[FILTER_QUERY_KEYS.componentIds])
-  if (componentIds) filters.componentIds = componentIds
+  const componentIds = parseNumberArray(q[FILTER_QUERY_KEYS.componentIds]);
+  if (componentIds) filters.componentIds = componentIds;
 
-  const classificationIds = parseNumberArray(
-    q[FILTER_QUERY_KEYS.classificationTypeIds]
-  )
-  if (classificationIds) filters.classificationTypeIds = classificationIds
+  const classificationIds = parseNumberArray(q[FILTER_QUERY_KEYS.classificationTypeIds]);
+  if (classificationIds) filters.classificationTypeIds = classificationIds;
 
-  return filters
+  return filters;
 }
 
 /**
  * Parse stroke diagram/animation filters
  */
-export function parseStrokeFiltersFromQuery(
-  q: Record<string, unknown>
-): Partial<KanjiListFilters> {
-  const filters: Partial<KanjiListFilters> = {}
-  const diagram = parseStrokeOrderFilter(
-    q[FILTER_QUERY_KEYS.strokeOrderDiagram]
-  )
-  if (diagram) filters.strokeOrderDiagram = diagram
+export function parseStrokeFiltersFromQuery(q: Record<string, unknown>): Partial<KanjiListFilters> {
+  const filters: Partial<KanjiListFilters> = {};
+  const diagram = parseStrokeOrderFilter(q[FILTER_QUERY_KEYS.strokeOrderDiagram]);
+  if (diagram) filters.strokeOrderDiagram = diagram;
 
-  const animation = parseStrokeOrderFilter(
-    q[FILTER_QUERY_KEYS.strokeOrderAnimation]
-  )
-  if (animation) filters.strokeOrderAnimation = animation
+  const animation = parseStrokeOrderFilter(q[FILTER_QUERY_KEYS.strokeOrderAnimation]);
+  if (animation) filters.strokeOrderAnimation = animation;
 
-  return filters
+  return filters;
 }
 
 /**
@@ -121,8 +111,8 @@ export function parseStrokeFiltersFromQuery(
 export function parseAnalysisFiltersFromQuery(
   q: Record<string, unknown>
 ): Partial<KanjiListFilters> {
-  const filters: Partial<KanjiListFilters> = {}
-  const analysis = parseAnalysisFilters(q[FILTER_QUERY_KEYS.analysisFilters])
-  if (analysis) filters.analysisFilters = analysis
-  return filters
+  const filters: Partial<KanjiListFilters> = {};
+  const analysis = parseAnalysisFilters(q[FILTER_QUERY_KEYS.analysisFilters]);
+  if (analysis) filters.analysisFilters = analysis;
+  return filters;
 }

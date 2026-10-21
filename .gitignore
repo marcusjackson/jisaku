@@ -1,5 +1,5 @@
 # Dependencies
-node_modules/
+node_modules
 .pnpm-store/
 
 # Build outputs
@@ -48,3 +48,5 @@ _local
 # To ensure use of pnpm
 package-lock.json
 yarn.lock
+
+__pycache__/

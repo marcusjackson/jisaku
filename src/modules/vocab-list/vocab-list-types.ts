@@ -7,17 +7,13 @@
  * @module modules/vocab-list
  */
 
-import type {
-  DescriptionFilledFilter,
-  VocabJlptLevel,
-  Vocabulary
-} from '@/api/vocabulary'
+import type { DescriptionFilledFilter, VocabJlptLevel, Vocabulary } from '@/api/vocabulary';
 
 // ============================================================================
 // Re-exports for convenience
 // ============================================================================
 
-export type { DescriptionFilledFilter, VocabJlptLevel, Vocabulary }
+export type { DescriptionFilledFilter, VocabJlptLevel, Vocabulary };
 
 // ============================================================================
 // Extended Filter Types
@@ -30,19 +26,19 @@ export type { DescriptionFilledFilter, VocabJlptLevel, Vocabulary }
  */
 export interface VocabListFilters {
   /** Search by word */
-  word?: string
+  word?: string;
   /** Search in short meaning and search keywords */
-  search?: string
+  search?: string;
   /** Search specifically in kana field */
-  kana?: string
+  kana?: string;
   /** Filter by JLPT levels (any of) */
-  jlptLevels?: VocabJlptLevel[]
+  jlptLevels?: VocabJlptLevel[];
   /** Filter to common words only */
-  isCommon?: boolean
+  isCommon?: boolean;
   /** Filter by kanji contained in word (ALL must match - AND logic) */
-  containsKanjiIds?: number[]
+  containsKanjiIds?: number[];
   /** Filter by description presence */
-  descriptionFilled?: DescriptionFilledFilter
+  descriptionFilled?: DescriptionFilledFilter;
 }
 
 // ============================================================================
@@ -59,8 +55,8 @@ export const FILTER_QUERY_KEYS = {
   jlptLevels: 'jlpt',
   isCommon: 'common',
   containsKanjiIds: 'kanji',
-  descriptionFilled: 'description'
-} as const satisfies Record<keyof VocabListFilters, string>
+  descriptionFilled: 'description',
+} as const satisfies Record<keyof VocabListFilters, string>;
 
 // ============================================================================
 // Display Labels
@@ -73,14 +69,11 @@ export const JLPT_LABELS: Record<VocabJlptLevel, string> = {
   N3: 'N3',
   N2: 'N2',
   N1: 'N1',
-  'non-jlpt': '非JLPT'
-}
+  'non-jlpt': '非JLPT',
+};
 
 /** Description filter display labels */
-export const DESCRIPTION_FILTER_LABELS: Record<
-  NonNullable<DescriptionFilledFilter>,
-  string
-> = {
+export const DESCRIPTION_FILTER_LABELS: Record<NonNullable<DescriptionFilledFilter>, string> = {
   filled: 'Has description',
-  empty: 'No description'
-}
+  empty: 'No description',
+};

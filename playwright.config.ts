@@ -1,6 +1,9 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test';
 
-const isCI = !!process.env['CI']
+const isCI = !!process.env['CI'];
+// Parallel worktrees each set their own E2E_PORT; on a shared port, a run
+// silently reuses another checkout's dev server and tests its code.
+const port = process.env['E2E_PORT'] ?? '5173';
 
 export default defineConfig({
   testDir: './e2e',
@@ -25,18 +28,15 @@ export default defineConfig({
   ...(isCI && { workers: 1 }),
 
   // Reporter to use
-  reporter: [
-    ['html', { open: 'never', outputFolder: 'playwright-report' }],
-    ['list']
-  ],
+  reporter: [['html', { open: 'never', outputFolder: 'playwright-report' }], ['list']],
 
   // Shared settings for all projects
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: `http://localhost:${port}`,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     actionTimeout: 10_000,
-    navigationTimeout: 15_000
+    navigationTimeout: 15_000,
   },
 
   // Configure projects for major browsers
@@ -46,21 +46,21 @@ export default defineConfig({
       name: 'chromium',
       testMatch: '*.test.ts',
       testIgnore: ['**/visual/**/*.vrt.ts'],
-      use: { ...devices['Desktop Chrome'] }
+      use: { ...devices['Desktop Chrome'] },
     },
     // Firefox
     {
       name: 'firefox',
       testMatch: '*.test.ts',
       testIgnore: ['**/visual/**/*.vrt.ts'],
-      use: { ...devices['Desktop Firefox'] }
+      use: { ...devices['Desktop Firefox'] },
     },
     // WebKit (Safari engine)
     {
       name: 'webkit',
       testMatch: '*.test.ts',
       testIgnore: ['**/visual/**/*.vrt.ts'],
-      use: { ...devices['Desktop Safari'] }
+      use: { ...devices['Desktop Safari'] },
     },
     // Visual regression testing - single browser for consistency
     {
@@ -70,16 +70,16 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // Consistent viewport for visual regression
-        viewport: { width: 1280, height: 800 }
-      }
-    }
+        viewport: { width: 1280, height: 800 },
+      },
+    },
   ],
 
   // Run local dev server before starting tests
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:5173',
+    command: `pnpm dev --port ${port} --strictPort`,
+    url: `http://localhost:${port}`,
     reuseExistingServer: !isCI,
-    timeout: 120 * 1000
-  }
-})
+    timeout: 120 * 1000,
+  },
+});

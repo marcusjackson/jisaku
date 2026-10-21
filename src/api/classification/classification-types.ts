@@ -15,27 +15,27 @@
  * A classification type (e.g., pictograph, ideograph)
  */
 export interface ClassificationType {
-  id: number
-  typeName: string
-  nameJapanese: string | null
-  nameEnglish: string | null
-  description: string | null
-  descriptionShort: string | null
-  displayOrder: number
-  createdAt: string
-  updatedAt: string
+  id: number;
+  typeName: string;
+  nameJapanese: string | null;
+  nameEnglish: string | null;
+  description: string | null;
+  descriptionShort: string | null;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
  * A kanji's assignment to a classification type
  */
 export interface KanjiClassification {
-  id: number
-  kanjiId: number
-  classificationTypeId: number
-  displayOrder: number
+  id: number;
+  kanjiId: number;
+  classificationTypeId: number;
+  displayOrder: number;
   // Joined data for convenience
-  classificationType?: ClassificationType
+  classificationType?: ClassificationType;
 }
 
 // ============================================================================
@@ -46,30 +46,30 @@ export interface KanjiClassification {
  * Input for creating a classification type
  */
 export interface CreateClassificationTypeInput {
-  typeName: string
-  nameJapanese?: string | null
-  nameEnglish?: string | null
-  description?: string | null
-  descriptionShort?: string | null
-  displayOrder?: number
+  typeName: string;
+  nameJapanese?: string | null;
+  nameEnglish?: string | null;
+  description?: string | null;
+  descriptionShort?: string | null;
+  displayOrder?: number;
 }
 
 /**
  * Input for updating a classification type
  */
 export interface UpdateClassificationTypeInput {
-  typeName?: string
-  nameJapanese?: string | null
-  nameEnglish?: string | null
-  description?: string | null
-  descriptionShort?: string | null
+  typeName?: string;
+  nameJapanese?: string | null;
+  nameEnglish?: string | null;
+  description?: string | null;
+  descriptionShort?: string | null;
 }
 
 /**
  * Input for assigning a classification to a kanji
  */
 export interface CreateKanjiClassificationInput {
-  kanjiId: number
-  classificationTypeId: number
-  displayOrder?: number
+  kanjiId: number;
+  classificationTypeId: number;
+  displayOrder?: number;
 }

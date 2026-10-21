@@ -42,7 +42,7 @@ function enterEditMode(): void {
 function handleBlur(): void {
   const trimmed = editValue.value.trim()
   const value = trimmed || null
-  emit('save', value)
+  if (value !== (props.modelValue ?? null)) emit('save', value)
   isEditing.value = false
 }
 
@@ -56,7 +56,7 @@ function handleKeydown(event: KeyboardEvent): void {
 
 <template>
   <!-- Display mode -->
-  <!-- Raw <button>: display/edit trigger needs custom textarea styling incompatible with BaseButton -->
+  <!-- Raw <button>: display/edit trigger, bare layout incompatible with BaseButton -->
   <button
     v-if="!isEditing"
     class="description-textarea-display"
@@ -72,10 +72,7 @@ function handleKeydown(event: KeyboardEvent): void {
   </button>
 
   <!-- Edit mode -->
-  <div
-    v-else
-    class="description-textarea-edit"
-  >
+  <div v-else class="description-textarea-edit">
     <textarea
       v-model="editValue"
       aria-label="Description"

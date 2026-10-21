@@ -113,16 +113,11 @@ function handleSave(): void {
     kunReadings: editKunReadings.value,
     onReadings: editOnReadings.value
   })
-  emit('update:open', false)
 }
 </script>
 
 <template>
-  <BaseDialog
-    :open="props.open"
-    title="Edit Readings"
-    @update:open="emit('update:open', $event)"
-  >
+  <BaseDialog :open="props.open" title="Edit Readings" @update:open="emit('update:open', $event)">
     <div class="readings-dialog-content">
       <KanjiDetailReadingsList
         :destructive-mode="props.destructiveMode ?? false"
@@ -156,12 +151,7 @@ function handleSave(): void {
       />
 
       <div class="readings-dialog-actions">
-        <BaseButton
-          variant="secondary"
-          @click="emit('update:open', false)"
-        >
-          Cancel
-        </BaseButton>
+        <BaseButton variant="secondary" @click="emit('update:open', false)"> Cancel </BaseButton>
         <BaseButton @click="handleSave">Save</BaseButton>
       </div>
     </div>

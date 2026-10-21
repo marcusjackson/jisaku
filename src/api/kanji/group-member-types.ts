@@ -17,12 +17,12 @@
  * Allows a meaning to be assigned to a reading group with its own display order
  */
 export interface KanjiMeaningGroupMember {
-  id: number
-  readingGroupId: number
-  meaningId: number
-  displayOrder: number
-  createdAt: string
-  updatedAt: string
+  id: number;
+  readingGroupId: number;
+  meaningId: number;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============================================================================
@@ -33,7 +33,7 @@ export interface KanjiMeaningGroupMember {
  * Input for adding a meaning to a reading group
  */
 export interface CreateGroupMemberInput {
-  readingGroupId: number
-  meaningId: number
-  displayOrder?: number
+  readingGroupId: number;
+  meaningId: number;
+  displayOrder?: number;
 }

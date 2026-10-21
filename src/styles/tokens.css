@@ -15,11 +15,7 @@
   --color-surface: #fff;
   --color-surface-elevated: #fff;
   --color-surface-secondary: #f9fafb;
-  --color-surface-hover: color-mix(
-    in srgb,
-    var(--color-surface) 70%,
-    var(--color-border)
-  );
+  --color-surface-hover: color-mix(in srgb, var(--color-surface) 70%, var(--color-border));
   --color-surface-variant: #f0f4f5;
   --color-bg-secondary: #f3f4f6;
   --color-bg-tertiary: #e5e7eb;
@@ -53,6 +49,7 @@
   --color-error-subtle: rgb(239 68 68 / 8%);
   --color-info: #3b82f6;
   --color-info-bg: #eff6ff;
+  --color-info-text: #1d4ed8;
   --color-info-border: #93c5fd; /* reserved */
 
   /* Danger (destructive actions) */
@@ -66,7 +63,7 @@
   --color-border-focus: var(--color-primary);
 
   /* Grays */
-  --color-gray-300: #d1d5db;
+  --color-gray-300: #d1d5db; /* reserved */
 
   /* Focus ring */
   --color-focus-ring: rgb(79 125 140 / 40%);
@@ -80,14 +77,12 @@
 
   /* Font Families */
   --font-family-sans:
-    -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, 'Helvetica Neue',
-    arial, sans-serif;
+    -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, 'Helvetica Neue', arial, sans-serif;
   --font-family-kanji:
-    'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'Noto Sans JP',
-    sans-serif;
+    'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'Noto Sans JP', sans-serif;
   --font-family-mono:
-    ui-monospace, sfmono-regular, 'SF Mono', menlo, monaco, 'Cascadia Mono',
-    'Segoe UI Mono', 'Roboto Mono', monospace;
+    ui-monospace, sfmono-regular, 'SF Mono', menlo, monaco, 'Cascadia Mono', 'Segoe UI Mono',
+    'Roboto Mono', monospace; /* reserved */
 
   /* Font Sizes */
   --font-size-xs: 0.75rem; /* 12px */
@@ -98,7 +93,7 @@
   --font-size-2xl: 1.5rem; /* 24px */
   --font-size-3xl: 1.875rem; /* 30px */
   --font-size-4xl: 2.25rem; /* 36px */
-  --font-size-5xl: 3rem; /* 48px */
+  --font-size-5xl: 3rem; /* 48px — reserved */
   --font-size-6xl: 4rem; /* 64px - large kanji display */
 
   /* Font Weights */
@@ -119,7 +114,7 @@
    * Spacing (4px grid)
    * ======================================== */
 
-  --spacing-0: 0;
+  --spacing-0: 0; /* reserved */
   --spacing-0-5: 0.125rem; /* 2px */
   --spacing-1: 0.25rem; /* 4px */
   --spacing-2: 0.5rem; /* 8px */
@@ -134,7 +129,6 @@
   --spacing-20: 5rem; /* 80px — reserved */
 
   /* Semantic Spacing Aliases */
-  --spacing-2xs: var(--spacing-0-5);
   --spacing-xs: var(--spacing-1);
   --spacing-sm: var(--spacing-2);
   --spacing-md: var(--spacing-4);
@@ -146,11 +140,11 @@
    * Border Radius
    * ======================================== */
 
-  --radius-none: 0;
+  --radius-none: 0; /* reserved */
   --radius-sm: 0.25rem; /* 4px */
   --radius-md: 0.5rem; /* 8px */
   --radius-lg: 0.75rem; /* 12px */
-  --radius-xl: 1rem; /* 16px */
+  --radius-xl: 1rem; /* 16px — reserved */
   --radius-full: 9999px; /* Pill shape */
 
   /* ========================================
@@ -159,19 +153,16 @@
 
   --border-width: 1px;
   --border-width-sm: 1px;
-  --border-width-md: 2px;
+  --border-width-md: 2px; /* reserved */
 
   /* ========================================
    * Shadows
    * ======================================== */
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 5%);
-  --shadow-thumb: 0 2px 4px rgb(0 0 0 / 20%);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%);
-  --shadow-lg:
-    0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 10%);
-  --shadow-xl:
-    0 20px 25px -5px rgb(0 0 0 / 10%), 0 8px 10px -6px rgb(0 0 0 / 10%);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 10%);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 10%), 0 8px 10px -6px rgb(0 0 0 / 10%);
   --shadow-raised: var(--shadow-md);
 
   /* ========================================
@@ -204,25 +195,24 @@
    * Layout
    * ======================================== */
 
-  /* Container widths */
-  --container-sm: 640px;
+  /* Container widths. The 768px layout breakpoint matches --container-md, but
+     custom properties don't work inside @media; see "Breakpoints" in css.md. */
+  --container-sm: 640px; /* reserved */
   --container-md: 768px;
-  --container-lg: 1024px;
+  --container-lg: 1024px; /* reserved */
   --container-xl: 1280px;
 
   /* Content layout */
   --content-max-width: var(--container-md); /* detail page content column */
   --content-min-height: 12.5rem; /* loading/error state placeholder (200px) */
   --list-max-height: 18.75rem; /* scrollable search/results list (300px) */
+  --list-max-height-sm: 15rem; /* member lists in dialogs (240px) */
 
   /* Grid */
   --grid-item-min-xs: 5rem; /* 80px */
   --grid-item-min-sm: 7.5rem; /* 120px */
   --grid-item-min-md: 8.75rem; /* 140px */
   --grid-item-min-lg: 10rem; /* 160px */
-
-  /* Sidebar */
-  --sidebar-width: 240px;
 
   /* Header */
   --header-height: 64px;
@@ -275,17 +265,13 @@
   /* ========================================
    * Kanji-Specific Tokens
    * ======================================== */
-
-  --kanji-display-size: var(--font-size-6xl);
   --kanji-card-size: var(--font-size-4xl);
-  --stroke-diagram-width: 200px;
-  --stroke-diagram-height: 200px;
 
   /* ========================================
    * Icon Sizes
    * ======================================== */
 
-  --icon-size-xs: var(--spacing-3); /* 12px */
+  --icon-size-xs: var(--spacing-3); /* 12px — reserved */
   --icon-size-sm: var(--spacing-4); /* 16px */
   --icon-size-md: var(--spacing-5); /* 20px */
   --icon-size-lg: var(--spacing-6); /* 24px */
@@ -302,6 +288,8 @@
  * ======================================== */
 
 [data-theme='dark'] {
+  color-scheme: dark;
+
   /* Background */
   --color-background: #0f172a;
   --color-surface: #1e293b;
@@ -328,6 +316,7 @@
   --color-error-subtle: rgb(239 68 68 / 12%);
   --color-info: #60a5fa;
   --color-info-bg: #1e3a8a;
+  --color-info-text: #bfdbfe;
 
   /* Danger (destructive actions) */
   --color-danger: #f87171;
@@ -340,7 +329,7 @@
   --color-border-focus: var(--color-primary);
 
   /* Grays */
-  --color-gray-300: #4b5563;
+  --color-gray-300: #4b5563; /* reserved */
 
   /* Focus ring */
   --color-focus-ring: rgb(96 165 186 / 40%);

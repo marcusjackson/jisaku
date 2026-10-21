@@ -16,11 +16,6 @@ import type {
   ReadingLevel
 } from '../kanji-detail-types'
 
-export interface ReadingWarning {
-  reading?: string
-  okurigana?: string
-}
-
 withDefaults(
   defineProps<{
     title: string
@@ -58,32 +53,17 @@ function getOkurigana(reading: EditOnReading | EditKunReading): string {
 </script>
 
 <template>
-  <div
-    class="readings-section"
-    :data-testid="testId"
-  >
+  <div class="readings-section" :data-testid="testId">
     <div class="readings-section-header">
       <h3 class="readings-section-title">{{ title }}</h3>
-      <BaseButton
-        size="sm"
-        variant="ghost"
-        @click="emit('add')"
-      >
-        + Add
-      </BaseButton>
+      <BaseButton size="sm" variant="ghost" @click="emit('add')"> + Add </BaseButton>
     </div>
 
-    <div
-      v-if="readings.length === 0"
-      class="readings-empty"
-    >
+    <div v-if="readings.length === 0" class="readings-empty">
       {{ emptyText }}
     </div>
 
-    <div
-      v-else
-      class="readings-list"
-    >
+    <div v-else class="readings-list">
       <KanjiDetailReadingItem
         v-for="(reading, index) in readings"
         :key="reading.id"

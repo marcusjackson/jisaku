@@ -3,8 +3,7 @@
 -- 
 -- This migration creates the core tables for the kanji dictionary.
 
--- Enable foreign key support
-PRAGMA foreign_keys = ON;
+-- Foreign keys are switched off by runMigrations, not here.
 
 -- Set schema version
 PRAGMA user_version = 1;

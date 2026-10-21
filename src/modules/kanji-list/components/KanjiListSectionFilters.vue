@@ -61,13 +61,9 @@ function toggleCollapsed(): void {
 </script>
 
 <template>
-  <section
-    aria-label="Filter kanji"
-    class="kanji-list-filters"
-    data-testid="kanji-list-filters"
-  >
+  <section aria-label="Filter kanji" class="kanji-list-filters" data-testid="kanji-list-filters">
     <!-- Collapsible Header -->
-    <!-- Raw <button>: collapsible header needs full custom styling incompatible with BaseButton -->
+    <!-- Raw <button>: collapsible header, bare layout incompatible with BaseButton -->
     <button
       :aria-expanded="!isCollapsed"
       class="kanji-list-filters-header"
@@ -77,10 +73,7 @@ function toggleCollapsed(): void {
     >
       <span class="kanji-list-filters-header-text">
         Filters
-        <span
-          v-if="activeFilterCount > 0"
-          class="kanji-list-filters-badge"
-        >
+        <span v-if="activeFilterCount > 0" class="kanji-list-filters-badge">
           {{ activeFilterCount }}
         </span>
       </span>
@@ -105,10 +98,7 @@ function toggleCollapsed(): void {
     </button>
 
     <!-- Collapsible Content -->
-    <div
-      v-show="!isCollapsed"
-      class="kanji-list-filters-expanded-content"
-    >
+    <div v-show="!isCollapsed" class="kanji-list-filters-expanded-content">
       <div class="kanji-list-filters-scrollable-content">
         <KanjiListFiltersContent
           :character-search="characterSearch"

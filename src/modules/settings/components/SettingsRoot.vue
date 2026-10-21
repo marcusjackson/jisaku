@@ -3,8 +3,11 @@
  * SettingsRoot
  *
  * Root component for the Settings page.
- * Handles all data fetching and orchestrates section components.
+ * Wires the database, theme and seed composables to the section components;
+ * the type-list sections load their own data.
  */
+
+import { ref } from 'vue'
 
 import { useDatabaseExport } from '@/shared/composables/use-database-export'
 import { useSeedData } from '@/shared/composables/use-seed-data'
@@ -28,8 +31,7 @@ const {
   importDatabase,
   isClearing: isDatabaseClearing,
   isExporting,
-  isImporting,
-  validateDatabaseFile
+  isImporting
 } = useDatabaseExport()
 
 // Composables for dev tools
@@ -49,12 +51,14 @@ function handleExportDatabase(): void {
   exportDatabase()
 }
 
-async function handleImportDatabase(file: File): Promise<boolean> {
-  return await importDatabase(file)
-}
+// The type-list sections load once on mount, so a new key remounts them
+// after an import or a seed has replaced their tables.
+const typeListsKey = ref(0)
 
-async function handleValidateDatabase(file: File): Promise<boolean> {
-  return await validateDatabaseFile(file)
+async function handleImportDatabase(file: File): Promise<boolean> {
+  const imported = await importDatabase(file)
+  if (imported) typeListsKey.value++
+  return imported
 }
 
 async function handleClearDatabase(): Promise<void> {
@@ -63,6 +67,7 @@ async function handleClearDatabase(): Promise<void> {
 
 async function handleSeedData(): Promise<void> {
   await seed()
+  typeListsKey.value++
 }
 
 async function handleClearDevData(): Promise<void> {
@@ -74,14 +79,11 @@ async function handleClearDevData(): Promise<void> {
   <div class="settings-root">
     <h1 class="settings-root__title">Settings</h1>
 
-    <SettingsSectionAppearance
-      :theme="theme"
-      @toggle-theme="handleThemeToggle"
-    />
+    <SettingsSectionAppearance :theme="theme" @toggle-theme="handleThemeToggle" />
 
-    <SettingsSectionPositionTypes />
+    <SettingsSectionPositionTypes :key="`position-${typeListsKey}`" />
 
-    <SettingsSectionClassificationTypes />
+    <SettingsSectionClassificationTypes :key="`classification-${typeListsKey}`" />
 
     <SettingsSectionDatabase
       :is-clearing="isDatabaseClearing"
@@ -90,7 +92,6 @@ async function handleClearDevData(): Promise<void> {
       @clear-database="handleClearDatabase"
       @export-database="handleExportDatabase"
       @import-database="handleImportDatabase"
-      @validate-database="handleValidateDatabase"
     />
 
     <SettingsSectionDevTools
@@ -121,7 +122,7 @@ async function handleClearDevData(): Promise<void> {
   margin-bottom: var(--spacing-md);
 }
 
-@media (width <= 767px) {
+@media (width < 768px) {
   .settings-root {
     max-width: 100%;
   }

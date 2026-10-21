@@ -4,13 +4,15 @@
  * Tests for kanji card display component.
  */
 
-import { renderWithProviders } from '@test/helpers/render'
-import { screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { createMemoryHistory, createRouter } from 'vue-router';
 
-import KanjiListCard from './KanjiListCard.vue'
+import { renderWithProviders } from '@test/helpers/render';
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import type { Kanji } from '@/api/kanji'
+import KanjiListCard from './KanjiListCard.vue';
+
+import type { Kanji } from '@/api/kanji';
 
 const mockKanji: Kanji = {
   id: 1,
@@ -31,8 +33,8 @@ const mockKanji: Kanji = {
   identifier: null,
   radicalStrokeCount: null,
   createdAt: '2024-01-01',
-  updatedAt: '2024-01-01'
-}
+  updatedAt: '2024-01-01',
+};
 
 const mockClassification = {
   id: 1,
@@ -46,68 +48,95 @@ const mockClassification = {
     nameEnglish: null,
     description: null,
     descriptionShort: null,
-    displayOrder: 1
-  }
-}
+    displayOrder: 1,
+  },
+};
 
 describe('KanjiListCard', () => {
   it('renders kanji character', () => {
     renderWithProviders(KanjiListCard, {
-      props: { kanji: mockKanji }
-    })
+      props: { kanji: mockKanji },
+    });
 
-    expect(screen.getByText('山')).toBeInTheDocument()
-  })
+    expect(screen.getByText('山')).toBeInTheDocument();
+  });
+
+  it('marks the kanji character as Japanese text', () => {
+    renderWithProviders(KanjiListCard, {
+      props: { kanji: mockKanji },
+    });
+
+    expect(screen.getByText('山')).toHaveAttribute('lang', 'ja');
+  });
 
   it('renders short meaning', () => {
     renderWithProviders(KanjiListCard, {
-      props: { kanji: mockKanji }
-    })
+      props: { kanji: mockKanji },
+    });
 
-    expect(screen.getByText('mountain')).toBeInTheDocument()
-  })
+    expect(screen.getByText('mountain')).toBeInTheDocument();
+  });
 
   it('renders kentei level badge', () => {
     renderWithProviders(KanjiListCard, {
-      props: { kanji: mockKanji }
-    })
+      props: { kanji: mockKanji },
+    });
 
-    expect(screen.getByText('10級')).toBeInTheDocument()
-  })
+    expect(screen.getByText('10級')).toBeInTheDocument();
+  });
 
   it('renders classification badge when provided', () => {
     renderWithProviders(KanjiListCard, {
       props: {
         kanji: mockKanji,
-        classification: mockClassification
-      }
-    })
+        classification: mockClassification,
+      },
+    });
 
     // Abbreviated as 象形
-    expect(screen.getByText('象形')).toBeInTheDocument()
-  })
+    expect(screen.getByText('象形')).toBeInTheDocument();
+  });
 
   it('links to kanji detail page', () => {
     renderWithProviders(KanjiListCard, {
-      props: { kanji: mockKanji }
-    })
+      props: { kanji: mockKanji },
+    });
 
-    const link = screen.getByRole('link')
-    expect(link).toHaveAttribute('href', '/kanji/1')
-  })
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/kanji/1');
+  });
+
+  it('carries the list filters to the detail link', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/kanji', component: { template: '<div />' } },
+        { path: '/kanji/:id', component: { template: '<div />' } },
+      ],
+    });
+    await router.push('/kanji?jlpt=N5');
+    await router.isReady();
+
+    render(KanjiListCard, {
+      global: { plugins: [router] },
+      props: { kanji: mockKanji },
+    });
+
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/kanji/1?jlpt=N5');
+  });
 
   it('does not render missing optional fields', () => {
     const kanjiWithoutOptional: Kanji = {
       ...mockKanji,
       shortMeaning: null,
-      kanjiKenteiLevel: null
-    }
+      kanjiKenteiLevel: null,
+    };
 
     renderWithProviders(KanjiListCard, {
-      props: { kanji: kanjiWithoutOptional }
-    })
+      props: { kanji: kanjiWithoutOptional },
+    });
 
-    expect(screen.queryByText('mountain')).not.toBeInTheDocument()
-    expect(screen.queryByText(/級/)).not.toBeInTheDocument()
-  })
-})
+    expect(screen.queryByText('mountain')).not.toBeInTheDocument();
+    expect(screen.queryByText(/級/)).not.toBeInTheDocument();
+  });
+});

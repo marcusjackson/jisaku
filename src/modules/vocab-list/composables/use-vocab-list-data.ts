@@ -7,26 +7,28 @@
  * @module modules/vocab-list/composables
  */
 
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-import { useKanjiRepository } from '@/api/kanji'
-import { useVocabularyRepository } from '@/api/vocabulary'
+import { useKanjiRepository } from '@/api/kanji';
+import { useVocabularyRepository } from '@/api/vocabulary';
 
-import type { VocabListFilters } from '../vocab-list-types'
-import type { Kanji } from '@/api/kanji'
-import type { Vocabulary } from '@/api/vocabulary'
-import type { Ref } from 'vue'
+import { useToast } from '@/shared/composables';
+
+import type { VocabListFilters } from '../vocab-list-types';
+import type { Kanji } from '@/api/kanji';
+import type { Vocabulary } from '@/api/vocabulary';
+import type { Ref } from 'vue';
 
 // ============================================================================
 // Composable Interface
 // ============================================================================
 
-export interface UseVocabListData {
-  vocabList: Ref<Vocabulary[]>
-  allKanji: Ref<Kanji[]>
-  fetchError: Ref<Error | null>
-  loadVocabulary: (filters: VocabListFilters) => void
-  loadReferenceData: () => void
+export interface UseVocabListDataReturn {
+  vocabList: Ref<Vocabulary[]>;
+  allKanji: Ref<Kanji[]>;
+  fetchError: Ref<Error | null>;
+  loadVocabulary: (filters: VocabListFilters) => void;
+  loadReferenceData: () => void;
 }
 
 // ============================================================================
@@ -38,26 +40,34 @@ export interface UseVocabListData {
  *
  * @returns Reactive state for vocab list data and load functions
  */
-export function useVocabListData(): UseVocabListData {
-  const vocabList = ref<Vocabulary[]>([])
-  const allKanji = ref<Kanji[]>([])
-  const fetchError = ref<Error | null>(null)
+export function useVocabListData(): UseVocabListDataReturn {
+  const vocabList = ref<Vocabulary[]>([]);
+  const allKanji = ref<Kanji[]>([]);
+  const fetchError = ref<Error | null>(null);
+  const { error: showError } = useToast();
+
+  function reportLoadError(err: unknown): void {
+    fetchError.value = err instanceof Error ? err : new Error(String(err));
+    showError(fetchError.value.message);
+  }
 
   function loadVocabulary(filters: VocabListFilters): void {
+    fetchError.value = null;
     try {
-      const repo = useVocabularyRepository()
-      vocabList.value = repo.search(filters)
+      const repo = useVocabularyRepository();
+      vocabList.value = repo.search(filters);
     } catch (err) {
-      fetchError.value = err instanceof Error ? err : new Error(String(err))
+      reportLoadError(err);
     }
   }
 
   function loadReferenceData(): void {
+    fetchError.value = null;
     try {
-      const kanjiRepo = useKanjiRepository()
-      allKanji.value = kanjiRepo.getAll()
+      const kanjiRepo = useKanjiRepository();
+      allKanji.value = kanjiRepo.getAll();
     } catch (err) {
-      fetchError.value = err instanceof Error ? err : new Error(String(err))
+      reportLoadError(err);
     }
   }
 
@@ -66,6 +76,6 @@ export function useVocabListData(): UseVocabListData {
     allKanji,
     fetchError,
     loadVocabulary,
-    loadReferenceData
-  }
+    loadReferenceData,
+  };
 }

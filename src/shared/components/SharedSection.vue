@@ -55,27 +55,15 @@ watch(
     class="shared-section"
     :data-testid="testId"
   >
-    <div
-      v-if="title || $slots['actions'] || $slots['header-extra']"
-      class="shared-section-header"
-    >
+    <div v-if="title || $slots['actions'] || $slots['header-extra']" class="shared-section-header">
       <div class="shared-section-title-row">
-        <h2
-          v-if="title"
-          class="shared-section-title"
-        >
+        <h2 v-if="title" class="shared-section-title">
           {{ title }}
         </h2>
         <slot name="header-extra" />
       </div>
-      <div
-        v-if="$slots['actions']"
-        class="shared-section-actions"
-      >
-        <slot
-          :is-open="true"
-          name="actions"
-        />
+      <div v-if="$slots['actions']" class="shared-section-actions">
+        <slot :is-open="true" name="actions" />
       </div>
     </div>
 
@@ -94,24 +82,15 @@ watch(
   >
     <div class="shared-section-header">
       <CollapsibleTrigger class="shared-section-trigger">
-        <h2
-          v-if="title"
-          class="shared-section-title"
-        >
+        <h2 v-if="title" class="shared-section-title">
           <span class="shared-section-trigger-icon">▶</span>
           {{ title }}
         </h2>
         <slot name="header-extra" />
       </CollapsibleTrigger>
 
-      <div
-        v-if="$slots['actions']"
-        class="shared-section-actions"
-      >
-        <slot
-          :is-open="isOpen"
-          name="actions"
-        />
+      <div v-if="$slots['actions']" class="shared-section-actions">
+        <slot :is-open="isOpen" name="actions" />
       </div>
     </div>
 
@@ -122,12 +101,7 @@ watch(
 
       <div class="shared-section-bottom-action">
         <CollapsibleTrigger as-child>
-          <BaseButton
-            size="sm"
-            variant="secondary"
-          >
-            Collapse
-          </BaseButton>
+          <BaseButton size="sm" variant="secondary"> Collapse </BaseButton>
         </CollapsibleTrigger>
       </div>
     </CollapsibleContent>

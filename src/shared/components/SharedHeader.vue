@@ -4,7 +4,6 @@
  *
  * App header with navigation links.
  * Used across all pages for consistent navigation.
- * Includes version toggle for testing new UI during refactoring.
  */
 
 import { RouterLink } from 'vue-router'
@@ -17,12 +16,7 @@ import SharedHeaderNav from './SharedHeaderNav.vue'
 <template>
   <header class="shared-header">
     <div class="shared-header-content">
-      <RouterLink
-        class="shared-header-logo"
-        :to="ROUTES.KANJI_LIST"
-      >
-        自作
-      </RouterLink>
+      <RouterLink class="shared-header-logo" lang="ja" :to="ROUTES.KANJI_LIST"> 自作 </RouterLink>
 
       <SharedHeaderNav />
     </div>

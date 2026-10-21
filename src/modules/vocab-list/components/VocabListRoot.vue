@@ -39,12 +39,12 @@ const {
   wordSearch
 } = useVocabListState()
 
-// Data fetching
-const { allKanji, fetchError, loadReferenceData, loadVocabulary, vocabList } =
+// Data fetching. A failed load is toasted by the data composable; only init failures replace the page.
+const { allKanji, loadReferenceData, loadVocabulary, vocabList } =
   useVocabListData()
 
 const isDialogOpen = ref(false)
-const displayError = computed(() => initError.value ?? fetchError.value)
+const displayError = computed(() => initError.value)
 
 // Watch for filter changes
 watch(
@@ -88,32 +88,18 @@ onMounted(async () => {
 
 <template>
   <!-- Loading state -->
-  <div
-    v-if="isInitializing"
-    class="vocab-list-root-loading"
-  >
-    <BaseSpinner
-      label="Loading database..."
-      size="lg"
-    />
+  <div v-if="isInitializing" class="vocab-list-root-loading">
+    <BaseSpinner label="Loading database..." size="lg" />
   </div>
 
   <!-- Error state -->
-  <div
-    v-else-if="displayError"
-    class="vocab-list-root-error"
-  >
-    <p class="vocab-list-root-error-title">
-      An error occurred while loading data
-    </p>
+  <div v-else-if="displayError" class="vocab-list-root-error">
+    <p class="vocab-list-root-error-title">An error occurred while loading data</p>
     <p class="vocab-list-root-error-message">{{ displayError.message }}</p>
   </div>
 
   <!-- Content -->
-  <div
-    v-else-if="isInitialized"
-    class="vocab-list-root"
-  >
+  <div v-else-if="isInitialized" class="vocab-list-root">
     <VocabListSectionFilters
       :active-filter-count="activeFilterCount"
       :all-kanji="allKanji"
@@ -136,10 +122,7 @@ onMounted(async () => {
       @refresh="triggerRefresh"
     />
 
-    <VocabListSectionDialog
-      v-model:open="isDialogOpen"
-      @created="handleVocabCreated"
-    />
+    <VocabListSectionDialog v-model:open="isDialogOpen" @created="handleVocabCreated" />
   </div>
 </template>
 

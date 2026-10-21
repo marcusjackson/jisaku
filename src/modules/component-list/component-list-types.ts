@@ -7,20 +7,20 @@
  * @module modules/component-list
  */
 
-import type { Component } from '@/api/component'
+import type { Component } from '@/api/component';
 
 // ============================================================================
 // Re-exports for convenience
 // ============================================================================
 
-export type { Component }
+export type { Component };
 
 // ============================================================================
 // Presence Filter Types
 // ============================================================================
 
 /** Filter options for field presence */
-export type PresenceFilterValue = 'has' | 'missing' | null
+export type PresenceFilterValue = 'has' | 'missing' | null;
 
 // ============================================================================
 // Extended Filter Types
@@ -33,23 +33,23 @@ export type PresenceFilterValue = 'has' | 'missing' | null
  */
 export interface ComponentListFilters {
   /** Search by component character */
-  character?: string
+  character?: string;
   /** Search in short display and keywords */
-  searchKeywords?: string
+  searchKeywords?: string;
   /** Search in kangxi number or meaning */
-  kangxiSearch?: string
+  kangxiSearch?: string;
   /** Minimum stroke count */
-  strokeCountMin?: number
+  strokeCountMin?: number;
   /** Maximum stroke count */
-  strokeCountMax?: number
+  strokeCountMax?: number;
   /** Filter by radical status (true = is radical, false = not radical, undefined = any) */
-  canBeRadical?: boolean
+  canBeRadical?: boolean;
   /** Filter by description field presence */
-  descriptionPresence?: PresenceFilterValue
+  descriptionPresence?: PresenceFilterValue;
   /** Filter by forms data presence */
-  formsPresence?: PresenceFilterValue
+  formsPresence?: PresenceFilterValue;
   /** Filter by groupings presence */
-  groupingsPresence?: PresenceFilterValue
+  groupingsPresence?: PresenceFilterValue;
 }
 
 // ============================================================================
@@ -68,15 +68,15 @@ export const FILTER_QUERY_KEYS = {
   canBeRadical: 'radical',
   descriptionPresence: 'description',
   formsPresence: 'forms',
-  groupingsPresence: 'groupings'
-} as const satisfies Record<keyof ComponentListFilters, string>
+  groupingsPresence: 'groupings',
+} as const satisfies Record<keyof ComponentListFilters, string>;
 
 // ============================================================================
 // Storage Keys
 // ============================================================================
 
 /** LocalStorage key for filter collapsed state */
-export const STORAGE_KEY_FILTERS_COLLAPSED = 'component-list-filters-collapsed'
+export const STORAGE_KEY_FILTERS_COLLAPSED = 'component-list-filters-collapsed';
 
 // ============================================================================
 // Filter Labels
@@ -86,12 +86,12 @@ export const STORAGE_KEY_FILTERS_COLLAPSED = 'component-list-filters-collapsed'
 export const PRESENCE_LABELS: Record<'has' | 'missing' | 'any', string> = {
   has: 'Has content',
   missing: 'Empty',
-  any: 'Any'
-}
+  any: 'Any',
+};
 
 /** Radical status filter option labels */
 export const RADICAL_STATUS_LABELS: Record<'yes' | 'no' | 'any', string> = {
   yes: 'Is radical',
   no: 'Not radical',
-  any: 'Any'
-}
+  any: 'Any',
+};

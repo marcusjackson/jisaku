@@ -47,7 +47,7 @@ function handleFieldChange(field: string, value: unknown): void {
 <template>
   <div class="kanji-detail-component-occurrence-editor">
     <div class="kanji-detail-component-occurrence-editor-header">
-      <span class="kanji-detail-component-occurrence-editor-character">
+      <span class="kanji-detail-component-occurrence-editor-character" lang="ja">
         {{ occurrence.component.character }}
       </span>
       <span

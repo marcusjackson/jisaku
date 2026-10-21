@@ -2,8 +2,7 @@
 /**
  * BaseButton
  *
- * A generic button component built on Reka UI primitives.
- * Supports primary, secondary, and ghost variants with multiple sizes.
+ * A plain `<button>` wrapper with primary, secondary, ghost and danger variants.
  */
 
 import { computed } from 'vue'
@@ -59,11 +58,7 @@ const classes = computed(() => [
     :type="type"
     @click="emit('click', $event)"
   >
-    <span
-      v-if="loading"
-      aria-hidden="true"
-      class="base-button-spinner"
-    />
+    <span v-if="loading" aria-hidden="true" class="base-button-spinner" />
     <span :class="{ 'base-button-content-hidden': loading }">
       <slot />
     </span>

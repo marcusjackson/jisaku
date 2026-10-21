@@ -4,19 +4,13 @@
  * Factory functions for creating test data for vocabulary and vocab-kanji entities.
  */
 
-import type {
-  VocabKanji,
-  VocabKanjiWithVocabulary,
-  Vocabulary
-} from '@/api/vocabulary'
+import type { VocabKanji, VocabKanjiWithVocabulary, Vocabulary } from '@/api/vocabulary';
 
 /**
  * Create a test Vocabulary entity
  */
-export function createTestVocabulary(
-  overrides: Partial<Vocabulary> = {}
-): Vocabulary {
-  const now = new Date().toISOString()
+export function createTestVocabulary(overrides: Partial<Vocabulary> = {}): Vocabulary {
+  const now = new Date().toISOString();
 
   return {
     id: 1,
@@ -29,17 +23,15 @@ export function createTestVocabulary(
     description: null,
     createdAt: now,
     updatedAt: now,
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 /**
  * Create a test VocabKanji junction entity
  */
-export function createTestVocabKanji(
-  overrides: Partial<VocabKanji> = {}
-): VocabKanji {
-  const now = new Date().toISOString()
+export function createTestVocabKanji(overrides: Partial<VocabKanji> = {}): VocabKanji {
+  const now = new Date().toISOString();
 
   return {
     id: 1,
@@ -49,8 +41,8 @@ export function createTestVocabKanji(
     displayOrder: 0,
     createdAt: now,
     updatedAt: now,
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 /**
@@ -62,8 +54,8 @@ export function createTestVocabKanjiWithVocabulary(
   return {
     vocabKanji: createTestVocabKanji(),
     vocabulary: createTestVocabulary(),
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 /**
@@ -79,9 +71,9 @@ export function createTestVocabularyList(
       word: `word${String(i + 1)}`,
       kana: `kana${String(i + 1)}`,
       shortMeaning: `meaning ${String(i + 1)}`,
-      ...baseOverrides
+      ...baseOverrides,
     })
-  )
+  );
 }
 
 /**
@@ -96,13 +88,13 @@ export function createTestVocabKanjiWithVocabularyList(
       id: i + 1,
       vocabId: i + 1,
       kanjiId,
-      displayOrder: i
+      displayOrder: i,
     }),
     vocabulary: createTestVocabulary({
       id: i + 1,
       word: `word${String(i + 1)}`,
       kana: `kana${String(i + 1)}`,
-      shortMeaning: `meaning ${String(i + 1)}`
-    })
-  }))
+      shortMeaning: `meaning ${String(i + 1)}`,
+    }),
+  }));
 }

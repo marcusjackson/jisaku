@@ -4,35 +4,35 @@
  * Handles kanji breakdown CRUD and reorder operations for the vocab detail page.
  */
 
-import { useKanjiRepository } from '@/api/kanji'
-import { useVocabKanjiRepository } from '@/api/vocabulary'
+import { useKanjiRepository } from '@/api/kanji';
+import { useVocabKanjiRepository } from '@/api/vocabulary';
 
-import { useToast } from '@/shared/composables'
+import { useDatabase, useToast } from '@/shared/composables';
 
-import { createKanjiCreateHandler } from './use-vocab-detail-kanji-create-handler'
+import { createKanjiCreateHandler } from './use-vocab-detail-kanji-create-handler';
 
-import type { Kanji } from '@/api/kanji'
-import type { VocabKanjiWithKanji } from '@/api/vocabulary'
-import type { QuickCreateKanjiData } from '@/shared/validation'
-import type { Ref } from 'vue'
+import type { Kanji } from '@/api/kanji';
+import type { VocabKanjiWithKanji } from '@/api/vocabulary';
+import type { QuickCreateKanjiData } from '@/shared/validation';
+import type { Ref } from 'vue';
 
 /** Dependencies for the composable */
 interface UseVocabDetailKanjiBreakdownHandlersDeps {
   /** Vocabulary ID ref */
-  vocabId: Ref<number>
+  vocabId: Ref<number>;
   /** Kanji breakdown list ref to update */
-  kanjiBreakdown: Ref<VocabKanjiWithKanji[]>
+  kanjiBreakdown: Ref<VocabKanjiWithKanji[]>;
   /** All kanji ref to update after creating new kanji */
-  allKanji: Ref<Kanji[]>
+  allKanji: Ref<Kanji[]>;
 }
 
 /** Return type of the composable */
 interface UseVocabDetailKanjiBreakdownHandlersReturn {
-  handleAdd: (kanjiId: number) => void
-  handleCreate: (data: QuickCreateKanjiData) => void
-  handleUpdateNotes: (id: number, notes: string | null) => void
-  handleReorder: (ids: number[]) => void
-  handleRemove: (id: number) => void
+  handleAdd: (kanjiId: number) => boolean;
+  handleCreate: (data: QuickCreateKanjiData) => boolean;
+  handleUpdateNotes: (id: number, notes: string | null) => boolean;
+  handleReorder: (ids: number[]) => void;
+  handleRemove: (id: number) => void;
 }
 
 // Helper to reload breakdown from repository
@@ -42,8 +42,8 @@ function createBreakdownReloader(
   repo: ReturnType<typeof useVocabKanjiRepository>
 ) {
   return (): void => {
-    kanjiBreakdown.value = repo.getByVocabIdWithKanji(vocabId.value)
-  }
+    kanjiBreakdown.value = repo.getByVocabIdWithKanji(vocabId.value);
+  };
 }
 
 // Helper to create add handler
@@ -53,15 +53,17 @@ function createAddHandler(
   repo: ReturnType<typeof useVocabKanjiRepository>,
   toast: ReturnType<typeof useToast>
 ) {
-  return (kanjiId: number): void => {
+  return (kanjiId: number): boolean => {
     try {
-      repo.create({ vocabId: vocabId.value, kanjiId })
-      reloadBreakdown()
-      toast.success('Kanji linked')
+      repo.create({ vocabId: vocabId.value, kanjiId });
+      reloadBreakdown();
+      toast.success('Kanji linked');
+      return true;
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to link kanji')
+      toast.error(err instanceof Error ? err.message : 'Failed to link kanji');
+      return false;
     }
-  }
+  };
 }
 
 // Helper to create update-notes handler
@@ -70,15 +72,17 @@ function createUpdateNotesHandler(
   repo: ReturnType<typeof useVocabKanjiRepository>,
   toast: ReturnType<typeof useToast>
 ) {
-  return (id: number, notes: string | null): void => {
+  return (id: number, notes: string | null): boolean => {
     try {
-      repo.update(id, { analysisNotes: notes })
-      reloadBreakdown()
-      toast.success('Notes updated')
+      repo.update(id, { analysisNotes: notes });
+      reloadBreakdown();
+      toast.success('Notes updated');
+      return true;
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to update notes')
+      toast.error(err instanceof Error ? err.message : 'Failed to update notes');
+      return false;
     }
-  }
+  };
 }
 
 // Helper to create reorder handler
@@ -89,14 +93,12 @@ function createReorderHandler(
 ) {
   return (ids: number[]): void => {
     try {
-      repo.reorder(ids)
-      reloadBreakdown()
+      repo.reorder(ids);
+      reloadBreakdown();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'Failed to reorder breakdown'
-      )
+      toast.error(err instanceof Error ? err.message : 'Failed to reorder breakdown');
     }
-  }
+  };
 }
 
 // Helper to create remove handler
@@ -107,13 +109,13 @@ function createRemoveHandler(
 ) {
   return (id: number): void => {
     try {
-      repo.remove(id)
-      reloadBreakdown()
-      toast.success('Kanji unlinked')
+      repo.remove(id);
+      reloadBreakdown();
+      toast.success('Kanji unlinked');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to unlink kanji')
+      toast.error(err instanceof Error ? err.message : 'Failed to unlink kanji');
     }
-  }
+  };
 }
 
 /**
@@ -124,37 +126,29 @@ function createRemoveHandler(
 export function useVocabDetailKanjiBreakdownHandlers(
   deps: UseVocabDetailKanjiBreakdownHandlersDeps
 ): UseVocabDetailKanjiBreakdownHandlersReturn {
-  const vocabKanjiRepo = useVocabKanjiRepository()
-  const kanjiRepo = useKanjiRepository()
-  const toast = useToast()
+  const vocabKanjiRepo = useVocabKanjiRepository();
+  const kanjiRepo = useKanjiRepository();
+  const toast = useToast();
 
   const reloadBreakdown = createBreakdownReloader(
     deps.vocabId,
     deps.kanjiBreakdown,
     vocabKanjiRepo
-  )
+  );
 
   return {
-    handleAdd: createAddHandler(
-      deps.vocabId,
-      reloadBreakdown,
-      vocabKanjiRepo,
-      toast
-    ),
+    handleAdd: createAddHandler(deps.vocabId, reloadBreakdown, vocabKanjiRepo, toast),
     handleCreate: createKanjiCreateHandler({
       vocabId: deps.vocabId,
       reloadBreakdown,
       allKanji: deps.allKanji,
       vocabKanjiRepo,
       kanjiRepo,
-      toast
+      toast,
+      transaction: useDatabase().transaction,
     }),
-    handleUpdateNotes: createUpdateNotesHandler(
-      reloadBreakdown,
-      vocabKanjiRepo,
-      toast
-    ),
+    handleUpdateNotes: createUpdateNotesHandler(reloadBreakdown, vocabKanjiRepo, toast),
     handleReorder: createReorderHandler(reloadBreakdown, vocabKanjiRepo, toast),
-    handleRemove: createRemoveHandler(reloadBreakdown, vocabKanjiRepo, toast)
-  }
+    handleRemove: createRemoveHandler(reloadBreakdown, vocabKanjiRepo, toast),
+  };
 }

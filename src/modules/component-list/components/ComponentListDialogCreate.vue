@@ -75,6 +75,7 @@ const onSubmit = handleSubmit((values) => {
         :error="errorMessage"
         label="Character"
         placeholder="亻"
+        required
       />
     </div>
 
@@ -88,12 +89,7 @@ const onSubmit = handleSubmit((values) => {
       >
         Cancel
       </BaseButton>
-      <BaseButton
-        :disabled="isSubmitting"
-        :loading="isSubmitting"
-        size="sm"
-        type="submit"
-      >
+      <BaseButton :disabled="isSubmitting" :loading="isSubmitting" size="sm" type="submit">
         Add
       </BaseButton>
     </div>

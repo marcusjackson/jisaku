@@ -5,10 +5,10 @@
  * Full integration testing is done via E2E tests.
  */
 
-import { render } from '@testing-library/vue'
-import { describe, expect, it, vi } from 'vitest'
+import { render } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import VocabListRoot from './VocabListRoot.vue'
+import VocabListRoot from './VocabListRoot.vue';
 
 // Mock database
 vi.mock('@/shared/composables/use-database', () => ({
@@ -16,42 +16,42 @@ vi.mock('@/shared/composables/use-database', () => ({
     isInitializing: { value: false },
     isInitialized: { value: false },
     initError: { value: null },
-    initialize: vi.fn().mockResolvedValue(undefined)
-  })
-}))
+    initialize: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
 
 // Mock router
 vi.mock('vue-router', () => ({
   useRoute: () => ({
-    query: {}
+    query: {},
   }),
   useRouter: () => ({
-    replace: vi.fn()
-  })
-}))
+    replace: vi.fn(),
+  }),
+}));
 
 // Mock repositories
 vi.mock('@/api/vocabulary', () => ({
   useVocabularyRepository: () => ({
     search: vi.fn().mockReturnValue([]),
-    getAll: vi.fn().mockReturnValue([])
-  })
-}))
+    getAll: vi.fn().mockReturnValue([]),
+  }),
+}));
 
 vi.mock('@/api/kanji', () => ({
   useKanjiRepository: () => ({
-    getAll: vi.fn().mockReturnValue([])
-  })
-}))
+    getAll: vi.fn().mockReturnValue([]),
+  }),
+}));
 
 describe('VocabListRoot', () => {
   it('renders without crashing', () => {
-    const { container } = render(VocabListRoot)
-    expect(container).toBeTruthy()
-  })
+    const { container } = render(VocabListRoot);
+    expect(container).toBeTruthy();
+  });
 
   it('mounts with content', () => {
-    const { container } = render(VocabListRoot)
-    expect(container.innerHTML.length).toBeGreaterThan(0)
-  })
-})
+    const { container } = render(VocabListRoot);
+    expect(container.innerHTML.length).toBeGreaterThan(0);
+  });
+});

@@ -52,16 +52,10 @@ function getSeedingState(): boolean {
 </script>
 
 <template>
-  <div
-    class="component-list-section-list"
-    data-testid="component-list-section-list"
-  >
+  <div class="component-list-section-list" data-testid="component-list-section-list">
     <header class="component-list-section-list-header">
       <h1 class="component-list-section-list-title">Component List</h1>
-      <BaseButton
-        data-testid="component-add-button"
-        @click="emit('addComponent')"
-      >
+      <BaseButton data-testid="component-add-button" @click="emit('addComponent')">
         Add New
       </BaseButton>
     </header>
@@ -71,25 +65,13 @@ function getSeedingState(): boolean {
       v-if="componentList.length === 0 && hasActiveFilters"
       class="component-list-section-list-empty"
     >
-      <p class="component-list-section-list-empty-text">
-        No components match your filters.
-      </p>
+      <p class="component-list-section-list-empty-text">No components match your filters.</p>
     </div>
 
     <!-- Empty: no components at all -->
-    <div
-      v-else-if="componentList.length === 0"
-      class="component-list-section-list-empty"
-    >
-      <p class="component-list-section-list-empty-text">
-        No components yet. Add your first one!
-      </p>
-      <BaseButton
-        size="lg"
-        @click="emit('addComponent')"
-      >
-        Add First Component
-      </BaseButton>
+    <div v-else-if="componentList.length === 0" class="component-list-section-list-empty">
+      <p class="component-list-section-list-empty-text">No components yet. Add your first one!</p>
+      <BaseButton size="lg" @click="emit('addComponent')"> Add First Component </BaseButton>
 
       <template v-if="isDevelopment">
         <BaseButton
@@ -100,18 +82,12 @@ function getSeedingState(): boolean {
         >
           {{ getSeedingState() ? 'Seeding...' : 'Seed Data' }}
         </BaseButton>
-        <p class="component-list-section-list-seed-hint">
-          Load example data for testing
-        </p>
+        <p class="component-list-section-list-seed-hint">Load example data for testing</p>
       </template>
     </div>
 
     <!-- Component grid -->
-    <div
-      v-else
-      class="component-list-section-list-grid"
-      data-testid="component-list-grid"
-    >
+    <div v-else class="component-list-section-list-grid" data-testid="component-list-grid">
       <ComponentListCard
         v-for="component in componentList"
         :key="component.id"
@@ -162,7 +138,7 @@ function getSeedingState(): boolean {
 
 .component-list-section-list-seed-hint {
   margin: 0;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
 

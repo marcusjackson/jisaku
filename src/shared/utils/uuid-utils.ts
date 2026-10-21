@@ -20,8 +20,8 @@
  * console.log(id) // '550e8400-e29b-41d4-a716-446655440000'
  */
 export function generateUUID(): string {
-  if (typeof crypto !== 'undefined') {
-    return crypto.randomUUID()
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
   }
-  throw new Error('crypto.randomUUID is not supported in this environment')
+  throw new Error('crypto.randomUUID is not supported in this environment');
 }

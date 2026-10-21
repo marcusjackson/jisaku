@@ -31,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
 const checked = defineModel<boolean>({ default: false })
 
 const switchId = useId()
+const errorId = `${switchId}-error`
 const hasError = computed(() => Boolean(props.error))
 </script>
 
@@ -40,30 +41,20 @@ const hasError = computed(() => Boolean(props.error))
       <SwitchRoot
         :id="switchId"
         v-model="checked"
+        :aria-describedby="hasError ? errorId : undefined"
+        :aria-invalid="hasError || undefined"
         :aria-label="ariaLabel || label || undefined"
-        v-bind="disabled ? { disabled: true } : {}"
         class="base-switch-root"
-        :class="{
-          'base-switch-root--checked': checked,
-          'base-switch-root-error': hasError
-        }"
+        :class="{ 'base-switch-root-error': hasError }"
+        :disabled="disabled"
       >
         <SwitchThumb class="base-switch-thumb" />
       </SwitchRoot>
-      <label
-        v-if="label || $slots['default']"
-        class="base-switch-label"
-        :for="switchId"
-      >
+      <label v-if="label || $slots['default']" class="base-switch-label" :for="switchId">
         <slot>{{ label }}</slot>
       </label>
     </div>
-    <p
-      v-if="hasError"
-      aria-live="polite"
-      class="base-switch-error-message"
-      role="alert"
-    >
+    <p v-if="hasError" :id="errorId" class="base-switch-error-message" role="alert">
       {{ error }}
     </p>
   </div>
@@ -71,6 +62,15 @@ const hasError = computed(() => Boolean(props.error))
 
 <style scoped>
 .base-switch {
+  /* Component-scoped tokens for switch anatomy */
+  --switch-track-width: calc(var(--spacing-10) + var(--spacing-1)); /* 44px */
+  --switch-track-height: var(--spacing-6); /* 24px */
+  --switch-thumb-size: var(--spacing-5); /* 20px */
+  --switch-thumb-offset: 2px;
+  --switch-thumb-translate: calc(
+    var(--switch-track-width) - var(--switch-thumb-size) - 2 * var(--switch-thumb-offset)
+  );
+
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
@@ -83,13 +83,6 @@ const hasError = computed(() => Boolean(props.error))
 }
 
 .base-switch-root {
-  /* Component-scoped tokens for switch anatomy */
-  --switch-track-width: calc(var(--spacing-10) + var(--spacing-1)); /* 44px */
-  --switch-track-height: var(--spacing-6); /* 24px */
-  --switch-thumb-size: var(--spacing-5); /* 20px */
-  --switch-thumb-offset: 2px;
-  --switch-thumb-translate: 20px;
-
   position: relative;
   box-sizing: border-box;
   width: var(--switch-track-width);

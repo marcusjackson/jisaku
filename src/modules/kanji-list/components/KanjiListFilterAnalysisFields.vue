@@ -21,7 +21,7 @@ const emit = defineEmits<{
 const NONE_VALUE = '__none__'
 
 const fieldOptions = [
-  { value: NONE_VALUE, label: 'Select field...' },
+  { value: NONE_VALUE, label: 'Add field…' },
   ...Object.entries(ANALYSIS_FIELD_LABELS).map(([value, label]) => ({
     value,
     label
@@ -69,24 +69,19 @@ function removeFilter(field: AnalysisFieldName): void {
     <span class="kanji-list-filter-analysis-label">Analysis Field</span>
 
     <!-- Active filters -->
-    <div
-      v-if="modelValue.length > 0"
-      class="kanji-list-filter-analysis-active"
-    >
-      <div
-        v-for="filter in modelValue"
-        :key="filter.field"
-        class="kanji-list-filter-analysis-item"
-      >
+    <div v-if="modelValue.length > 0" class="kanji-list-filter-analysis-active">
+      <div v-for="filter in modelValue" :key="filter.field" class="kanji-list-filter-analysis-item">
         <span class="kanji-list-filter-analysis-field">
           {{ ANALYSIS_FIELD_LABELS[filter.field] }}
         </span>
         <BaseSelect
+          :label="`${ANALYSIS_FIELD_LABELS[filter.field]} length`"
           :model-value="filter.threshold"
           :options="thresholdOptions"
           @update:model-value="updateThreshold(filter.field, $event)"
         />
         <BaseButton
+          :aria-label="`Remove ${ANALYSIS_FIELD_LABELS[filter.field]} filter`"
           size="sm"
           variant="ghost"
           @click="removeFilter(filter.field)"
@@ -98,9 +93,9 @@ function removeFilter(field: AnalysisFieldName): void {
 
     <!-- Add new filter -->
     <BaseSelect
+      label="Field to filter"
       :model-value="NONE_VALUE"
       :options="fieldOptions"
-      placeholder="Add field..."
       @update:model-value="addFilter"
     />
   </div>
@@ -164,5 +159,18 @@ function removeFilter(field: AnalysisFieldName): void {
   .kanji-list-filter-analysis-field {
     width: 100%;
   }
+}
+
+/* Visually hidden select labels: the field name beside each select names it */
+.kanji-list-filter-analysis :deep(.base-select-label) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border-width: 0;
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 </style>

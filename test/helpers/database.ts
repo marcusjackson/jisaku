@@ -14,6 +14,6 @@ export {
   seedOnReading,
   seedReadingGroup,
   seedVocabKanji,
-  seedVocabulary
-} from './database/seeders'
-export { createTestDatabase, SCHEMA_SQL } from './database/setup'
+  seedVocabulary,
+} from './database/seeders';
+export { createTestDatabase, SCHEMA_SQL } from './database/setup';

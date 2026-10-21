@@ -13,6 +13,8 @@ import { BaseBadge, BaseButton } from '@/base/components'
 
 import { SharedSection } from '@/shared/components'
 
+import { JOYO_OPTIONS, KENTEI_OPTIONS, NONE } from '../utils/constants'
+
 import KanjiDetailDialogBasicInfo from './KanjiDetailDialogBasicInfo.vue'
 
 import type { BasicInfoSaveData } from '../kanji-detail-types'
@@ -32,10 +34,8 @@ const props = defineProps<{
   classifications: KanjiClassification[]
   /** All available classification types */
   classificationTypes: ClassificationType[]
-}>()
-
-const emit = defineEmits<{
-  save: [data: BasicInfoSaveData]
+  /** Saves basic info; returns whether it saved, so the dialog can close */
+  save: (data: BasicInfoSaveData) => boolean
 }>()
 
 const isDialogOpen = ref(false)
@@ -46,37 +46,22 @@ const jlptDisplay = computed(() => {
   return props.kanji.jlptLevel
 })
 
+/** Value-to-label lookup for a select option list, leaving out the NONE entry. */
+function optionLabels(options: { label: string; value: string }[]): Record<string, string> {
+  return Object.fromEntries(options.filter((o) => o.value !== NONE).map((o) => [o.value, o.label]))
+}
+
+const joyoLabels = optionLabels(JOYO_OPTIONS)
+const kenteiLabels = optionLabels(KENTEI_OPTIONS)
+
 const joyoDisplay = computed(() => {
   if (!props.kanji.joyoLevel) return '—'
-  const labels: Record<string, string> = {
-    elementary1: '小1',
-    elementary2: '小2',
-    elementary3: '小3',
-    elementary4: '小4',
-    elementary5: '小5',
-    elementary6: '小6',
-    secondary: '中学'
-  }
-  return labels[props.kanji.joyoLevel] ?? '—'
+  return joyoLabels[props.kanji.joyoLevel] ?? '—'
 })
 
 const kenteiDisplay = computed(() => {
   if (!props.kanji.kanjiKenteiLevel) return '—'
-  const labels: Record<string, string> = {
-    '10': '10級',
-    '9': '9級',
-    '8': '8級',
-    '7': '7級',
-    '6': '6級',
-    '5': '5級',
-    '4': '4級',
-    '3': '3級',
-    pre2: '準2級',
-    '2': '2級',
-    pre1: '準1級',
-    '1': '1級'
-  }
-  return labels[props.kanji.kanjiKenteiLevel] ?? '—'
+  return kenteiLabels[props.kanji.kanjiKenteiLevel] ?? '—'
 })
 
 const radicalDisplay = computed(() => {
@@ -100,18 +85,15 @@ function getAbbreviation(type: ClassificationType): string {
 }
 
 function handleSave(data: BasicInfoSaveData): void {
-  emit('save', data)
-  isDialogOpen.value = false
+  if (props.save(data)) isDialogOpen.value = false
 }
 </script>
 
 <template>
-  <SharedSection
-    test-id="kanji-detail-basic-info"
-    title="Basic Information"
-  >
+  <SharedSection test-id="kanji-detail-basic-info" title="Basic Information">
     <template #actions>
       <BaseButton
+        aria-label="Edit basic info"
         data-testid="basic-info-edit-button"
         size="sm"
         variant="secondary"
@@ -147,10 +129,7 @@ function handleSave(data: BasicInfoSaveData): void {
         </div>
       </div>
 
-      <div
-        v-if="classifications.length > 0"
-        class="kanji-basic-info-classifications"
-      >
+      <div v-if="classifications.length > 0" class="kanji-basic-info-classifications">
         <span class="kanji-basic-info-label">Classification</span>
         <div class="kanji-basic-info-badges">
           <BaseBadge

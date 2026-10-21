@@ -44,16 +44,10 @@ function handleDeleteCancel(): void {
 </script>
 
 <template>
-  <section
-    class="kanji-detail-section-actions"
-    data-testid="kanji-detail-actions"
-  >
+  <section class="kanji-detail-section-actions" data-testid="kanji-detail-actions">
     <div class="kanji-detail-section-actions-controls">
       <div class="kanji-detail-section-actions-toggle">
-        <label
-          class="kanji-detail-section-actions-label"
-          for="destructive-mode-switch"
-        >
+        <label class="kanji-detail-section-actions-label" for="destructive-mode-switch">
           Destructive Mode
         </label>
         <BaseSwitch
@@ -66,7 +60,6 @@ function handleDeleteCancel(): void {
       </div>
 
       <BaseButton
-        aria-label="Delete"
         data-testid="delete-kanji-button"
         :disabled="props.isDeleting || !props.destructiveMode"
         variant="ghost"
@@ -80,10 +73,7 @@ function handleDeleteCancel(): void {
       </BaseButton>
     </div>
 
-    <SharedBackButton
-      label="Back to Kanji List"
-      :to="ROUTES.KANJI_LIST"
-    />
+    <SharedBackButton label="Back to Kanji List" :to="ROUTES.KANJI_LIST" />
 
     <SharedConfirmDialog
       v-model:open="showDeleteDialog"

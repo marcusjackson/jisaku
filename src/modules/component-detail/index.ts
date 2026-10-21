@@ -7,7 +7,7 @@
  */
 
 // Types
-export * from './component-detail-types'
+export * from './component-detail-types';
 
 // Components
-export { default as ComponentDetailRoot } from './components/ComponentDetailRoot.vue'
+export { default as ComponentDetailRoot } from './components/ComponentDetailRoot.vue';

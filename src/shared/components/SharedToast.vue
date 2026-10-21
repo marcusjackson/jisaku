@@ -26,7 +26,7 @@ import type { Toast } from '@/shared/composables/use-toast'
 const { removeToast, toasts } = useToast()
 
 function getToastClass(type: Toast['type']): string {
-  return `base-toast base-toast-${type}`
+  return `shared-toast shared-toast-${type}`
 }
 
 function handleOpenChange(open: boolean, id: string): void {
@@ -45,8 +45,8 @@ function handleOpenChange(open: boolean, id: string): void {
       :duration="toast.duration"
       @update:open="(open: boolean) => handleOpenChange(open, toast.id)"
     >
-      <div class="base-toast-content">
-        <div class="base-toast-icon">
+      <div class="shared-toast-content">
+        <div class="shared-toast-icon">
           <!-- Success icon -->
           <svg
             v-if="toast.type === 'success'"
@@ -75,11 +75,7 @@ function handleOpenChange(open: boolean, id: string): void {
             viewBox="0 0 24 24"
             width="20"
           >
-            <circle
-              cx="12"
-              cy="12"
-              r="10"
-            />
+            <circle cx="12" cy="12" r="10" />
             <path d="m15 9-6 6M9 9l6 6" />
           </svg>
           <!-- Warning icon -->
@@ -112,35 +108,22 @@ function handleOpenChange(open: boolean, id: string): void {
             viewBox="0 0 24 24"
             width="20"
           >
-            <circle
-              cx="12"
-              cy="12"
-              r="10"
-            />
+            <circle cx="12" cy="12" r="10" />
             <path d="M12 16v-4M12 8h.01" />
           </svg>
         </div>
 
-        <div class="base-toast-text">
-          <ToastTitle
-            v-if="toast.title"
-            class="base-toast-title"
-          >
+        <div class="shared-toast-text">
+          <ToastTitle v-if="toast.title" class="shared-toast-title">
             {{ toast.title }}
           </ToastTitle>
-          <ToastDescription
-            class="base-toast-description"
-            data-testid="toast-description"
-          >
+          <ToastDescription class="shared-toast-description" data-testid="toast-description">
             {{ toast.message }}
           </ToastDescription>
         </div>
       </div>
 
-      <ToastClose
-        aria-label="Close"
-        class="base-toast-close"
-      >
+      <ToastClose aria-label="Close" class="shared-toast-close">
         <svg
           aria-hidden="true"
           fill="none"
@@ -157,7 +140,7 @@ function handleOpenChange(open: boolean, id: string): void {
       </ToastClose>
     </ToastRoot>
 
-    <ToastViewport class="base-toast-viewport" />
+    <ToastViewport class="shared-toast-viewport" />
   </ToastProvider>
 </template>
 

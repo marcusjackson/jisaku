@@ -13,16 +13,10 @@ defineProps<{
 </script>
 
 <template>
-  <div
-    v-if="meanings.length > 0"
-    class="unassigned-notice"
-  >
+  <div v-if="meanings.length > 0" class="unassigned-notice">
     <div class="unassigned-notice-label">Unassigned meanings:</div>
     <ol class="unassigned-notice-list">
-      <li
-        v-for="meaning in meanings"
-        :key="meaning.id"
-      >
+      <li v-for="meaning in meanings" :key="meaning.id">
         {{ meaning.meaningText }}
       </li>
     </ol>

@@ -6,121 +6,90 @@
  * @module modules/kanji-detail
  */
 
-import { computed } from 'vue'
+import { computed, ref } from 'vue';
 
-import {
-  useVocabKanjiRepository,
-  useVocabularyRepository
-} from '@/api/vocabulary'
+import { useVocabKanjiRepository, useVocabularyRepository } from '@/api/vocabulary';
 
-import { useToast } from '@/shared/composables/use-toast'
+import { useDatabase } from '@/shared/composables/use-database';
+import { useToast } from '@/shared/composables/use-toast';
 
-import type {
-  QuickCreateVocabularyData,
-  VocabularyListItem
-} from '../kanji-detail-types'
-import type { Kanji } from '@/api/kanji/kanji-types'
-import type { VocabKanjiWithVocabulary } from '@/api/vocabulary'
-import type { ComputedRef, Ref } from 'vue'
+import { createVocabularyAndLink } from './use-kanji-detail-vocabulary-create-handler';
+
+import type { QuickCreateVocabularyData, VocabularyListItem } from '../kanji-detail-types';
+import type { Kanji } from '@/api/kanji/kanji-types';
+import type { VocabKanjiWithVocabulary } from '@/api/vocabulary';
+import type { ComputedRef, Ref } from 'vue';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface State {
-  kanji: Ref<Kanji | null>
-  vocabulary: Ref<VocabKanjiWithVocabulary[]>
+  kanji: Ref<Kanji | null>;
+  vocabulary: Ref<VocabKanjiWithVocabulary[]>;
 }
 
-type VocabRepo = ReturnType<typeof useVocabularyRepository>
+type VocabRepo = ReturnType<typeof useVocabularyRepository>;
 
 interface VocabCtx {
-  state: State
-  vocabRepo: VocabRepo
-  vocabKanjiRepo: ReturnType<typeof useVocabKanjiRepository>
-  toast: ReturnType<typeof useToast>
-  refresh: () => void
+  state: State;
+  vocabRepo: VocabRepo;
+  vocabKanjiRepo: ReturnType<typeof useVocabKanjiRepository>;
+  toast: ReturnType<typeof useToast>;
+  refresh: () => void;
 }
 
 interface UseKanjiDetailVocabularyHandlersReturn {
-  allVocabulary: ComputedRef<VocabularyListItem[]>
-  vocabularyList: ComputedRef<VocabularyListItem[]>
-  handleLink: (vocabularyId: number) => void
-  handleUnlink: (vocabularyId: number) => void
-  handleCreate: (data: QuickCreateVocabularyData) => void
-  refreshVocabulary: () => void
+  allVocabulary: ComputedRef<VocabularyListItem[]>;
+  vocabularyList: ComputedRef<VocabularyListItem[]>;
+  handleLink: (vocabularyId: number) => boolean;
+  handleUnlink: (vocabularyId: number) => void;
+  handleCreate: (data: QuickCreateVocabularyData) => boolean;
+  refreshVocabulary: () => void;
 }
 
 // ============================================================================
 // Module-scope implementation functions
 // ============================================================================
 
-function doHandleLinkAction(
-  vocabularyId: number,
-  isLink: boolean,
-  ctx: VocabCtx
-): void {
-  const kanjiVal = ctx.state.kanji.value
+function doHandleLink(vocabularyId: number, ctx: VocabCtx): boolean {
+  const kanjiVal = ctx.state.kanji.value;
   if (!kanjiVal) {
-    ctx.toast.error('No kanji selected')
-    return
+    ctx.toast.error('No kanji selected');
+    return false;
   }
-  if (isLink) {
-    const alreadyLinked = ctx.state.vocabulary.value.some(
-      (v) => v.vocabulary.id === vocabularyId
-    )
-    if (alreadyLinked) {
-      ctx.toast.error('This vocabulary is already linked to this kanji')
-      return
-    }
-    try {
-      ctx.vocabKanjiRepo.create({ vocabId: vocabularyId, kanjiId: kanjiVal.id })
-      ctx.refresh()
-      ctx.toast.success('Vocabulary linked successfully')
-    } catch {
-      ctx.toast.error('Failed to link vocabulary')
-    }
-  } else {
-    const link = ctx.state.vocabulary.value.find(
-      (v) => v.vocabulary.id === vocabularyId
-    )
-    if (!link) {
-      ctx.toast.error('Vocabulary is not linked to this kanji')
-      return
-    }
-    try {
-      ctx.vocabKanjiRepo.remove(link.vocabKanji.id)
-      ctx.refresh()
-      ctx.toast.success('Vocabulary unlinked successfully')
-    } catch {
-      ctx.toast.error('Failed to unlink vocabulary')
-    }
+  const alreadyLinked = ctx.state.vocabulary.value.some((v) => v.vocabulary.id === vocabularyId);
+  if (alreadyLinked) {
+    ctx.toast.error('This vocabulary is already linked to this kanji');
+    return false;
+  }
+  try {
+    ctx.vocabKanjiRepo.create({ vocabId: vocabularyId, kanjiId: kanjiVal.id });
+    ctx.refresh();
+    ctx.toast.success('Vocabulary linked successfully');
+    return true;
+  } catch {
+    ctx.toast.error('Failed to link vocabulary');
+    return false;
   }
 }
 
-function doHandleCreate(data: QuickCreateVocabularyData, ctx: VocabCtx): void {
-  const kanjiVal = ctx.state.kanji.value
-  if (!kanjiVal) {
-    ctx.toast.error('No kanji selected')
-    return
+function doHandleUnlink(vocabularyId: number, ctx: VocabCtx): void {
+  if (!ctx.state.kanji.value) {
+    ctx.toast.error('No kanji selected');
+    return;
+  }
+  const link = ctx.state.vocabulary.value.find((v) => v.vocabulary.id === vocabularyId);
+  if (!link) {
+    ctx.toast.error('Vocabulary is not linked to this kanji');
+    return;
   }
   try {
-    const newVocabulary = ctx.vocabRepo.create({
-      word: data.word,
-      kana: data.kana,
-      shortMeaning:
-        data.shortMeaning && data.shortMeaning.trim() !== ''
-          ? data.shortMeaning
-          : null
-    })
-    ctx.vocabKanjiRepo.create({
-      vocabId: newVocabulary.id,
-      kanjiId: kanjiVal.id
-    })
-    ctx.refresh()
-    ctx.toast.success(`Created and linked "${data.word}"`)
+    ctx.vocabKanjiRepo.remove(link.vocabKanji.id);
+    ctx.refresh();
+    ctx.toast.success('Vocabulary unlinked successfully');
   } catch {
-    ctx.toast.error('Failed to create vocabulary')
+    ctx.toast.error('Failed to unlink vocabulary');
   }
 }
 
@@ -138,9 +107,13 @@ function doHandleCreate(data: QuickCreateVocabularyData, ctx: VocabCtx): void {
 export function useKanjiDetailVocabularyHandlers(
   state: State
 ): UseKanjiDetailVocabularyHandlersReturn {
-  const toast = useToast()
-  const vocabRepo = useVocabularyRepository()
-  const vocabKanjiRepo = useVocabKanjiRepository()
+  const toast = useToast();
+  const vocabRepo = useVocabularyRepository();
+  const vocabKanjiRepo = useVocabKanjiRepository();
+
+  // The repository read is not reactive, so the search list re-reads it whenever
+  // the linked list is refreshed (after a link, unlink or quick-create).
+  const vocabularyVersion = ref(0);
 
   const ctx: VocabCtx = {
     state,
@@ -148,21 +121,21 @@ export function useKanjiDetailVocabularyHandlers(
     vocabKanjiRepo,
     toast,
     refresh: () => {
-      const k = state.kanji.value
-      if (k)
-        state.vocabulary.value = vocabKanjiRepo.getByKanjiIdWithVocabulary(k.id)
-    }
-  }
+      const k = state.kanji.value;
+      if (k) state.vocabulary.value = vocabKanjiRepo.getByKanjiIdWithVocabulary(k.id);
+      vocabularyVersion.value++;
+    },
+  };
 
   const allVocabulary = computed<VocabularyListItem[]>(() =>
-    vocabRepo.getAll().map((v) => ({
+    (vocabularyVersion.value >= 0 ? vocabRepo.getAll() : []).map((v) => ({
       linkId: 0,
       vocabularyId: v.id,
       word: v.word,
       kana: v.kana,
-      shortMeaning: v.shortMeaning
+      shortMeaning: v.shortMeaning,
     }))
-  )
+  );
 
   const vocabularyList = computed<VocabularyListItem[]>(() =>
     state.vocabulary.value.map((v) => ({
@@ -170,22 +143,18 @@ export function useKanjiDetailVocabularyHandlers(
       vocabularyId: v.vocabulary.id,
       word: v.vocabulary.word,
       kana: v.vocabulary.kana,
-      shortMeaning: v.vocabulary.shortMeaning
+      shortMeaning: v.vocabulary.shortMeaning,
     }))
-  )
+  );
 
   return {
     allVocabulary,
     vocabularyList,
-    handleLink: (id) => {
-      doHandleLinkAction(id, true, ctx)
-    },
+    handleLink: (id) => doHandleLink(id, ctx),
     handleUnlink: (id) => {
-      doHandleLinkAction(id, false, ctx)
+      doHandleUnlink(id, ctx);
     },
-    handleCreate: (data) => {
-      doHandleCreate(data, ctx)
-    },
-    refreshVocabulary: ctx.refresh
-  }
+    handleCreate: (data) => createVocabularyAndLink(data, ctx, useDatabase().transaction),
+    refreshVocabulary: ctx.refresh,
+  };
 }
